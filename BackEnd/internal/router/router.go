@@ -5,6 +5,7 @@ import (
 	"posyandu-api/internal/middleware"
 	"posyandu-api/internal/repository"
 	"posyandu-api/internal/service"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -24,10 +25,6 @@ func Setup(db *gorm.DB) *gin.Engine {
 
 	admin := protected.Group("/admin", middleware.RoleRequired("admin"))
 	admin.POST("/users", authH.CreateStaff)
-
-	// contoh untuk fitur berikutnya:
-	// kader := protected.Group("/kader", middleware.RoleRequired("kader"))
-	// verifikasi := protected.Group("/verifikasi", middleware.RoleRequired("bidan"))
 
 	return r
 }
