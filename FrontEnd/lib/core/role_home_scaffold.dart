@@ -1,41 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../features/auth/auth_provider.dart';
+import 'app_colors.dart';
 
-class RoleHomeScaffold extends StatelessWidget {
-  final String title;
-  final List<Widget> children;
+/// Kerangka navigasi bawah 3 tombol: Beranda | Fungsi Utama | Akun.
+class RoleNavScaffold extends StatefulWidget {
+  final List<Widget> pages;
+  final List<BottomNavigationBarItem> navItems;
 
-  const RoleHomeScaffold({
+  const RoleNavScaffold({
     super.key,
-    required this.title,
-    this.children = const [],
-  });
+    required this.pages,
+    required this.navItems,
+  }) : assert(pages.length == navItems.length, 'Pages dan NavItems harus berjumlah sama');
+
+  @override
+  State<RoleNavScaffold> createState() => _RoleNavScaffoldState();
+}
+
+class _RoleNavScaffoldState extends State<RoleNavScaffold> {
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthProvider>().user;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: [
-          IconButton(
-            tooltip: 'Keluar',
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthProvider>().logout(),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Text('Halo, ${user?['nama'] ?? ''}',
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 4),
-          Text('Role: ${user?['role'] ?? '-'}'),
-          const SizedBox(height: 24),
-          ...children,
-        ],
+      body: IndexedStack(index: _currentIndex, children: widget.pages),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          boxShadow: [
+            BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -1)),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          backgroundColor: Colors.white,
+          selectedItemColor: AppColors.hijau,
+          unselectedItemColor: AppColors.teksRedup,
+          selectedFontSize: 12,
+          unselectedFontSize: 11,
+          type: BottomNavigationBarType.fixed,
+          onTap: (index) => setState(() => _currentIndex = index),
+          items: widget.navItems,
+        ),
       ),
     );
   }

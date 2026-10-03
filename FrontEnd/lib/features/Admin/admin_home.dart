@@ -5,6 +5,7 @@ import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../auth/auth_provider.dart';
 import 'create_staff_page.dart';
+import 'admin_kelola_akun_page.dart';
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});
@@ -94,8 +95,11 @@ class _AdminHomeState extends State<AdminHome> {
             childAspectRatio: 1.9,
             children: [
               _menu(Icons.manage_accounts, 'Kelola Akun', 'Kader, bidan, orang tua',
-                  () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const CreateStaffPage()))),
+                  () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              const AdminKelolaAkunPage(denganTombolKembali: true)))),
               _menu(Icons.calendar_month, 'Jadwal & Agenda', 'Kalender posyandu',
                   () => soon(context, 'Kelola jadwal')),
               _menu(Icons.campaign_outlined, 'Pengumuman', 'Siaran ke pengguna',
