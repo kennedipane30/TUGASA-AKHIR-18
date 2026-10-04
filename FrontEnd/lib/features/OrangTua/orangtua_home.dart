@@ -4,14 +4,18 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
-import 'lengkapi_keluarga_page.dart'; // <-- PERUBAHAN 1: tambah import
+import 'lengkapi_keluarga_page.dart';
 
 /// Status kehadiran anak pada posyandu terdekat (OT-06).
 enum StatusHadir { belumDaftar, terdaftar, sudahCheckin, tidakHadir }
 
+// Data kesehatan (pemeriksaan, KMS, imunisasi) belum punya endpoint di backend.
+// Selama false, bagian tersebut menampilkan pesan "belum ada data" dan TIDAK
+// memakai data contoh di bawah. Ubah menjadi true hanya untuk keperluan demo.
+bool get _tampilDataContoh => false;
+
 // ---------------------------------------------------------------------------
-// DATA CONTOH. Ganti dengan data dari API / database lokal (Drift/sqflite)
-// saat endpoint anak, pemeriksaan, dan imunisasi sudah dibuat.
+// DATA CONTOH (khusus bagian kesehatan, belum tersambung ke API)
 // ---------------------------------------------------------------------------
 class _Anak {
   final String nama;
@@ -113,6 +117,19 @@ const _daftarAnak = <_Anak>[
   ),
 ];
 
+// Usia dari tanggal "dd/mm/yyyy"
+String _usiaAnak(String tgl) {
+  final p = tgl.split('/');
+  if (p.length != 3) return '-';
+  final d = int.tryParse(p[0]), m = int.tryParse(p[1]), y = int.tryParse(p[2]);
+  if (d == null || m == null || y == null) return '-';
+  final n = DateTime.now();
+  var bln = (n.year - y) * 12 + (n.month - m);
+  if (n.day < d) bln--;
+  if (bln < 0) bln = 0;
+  return bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
+}
+
 class OrangTuaHome extends StatefulWidget {
   const OrangTuaHome({super.key});
 
@@ -123,11 +140,13 @@ class OrangTuaHome extends StatefulWidget {
 class _OrangTuaHomeState extends State<OrangTuaHome> {
   int _aktif = 0;
 
-  // Status kehadiran per anak. Nanti diisi dari data pendaftaran di server/lokal.
-  final Map<int, StatusHadir> _status = {
-    0: StatusHadir.belumDaftar,
-    1: StatusHadir.belumDaftar,
-  };
+  // Data anak dari server (GET /keluarga)
+  List<DataAnak> _daftar = [];
+  bool _memuat = true;
+  String? _gagal;
+
+  // Status kehadiran per anak (berdasarkan id anak). Belum tersambung ke server.
+  final Map<int, StatusHadir> _status = {};
 
   // Jadwal contoh: 3 hari dari sekarang, sehingga pendaftaran sudah dibuka tetapi
   // check-in belum. Untuk menguji check-in, ubah menjadi Duration(minutes: 30).
@@ -146,9 +165,41 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     return !n.isBefore(_checkinBuka) && n.isBefore(_jadwal.add(const Duration(hours: 3)));
   }
 
-  _Anak get _anak => _daftarAnak[_aktif];
-  StatusHadir get _hadir => _status[_aktif]!;
-  void _setHadir(StatusHadir s) => setState(() => _status[_aktif] = s);
+  DataAnak? get _anak => _daftar.isEmpty ? null : _daftar[_aktif];
+  _Anak get _contoh => _daftarAnak[_aktif % _daftarAnak.length];
+  int get _kunci => _anak?.id ?? 0;
+  StatusHadir get _hadir => _status[_kunci] ?? StatusHadir.belumDaftar;
+  void _setHadir(StatusHadir s) => setState(() => _status[_kunci] = s);
+
+  @override
+  void initState() {
+    super.initState();
+    _muat();
+  }
+
+  // Ambil daftar anak dari server
+  Future<void> _muat() async {
+    try {
+      final data = await KeluargaApi.ambil();
+      final k = Map<String, dynamic>.from((data['keluarga'] ?? {}) as Map);
+      final daftar = ((k['anak'] as List?) ?? [])
+          .map((e) => DataAnak.fromApi(Map<String, dynamic>.from(e as Map)))
+          .toList();
+      if (!mounted) return;
+      setState(() {
+        _daftar = daftar;
+        if (_aktif >= daftar.length) _aktif = 0;
+        _gagal = null;
+        _memuat = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _gagal = 'Gagal memuat data anak dari server.';
+        _memuat = false;
+      });
+    }
+  }
 
   void _pesan(String teks) {
     ScaffoldMessenger.of(context)
@@ -163,16 +214,75 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       lokasi: 'Posyandu Melati RW 05',
       notif: 2,
       children: [
-        const KartuLengkapiKeluarga(), // <-- PERUBAHAN 2: kartu lengkapi data keluarga
-        _pilihAnak(),
-        _kartuDigital(),
-        _jadwalPosyandu(),
-        _hasilTerakhir(),
-        _grafikKms(),
-        _imunisasi(),
-        _riwayatKunjungan(),
-        _aksiCepat(),
+        KartuLengkapiKeluarga(onKembali: _muat),
+        if (_memuat)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_gagal != null)
+          _kartuGagal()
+        else if (_daftar.isEmpty)
+          _kartuBelumAdaAnak()
+        else ...[
+          _pilihAnak(),
+          _kartuDigital(),
+          _jadwalPosyandu(),
+          if (_tampilDataContoh) ...[
+            _hasilTerakhir(),
+            _grafikKms(),
+            _imunisasi(),
+            _riwayatKunjungan(),
+          ] else
+            _belumAdaPemeriksaan(),
+          _aksiCepat(),
+        ],
       ],
+    );
+  }
+
+  Widget _kartuGagal() {
+    return SectionCard(
+      color: AppColors.kuningMuda,
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off, color: AppColors.kuning),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(_gagal!,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() => _memuat = true);
+              _muat();
+            },
+            child: const Text('Coba lagi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _kartuBelumAdaAnak() {
+    return SectionCard(
+      title: 'Data Anak',
+      icon: Icons.child_care,
+      child: const Text(
+        'Belum ada data anak. Tambahkan lewat "Lengkapi Data Keluarga" di atas.',
+        style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+      ),
+    );
+  }
+
+  Widget _belumAdaPemeriksaan() {
+    return SectionCard(
+      title: 'Hasil Pemeriksaan',
+      icon: Icons.monitor_heart_outlined,
+      child: const Text(
+        'Belum ada data pemeriksaan. Berat badan, tinggi badan, grafik KMS, dan imunisasi akan muncul setelah anak diperiksa di posyandu.',
+        style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+      ),
     );
   }
 
@@ -184,12 +294,12 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
         spacing: 8,
         runSpacing: 8,
         children: [
-          for (var i = 0; i < _daftarAnak.length; i++)
+          for (var i = 0; i < _daftar.length; i++)
             ChoiceChip(
               selected: i == _aktif,
               selectedColor: AppColors.hijau,
               backgroundColor: Colors.white,
-              label: Text('${_daftarAnak[i].nama} · ${_daftarAnak[i].usia}'),
+              label: Text('${_daftar[i].nama} · ${_usiaAnak(_daftar[i].tglLahir)}'),
               labelStyle: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: i == _aktif ? Colors.white : Colors.black87,
@@ -203,6 +313,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
 
   // OT-08: kartu anak digital dengan kode QR untuk check-in.
   Widget _kartuDigital() {
+    final anak = _anak!;
     final terdaftar = _hadir != StatusHadir.belumDaftar;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -248,7 +359,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                     children: [
                       const Text('Nama Lengkap Anak',
                           style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
-                      Text(_anak.nama,
+                      Text(anak.nama,
                           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 6),
                       Wrap(
@@ -282,7 +393,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                   showDialog<void>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: Text(_anak.nama),
+                      title: Text(anak.nama),
                       content: const Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -370,7 +481,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           ..._tombolKehadiran(),
           const SizedBox(height: 8),
           const Text(
-            'Jika offline, pendaftaran dan check-in disimpan di perangkat lalu dikirim otomatis saat internet tersedia.',
+            'Pendaftaran dan check-in belum tersambung ke server (menyusul pada tahap berikutnya).',
             style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup),
           ),
         ],
@@ -379,11 +490,12 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   }
 
   List<Widget> _tombolKehadiran() {
+    final anak = _anak!;
     switch (_hadir) {
       case StatusHadir.belumDaftar:
         return [
           AppButton(
-            'Daftarkan ${_anak.nama}',
+            'Daftarkan ${anak.nama}',
             icon: Icons.how_to_reg,
             onPressed: _bolehDaftar
                 ? () {
@@ -440,7 +552,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
 
   // OT-03: hasil pemeriksaan terakhir, status gizi warna, catatan bidan.
   Widget _hasilTerakhir() {
-    final a = _anak;
+    final a = _contoh;
     return SectionCard(
       title: 'Hasil Pemeriksaan Terakhir',
       icon: Icons.monitor_heart_outlined,
@@ -525,7 +637,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
 
   // OT-03 #3: grafik perkembangan terhadap kurva standar.
   Widget _grafikKms() {
-    final a = _anak;
+    final a = _contoh;
     final sekarang = DateTime.now();
     final label = [
       for (var i = a.kmsBb.length - 1; i >= 0; i--)
@@ -575,7 +687,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
 
   // OT-04: riwayat vaksin, saran vaksin berikutnya, vaksin terlewat, vitamin A.
   Widget _imunisasi() {
-    final a = _anak;
+    final a = _contoh;
     return SectionCard(
       title: 'Imunisasi & Suplemen',
       icon: Icons.vaccines_outlined,

@@ -25,12 +25,12 @@ type AyahInput struct {
 }
 
 type ProfilInput struct {
+	TanpaIbu     bool       `json:"tanpa_ibu"` // TAMBAHAN: Agar terbaca dari API
 	TglLahirIbu  string     `json:"tgl_lahir_ibu"`
 	PekerjaanIbu string     `json:"pekerjaan_ibu"`
 	Alamat       string     `json:"alamat"`
 	RT           string     `json:"rt"`
 	RW           string     `json:"rw"`
-	PosyanduID   *uint      `json:"posyandu_id"`
 	TanpaAyah    bool       `json:"tanpa_ayah"`
 	Ayah         *AyahInput `json:"ayah"`
 }
@@ -76,10 +76,6 @@ func NewKeluargaService(r *repository.KeluargaRepository) *KeluargaService {
 	return &KeluargaService{r}
 }
 
-func (s *KeluargaService) ListPosyandu() ([]models.Posyandu, error) {
-	return s.repo.ListPosyandu()
-}
-
 func (s *KeluargaService) Get(uid uint) (*KeluargaResponse, error) {
 	k, err := s.repo.GetByUser(uid)
 	if err != nil {
@@ -101,14 +97,17 @@ func (s *KeluargaService) SimpanProfil(uid uint, in ProfilInput) (*KeluargaRespo
 	if err != nil {
 		return nil, err
 	}
+
+	k.TanpaIbu = in.TanpaIbu
 	k.TglLahirIbu = tglIbu
 	k.PekerjaanIbu = strings.TrimSpace(in.PekerjaanIbu)
 	k.Alamat = strings.TrimSpace(in.Alamat)
 	k.RT = in.RT
 	k.RW = in.RW
-	k.PosyanduID = in.PosyanduID
 	k.TanpaAyah = in.TanpaAyah
-	k.Posyandu, k.Ayah, k.Anak = nil, nil, nil
+	
+	// DIHAPUS: k.Posyandu
+	k.Ayah, k.Anak = nil, nil
 
 	var ayah *models.Ayah
 	if !in.TanpaAyah && in.Ayah != nil && strings.TrimSpace(in.Ayah.Nama) != "" {
@@ -141,7 +140,8 @@ func (s *KeluargaService) pastikanKeluarga(uid uint) (*models.Keluarga, error) {
 		return nil, err
 	}
 	if k.ID == 0 {
-		k.Anak, k.Ayah, k.Posyandu = nil, nil, nil
+		// DIHAPUS: k.Posyandu
+		k.Anak, k.Ayah = nil, nil
 		if err := s.repo.SimpanProfil(k, nil); err != nil {
 			return nil, err
 		}

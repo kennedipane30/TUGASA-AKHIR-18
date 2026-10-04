@@ -1,30 +1,22 @@
-import 'dart:convert';
-
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/api_client.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../auth/auth_provider.dart';
 
 // ---------------------------------------------------------------------------
-// Daftar posyandu contoh. Ganti dengan data dari API (tabel posyandu).
-// ---------------------------------------------------------------------------
-const _daftarPosyandu = <String>[
-  'Posyandu Melati 1',
-  'Posyandu Melati 2',
-  'Posyandu Mawar',
-];
-
-// ---------------------------------------------------------------------------
 // MODEL
 // ---------------------------------------------------------------------------
 class DataAnak {
-  String nama, nik, tglLahir, jk, beratLahir, panjangLahir;
+  int? id;
+  String nama, nik, tglLahir, jk, beratLahir, panjangLahir; // tglLahir: dd/mm/yyyy
 
   DataAnak({
+    this.id,
     this.nama = '',
     this.nik = '',
     this.tglLahir = '',
@@ -33,29 +25,22 @@ class DataAnak {
     this.panjangLahir = '',
   });
 
-  Map<String, dynamic> toJson() => {
-        'nama': nama,
-        'nik': nik,
-        'tglLahir': tglLahir,
-        'jk': jk,
-        'beratLahir': beratLahir,
-        'panjangLahir': panjangLahir,
-      };
-
-  factory DataAnak.fromJson(Map<String, dynamic> j) => DataAnak(
-        nama: j['nama'] ?? '',
-        nik: j['nik'] ?? '',
-        tglLahir: j['tglLahir'] ?? '',
-        jk: j['jk'] ?? '',
-        beratLahir: j['beratLahir'] ?? '',
-        panjangLahir: j['panjangLahir'] ?? '',
+  factory DataAnak.fromApi(Map<String, dynamic> j) => DataAnak(
+        id: (j['id'] as num?)?.toInt(),
+        nama: j['nama']?.toString() ?? '',
+        nik: j['nik']?.toString() ?? '',
+        tglLahir: _dariApi(j['tgl_lahir']),
+        jk: j['jk']?.toString() ?? '',
+        beratLahir: _angka(j['berat_lahir']),
+        panjangLahir: _angka(j['panjang_lahir']),
       );
 }
 
 class DataKeluarga {
   // Ibu / wali
+  bool tanpaIbu;
   String namaIbu, nikIbu, tglLahirIbu, noHpIbu, pekerjaanIbu;
-  String alamat, rt, rw, wilayah;
+  String alamat, rt, rw;
   // Suami / ayah
   bool tanpaAyah;
   String namaAyah, nikAyah, tglLahirAyah, noHpAyah, pekerjaanAyah;
@@ -63,6 +48,7 @@ class DataKeluarga {
   List<DataAnak> anak;
 
   DataKeluarga({
+    this.tanpaIbu = false,
     this.namaIbu = '',
     this.nikIbu = '',
     this.tglLahirIbu = '',
@@ -71,7 +57,6 @@ class DataKeluarga {
     this.alamat = '',
     this.rt = '',
     this.rw = '',
-    this.wilayah = '',
     this.tanpaAyah = false,
     this.namaAyah = '',
     this.nikAyah = '',
@@ -81,12 +66,10 @@ class DataKeluarga {
     List<DataAnak>? anak,
   }) : anak = anak ?? [];
 
+  // Aturan sama dengan backend (models.Keluarga.Status)
   bool get ibuLengkap =>
-      namaIbu.trim().isNotEmpty &&
-      tglLahirIbu.isNotEmpty &&
-      alamat.trim().isNotEmpty &&
-      rw.trim().isNotEmpty &&
-      wilayah.isNotEmpty;
+      tanpaIbu ||
+      (tglLahirIbu.isNotEmpty && alamat.trim().isNotEmpty && rw.trim().isNotEmpty);
 
   bool get ayahLengkap => tanpaAyah || namaAyah.trim().isNotEmpty;
   bool get anakLengkap => anak.isNotEmpty;
@@ -94,73 +77,41 @@ class DataKeluarga {
   int get langkahSelesai =>
       (ibuLengkap ? 1 : 0) + (ayahLengkap ? 1 : 0) + (anakLengkap ? 1 : 0);
   bool get lengkap => langkahSelesai == 3;
-
-  Map<String, dynamic> toJson() => {
-        'namaIbu': namaIbu,
-        'nikIbu': nikIbu,
-        'tglLahirIbu': tglLahirIbu,
-        'noHpIbu': noHpIbu,
-        'pekerjaanIbu': pekerjaanIbu,
-        'alamat': alamat,
-        'rt': rt,
-        'rw': rw,
-        'wilayah': wilayah,
-        'tanpaAyah': tanpaAyah,
-        'namaAyah': namaAyah,
-        'nikAyah': nikAyah,
-        'tglLahirAyah': tglLahirAyah,
-        'noHpAyah': noHpAyah,
-        'pekerjaanAyah': pekerjaanAyah,
-        'anak': anak.map((e) => e.toJson()).toList(),
-      };
-
-  factory DataKeluarga.fromJson(Map<String, dynamic> j) => DataKeluarga(
-        namaIbu: j['namaIbu'] ?? '',
-        nikIbu: j['nikIbu'] ?? '',
-        tglLahirIbu: j['tglLahirIbu'] ?? '',
-        noHpIbu: j['noHpIbu'] ?? '',
-        pekerjaanIbu: j['pekerjaanIbu'] ?? '',
-        alamat: j['alamat'] ?? '',
-        rt: j['rt'] ?? '',
-        rw: j['rw'] ?? '',
-        wilayah: j['wilayah'] ?? '',
-        tanpaAyah: j['tanpaAyah'] ?? false,
-        namaAyah: j['namaAyah'] ?? '',
-        nikAyah: j['nikAyah'] ?? '',
-        tglLahirAyah: j['tglLahirAyah'] ?? '',
-        noHpAyah: j['noHpAyah'] ?? '',
-        pekerjaanAyah: j['pekerjaanAyah'] ?? '',
-        anak: ((j['anak'] ?? []) as List)
-            .map((e) => DataAnak.fromJson(Map<String, dynamic>.from(e)))
-            .toList(),
-      );
 }
-
-/// Penyimpanan sementara di perangkat (per akun).
-/// Ganti dengan API keluarga/anak + database lokal saat endpoint sudah dibuat.
-class KeluargaStorage {
-  static const _s = FlutterSecureStorage();
-  static String _key(String uid) => 'keluarga_$uid';
-
-  static Future<DataKeluarga> baca(String uid) async {
-    final raw = await _s.read(key: _key(uid));
-    if (raw == null) return DataKeluarga();
-    try {
-      return DataKeluarga.fromJson(Map<String, dynamic>.from(jsonDecode(raw)));
-    } catch (_) {
-      return DataKeluarga();
-    }
-  }
-
-  static Future<void> simpan(String uid, DataKeluarga d) =>
-      _s.write(key: _key(uid), value: jsonEncode(d.toJson()));
-}
-
-String _idPengguna(BuildContext c) =>
-    c.read<AuthProvider>().user?['id']?.toString() ?? 'anon';
 
 // ---------------------------------------------------------------------------
-// FUNGSI BANTU
+// API
+// ---------------------------------------------------------------------------
+final Options _opsi = Options(receiveTimeout: const Duration(seconds: 15));
+
+class KeluargaApi {
+  /// GET /keluarga -> { data: { keluarga: {...}, status: {...} } }
+  static Future<Map<String, dynamic>> ambil() async {
+    final r = await ApiClient.dio.get('/keluarga', options: _opsi);
+    return Map<String, dynamic>.from(r.data['data'] as Map);
+  }
+}
+
+String _pesanError(Object e) {
+  if (e is DioException) {
+    final d = e.response?.data;
+    if (d is Map && d['error'] != null) return d['error'].toString();
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'Server tidak merespons. Periksa koneksi dan alamat server.';
+      case DioExceptionType.connectionError:
+        return 'Tidak dapat terhubung ke server.';
+      default:
+        return 'Terjadi kesalahan (kode ${e.response?.statusCode ?? '-'}).';
+    }
+  }
+  return 'Terjadi kesalahan: $e';
+}
+
+// ---------------------------------------------------------------------------
+// HELPER
 // ---------------------------------------------------------------------------
 DateTime? _parseTgl(String s) {
   final p = s.split('/');
@@ -172,6 +123,35 @@ DateTime? _parseTgl(String s) {
 
 String _fmtTgl(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+// "2026-10-01T00:00:00Z" -> "01/10/2026"
+String _dariApi(dynamic v) {
+  if (v == null) return '';
+  final s = v.toString();
+  if (s.length < 10) return '';
+  final p = s.substring(0, 10).split('-');
+  if (p.length != 3) return '';
+  return '${p[2]}/${p[1]}/${p[0]}';
+}
+
+// "01/10/2026" -> "2026-10-01"
+String _keApi(String tgl) {
+  final d = _parseTgl(tgl);
+  if (d == null) return '';
+  return '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+}
+
+String _angka(dynamic v) {
+  if (v == null) return '';
+  final n = (v as num).toDouble();
+  return n == n.roundToDouble() ? n.toInt().toString() : n.toString();
+}
+
+double? _keDouble(String s) {
+  final t = s.trim();
+  if (t.isEmpty) return null;
+  return double.tryParse(t.replaceAll(',', '.'));
+}
 
 String _usia(String tgl) {
   final l = _parseTgl(tgl);
@@ -213,11 +193,12 @@ class LengkapiKeluargaPage extends StatefulWidget {
 
 class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
   final _key = GlobalKey<FormState>();
-  late final String _uid;
   bool _memuat = true;
   bool _menyimpan = false;
+  String? _gagal;
 
   // Ibu / wali
+  bool _tanpaIbu = false;
   final _namaIbu = TextEditingController();
   final _nikIbu = TextEditingController();
   final _tglIbu = TextEditingController();
@@ -226,7 +207,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
   final _alamat = TextEditingController();
   final _rt = TextEditingController();
   final _rw = TextEditingController();
-  String? _wilayah;
 
   // Suami / ayah
   bool _tanpaAyah = false;
@@ -247,7 +227,11 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
   @override
   void initState() {
     super.initState();
-    _uid = _idPengguna(context);
+    for (final c in _semua) {
+      c.addListener(() {
+        if (mounted) setState(() {});
+      });
+    }
     _muat();
   }
 
@@ -259,38 +243,54 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
     super.dispose();
   }
 
+  // Ambil data dari server (GET /keluarga)
   Future<void> _muat() async {
-    final d = await KeluargaStorage.baca(_uid);
     final user = context.read<AuthProvider>().user;
+    try {
+      final data = await KeluargaApi.ambil();
+      final k = Map<String, dynamic>.from((data['keluarga'] ?? {}) as Map);
+      final ayah = k['ayah'] == null ? null : Map<String, dynamic>.from(k['ayah'] as Map);
 
-    _namaIbu.text = d.namaIbu.isNotEmpty ? d.namaIbu : (user?['nama'] ?? '').toString();
-    _nikIbu.text = d.nikIbu.isNotEmpty ? d.nikIbu : (user?['nik'] ?? '').toString();
-    _hpIbu.text = d.noHpIbu.isNotEmpty ? d.noHpIbu : (user?['no_hp'] ?? '').toString();
-    _tglIbu.text = d.tglLahirIbu;
-    _kerjaIbu.text = d.pekerjaanIbu;
-    _alamat.text = d.alamat;
-    _rt.text = d.rt;
-    _rw.text = d.rw;
-    _wilayah = _daftarPosyandu.contains(d.wilayah) ? d.wilayah : null;
+      if (!mounted) return;
 
-    _tanpaAyah = d.tanpaAyah;
-    _namaAyah.text = d.namaAyah;
-    _nikAyah.text = d.nikAyah;
-    _tglAyah.text = d.tglLahirAyah;
-    _hpAyah.text = d.noHpAyah;
-    _kerjaAyah.text = d.pekerjaanAyah;
+      // Nama, NIK, dan No. HP ibu berasal dari akun (tabel user)
+      _namaIbu.text = (user?['nama'] ?? '').toString();
+      _nikIbu.text = (user?['nik'] ?? '').toString();
+      _hpIbu.text = (user?['no_hp'] ?? '').toString();
 
-    _anak = d.anak;
+      _tanpaIbu = k['tanpa_ibu'] == true;
+      _tglIbu.text = _dariApi(k['tgl_lahir_ibu']);
+      _kerjaIbu.text = (k['pekerjaan_ibu'] ?? '').toString();
+      _alamat.text = (k['alamat'] ?? '').toString();
+      _rt.text = (k['rt'] ?? '').toString();
+      _rw.text = (k['rw'] ?? '').toString();
 
-    for (final c in _semua) {
-      c.addListener(() {
-        if (mounted) setState(() {});
+      _tanpaAyah = k['tanpa_ayah'] == true;
+      _namaAyah.text = (ayah?['nama'] ?? '').toString();
+      _nikAyah.text = (ayah?['nik'] ?? '').toString();
+      _tglAyah.text = _dariApi(ayah?['tgl_lahir']);
+      _hpAyah.text = (ayah?['no_hp'] ?? '').toString();
+      _kerjaAyah.text = (ayah?['pekerjaan'] ?? '').toString();
+
+      _anak = ((k['anak'] as List?) ?? [])
+          .map((e) => DataAnak.fromApi(Map<String, dynamic>.from(e as Map)))
+          .toList();
+
+      setState(() {
+        _gagal = null;
+        _memuat = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _gagal = _pesanError(e);
+        _memuat = false;
       });
     }
-    if (mounted) setState(() => _memuat = false);
   }
 
   DataKeluarga _ambil() => DataKeluarga(
+        tanpaIbu: _tanpaIbu,
         namaIbu: _namaIbu.text.trim(),
         nikIbu: _nikIbu.text.trim(),
         tglLahirIbu: _tglIbu.text.trim(),
@@ -299,7 +299,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
         alamat: _alamat.text.trim(),
         rt: _rt.text.trim(),
         rw: _rw.text.trim(),
-        wilayah: _wilayah ?? '',
         tanpaAyah: _tanpaAyah,
         namaAyah: _namaAyah.text.trim(),
         nikAyah: _nikAyah.text.trim(),
@@ -327,16 +326,42 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
     if (d != null) c.text = _fmtTgl(d);
   }
 
+  // Body untuk PUT /keluarga (service.ProfilInput)
+  Map<String, dynamic> _bodyProfil() => {
+        'tanpa_ibu': _tanpaIbu,
+        'tgl_lahir_ibu': _keApi(_tglIbu.text),
+        'pekerjaan_ibu': _kerjaIbu.text.trim(),
+        'alamat': _alamat.text.trim(),
+        'rt': _rt.text.trim(),
+        'rw': _rw.text.trim(),
+        'tanpa_ayah': _tanpaAyah,
+        'ayah': _tanpaAyah
+            ? null
+            : {
+                'nama': _namaAyah.text.trim(),
+                'nik': _nikAyah.text.trim(),
+                'tgl_lahir': _keApi(_tglAyah.text),
+                'no_hp': _hpAyah.text.trim(),
+                'pekerjaan': _kerjaAyah.text.trim(),
+              },
+      };
+
+  // -----------------------------------------------------------------
+  // SIMPAN KE SERVER (online)
+  // Data anak disimpan langsung lewat bottom sheet (POST/PUT/DELETE /keluarga/anak)
+  // -----------------------------------------------------------------
   Future<void> _simpan() async {
+    if (_menyimpan) return;
     if (!_key.currentState!.validate()) return;
     setState(() => _menyimpan = true);
+
     try {
-      await KeluargaStorage.simpan(_uid, _ambil());
+      await ApiClient.dio.put('/keluarga', data: _bodyProfil(), options: _opsi);
       if (!mounted) return;
-      _snack('Data keluarga disimpan');
+      _snack('Data keluarga berhasil disimpan');
       Navigator.pop(context, true);
-    } catch (_) {
-      _snack('Gagal menyimpan data');
+    } catch (e) {
+      _snack(_pesanError(e));
     } finally {
       if (mounted) setState(() => _menyimpan = false);
     }
@@ -379,10 +404,21 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
         ],
       ),
     );
-    if (ya == true) setState(() => _anak = [..._anak]..removeAt(i));
+    if (ya != true) return;
+
+    final id = _anak[i].id;
+    try {
+      if (id != null) {
+        await ApiClient.dio.delete('/keluarga/anak/$id', options: _opsi);
+      }
+      if (!mounted) return;
+      setState(() => _anak = [..._anak]..removeAt(i));
+      _snack('Data anak dihapus');
+    } catch (e) {
+      _snack(_pesanError(e));
+    }
   }
 
-  // ----------------------------------------------------------------- tampilan
   Widget _langkah(String label, bool selesai) => Expanded(
         child: Column(
           children: [
@@ -403,6 +439,37 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
   Widget build(BuildContext context) {
     if (_memuat) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_gagal != null) {
+      return Scaffold(
+        backgroundColor: AppColors.latar,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          title: const Text('Lengkapi Data Keluarga',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+                const SizedBox(height: 12),
+                Text(_gagal!, textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() => _memuat = true);
+                    _muat();
+                  },
+                  child: const Text('Coba lagi'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
     final d = _ambil();
 
@@ -481,42 +548,50 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
                   : const Pill('Belum lengkap', bg: AppColors.kuningMuda, fg: AppColors.kuning),
               child: Column(
                 children: [
-                  TextFormField(
-                    controller: _namaIbu,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: _dekor('Nama lengkap', icon: Icons.person_outline),
+                  // Opsi Tanpa Ibu
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    activeColor: AppColors.hijau,
+                    value: _tanpaIbu,
+                    title: const Text('Tidak ada data ibu', style: TextStyle(fontSize: 13)),
+                    onChanged: (v) => setState(() => _tanpaIbu = v ?? false),
                   ),
-                  _jarak(),
-                  TextFormField(
-                    controller: _nikIbu,
-                    readOnly: true,
-                    decoration: _dekor('NIK (dari akun)', icon: Icons.badge_outlined),
-                  ),
-                  _jarak(),
-                  TextFormField(
-                    controller: _tglIbu,
-                    readOnly: true,
-                    onTap: () => _pilihTanggal(_tglIbu),
-                    decoration: _dekor('Tanggal lahir',
-                        hint: 'dd/mm/yyyy', icon: Icons.calendar_today_outlined),
-                  ),
-                  _jarak(),
-                  TextFormField(
-                    controller: _hpIbu,
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: _dekor('No. WhatsApp', icon: Icons.phone_outlined),
-                    validator: (v) => (v != null && v.isNotEmpty && v.length < 10)
-                        ? 'No. WhatsApp tidak valid'
-                        : null,
-                  ),
-                  _jarak(),
-                  TextFormField(
-                    controller: _kerjaIbu,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: _dekor('Pekerjaan (opsional)', icon: Icons.work_outline),
-                  ),
-                  _jarak(),
+
+                  if (!_tanpaIbu) ...[
+                    TextFormField(
+                      controller: _namaIbu,
+                      readOnly: true,
+                      decoration: _dekor('Nama lengkap (dari akun)', icon: Icons.person_outline),
+                    ),
+                    _jarak(),
+                    TextFormField(
+                      controller: _nikIbu,
+                      readOnly: true,
+                      decoration: _dekor('NIK (dari akun)', icon: Icons.badge_outlined),
+                    ),
+                    _jarak(),
+                    TextFormField(
+                      controller: _tglIbu,
+                      readOnly: true,
+                      onTap: () => _pilihTanggal(_tglIbu),
+                      decoration: _dekor('Tanggal lahir', hint: 'dd/mm/yyyy', icon: Icons.calendar_today_outlined),
+                    ),
+                    _jarak(),
+                    TextFormField(
+                      controller: _hpIbu,
+                      readOnly: true,
+                      decoration: _dekor('No. WhatsApp (dari akun)', icon: Icons.phone_outlined),
+                    ),
+                    _jarak(),
+                    TextFormField(
+                      controller: _kerjaIbu,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: _dekor('Pekerjaan (opsional)', icon: Icons.work_outline),
+                    ),
+                    _jarak(),
+                  ],
+                  // Alamat tetap tampil
                   TextFormField(
                     controller: _alamat,
                     maxLines: 2,
@@ -545,16 +620,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
                         ),
                       ),
                     ],
-                  ),
-                  _jarak(),
-                  DropdownButtonFormField<String>(
-                    value: _wilayah,
-                    isExpanded: true,
-                    decoration: _dekor('Posyandu terdekat', icon: Icons.location_on_outlined),
-                    items: _daftarPosyandu
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _wilayah = v),
                   ),
                 ],
               ),
@@ -704,7 +769,7 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
 }
 
 // ---------------------------------------------------------------------------
-// FORM TAMBAH / UBAH ANAK (bottom sheet)
+// FORM TAMBAH / UBAH ANAK (bottom sheet) - langsung menyimpan ke server
 // ---------------------------------------------------------------------------
 class _FormAnak extends StatefulWidget {
   final DataAnak? awal;
@@ -723,6 +788,8 @@ class _FormAnakState extends State<_FormAnak> {
   late final TextEditingController _panjang;
   String _jk = '';
   bool _jkError = false;
+  bool _menyimpan = false;
+  String? _error;
 
   @override
   void initState() {
@@ -757,21 +824,42 @@ class _FormAnakState extends State<_FormAnak> {
     if (d != null) setState(() => _tgl.text = _fmtTgl(d));
   }
 
-  void _simpan() {
+  Future<void> _simpan() async {
+    if (_menyimpan) return;
     final ok = _key.currentState!.validate();
     setState(() => _jkError = _jk.isEmpty);
     if (!ok || _jk.isEmpty) return;
-    Navigator.pop(
-      context,
-      DataAnak(
-        nama: _nama.text.trim(),
-        nik: _nik.text.trim(),
-        tglLahir: _tgl.text.trim(),
-        jk: _jk,
-        beratLahir: _berat.text.trim(),
-        panjangLahir: _panjang.text.trim(),
-      ),
-    );
+
+    setState(() {
+      _menyimpan = true;
+      _error = null;
+    });
+
+    // Body sesuai service.AnakInput
+    final body = {
+      'nama': _nama.text.trim(),
+      'nik': _nik.text.trim(),
+      'tgl_lahir': _keApi(_tgl.text),
+      'jk': _jk,
+      'berat_lahir': _keDouble(_berat.text),
+      'panjang_lahir': _keDouble(_panjang.text),
+    };
+
+    try {
+      final id = widget.awal?.id;
+      final r = id == null
+          ? await ApiClient.dio.post('/keluarga/anak', data: body, options: _opsi)
+          : await ApiClient.dio.put('/keluarga/anak/$id', data: body, options: _opsi);
+      final hasil = DataAnak.fromApi(Map<String, dynamic>.from(r.data['data'] as Map));
+      if (!mounted) return;
+      Navigator.pop(context, hasil);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _menyimpan = false;
+        _error = _pesanError(e);
+      });
+    }
   }
 
   String? _rentang(String? v, double min, double maks, String nama) {
@@ -881,6 +969,12 @@ class _FormAnakState extends State<_FormAnak> {
                   ),
                 ],
               ),
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text(_error!,
+                      style: const TextStyle(color: AppColors.merah, fontSize: 12.5)),
+                ),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -889,7 +983,10 @@ class _FormAnakState extends State<_FormAnak> {
                         filled: false, onPressed: () => Navigator.pop(context)),
                   ),
                   const SizedBox(width: 10),
-                  Expanded(child: AppButton('Simpan', icon: Icons.check, onPressed: _simpan)),
+                  Expanded(
+                    child: AppButton(_menyimpan ? 'Menyimpan...' : 'Simpan',
+                        icon: Icons.check, onPressed: _simpan),
+                  ),
                 ],
               ),
             ],
@@ -901,29 +998,40 @@ class _FormAnakState extends State<_FormAnak> {
 }
 
 // ---------------------------------------------------------------------------
-// KARTU PENGINGAT DI BERANDA
+// KARTU DI BERANDA
 // ---------------------------------------------------------------------------
 class KartuLengkapiKeluarga extends StatefulWidget {
-  const KartuLengkapiKeluarga({super.key});
+  final VoidCallback? onKembali;
+  const KartuLengkapiKeluarga({super.key, this.onKembali});
 
   @override
   State<KartuLengkapiKeluarga> createState() => _KartuLengkapiKeluargaState();
 }
 
 class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
-  DataKeluarga? _data;
-  late final String _uid;
+  int? _selesai;
+  bool _lengkap = false;
+  bool _gagal = false;
 
   @override
   void initState() {
     super.initState();
-    _uid = _idPengguna(context);
     _muat();
   }
 
   Future<void> _muat() async {
-    final d = await KeluargaStorage.baca(_uid);
-    if (mounted) setState(() => _data = d);
+    try {
+      final data = await KeluargaApi.ambil();
+      final st = Map<String, dynamic>.from((data['status'] ?? {}) as Map);
+      if (!mounted) return;
+      setState(() {
+        _selesai = (st['langkah_selesai'] as num?)?.toInt() ?? 0;
+        _lengkap = st['lengkap'] == true;
+        _gagal = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _gagal = true);
+    }
   }
 
   Future<void> _buka() async {
@@ -932,14 +1040,32 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
       MaterialPageRoute(builder: (_) => const LengkapiKeluargaPage()),
     );
     _muat();
+    widget.onKembali?.call();
   }
 
   @override
   Widget build(BuildContext context) {
-    final d = _data;
-    if (d == null) return const SizedBox.shrink();
+    final selesai = _selesai;
 
-    if (d.lengkap) {
+    if (selesai == null) {
+      if (!_gagal) return const SizedBox.shrink();
+      return SectionCard(
+        color: AppColors.kuningMuda,
+        child: Row(
+          children: [
+            const Icon(Icons.cloud_off, color: AppColors.kuning),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text('Gagal memuat data keluarga',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            ),
+            TextButton(onPressed: _muat, child: const Text('Coba lagi')),
+          ],
+        ),
+      );
+    }
+
+    if (_lengkap) {
       return SectionCard(
         color: AppColors.hijauMuda,
         child: Row(
@@ -960,7 +1086,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
       color: AppColors.kuningMuda,
       title: 'Lengkapi Data Keluarga',
       icon: Icons.assignment_ind_outlined,
-      trailing: Pill('${d.langkahSelesai}/3', bg: Colors.white, fg: AppColors.kuning),
+      trailing: Pill('$selesai/3', bg: Colors.white, fg: AppColors.kuning),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -972,7 +1098,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: d.langkahSelesai / 3,
+              value: selesai / 3,
               minHeight: 8,
               backgroundColor: Colors.white,
               color: AppColors.hijau,

@@ -14,24 +14,23 @@ func NewKeluargaRepository(db *gorm.DB) *KeluargaRepository {
 	return &KeluargaRepository{db}
 }
 
-func (r *KeluargaRepository) ListPosyandu() ([]models.Posyandu, error) {
-	var p []models.Posyandu
-	return p, r.db.Order("nama").Find(&p).Error
-}
+// Fungsi ListPosyandu dihapus karena sudah tidak butuh tabel posyandu
 
 func (r *KeluargaRepository) GetByUser(uid uint) (*models.Keluarga, error) {
 	var k models.Keluarga
-	err := r.db.Preload("Ayah").Preload("Anak").Preload("Posyandu").
+	// Preload Posyandu dihapus
+	err := r.db.Preload("Ayah").Preload("Anak").
 		Where("user_id = ?", uid).First(&k).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return &models.Keluarga{UserID: uid}, nil // belum pernah isi
+		return &models.Keluarga{UserID: uid}, nil
 	}
 	return &k, err
 }
 
-// Simpan data ibu + ayah (upsert)
 func (r *KeluargaRepository) SimpanProfil(k *models.Keluarga, ayah *models.Ayah) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
+		// Logika Insert otomatis PosyanduID dihapus karena sudah tidak ada tabelnya
+
 		if err := tx.Save(k).Error; err != nil {
 			return err
 		}

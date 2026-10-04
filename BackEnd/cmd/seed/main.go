@@ -12,21 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func seedPosyandu(db *gorm.DB) {
-	daftar := []string{
-		"Posyandu Melati 1",
-		"Posyandu Melati 2",
-		"Posyandu Mawar",
-	}
-	for _, n := range daftar {
-		p := models.Posyandu{Nama: n}
-		if err := db.Where(models.Posyandu{Nama: n}).FirstOrCreate(&p).Error; err != nil {
-			log.Fatal("gagal seed posyandu: ", err)
-		}
-	}
-	log.Println("seed posyandu selesai")
-}
-
 func seedAdmin(db *gorm.DB) {
 	nama := os.Getenv("ADMIN_NAME")
 	phone := os.Getenv("ADMIN_PHONE")
@@ -70,6 +55,6 @@ func main() {
 		log.Fatal("gagal konek database: ", err)
 	}
 
-	seedPosyandu(db)
+	// Panggilan seedPosyandu telah dihapus
 	seedAdmin(db)
 }

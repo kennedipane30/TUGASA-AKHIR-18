@@ -56,14 +56,7 @@ func paramID(c *gin.Context) (uint, bool) {
 	return uint(n), true
 }
 
-func (h *KeluargaHandler) ListPosyandu(c *gin.Context) {
-	data, err := h.svc.ListPosyandu()
-	if err != nil {
-		respondErr(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"data": data})
-}
+// FUNGSI ListPosyandu SUDAH DIHAPUS DARI SINI
 
 func (h *KeluargaHandler) Get(c *gin.Context) {
 	uid, ok := userID(c)
@@ -155,4 +148,4 @@ func (h *KeluargaHandler) HapusAnak(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "data anak dihapus"})
-}
+}	

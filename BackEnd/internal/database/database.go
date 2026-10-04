@@ -24,7 +24,7 @@ func Connect() (*gorm.DB, error) {
 	// urutan: tabel induk dulu, baru tabel yang punya foreign key
 	if err := db.AutoMigrate(
 		&models.User{},
-		&models.Posyandu{},
+		// models.Posyandu telah dihapus karena hanya menggunakan 1 posyandu
 		&models.Keluarga{},
 		&models.Ayah{},
 		&models.Anak{},

@@ -7,13 +7,14 @@ type Keluarga struct {
 	UserID uint `gorm:"not null;uniqueIndex" json:"user_id"`
 
 	// Ibu / wali
+	TanpaIbu     bool       `gorm:"default:false" json:"tanpa_ibu"`
 	TglLahirIbu  *time.Time `gorm:"type:date" json:"tgl_lahir_ibu"`
 	PekerjaanIbu string     `gorm:"size:100" json:"pekerjaan_ibu"`
 	Alamat       string     `gorm:"type:text" json:"alamat"`
 	RT           string     `gorm:"size:3" json:"rt"`
 	RW           string     `gorm:"size:3" json:"rw"`
-	PosyanduID   *uint      `json:"posyandu_id"`
-	Posyandu     *Posyandu  `gorm:"foreignKey:PosyanduID" json:"posyandu,omitempty"`
+	
+	// BARIS POSYANDU SUDAH DIHAPUS DARI SINI
 
 	// Ayah
 	TanpaAyah bool  `gorm:"default:false" json:"tanpa_ayah"`
@@ -27,19 +28,6 @@ type Keluarga struct {
 
 func (Keluarga) TableName() string { return "keluarga" }
 
-type Ayah struct {
-	ID         uint       `gorm:"primaryKey" json:"id"`
-	KeluargaID uint       `gorm:"not null;uniqueIndex" json:"keluarga_id"`
-	Nama       string     `gorm:"size:100;not null" json:"nama"`
-	NIK        string     `gorm:"size:16" json:"nik"`
-	TglLahir   *time.Time `gorm:"type:date" json:"tgl_lahir"`
-	NoHP       string     `gorm:"size:20" json:"no_hp"`
-	Pekerjaan  string     `gorm:"size:100" json:"pekerjaan"`
-}
-
-func (Ayah) TableName() string { return "ayah" }
-
-// Status kelengkapan (dihitung, tidak disimpan)
 type StatusKeluarga struct {
 	IbuLengkap     bool `json:"ibu_lengkap"`
 	AyahLengkap    bool `json:"ayah_lengkap"`
@@ -50,8 +38,8 @@ type StatusKeluarga struct {
 
 func (k *Keluarga) Status() StatusKeluarga {
 	s := StatusKeluarga{
-		IbuLengkap: k.TglLahirIbu != nil && k.Alamat != "" &&
-			k.RW != "" && k.PosyanduID != nil,
+		// Lengkap asalkan tanpa ibu dicentang ATAU data alamat/tgl lahir diisi
+		IbuLengkap: k.TanpaIbu || (k.TglLahirIbu != nil && k.Alamat != "" && k.RW != ""),
 		AyahLengkap: k.TanpaAyah || (k.Ayah != nil && k.Ayah.Nama != ""),
 		AnakLengkap: len(k.Anak) > 0,
 	}
@@ -63,3 +51,15 @@ func (k *Keluarga) Status() StatusKeluarga {
 	s.Lengkap = s.LangkahSelesai == 3
 	return s
 }
+
+type Ayah struct {
+	ID         uint       `gorm:"primaryKey" json:"id"`
+	KeluargaID uint       `gorm:"not null;uniqueIndex" json:"keluarga_id"`
+	Nama       string     `gorm:"size:100;not null" json:"nama"`
+	NIK        string     `gorm:"size:16" json:"nik"`
+	TglLahir   *time.Time `gorm:"type:date" json:"tgl_lahir"`
+	NoHP       string     `gorm:"size:20" json:"no_hp"`
+	Pekerjaan  string     `gorm:"size:100" json:"pekerjaan"`
+}
+
+func (Ayah) TableName() string { return "ayah" }
