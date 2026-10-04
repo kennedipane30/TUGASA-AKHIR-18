@@ -16,6 +16,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	repo := repository.NewUserRepository(db)
 	authH := handler.NewAuthHandler(service.NewAuthService(repo))
 
+	keluargaRepo := repository.NewKeluargaRepository(db)
+	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo))
+
 	api := r.Group("/api/v1")
 	api.POST("/auth/register", authH.Register)
 	api.POST("/auth/login", authH.Login)
@@ -23,8 +26,23 @@ func Setup(db *gorm.DB) *gin.Engine {
 	protected := api.Group("/", middleware.AuthRequired())
 	protected.GET("/auth/me", authH.Me)
 
+	// Daftar posyandu (untuk dropdown)
+	protected.GET("/posyandu", keluargaH.ListPosyandu)
+
+	// Data keluarga (orang tua)
+	keluarga := protected.Group("/keluarga")
+	keluarga.GET("", keluargaH.Get)
+	keluarga.PUT("", keluargaH.SimpanProfil)
+	keluarga.POST("/anak", keluargaH.TambahAnak)
+	keluarga.PUT("/anak/:id", keluargaH.UbahAnak)
+	keluarga.DELETE("/anak/:id", keluargaH.HapusAnak)
+
 	admin := protected.Group("/admin", middleware.RoleRequired("admin"))
 	admin.POST("/users", authH.CreateStaff)
+	admin.GET("/users", authH.ListStaff)
+	admin.PUT("/users/:id", authH.UpdateStaff)
+	admin.PATCH("/users/:id/active", authH.SetStaffActive)
+	admin.DELETE("/users/:id", authH.DeleteStaff)
 
 	return r
 }

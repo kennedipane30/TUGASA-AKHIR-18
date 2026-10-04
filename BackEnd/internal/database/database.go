@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"posyandu-api/internal/models"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -20,7 +21,14 @@ func Connect() (*gorm.DB, error) {
 		return nil, err
 	}
 	// semua model didaftarkan di sini
-	if err := db.AutoMigrate(&models.User{}); err != nil {
+	// urutan: tabel induk dulu, baru tabel yang punya foreign key
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Posyandu{},
+		&models.Keluarga{},
+		&models.Ayah{},
+		&models.Anak{},
+	); err != nil {
 		return nil, err
 	}
 	return db, nil

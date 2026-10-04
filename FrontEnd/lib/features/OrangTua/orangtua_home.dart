@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
+import 'lengkapi_keluarga_page.dart'; // <-- PERUBAHAN 1: tambah import
 
 /// Status kehadiran anak pada posyandu terdekat (OT-06).
 enum StatusHadir { belumDaftar, terdaftar, sudahCheckin, tidakHadir }
@@ -162,6 +163,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       lokasi: 'Posyandu Melati RW 05',
       notif: 2,
       children: [
+        const KartuLengkapiKeluarga(), // <-- PERUBAHAN 2: kartu lengkapi data keluarga
         _pilihAnak(),
         _kartuDigital(),
         _jadwalPosyandu(),

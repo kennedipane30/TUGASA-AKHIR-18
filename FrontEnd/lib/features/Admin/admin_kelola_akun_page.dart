@@ -2,29 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
-
-class _Akun {
-  final int id;
-  final String nama;
-  final String username;
-  final String peran;
-  final bool aktif;
-  const _Akun({
-    required this.id,
-    required this.nama,
-    required this.username,
-    required this.peran,
-    this.aktif = true,
-  });
-
-  _Akun salin({String? nama, String? username, String? peran, bool? aktif}) => _Akun(
-        id: id,
-        nama: nama ?? this.nama,
-        username: username ?? this.username,
-        peran: peran ?? this.peran,
-        aktif: aktif ?? this.aktif,
-      );
-}
+import 'admin_service.dart';
 
 class AdminKelolaAkunPage extends StatefulWidget {
   /// true jika halaman dibuka lewat Navigator.push (menu Aksi Cepat).
@@ -37,67 +15,95 @@ class AdminKelolaAkunPage extends StatefulWidget {
 
 class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
   static const _filter = ['Kader', 'Bidan', 'Semua'];
-  String _aktif = 'Kader';
-  int _idBerikut = 6;
+  final _service = AdminService();
 
-  // DATA CONTOH. Ganti dengan data dari API (GET/POST/PUT/DELETE akun staf).
-  final List<_Akun> _data = [
-    const _Akun(id: 1, nama: 'Siti Aminah', username: 'siti.aminah', peran: 'Kader'),
-    const _Akun(id: 2, nama: 'Dewi Lestari', username: 'dewi.lestari', peran: 'Kader'),
-    const _Akun(id: 3, nama: 'Rina Marlina', username: 'rina.marlina', peran: 'Kader'),
-    const _Akun(
-        id: 4, nama: 'Yuni Astuti', username: 'yuni.astuti', peran: 'Kader', aktif: false),
-    const _Akun(id: 5, nama: 'Bidan Ratna', username: 'bidan.ratna', peran: 'Bidan'),
-  ];
+  String _aktif = 'Kader';
+  bool _memuat = true;
+  String? _galat;
+  List<StaffAkun> _data = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _muat();
+  }
+
+  String _bersih(Object e) => e.toString().replaceFirst('Exception: ', '');
 
   void _pesan(String teks) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(teks)));
   }
 
+  Future<void> _muat({bool tampilLoading = true}) async {
+    if (tampilLoading) setState(() => _memuat = true);
+    try {
+      final hasil = await _service.daftarStaff();
+      if (!mounted) return;
+      setState(() {
+        _data = hasil;
+        _galat = null;
+        _memuat = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _galat = _bersih(e);
+        _memuat = false;
+      });
+    }
+  }
+
   Future<void> _tambah() async {
     final hasil = await Navigator.push<_HasilForm>(
       context,
-      MaterialPageRoute(builder: (_) => _AkunFormPage(peranAwal: _aktif == 'Bidan' ? 'Bidan' : 'Kader')),
+      MaterialPageRoute(
+          builder: (_) => _AkunFormPage(peranAwal: _aktif == 'Bidan' ? 'bidan' : 'kader')),
     );
     if (hasil == null) return;
-    setState(() {
-      _data.add(_Akun(
-        id: _idBerikut++,
+    try {
+      await _service.tambah(
         nama: hasil.nama,
         username: hasil.username,
-        peran: hasil.peran,
-      ));
-    });
-    _pesan('Akun ${hasil.nama} berhasil dibuat');
+        password: hasil.sandi ?? '',
+        role: hasil.role,
+      );
+      _pesan('Akun ${hasil.nama} berhasil dibuat');
+      await _muat(tampilLoading: false);
+    } catch (e) {
+      _pesan(_bersih(e));
+    }
   }
 
-  Future<void> _ubah(_Akun a) async {
+  Future<void> _ubah(StaffAkun a) async {
     final hasil = await Navigator.push<_HasilForm>(
       context,
       MaterialPageRoute(builder: (_) => _AkunFormPage(akun: a)),
     );
     if (hasil == null) return;
-    setState(() {
-      final i = _data.indexWhere((e) => e.id == a.id);
-      if (i != -1) {
-        _data[i] = a.salin(
-          nama: hasil.nama,
-          username: hasil.username,
-          peran: hasil.peran,
-        );
-      }
-    });
-    _pesan('Akun ${hasil.nama} diperbarui');
+    try {
+      await _service.ubah(
+        a.id,
+        nama: hasil.nama,
+        username: hasil.username,
+        role: hasil.role,
+        password: hasil.sandi,
+      );
+      _pesan('Akun ${hasil.nama} diperbarui');
+      await _muat(tampilLoading: false);
+    } catch (e) {
+      _pesan(_bersih(e));
+    }
   }
 
-  Future<void> _hapus(_Akun a) async {
+  Future<void> _hapus(StaffAkun a) async {
     final ya = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Hapus akun?'),
-        content: Text('Akun ${a.nama} (${a.peran}) akan dihapus dan tidak dapat login lagi.'),
+        content: Text('Akun ${a.nama} (${a.labelPeran}) akan dihapus dan tidak dapat login lagi.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
           ElevatedButton(
@@ -110,22 +116,32 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
       ),
     );
     if (ya != true) return;
-    setState(() => _data.removeWhere((e) => e.id == a.id));
-    _pesan('Akun ${a.nama} dihapus');
+    try {
+      await _service.hapus(a.id);
+      _pesan('Akun ${a.nama} dihapus');
+      await _muat(tampilLoading: false);
+    } catch (e) {
+      _pesan(_bersih(e));
+    }
   }
 
-  void _gantiStatus(_Akun a, bool nilai) {
-    setState(() {
-      final i = _data.indexWhere((e) => e.id == a.id);
-      if (i != -1) _data[i] = a.salin(aktif: nilai);
-    });
-    _pesan('Akun ${a.nama} ${nilai ? 'diaktifkan' : 'dinonaktifkan'}');
+  Future<void> _gantiStatus(StaffAkun a, bool nilai) async {
+    try {
+      await _service.setAktif(a.id, nilai);
+      _pesan('Akun ${a.nama} ${nilai ? 'diaktifkan' : 'dinonaktifkan'}');
+      await _muat(tampilLoading: false);
+    } catch (e) {
+      _pesan(_bersih(e));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final daftar =
-        _aktif == 'Semua' ? _data : _data.where((a) => a.peran == _aktif).toList();
+    final daftar = switch (_aktif) {
+      'Kader' => _data.where((a) => a.role == 'kader').toList(),
+      'Bidan' => _data.where((a) => a.role == 'bidan').toList(),
+      _ => _data,
+    };
     final jumlahAktif = daftar.where((a) => a.aktif).length;
 
     return Scaffold(
@@ -136,76 +152,111 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          SectionCard(
-            color: AppColors.hijauMuda,
-            child: Row(
-              children: [
-                const Icon(Icons.manage_accounts, color: AppColors.hijau),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _aktif == 'Semua' ? 'Seluruh Akun Staf' : 'Akun $_aktif Bertugas',
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                      ),
-                      Text('${daftar.length} akun · $jumlahAktif aktif',
-                          style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          AppButton('Tambah Akun', icon: Icons.person_add_alt_1, onPressed: _tambah),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final f in _filter)
-                ChoiceChip(
-                  label: Text(f),
-                  selected: _aktif == f,
-                  selectedColor: AppColors.hijau,
-                  backgroundColor: Colors.white,
-                  showCheckmark: false,
-                  labelStyle: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: _aktif == f ? Colors.white : Colors.black87,
-                  ),
-                  onSelected: (_) => setState(() => _aktif = f),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SectionCard(
-            title: 'Daftar Akun',
-            icon: Icons.groups_outlined,
-            trailing: Pill('${daftar.length} akun', bg: AppColors.biruMuda, fg: AppColors.biru),
-            child: daftar.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Center(
-                      child: Text('Belum ada akun',
-                          style: TextStyle(color: AppColors.teksRedup)),
-                    ),
-                  )
-                : Column(children: [for (final a in daftar) _kartuAkun(a)]),
+        actions: [
+          IconButton(
+            tooltip: 'Muat ulang',
+            icon: const Icon(Icons.refresh),
+            onPressed: _memuat ? null : () => _muat(),
           ),
         ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () => _muat(tampilLoading: false),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            SectionCard(
+              color: AppColors.hijauMuda,
+              child: Row(
+                children: [
+                  const Icon(Icons.manage_accounts, color: AppColors.hijau),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _aktif == 'Semua' ? 'Seluruh Akun Staf' : 'Akun $_aktif Bertugas',
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                        ),
+                        Text('${daftar.length} akun · $jumlahAktif aktif',
+                            style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            AppButton('Tambah Akun', icon: Icons.person_add_alt_1, onPressed: _tambah),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final f in _filter)
+                  ChoiceChip(
+                    label: Text(f),
+                    selected: _aktif == f,
+                    selectedColor: AppColors.hijau,
+                    backgroundColor: Colors.white,
+                    showCheckmark: false,
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: _aktif == f ? Colors.white : Colors.black87,
+                    ),
+                    onSelected: (_) => setState(() => _aktif = f),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SectionCard(
+              title: 'Daftar Akun',
+              icon: Icons.groups_outlined,
+              trailing: Pill('${daftar.length} akun', bg: AppColors.biruMuda, fg: AppColors.biru),
+              child: _isiDaftar(daftar),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _kartuAkun(_Akun a) {
-    final warnaPeran = a.peran == 'Bidan' ? AppColors.biru : AppColors.hijau;
-    final bgPeran = a.peran == 'Bidan' ? AppColors.biruMuda : AppColors.hijauMuda;
+  Widget _isiDaftar(List<StaffAkun> daftar) {
+    if (_memuat) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_galat != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          children: [
+            Text(_galat!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.merah)),
+            const SizedBox(height: 10),
+            AppButton('Coba Lagi', icon: Icons.refresh, filled: false, onPressed: () => _muat()),
+          ],
+        ),
+      );
+    }
+    if (daftar.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: Text('Belum ada akun', style: TextStyle(color: AppColors.teksRedup)),
+        ),
+      );
+    }
+    return Column(children: [for (final a in daftar) _kartuAkun(a)]);
+  }
+
+  Widget _kartuAkun(StaffAkun a) {
+    final warnaPeran = a.role == 'bidan' ? AppColors.biru : AppColors.hijau;
+    final bgPeran = a.role == 'bidan' ? AppColors.biruMuda : AppColors.hijauMuda;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -230,16 +281,21 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(a.nama,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
                     Text('@${a.username}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
-              Pill(a.peran, bg: bgPeran, fg: warnaPeran),
+              const SizedBox(width: 6),
+              Pill(a.labelPeran, bg: bgPeran, fg: warnaPeran),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Row(
             children: [
               Pill(a.aktif ? 'Aktif' : 'Nonaktif',
@@ -252,15 +308,17 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 onChanged: (v) => _gantiStatus(a, v),
               ),
-              const Spacer(),
-              SizedBox(
-                width: 96,
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
                 child: AppButton('Edit',
                     icon: Icons.edit_outlined, filled: false, onPressed: () => _ubah(a)),
               ),
               const SizedBox(width: 8),
-              SizedBox(
-                width: 104,
+              Expanded(
                 child: AppButton('Hapus',
                     icon: Icons.delete_outline,
                     filled: false,
@@ -281,15 +339,15 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
 class _HasilForm {
   final String nama;
   final String username;
-  final String peran;
+  final String role; // 'kader' atau 'bidan'
   final String? sandi;
-  const _HasilForm(this.nama, this.username, this.peran, this.sandi);
+  const _HasilForm(this.nama, this.username, this.role, this.sandi);
 }
 
 class _AkunFormPage extends StatefulWidget {
-  final _Akun? akun;
+  final StaffAkun? akun;
   final String peranAwal;
-  const _AkunFormPage({this.akun, this.peranAwal = 'Kader'});
+  const _AkunFormPage({this.akun, this.peranAwal = 'kader'});
 
   @override
   State<_AkunFormPage> createState() => _AkunFormPageState();
@@ -310,7 +368,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
     super.initState();
     _nama = TextEditingController(text: widget.akun?.nama ?? '');
     _username = TextEditingController(text: widget.akun?.username ?? '');
-    _peran = widget.akun?.peran ?? widget.peranAwal;
+    _peran = widget.akun?.role ?? widget.peranAwal;
   }
 
   @override
@@ -366,8 +424,8 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                     value: _peran,
                     decoration: _dekor('Role'),
                     items: const [
-                      DropdownMenuItem(value: 'Kader', child: Text('Kader')),
-                      DropdownMenuItem(value: 'Bidan', child: Text('Bidan')),
+                      DropdownMenuItem(value: 'kader', child: Text('Kader')),
+                      DropdownMenuItem(value: 'bidan', child: Text('Bidan')),
                     ],
                     onChanged: (v) => setState(() => _peran = v ?? _peran),
                   ),
@@ -391,7 +449,9 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                     controller: _sandi,
                     obscureText: !_lihat,
                     decoration: _dekor(
-                      _edit ? 'Kata sandi baru (kosongkan jika tidak diubah)' : 'Kata sandi awal (min. 6)',
+                      _edit
+                          ? 'Kata sandi baru (kosongkan jika tidak diubah)'
+                          : 'Kata sandi awal (min. 6)',
                       suffix: IconButton(
                         icon: Icon(_lihat ? Icons.visibility_off : Icons.visibility),
                         onPressed: () => setState(() => _lihat = !_lihat),

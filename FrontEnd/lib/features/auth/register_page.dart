@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'auth_service.dart';
 
 const _hijau = Color(0xFF0B6B4D);
 const _latar = Color(0xFFF3F2FB);
 const _isiField = Color(0xFFEDEBF7);
-
-// Daftar sementara. Ganti dengan data dari API jika endpoint posyandu sudah dibuat.
-const _daftarPosyandu = <String>[
-  'Posyandu Melati 1',
-  'Posyandu Melati 2',
-  'Posyandu Mawar',
-];
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -22,16 +16,12 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _key = GlobalKey<FormState>();
-  final _nik = TextEditingController();
   final _nama = TextEditingController();
+  final _nik = TextEditingController();
   final _hp = TextEditingController();
-  final _namaBalita = TextEditingController();
-  final _tglLahir = TextEditingController();
   final _pin = TextEditingController();
   final _pin2 = TextEditingController();
 
-  String? _wilayah;
-  String? _jk; // 'L' atau 'P'
   bool _hidePin = true;
   bool _hidePin2 = true;
   bool _setuju = false;
@@ -39,11 +29,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void dispose() {
-    _nik.dispose();
     _nama.dispose();
+    _nik.dispose();
     _hp.dispose();
-    _namaBalita.dispose();
-    _tglLahir.dispose();
     _pin.dispose();
     _pin2.dispose();
     super.dispose();
@@ -54,20 +42,6 @@ class _RegisterPageState extends State<RegisterPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  Future<void> _pilihTanggal() async {
-    final now = DateTime.now();
-    final d = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: DateTime(now.year - 6),
-      lastDate: now,
-    );
-    if (d != null) {
-      _tglLahir.text =
-          '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-    }
-  }
-
   Future<void> _submit() async {
     if (!_key.currentState!.validate()) return;
     if (!_setuju) {
@@ -76,7 +50,6 @@ class _RegisterPageState extends State<RegisterPage> {
     }
     setState(() => _loading = true);
     try {
-      // Backend saat ini menyimpan: nama, NIK, No. HP, dan kata sandi (PIN).
       await AuthService().register(
         _nama.text.trim(),
         _nik.text.trim(),
@@ -84,7 +57,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _pin.text,
       );
       if (!mounted) return;
-      _snack('Pendaftaran berhasil, silakan masuk');
+      _snack('Akun berhasil dibuat. Silakan masuk, lalu lengkapi data keluarga.');
       Navigator.pop(context);
     } catch (e) {
       _snack(e.toString().replaceFirst('Exception: ', ''));
@@ -93,8 +66,7 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  InputDecoration _dekor(String hint, IconData icon,
-      {Widget? suffix, String? counter}) {
+  InputDecoration _dekor(String hint, IconData icon, {Widget? suffix, String? counter}) {
     return InputDecoration(
       hintText: hint,
       counterText: counter,
@@ -117,8 +89,7 @@ class _RegisterPageState extends State<RegisterPage> {
             text: teks,
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             children: [
-              if (wajib)
-                const TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
+              if (wajib) const TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
             ],
           ),
         ),
@@ -128,14 +99,11 @@ class _RegisterPageState extends State<RegisterPage> {
         width: double.infinity,
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: warna,
-          borderRadius: BorderRadius.circular(16),
-        ),
+        decoration: BoxDecoration(color: warna, borderRadius: BorderRadius.circular(16)),
         child: child,
       );
 
-  Widget _judulBagian(int no, String judul, String badge, Color warnaBadge) {
+  Widget _judulBagian(int no, String judul, String badge) {
     return Row(
       children: [
         CircleAvatar(
@@ -153,7 +121,7 @@ class _RegisterPageState extends State<RegisterPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: warnaBadge,
+            color: const Color(0xFFE3F4EC),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(badge,
@@ -161,24 +129,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   fontSize: 11, fontWeight: FontWeight.w700, color: _hijau)),
         ),
       ],
-    );
-  }
-
-  Widget _pilihJk(String kode, String teks, IconData icon) {
-    final aktif = _jk == kode;
-    return Expanded(
-      child: OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          backgroundColor: aktif ? const Color(0xFFE3F4EC) : _isiField,
-          side: BorderSide(color: aktif ? _hijau : Colors.transparent),
-          foregroundColor: aktif ? _hijau : Colors.black87,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        onPressed: () => setState(() => _jk = kode),
-        icon: Icon(icon, size: 18),
-        label: Text(teks),
-      ),
     );
   }
 
@@ -193,7 +143,6 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
                 Container(
                   color: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -241,12 +190,11 @@ class _RegisterPageState extends State<RegisterPage> {
                 const Padding(
                   padding: EdgeInsets.fromLTRB(16, 6, 16, 16),
                   child: Text(
-                    'Pendaftaran mandiri khusus keluarga balita untuk memantau KMS & imunisasi rutin secara berkala.',
+                    'Buat akun terlebih dahulu. Data keluarga seperti data diri, suami/ayah, dan anak dapat dilengkapi setelah masuk.',
                     style: TextStyle(color: Colors.black54, fontSize: 13),
                   ),
                 ),
 
-                // Info
                 _kartu(
                   warna: const Color(0xFFE3F4EC),
                   child: const Row(
@@ -262,7 +210,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
                             SizedBox(height: 4),
                             Text(
-                              'Pendaftaran mandiri ini hanya diperuntukkan bagi Orang Tua/Wali. Untuk akun Kader Posyandu & Tenaga Bidan dibuatkan resmi oleh Puskesmas/Admin Wilayah.',
+                              'Akun Kader Posyandu & Tenaga Bidan dibuatkan resmi oleh Puskesmas/Admin Wilayah.',
                               style: TextStyle(fontSize: 12, color: Colors.black87),
                             ),
                           ],
@@ -272,13 +220,20 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
 
-                // 1. Identitas
+                // 1. Identitas akun
                 _kartu(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _judulBagian(1, 'Identitas Orang Tua / Wali', 'Wajib Diisi',
-                          const Color(0xFFE3F4EC)),
+                      _judulBagian(1, 'Identitas Akun', 'Wajib Diisi'),
+                      _label('Nama Lengkap Ibu / Wali', wajib: true),
+                      TextFormField(
+                        controller: _nama,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _dekor('Sesuai KTP / Kartu KIA', Icons.person_outline),
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
+                      ),
                       _label('NIK Ibu / Wali (16 Digit)', wajib: true),
                       TextFormField(
                         controller: _nik,
@@ -291,22 +246,12 @@ class _RegisterPageState extends State<RegisterPage> {
                         validator: (v) =>
                             (v == null || v.trim().length != 16) ? 'NIK harus 16 digit' : null,
                       ),
-                      _label('Nama Lengkap Ibu / Wali', wajib: true),
-                      TextFormField(
-                        controller: _nama,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: _dekor('Sesuai KTP / Kartu KIA (Contoh: Siti Rahmawati)',
-                            Icons.person_outline),
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
-                      ),
                       _label('Nomor WhatsApp Aktif', wajib: true),
                       TextFormField(
                         controller: _hp,
                         keyboardType: TextInputType.phone,
                         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration:
-                            _dekor('Contoh: 081234567890', Icons.phone_outlined),
+                        decoration: _dekor('Contoh: 081234567890', Icons.phone_outlined),
                         validator: (v) => (v == null || v.trim().length < 10)
                             ? 'No. WhatsApp tidak valid'
                             : null,
@@ -314,71 +259,20 @@ class _RegisterPageState extends State<RegisterPage> {
                       const Padding(
                         padding: EdgeInsets.only(top: 6),
                         child: Text(
-                          'Digunakan untuk pengingat otomatis jadwal imunisasi & vitamin A',
+                          'Digunakan untuk masuk dan pengingat otomatis jadwal imunisasi & vitamin A',
                           style: TextStyle(fontSize: 11, color: Colors.black54),
                         ),
                       ),
-                      _label('Wilayah Domisili (Pilih Posyandu Terdekat)', wajib: true),
-                      DropdownButtonFormField<String>(
-                        value: _wilayah,
-                        isExpanded: true,
-                        decoration: _dekor(
-                            '-- Pilih unit Posyandu di lingkungan', Icons.location_on_outlined),
-                        items: _daftarPosyandu
-                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                            .toList(),
-                        onChanged: (v) => setState(() => _wilayah = v),
-                      ),
                     ],
                   ),
                 ),
 
-                // 2. Data balita
+                // 2. Keamanan akun
                 _kartu(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _judulBagian(2, 'Data Balita Pertama', 'Dapat Dilengkapi Nanti',
-                          const Color(0xFFFFF1CC)),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 10),
-                        child: Text(
-                          'Bisa Anda lewati terlebih dahulu bila Buku KIA anak sedang tidak di dekat Anda.',
-                          style: TextStyle(fontSize: 12.5, color: Colors.black54),
-                        ),
-                      ),
-                      _label('Nama Lengkap Balita'),
-                      TextFormField(
-                        controller: _namaBalita,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: _dekor('Contoh: Muhammad Rayhan', Icons.child_care),
-                      ),
-                      _label('Tanggal Lahir Anak'),
-                      TextFormField(
-                        controller: _tglLahir,
-                        readOnly: true,
-                        onTap: _pilihTanggal,
-                        decoration: _dekor('dd/mm/yyyy', Icons.calendar_today_outlined),
-                      ),
-                      _label('Jenis Kelamin'),
-                      Row(
-                        children: [
-                          _pilihJk('L', 'Laki-laki', Icons.male),
-                          const SizedBox(width: 10),
-                          _pilihJk('P', 'Perempuan', Icons.female),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 3. Keamanan akun
-                _kartu(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _judulBagian(3, 'Keamanan Akun Keluarga', 'PIN 6 Digit',
-                          const Color(0xFFE3F4EC)),
+                      _judulBagian(2, 'Keamanan Akun', 'PIN 6 Digit'),
                       _label('Buat PIN Masuk (6 Digit Angka)', wajib: true),
                       TextFormField(
                         controller: _pin,
@@ -446,7 +340,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: Padding(
                           padding: EdgeInsets.only(top: 12),
                           child: Text(
-                            'Saya menyatakan dengan sadar bahwa data yang diisi adalah benar dan sah sesuai Kartu Keluarga (KK) serta Buku KIA fisik balita kami.',
+                            'Saya menyatakan dengan sadar bahwa data yang diisi adalah benar dan sah sesuai KTP / Kartu Keluarga (KK).',
                             style: TextStyle(fontSize: 12),
                           ),
                         ),
@@ -455,7 +349,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
 
-                // Tombol daftar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: SizedBox(
@@ -465,8 +358,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _hijau,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: _loading ? null : _submit,
                       icon: _loading
@@ -476,7 +368,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               child: CircularProgressIndicator(
                                   strokeWidth: 2, color: Colors.white))
                           : const Icon(Icons.person_add_alt_1),
-                      label: Text(_loading ? 'Memproses...' : 'Daftar Sekarang',
+                      label: Text(_loading ? 'Memproses...' : 'Buat Akun',
                           style: const TextStyle(fontWeight: FontWeight.w700)),
                     ),
                   ),
