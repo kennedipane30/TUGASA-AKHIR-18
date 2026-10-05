@@ -11,8 +11,8 @@ import (
 type JadwalPosyandu struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	Tanggal time.Time `gorm:"column:tanggal;type:date;not null" json:"tanggal"`
-	JamMulai string `gorm:"column:jam_mulai;type:time;not null" json:"jam_mulai"`
-	JamSelesai *string `gorm:"column:jam_selesai;type:time" json:"jam_selesai"`
+	JamMulai   string  `gorm:"column:jam_mulai;type:time;not null" json:"jam_mulai"`
+JamSelesai *string `gorm:"column:jam_selesai;type:time" json:"jam_selesai"`
 	Lokasi string `gorm:"column:lokasi;size:150" json:"lokasi"`
 	BukaDaftarHari int16 `gorm:"column:buka_daftar_hari;default:7" json:"buka_daftar_hari"`
 	BukaCheckinMenit int16 `gorm:"column:buka_checkin_menit;default:60" json:"buka_checkin_menit"`

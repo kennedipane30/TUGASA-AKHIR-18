@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'admin_jadwal_page.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../auth/auth_provider.dart';
@@ -100,8 +100,12 @@ class _AdminHomeState extends State<AdminHome> {
                       MaterialPageRoute(
                           builder: (_) =>
                               const AdminKelolaAkunPage(denganTombolKembali: true)))),
-              _menu(Icons.calendar_month, 'Jadwal & Agenda', 'Kalender posyandu',
-                  () => soon(context, 'Kelola jadwal')),
+              AppButton('Kelola Jadwal',
+                  icon: Icons.edit_calendar,
+                  filled: false,
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AdminJadwalPage()))),
               _menu(Icons.campaign_outlined, 'Pengumuman', 'Siaran ke pengguna',
                   () => soon(context, 'Pengumuman')),
               _menu(Icons.family_restroom, 'Data Keluarga', 'Orang tua & balita',
