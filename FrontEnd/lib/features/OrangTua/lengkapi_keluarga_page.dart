@@ -12,7 +12,7 @@ import '../auth/auth_provider.dart';
 // MODEL
 // ---------------------------------------------------------------------------
 class DataAnak {
-  int? id;
+  String? id; // UUID
   String nama, nik, tglLahir, jk, beratLahir, panjangLahir; // tglLahir: dd/mm/yyyy
 
   DataAnak({
@@ -26,13 +26,13 @@ class DataAnak {
   });
 
   factory DataAnak.fromApi(Map<String, dynamic> j) => DataAnak(
-        id: (j['id'] as num?)?.toInt(),
+        id: j['id']?.toString(),
         nama: j['nama']?.toString() ?? '',
         nik: j['nik']?.toString() ?? '',
-        tglLahir: _dariApi(j['tgl_lahir']),
-        jk: j['jk']?.toString() ?? '',
-        beratLahir: _angka(j['berat_lahir']),
-        panjangLahir: _angka(j['panjang_lahir']),
+        tglLahir: _dariApi(j['tanggal_lahir']),
+        jk: j['jenis_kelamin']?.toString() ?? '',
+        beratLahir: _angka(j['berat_lahir_kg']),
+        panjangLahir: _angka(j['panjang_lahir_cm']),
       );
 }
 
@@ -66,7 +66,6 @@ class DataKeluarga {
     List<DataAnak>? anak,
   }) : anak = anak ?? [];
 
-  // Aturan sama dengan backend (models.Keluarga.Status)
   bool get ibuLengkap =>
       tanpaIbu ||
       (tglLahirIbu.isNotEmpty && alamat.trim().isNotEmpty && rw.trim().isNotEmpty);
@@ -84,11 +83,40 @@ class DataKeluarga {
 // ---------------------------------------------------------------------------
 final Options _opsi = Options(receiveTimeout: const Duration(seconds: 15));
 
+Map<String, dynamic>? _peta(dynamic v) =>
+    v is Map ? Map<String, dynamic>.from(v) : null;
+
 class KeluargaApi {
-  /// GET /keluarga -> { data: { keluarga: {...}, status: {...} } }
+  /// GET /keluarga -> { data: { keluarga, ibu, ayah, anak, status } }
   static Future<Map<String, dynamic>> ambil() async {
     final r = await ApiClient.dio.get('/keluarga', options: _opsi);
     return Map<String, dynamic>.from(r.data['data'] as Map);
+  }
+
+  static DataKeluarga keModel(Map<String, dynamic> data, {Map<String, dynamic>? user}) {
+    final k = _peta(data['keluarga']);
+    final ibu = _peta(data['ibu']);
+    final ayah = _peta(data['ayah']);
+    final anak = ((data['anak'] as List?) ?? [])
+        .map((e) => DataAnak.fromApi(Map<String, dynamic>.from(e as Map)))
+        .toList();
+    return DataKeluarga(
+      namaIbu: (user?['nama'] ?? ibu?['nama'] ?? '').toString(),
+      nikIbu: (user?['nik'] ?? ibu?['nik'] ?? '').toString(),
+      noHpIbu: (user?['no_hp'] ?? ibu?['no_hp'] ?? '').toString(),
+      tglLahirIbu: _dariApi(ibu?['tanggal_lahir']),
+      pekerjaanIbu: (ibu?['pekerjaan'] ?? '').toString(),
+      alamat: (k?['alamat'] ?? '').toString(),
+      rt: (k?['rt'] ?? '').toString(),
+      rw: (k?['rw'] ?? '').toString(),
+      tanpaAyah: k?['tanpa_ayah'] == true,
+      namaAyah: (ayah?['nama'] ?? '').toString(),
+      nikAyah: (ayah?['nik'] ?? '').toString(),
+      tglLahirAyah: _dariApi(ayah?['tanggal_lahir']),
+      noHpAyah: (ayah?['no_hp'] ?? '').toString(),
+      pekerjaanAyah: (ayah?['pekerjaan'] ?? '').toString(),
+      anak: anak,
+    );
   }
 }
 
@@ -143,7 +171,8 @@ String _keApi(String tgl) {
 
 String _angka(dynamic v) {
   if (v == null) return '';
-  final n = (v as num).toDouble();
+  final n = double.tryParse(v.toString());
+  if (n == null) return '';
   return n == n.roundToDouble() ? n.toInt().toString() : n.toString();
 }
 
@@ -248,33 +277,29 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
     final user = context.read<AuthProvider>().user;
     try {
       final data = await KeluargaApi.ambil();
-      final k = Map<String, dynamic>.from((data['keluarga'] ?? {}) as Map);
-      final ayah = k['ayah'] == null ? null : Map<String, dynamic>.from(k['ayah'] as Map);
+      final m = KeluargaApi.keModel(data, user: user == null ? null : Map<String, dynamic>.from(user));
 
       if (!mounted) return;
 
-      // Nama, NIK, dan No. HP ibu berasal dari akun (tabel user)
-      _namaIbu.text = (user?['nama'] ?? '').toString();
-      _nikIbu.text = (user?['nik'] ?? '').toString();
-      _hpIbu.text = (user?['no_hp'] ?? '').toString();
+      _namaIbu.text = m.namaIbu;
+      _nikIbu.text = m.nikIbu;
+      _hpIbu.text = m.noHpIbu;
 
-      _tanpaIbu = k['tanpa_ibu'] == true;
-      _tglIbu.text = _dariApi(k['tgl_lahir_ibu']);
-      _kerjaIbu.text = (k['pekerjaan_ibu'] ?? '').toString();
-      _alamat.text = (k['alamat'] ?? '').toString();
-      _rt.text = (k['rt'] ?? '').toString();
-      _rw.text = (k['rw'] ?? '').toString();
+      _tanpaIbu = false;
+      _tglIbu.text = m.tglLahirIbu;
+      _kerjaIbu.text = m.pekerjaanIbu;
+      _alamat.text = m.alamat;
+      _rt.text = m.rt;
+      _rw.text = m.rw;
 
-      _tanpaAyah = k['tanpa_ayah'] == true;
-      _namaAyah.text = (ayah?['nama'] ?? '').toString();
-      _nikAyah.text = (ayah?['nik'] ?? '').toString();
-      _tglAyah.text = _dariApi(ayah?['tgl_lahir']);
-      _hpAyah.text = (ayah?['no_hp'] ?? '').toString();
-      _kerjaAyah.text = (ayah?['pekerjaan'] ?? '').toString();
+      _tanpaAyah = m.tanpaAyah;
+      _namaAyah.text = m.namaAyah;
+      _nikAyah.text = m.nikAyah;
+      _tglAyah.text = m.tglLahirAyah;
+      _hpAyah.text = m.noHpAyah;
+      _kerjaAyah.text = m.pekerjaanAyah;
 
-      _anak = ((k['anak'] as List?) ?? [])
-          .map((e) => DataAnak.fromApi(Map<String, dynamic>.from(e as Map)))
-          .toList();
+      _anak = m.anak;
 
       setState(() {
         _gagal = null;
@@ -346,10 +371,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
               },
       };
 
-  // -----------------------------------------------------------------
-  // SIMPAN KE SERVER (online)
-  // Data anak disimpan langsung lewat bottom sheet (POST/PUT/DELETE /keluarga/anak)
-  // -----------------------------------------------------------------
   Future<void> _simpan() async {
     if (_menyimpan) return;
     if (!_key.currentState!.validate()) return;
@@ -548,7 +569,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
                   : const Pill('Belum lengkap', bg: AppColors.kuningMuda, fg: AppColors.kuning),
               child: Column(
                 children: [
-                  // Opsi Tanpa Ibu
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
@@ -591,7 +611,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
                     ),
                     _jarak(),
                   ],
-                  // Alamat tetap tampil
                   TextFormField(
                     controller: _alamat,
                     maxLines: 2,
@@ -985,7 +1004,7 @@ class _FormAnakState extends State<_FormAnak> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: AppButton(_menyimpan ? 'Menyimpan...' : 'Simpan',
-                        icon: Icons.check, onPressed: _simpan),
+                        icon: Icons.check, onPressed: _menyimpan ? () {} : _simpan),
                   ),
                 ],
               ),
@@ -1022,11 +1041,11 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
   Future<void> _muat() async {
     try {
       final data = await KeluargaApi.ambil();
-      final st = Map<String, dynamic>.from((data['status'] ?? {}) as Map);
+      final m = KeluargaApi.keModel(data);
       if (!mounted) return;
       setState(() {
-        _selesai = (st['langkah_selesai'] as num?)?.toInt() ?? 0;
-        _lengkap = st['lengkap'] == true;
+        _selesai = m.langkahSelesai;
+        _lengkap = m.lengkap;
         _gagal = false;
       });
     } catch (_) {

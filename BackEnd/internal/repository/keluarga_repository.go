@@ -195,3 +195,23 @@ func (r *KeluargaRepository) ListAnak(keluargaID uuid.UUID) ([]models.Anak, erro
 	err := r.db.Where("keluarga_id = ?", keluargaID).Order("tanggal_lahir").Find(&list).Error
 	return list, err
 }
+func (r *KeluargaRepository) AnakSudahAda(keluargaID uuid.UUID, nama string, tgl time.Time, kecuali uuid.UUID) bool {
+	var n int64
+	q := r.db.Model(&models.Anak{}).
+		Where("keluarga_id = ? AND LOWER(nama) = LOWER(?) AND tanggal_lahir = ?", keluargaID, nama, tgl.Format("2006-01-02"))
+	if kecuali != uuid.Nil {
+		q = q.Where("id <> ?", kecuali)
+	}
+	q.Count(&n)
+	return n > 0
+}
+
+func (r *KeluargaRepository) NIKAnakSudahAda(nik string, kecuali uuid.UUID) bool {
+	var n int64
+	q := r.db.Model(&models.Anak{}).Where("nik = ?", nik)
+	if kecuali != uuid.Nil {
+		q = q.Where("id <> ?", kecuali)
+	}
+	q.Count(&n)
+	return n > 0
+}

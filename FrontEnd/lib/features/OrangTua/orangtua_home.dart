@@ -145,8 +145,8 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   bool _memuat = true;
   String? _gagal;
 
-  // Status kehadiran per anak (berdasarkan id anak). Belum tersambung ke server.
-  final Map<int, StatusHadir> _status = {};
+  // Status kehadiran per anak (berdasarkan id/UUID anak). Belum tersambung ke server.
+  final Map<String, StatusHadir> _status = {};
 
   // Jadwal contoh: 3 hari dari sekarang, sehingga pendaftaran sudah dibuka tetapi
   // check-in belum. Untuk menguji check-in, ubah menjadi Duration(minutes: 30).
@@ -167,7 +167,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
 
   DataAnak? get _anak => _daftar.isEmpty ? null : _daftar[_aktif];
   _Anak get _contoh => _daftarAnak[_aktif % _daftarAnak.length];
-  int get _kunci => _anak?.id ?? 0;
+  String get _kunci => _anak?.id ?? '';
   StatusHadir get _hadir => _status[_kunci] ?? StatusHadir.belumDaftar;
   void _setHadir(StatusHadir s) => setState(() => _status[_kunci] = s);
 
@@ -181,8 +181,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   Future<void> _muat() async {
     try {
       final data = await KeluargaApi.ambil();
-      final k = Map<String, dynamic>.from((data['keluarga'] ?? {}) as Map);
-      final daftar = ((k['anak'] as List?) ?? [])
+      final daftar = ((data['anak'] as List?) ?? [])
           .map((e) => DataAnak.fromApi(Map<String, dynamic>.from(e as Map)))
           .toList();
       if (!mounted) return;

@@ -49,11 +49,11 @@ func Setup(db *gorm.DB) *gin.Engine {
 
 	// ----------------------------------------------------------- orang tua
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
-	ortu.GET("/keluarga/saya", keluargaH.Get)
-	ortu.PUT("/keluarga/saya", keluargaH.SimpanProfil)
-	ortu.POST("/keluarga/saya/anak", keluargaH.TambahAnak)
-	ortu.PUT("/keluarga/saya/anak/:id", keluargaH.UbahAnak)
-	ortu.DELETE("/keluarga/saya/anak/:id", keluargaH.HapusAnak)
+	ortu.GET("/keluarga", keluargaH.Get)
+	ortu.PUT("/keluarga", keluargaH.SimpanProfil)
+	ortu.POST("/keluarga/anak", keluargaH.TambahAnak)
+	ortu.PUT("/keluarga/anak/:id", keluargaH.UbahAnak)
+	ortu.DELETE("/keluarga/anak/:id", keluargaH.HapusAnak)
 	ortu.POST("/jadwal/:id/daftar", jadwalH.Daftar)
 	ortu.POST("/jadwal/:id/batal", jadwalH.BatalDaftar)
 	ortu.POST("/jadwal/:id/checkin", jadwalH.Checkin)

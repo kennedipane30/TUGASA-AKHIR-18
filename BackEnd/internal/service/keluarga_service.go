@@ -192,6 +192,16 @@ func buatAnak(in AnakInput) (*models.Anak, error) {
 	}, nil
 }
 
+func (s *KeluargaService) cekDuplikatAnak(keluargaID uuid.UUID, a *models.Anak, kecuali uuid.UUID) error {
+	if a.NIK != nil && s.repo.NIKAnakSudahAda(*a.NIK, kecuali) {
+		return konflik("NIK anak sudah terdaftar")
+	}
+	if s.repo.AnakSudahAda(keluargaID, a.Nama, a.TanggalLahir, kecuali) {
+		return konflik("data anak dengan nama dan tanggal lahir yang sama sudah ada")
+	}
+	return nil
+}
+
 func (s *KeluargaService) TambahAnak(uid uint, in AnakInput) (*models.Anak, error) {
 	a, err := buatAnak(in)
 	if err != nil {
@@ -199,6 +209,9 @@ func (s *KeluargaService) TambahAnak(uid uint, in AnakInput) (*models.Anak, erro
 	}
 	kid, err := s.repo.PastikanKeluarga(uid)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.cekDuplikatAnak(kid, a, uuid.Nil); err != nil {
 		return nil, err
 	}
 	a.KeluargaID = kid
@@ -219,6 +232,9 @@ func (s *KeluargaService) UbahAnak(uid uint, id uuid.UUID, in AnakInput) (*model
 	}
 	if d.Keluarga == nil {
 		return nil, errors.New("data keluarga belum ada")
+	}
+	if err := s.cekDuplikatAnak(d.Keluarga.ID, a, id); err != nil {
+		return nil, err
 	}
 	a.ID = id
 	a.KeluargaID = d.Keluarga.ID
