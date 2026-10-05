@@ -9,10 +9,22 @@ import (
 	"posyandu-api/internal/utils"
 
 	"github.com/joho/godotenv"
-	"gorm.io/gorm"
 )
 
-func seedAdmin(db *gorm.DB) {
+func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("gagal membaca .env, jalankan dari folder BackEnd: ", err)
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		log.Fatal("gagal konek database: ", err)
+	}
+
+	// Data master (wilayah dan posyandu)
+	seedMaster(db)
+
+	// Akun admin
 	nama := os.Getenv("ADMIN_NAME")
 	phone := os.Getenv("ADMIN_PHONE")
 	password := os.Getenv("ADMIN_PASSWORD")
@@ -23,7 +35,7 @@ func seedAdmin(db *gorm.DB) {
 	var count int64
 	db.Model(&models.User{}).Where("no_hp = ?", phone).Count(&count)
 	if count > 0 {
-		log.Println("admin sudah ada, seeder admin dilewati")
+		log.Println("admin sudah ada, dilewati")
 		return
 	}
 
@@ -43,18 +55,4 @@ func seedAdmin(db *gorm.DB) {
 		log.Fatal("gagal membuat admin: ", err)
 	}
 	log.Println("admin berhasil dibuat, login dengan No. HP:", phone)
-}
-
-func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("gagal membaca .env, jalankan dari folder BackEnd: ", err)
-	}
-
-	db, err := database.Connect()
-	if err != nil {
-		log.Fatal("gagal konek database: ", err)
-	}
-
-	// Panggilan seedPosyandu telah dihapus
-	seedAdmin(db)
 }

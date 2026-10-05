@@ -1,43 +1,129 @@
-package models
+package handler
 
 import (
-	"time"
+	"net/http"
 
+	"posyandu-api/internal/service"
+
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
-// Anak: data identitas balita.
-type Anak struct {
-	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;column:id" json:"id"`
-	KeluargaID     uuid.UUID      `gorm:"column:keluarga_id;type:uuid;not null;index" json:"keluarga_id"`
-	Keluarga       *Keluarga      `gorm:"foreignKey:KeluargaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
-	NIK            *string        `gorm:"column:nik;size:16;uniqueIndex:ux_anak_nik,where:deleted_at IS NULL" json:"nik,omitempty"`
-	Nama           string         `gorm:"column:nama;size:100;not null" json:"nama"`
-	TanggalLahir   time.Time      `gorm:"column:tanggal_lahir;type:date;not null" json:"tanggal_lahir"`
-	JenisKelamin   string         `gorm:"column:jenis_kelamin;size:1;not null" json:"jenis_kelamin"` // L | P
-	BeratLahirKg   *float64       `gorm:"column:berat_lahir_kg;type:numeric(4,2)" json:"berat_lahir_kg"`
-	PanjangLahirCm *float64       `gorm:"column:panjang_lahir_cm;type:numeric(4,1)" json:"panjang_lahir_cm"`
-	KodeQR         string         `gorm:"column:kode_qr;size:64;not null;uniqueIndex:ux_anak_kode_qr" json:"kode_qr"`
-	Status         string         `gorm:"column:status;size:10;default:aktif" json:"status"` // aktif | arsip
-	TanggalArsip   *time.Time     `gorm:"column:tanggal_arsip;type:date" json:"tanggal_arsip,omitempty"`
-	AlasanArsip    string         `gorm:"column:alasan_arsip;size:100" json:"alasan_arsip,omitempty"`
-	DigabungKeID   *uuid.UUID     `gorm:"column:digabung_ke_id;type:uuid" json:"digabung_ke_id,omitempty"`
-	Version        int            `gorm:"column:version;default:1" json:"version"`
-	PerangkatAsal  *uuid.UUID     `gorm:"column:perangkat_asal;type:uuid" json:"perangkat_asal,omitempty"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
-	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
+type PelayananHandler struct{ svc *service.PelayananService }
+
+func NewPelayananHandler(s *service.PelayananService) *PelayananHandler { return &PelayananHandler{s} }
+
+// ---------------------------------------------------------------- kader
+
+// GET /kader/jadwal/:id/antrean
+func (h *PelayananHandler) AntreanKader(c *gin.Context) {
+	id, ok := idParam(c, "id")
+	if !ok {
+		return
+	}
+	list, err := h.svc.AntreanKader(id)
+	if err != nil {
+		tulisError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": list})
 }
 
-func (Anak) TableName() string { return "anak" }
+// PUT /kader/pendaftaran/:id/pengukuran
+func (h *PelayananHandler) CatatPengukuran(c *gin.Context) {
+	id, ok := idParam(c, "id")
+	if !ok {
+		return
+	}
+	var in service.PengukuranInput
+	if err := c.ShouldBindJSON(&in); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	m, err := h.svc.CatatPengukuran(c.GetUint("user_id"), id, in)
+	if err != nil {
+		tulisError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": m})
+}
 
-func (a *Anak) BeforeCreate(*gorm.DB) error {
-	if a.ID == uuid.Nil {
-		a.ID = uuid.New()
+// ---------------------------------------------------------------- bidan
+
+// GET /bidan/jadwal/:id/pengukuran
+func (h *PelayananHandler) AntreanBidan(c *gin.Context) {
+	id, ok := idParam(c, "id")
+	if !ok {
+		return
 	}
-	if a.KodeQR == "" {
-		a.KodeQR = "PSY-" + a.ID.String()
+	list, err := h.svc.AntreanBidan(id)
+	if err != nil {
+		tulisError(c, err)
+		return
 	}
-	return nil
+	c.JSON(http.StatusOK, gin.H{"data": list})
+}
+
+// GET /bidan/pendaftaran/:id
+func (h *PelayananHandler) DetailBidan(c *gin.Context) {
+	id, ok := idParam(c, "id")
+	if !ok {
+		return
+	}
+	d, err := h.svc.DetailBidan(id)
+	if err != nil {
+		tulisError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": d})
+}
+
+// PUT /bidan/pendaftaran/:id/catatan
+func (h *PelayananHandler) SimpanCatatan(c *gin.Context) {
+	id, ok := idParam(c, "id")
+	if !ok {
+		return
+	}
+	var in service.CatatanBidanInput
+	if err := c.ShouldBindJSON(&in); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	d, err := h.svc.SimpanCatatan(c.GetUint("user_id"), id, in)
+	if err != nil {
+		tulisError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": d})
+}
+
+// GET /vaksin  (daftar jenis vaksin untuk pilihan bidan)
+func (h *PelayananHandler) ListVaksin(c *gin.Context) {
+	list, err := h.svc.ListVaksin()
+	if err != nil {
+		tulisError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": list})
+}
+
+// ---------------------------------------------------------------- orang tua
+
+// GET /riwayat?anak_id=...   (hanya kunjungan yang sudah diberi catatan bidan)
+func (h *PelayananHandler) Riwayat(c *gin.Context) {
+	var anakID *uuid.UUID
+	if s := c.Query("anak_id"); s != "" {
+		id, err := uuid.Parse(s)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "anak_id tidak valid"})
+			return
+		}
+		anakID = &id
+	}
+	list, err := h.svc.Riwayat(c.GetUint("user_id"), anakID)
+	if err != nil {
+		tulisError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": list})
 }

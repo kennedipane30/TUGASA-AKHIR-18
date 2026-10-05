@@ -20,24 +20,9 @@ func Connect() (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	// semua model didaftarkan di sini
-	// urutan: tabel induk dulu, baru tabel yang punya foreign key
-	if err := db.AutoMigrate(
-		&models.User{},
-		// models.Posyandu telah dihapus karena hanya menggunakan 1 posyandu
-		&models.Keluarga{},
-		&models.Ayah{},
-		&models.Anak{},
 
-		// BARU: jadwal, pendaftaran, pengukuran, catatan bidan
-		&models.JenisVaksin{},
-		&models.JadwalPosyandu{},
-		&models.Pendaftaran{},
-		&models.Pengukuran{},
-		&models.PemeriksaanBidan{},
-		&models.ImunisasiAnak{},
-		&models.SuplemenAnak{},
-	); err != nil {
+	// Seluruh tabel dibuat dari daftar model di models/registry.go.
+	if err := db.AutoMigrate(models.AllModels()...); err != nil {
 		return nil, err
 	}
 	return db, nil

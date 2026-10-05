@@ -1,74 +1,159 @@
-package router
+package repository
 
 import (
-	"posyandu-api/internal/handler"
-	"posyandu-api/internal/middleware"
-	"posyandu-api/internal/repository"
-	"posyandu-api/internal/service"
+	"posyandu-api/internal/models"
 
-	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-func Setup(db *gorm.DB) *gin.Engine {
-	r := gin.Default()
+type PelayananRepository struct{ db *gorm.DB }
 
-	// repository
-	userRepo := repository.NewUserRepository(db)
-	keluargaRepo := repository.NewKeluargaRepository(db)
-	jadwalRepo := repository.NewJadwalRepository(db)
-	pelayananRepo := repository.NewPelayananRepository(db)
+func NewPelayananRepository(db *gorm.DB) *PelayananRepository { return &PelayananRepository{db} }
 
-	// handler (service dibuat di sini)
-	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
-	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo, userRepo))
-	jadwalH := handler.NewJadwalHandler(service.NewJadwalService(jadwalRepo, keluargaRepo))
-	pelayananH := handler.NewPelayananHandler(service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo))
+func (r *PelayananRepository) Tx(fn func(tx *PelayananRepository) error) error {
+	return r.db.Transaction(func(tx *gorm.DB) error { return fn(&PelayananRepository{tx}) })
+}
 
-	api := r.Group("/api/v1")
-	api.POST("/auth/register", authH.Register)
-	api.POST("/auth/login", authH.Login)
+// ---------------------------------------------------------------- pengukuran
 
-	// ----------------------------------------------------------- semua role (sudah login)
-	protected := api.Group("/", middleware.AuthRequired())
-	protected.GET("/auth/me", authH.Me)
-	protected.GET("/posyandu", keluargaH.GetPosyandu)
-	protected.GET("/jadwal", jadwalH.List)
-	protected.GET("/jadwal/terdekat", jadwalH.Terdekat)
-	protected.GET("/vaksin", pelayananH.ListVaksin)
+func (r *PelayananRepository) GetPengukuran(pendaftaranID uuid.UUID) (*models.Pengukuran, error) {
+	var p models.Pengukuran
+	err := r.db.Where("pendaftaran_id = ?", pendaftaranID).First(&p).Error
+	return &p, err
+}
 
-	// ----------------------------------------------------------- admin: kelola akun dan jadwal
-	admin := protected.Group("/admin", middleware.RoleRequired("admin"))
-	admin.POST("/users", authH.CreateStaff)
-	admin.POST("/jadwal", jadwalH.Buat)
-	admin.PUT("/jadwal/:id", jadwalH.Ubah)
-	admin.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
+func (r *PelayananRepository) CreatePengukuran(p *models.Pengukuran) error { return r.db.Create(p).Error }
+func (r *PelayananRepository) SavePengukuran(p *models.Pengukuran) error   { return r.db.Save(p).Error }
 
-	// ----------------------------------------------------------- orang tua
-	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
-	ortu.GET("/keluarga/saya", keluargaH.GetSaya)
-	ortu.PUT("/keluarga/saya", keluargaH.UpdateSaya)
-	ortu.POST("/keluarga/saya/anak", keluargaH.TambahAnak)
-	ortu.PUT("/keluarga/saya/anak/:id", keluargaH.UbahAnak)
-	ortu.DELETE("/keluarga/saya/anak/:id", keluargaH.HapusAnak)
-	ortu.POST("/jadwal/:id/daftar", jadwalH.Daftar)
-	ortu.POST("/jadwal/:id/batal", jadwalH.BatalDaftar)
-	ortu.POST("/jadwal/:id/checkin", jadwalH.Checkin)
-	ortu.GET("/riwayat", pelayananH.Riwayat)
+// PengukuranSebelumnya: pengukuran terbaru anak selain kunjungan yang sedang dicatat.
+func (r *PelayananRepository) PengukuranSebelumnya(anakID, kecualiPendaftaran uuid.UUID) (*models.Pengukuran, error) {
+	var p models.Pengukuran
+	err := r.db.Where("anak_id = ? AND pendaftaran_id <> ?", anakID, kecualiPendaftaran).
+		Order("tanggal_ukur DESC").First(&p).Error
+	return &p, err
+}
 
-	// ----------------------------------------------------------- kader
-	kader := protected.Group("/kader", middleware.RoleRequired("kader"))
-	kader.GET("/anak", jadwalH.CariAnak)
-	kader.POST("/jadwal/:id/walkin", jadwalH.WalkIn)
-	kader.POST("/pendaftaran/:id/checkin", jadwalH.CheckinManual)
-	kader.GET("/jadwal/:id/antrean", pelayananH.AntreanKader)
-	kader.PUT("/pendaftaran/:id/pengukuran", pelayananH.CatatPengukuran)
+func (r *PelayananRepository) ListPengukuran(pendaftaranIDs []uuid.UUID) ([]models.Pengukuran, error) {
+	list := []models.Pengukuran{}
+	if len(pendaftaranIDs) == 0 {
+		return list, nil
+	}
+	err := r.db.Where("pendaftaran_id IN ?", pendaftaranIDs).Find(&list).Error
+	return list, err
+}
 
-	// ----------------------------------------------------------- bidan
-	bidan := protected.Group("/bidan", middleware.RoleRequired("bidan"))
-	bidan.GET("/jadwal/:id/pengukuran", pelayananH.AntreanBidan)
-	bidan.GET("/pendaftaran/:id", pelayananH.DetailBidan)
-	bidan.PUT("/pendaftaran/:id/catatan", pelayananH.SimpanCatatan)
+// PendaftaranBerpengukuran: kunjungan pada satu jadwal yang sudah diinput kader.
+func (r *PelayananRepository) PendaftaranBerpengukuran(jadwalID uuid.UUID) ([]models.Pendaftaran, error) {
+	list := []models.Pendaftaran{}
+	err := r.db.Preload("Anak").
+		Where("jadwal_id = ?", jadwalID).
+		Where("id IN (?)", r.db.Model(&models.Pengukuran{}).Select("pendaftaran_id")).
+		Order("nomor_antrean ASC").Find(&list).Error
+	return list, err
+}
 
-	return r
+// ---------------------------------------------------------------- catatan bidan
+
+func (r *PelayananRepository) GetPemeriksaan(pendaftaranID uuid.UUID) (*models.PemeriksaanBidan, error) {
+	var p models.PemeriksaanBidan
+	err := r.db.Where("pendaftaran_id = ?", pendaftaranID).First(&p).Error
+	return &p, err
+}
+
+func (r *PelayananRepository) CreatePemeriksaan(p *models.PemeriksaanBidan) error { return r.db.Create(p).Error }
+func (r *PelayananRepository) SavePemeriksaan(p *models.PemeriksaanBidan) error   { return r.db.Save(p).Error }
+
+func (r *PelayananRepository) ListPemeriksaan(pendaftaranIDs []uuid.UUID) ([]models.PemeriksaanBidan, error) {
+	list := []models.PemeriksaanBidan{}
+	if len(pendaftaranIDs) == 0 {
+		return list, nil
+	}
+	err := r.db.Where("pendaftaran_id IN ?", pendaftaranIDs).Find(&list).Error
+	return list, err
+}
+
+// ---------------------------------------------------------------- imunisasi dan suplemen
+
+func (r *PelayananRepository) ListVaksin() ([]models.JenisVaksin, error) {
+	list := []models.JenisVaksin{}
+	err := r.db.Where("is_active = ?", true).Order("nama").Find(&list).Error
+	return list, err
+}
+
+func (r *PelayananRepository) ImunisasiSudahAda(anakID, jenisID uuid.UUID, dosis int16, kecualiPendaftaran uuid.UUID) bool {
+	var n int64
+	r.db.Model(&models.ImunisasiAnak{}).
+		Where("anak_id = ? AND jenis_vaksin_id = ? AND dosis_ke = ?", anakID, jenisID, dosis).
+		Where("pendaftaran_id IS NULL OR pendaftaran_id <> ?", kecualiPendaftaran).
+		Count(&n)
+	return n > 0
+}
+
+// GantiImunisasi menggantikan seluruh catatan imunisasi satu kunjungan.
+func (r *PelayananRepository) GantiImunisasi(pendaftaranID uuid.UUID, items []models.ImunisasiAnak) error {
+	if err := r.db.Unscoped().Where("pendaftaran_id = ?", pendaftaranID).
+		Delete(&models.ImunisasiAnak{}).Error; err != nil {
+		return err
+	}
+	for i := range items {
+		if err := r.db.Create(&items[i]).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *PelayananRepository) GantiSuplemen(pendaftaranID uuid.UUID, items []models.SuplemenAnak) error {
+	if err := r.db.Unscoped().Where("pendaftaran_id = ?", pendaftaranID).
+		Delete(&models.SuplemenAnak{}).Error; err != nil {
+		return err
+	}
+	for i := range items {
+		if err := r.db.Create(&items[i]).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *PelayananRepository) ListImunisasi(pendaftaranIDs []uuid.UUID) ([]models.ImunisasiAnak, error) {
+	list := []models.ImunisasiAnak{}
+	if len(pendaftaranIDs) == 0 {
+		return list, nil
+	}
+	err := r.db.Preload("JenisVaksin").Where("pendaftaran_id IN ?", pendaftaranIDs).Find(&list).Error
+	return list, err
+}
+
+func (r *PelayananRepository) ListImunisasiAnak(anakID uuid.UUID) ([]models.ImunisasiAnak, error) {
+	list := []models.ImunisasiAnak{}
+	err := r.db.Preload("JenisVaksin").Where("anak_id = ?", anakID).
+		Order("tanggal_pemberian DESC").Find(&list).Error
+	return list, err
+}
+
+func (r *PelayananRepository) ListSuplemen(pendaftaranIDs []uuid.UUID) ([]models.SuplemenAnak, error) {
+	list := []models.SuplemenAnak{}
+	if len(pendaftaranIDs) == 0 {
+		return list, nil
+	}
+	err := r.db.Where("pendaftaran_id IN ?", pendaftaranIDs).Find(&list).Error
+	return list, err
+}
+
+// ---------------------------------------------------------------- riwayat
+
+// RiwayatPendaftaran: kunjungan anak yang SUDAH diberi catatan bidan (dan boleh ditampilkan).
+func (r *PelayananRepository) RiwayatPendaftaran(anakIDs []uuid.UUID) ([]models.Pendaftaran, error) {
+	list := []models.Pendaftaran{}
+	if len(anakIDs) == 0 {
+		return list, nil
+	}
+	err := r.db.Preload("Jadwal").
+		Where("anak_id IN ?", anakIDs).
+		Where("id IN (?)", r.db.Model(&models.PemeriksaanBidan{}).
+			Select("pendaftaran_id").Where("tampil_ke_orang_tua = ?", true)).
+		Find(&list).Error
+	return list, err
 }
