@@ -45,7 +45,7 @@ func staffError(c *gin.Context, err error) {
 	c.JSON(code, gin.H{"error": err.Error()})
 }
 
-func idParam(c *gin.Context) (uint, bool) {
+func staffIDParam(c *gin.Context) (uint, bool) {
 	n, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id tidak valid"})
@@ -68,7 +68,7 @@ func (h *AuthHandler) ListStaff(c *gin.Context) {
 }
 
 func (h *AuthHandler) UpdateStaff(c *gin.Context) {
-	id, ok := idParam(c)
+	id, ok := staffIDParam(c)
 	if !ok {
 		return
 	}
@@ -86,7 +86,7 @@ func (h *AuthHandler) UpdateStaff(c *gin.Context) {
 }
 
 func (h *AuthHandler) SetStaffActive(c *gin.Context) {
-	id, ok := idParam(c)
+	id, ok := staffIDParam(c)
 	if !ok {
 		return
 	}
@@ -106,7 +106,7 @@ func (h *AuthHandler) SetStaffActive(c *gin.Context) {
 }
 
 func (h *AuthHandler) DeleteStaff(c *gin.Context) {
-	id, ok := idParam(c)
+	id, ok := staffIDParam(c)
 	if !ok {
 		return
 	}

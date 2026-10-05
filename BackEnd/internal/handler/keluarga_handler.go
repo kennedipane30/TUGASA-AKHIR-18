@@ -8,6 +8,7 @@ import (
 	"posyandu-api/internal/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type KeluargaHandler struct{ svc *service.KeluargaService }
@@ -44,19 +45,17 @@ func respondErr(c *gin.Context, err error) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": ve.Msg})
 		return
 	}
-	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	tulisError(c, err)
 }
 
-func paramID(c *gin.Context) (uint, bool) {
-	n, err := strconv.ParseUint(c.Param("id"), 10, 64)
+func paramID(c *gin.Context) (uuid.UUID, bool) {
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id tidak valid"})
-		return 0, false
+		return uuid.Nil, false
 	}
-	return uint(n), true
+	return id, true
 }
-
-// FUNGSI ListPosyandu SUDAH DIHAPUS DARI SINI
 
 func (h *KeluargaHandler) Get(c *gin.Context) {
 	uid, ok := userID(c)
@@ -148,4 +147,4 @@ func (h *KeluargaHandler) HapusAnak(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "data anak dihapus"})
-}	
+}

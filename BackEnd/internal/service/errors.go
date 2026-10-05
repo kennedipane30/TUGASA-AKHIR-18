@@ -8,7 +8,13 @@ import (
 var (
 	ErrJadwalTidakAda      = errors.New("jadwal tidak ditemukan")
 	ErrPendaftaranTidakAda = errors.New("pendaftaran tidak ditemukan")
+	ErrAnakTidakAda        = errors.New("anak tidak ditemukan")
 )
+
+// ErrValidasi: input tidak valid (kode 400).
+type ErrValidasi struct{ Pesan string }
+
+func (e ErrValidasi) Error() string { return e.Pesan }
 
 // ErrKonflik: aturan alur tidak terpenuhi (dijawab dengan kode 409).
 type ErrKonflik struct{ Pesan string }
@@ -20,5 +26,6 @@ type ErrTerlarang struct{ Pesan string }
 
 func (e ErrTerlarang) Error() string { return e.Pesan }
 
+func validasi(format string, a ...any) error  { return ErrValidasi{fmt.Sprintf(format, a...)} }
 func konflik(format string, a ...any) error   { return ErrKonflik{fmt.Sprintf(format, a...)} }
 func terlarang(format string, a ...any) error { return ErrTerlarang{fmt.Sprintf(format, a...)} }

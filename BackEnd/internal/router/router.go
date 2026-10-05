@@ -21,7 +21,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 
 	// handler (service dibuat di sini)
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
-	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo, userRepo))
+	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo))
 	jadwalH := handler.NewJadwalHandler(service.NewJadwalService(jadwalRepo, keluargaRepo))
 	pelayananH := handler.NewPelayananHandler(service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo))
 
@@ -32,7 +32,6 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// ----------------------------------------------------------- semua role (sudah login)
 	protected := api.Group("/", middleware.AuthRequired())
 	protected.GET("/auth/me", authH.Me)
-	protected.GET("/posyandu", keluargaH.GetPosyandu)
 	protected.GET("/jadwal", jadwalH.List)
 	protected.GET("/jadwal/terdekat", jadwalH.Terdekat)
 	protected.GET("/vaksin", pelayananH.ListVaksin)
@@ -40,14 +39,18 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// ----------------------------------------------------------- admin: kelola akun dan jadwal
 	admin := protected.Group("/admin", middleware.RoleRequired("admin"))
 	admin.POST("/users", authH.CreateStaff)
+	admin.GET("/users", authH.ListStaff)
+	admin.PUT("/users/:id", authH.UpdateStaff)
+	admin.PATCH("/users/:id/aktif", authH.SetStaffActive)
+	admin.DELETE("/users/:id", authH.DeleteStaff)
 	admin.POST("/jadwal", jadwalH.Buat)
 	admin.PUT("/jadwal/:id", jadwalH.Ubah)
 	admin.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
 
 	// ----------------------------------------------------------- orang tua
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
-	ortu.GET("/keluarga/saya", keluargaH.GetSaya)
-	ortu.PUT("/keluarga/saya", keluargaH.UpdateSaya)
+	ortu.GET("/keluarga/saya", keluargaH.Get)
+	ortu.PUT("/keluarga/saya", keluargaH.SimpanProfil)
 	ortu.POST("/keluarga/saya/anak", keluargaH.TambahAnak)
 	ortu.PUT("/keluarga/saya/anak/:id", keluargaH.UbahAnak)
 	ortu.DELETE("/keluarga/saya/anak/:id", keluargaH.HapusAnak)

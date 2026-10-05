@@ -8,6 +8,8 @@ import (
 
 	"posyandu-api/internal/models"
 	"posyandu-api/internal/repository"
+
+	"github.com/google/uuid"
 )
 
 type ValidationError struct{ Msg string }
@@ -25,7 +27,7 @@ type AyahInput struct {
 }
 
 type ProfilInput struct {
-	TanpaIbu     bool       `json:"tanpa_ibu"` // TAMBAHAN: Agar terbaca dari API
+	TanpaIbu     bool       `json:"tanpa_ibu"`
 	TglLahirIbu  string     `json:"tgl_lahir_ibu"`
 	PekerjaanIbu string     `json:"pekerjaan_ibu"`
 	Alamat       string     `json:"alamat"`
@@ -44,9 +46,17 @@ type AnakInput struct {
 	PanjangLahir *float64 `json:"panjang_lahir"`
 }
 
+type StatusKeluarga struct {
+	ProfilLengkap bool `json:"profil_lengkap"`
+	JumlahAnak    int  `json:"jumlah_anak"`
+}
+
 type KeluargaResponse struct {
-	Keluarga *models.Keluarga      `json:"keluarga"`
-	Status   models.StatusKeluarga `json:"status"`
+	Keluarga *models.Keluarga `json:"keluarga"`
+	Ibu      *models.OrangTua `json:"ibu"`
+	Ayah     *models.OrangTua `json:"ayah"`
+	Anak     []models.Anak    `json:"anak"`
+	Status   StatusKeluarga   `json:"status"`
 }
 
 var reAngka = regexp.MustCompile(`^[0-9]*$`)
@@ -70,6 +80,14 @@ func cekNIK(nik string) error {
 	return nil
 }
 
+func strPtr(s string) *string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
 type KeluargaService struct{ repo *repository.KeluargaRepository }
 
 func NewKeluargaService(r *repository.KeluargaRepository) *KeluargaService {
@@ -77,11 +95,21 @@ func NewKeluargaService(r *repository.KeluargaRepository) *KeluargaService {
 }
 
 func (s *KeluargaService) Get(uid uint) (*KeluargaResponse, error) {
-	k, err := s.repo.GetByUser(uid)
+	d, err := s.repo.GetByUser(uid)
 	if err != nil {
 		return nil, err
 	}
-	return &KeluargaResponse{Keluarga: k, Status: k.Status()}, nil
+	st := StatusKeluarga{JumlahAnak: len(d.Anak)}
+	if d.Keluarga != nil {
+		st.ProfilLengkap = d.Keluarga.Alamat != "" && d.Keluarga.RT != "" && d.Keluarga.RW != ""
+	}
+	return &KeluargaResponse{
+		Keluarga: d.Keluarga,
+		Ibu:      d.Ibu,
+		Ayah:     d.Ayah,
+		Anak:     d.Anak,
+		Status:   st,
+	}, nil
 }
 
 func (s *KeluargaService) SimpanProfil(uid uint, in ProfilInput) (*KeluargaResponse, error) {
@@ -93,23 +121,7 @@ func (s *KeluargaService) SimpanProfil(uid uint, in ProfilInput) (*KeluargaRespo
 		return nil, invalid("RT/RW harus angka maksimal 3 digit")
 	}
 
-	k, err := s.repo.GetByUser(uid)
-	if err != nil {
-		return nil, err
-	}
-
-	k.TanpaIbu = in.TanpaIbu
-	k.TglLahirIbu = tglIbu
-	k.PekerjaanIbu = strings.TrimSpace(in.PekerjaanIbu)
-	k.Alamat = strings.TrimSpace(in.Alamat)
-	k.RT = in.RT
-	k.RW = in.RW
-	k.TanpaAyah = in.TanpaAyah
-	
-	// DIHAPUS: k.Posyandu
-	k.Ayah, k.Anak = nil, nil
-
-	var ayah *models.Ayah
+	var ayah *models.OrangTua
 	if !in.TanpaAyah && in.Ayah != nil && strings.TrimSpace(in.Ayah.Nama) != "" {
 		if err := cekNIK(in.Ayah.NIK); err != nil {
 			return nil, err
@@ -118,35 +130,29 @@ func (s *KeluargaService) SimpanProfil(uid uint, in ProfilInput) (*KeluargaRespo
 		if err != nil {
 			return nil, err
 		}
-		ayah = &models.Ayah{
-			Nama:      strings.TrimSpace(in.Ayah.Nama),
-			NIK:       in.Ayah.NIK,
-			TglLahir:  tglAyah,
-			NoHP:      in.Ayah.NoHP,
-			Pekerjaan: strings.TrimSpace(in.Ayah.Pekerjaan),
+		ayah = &models.OrangTua{
+			PeranKeluarga: "ayah",
+			Nama:          strings.TrimSpace(in.Ayah.Nama),
+			NIK:           strPtr(in.Ayah.NIK),
+			TanggalLahir:  tglAyah,
+			NoHP:          strings.TrimSpace(in.Ayah.NoHP),
+			Pekerjaan:     strings.TrimSpace(in.Ayah.Pekerjaan),
 		}
 	}
 
-	if err := s.repo.SimpanProfil(k, ayah); err != nil {
-		return nil, err
-	}
-	return s.Get(uid)
-}
-
-// pastikan baris keluarga sudah ada sebelum menambah anak
-func (s *KeluargaService) pastikanKeluarga(uid uint) (*models.Keluarga, error) {
-	k, err := s.repo.GetByUser(uid)
+	err = s.repo.SimpanProfil(uid, repository.ProfilData{
+		Alamat:       strings.TrimSpace(in.Alamat),
+		RT:           in.RT,
+		RW:           in.RW,
+		TanpaAyah:    in.TanpaAyah,
+		TglLahirIbu:  tglIbu,
+		PekerjaanIbu: strings.TrimSpace(in.PekerjaanIbu),
+		Ayah:         ayah,
+	})
 	if err != nil {
 		return nil, err
 	}
-	if k.ID == 0 {
-		// DIHAPUS: k.Posyandu
-		k.Anak, k.Ayah = nil, nil
-		if err := s.repo.SimpanProfil(k, nil); err != nil {
-			return nil, err
-		}
-	}
-	return k, nil
+	return s.Get(uid)
 }
 
 func buatAnak(in AnakInput) (*models.Anak, error) {
@@ -177,12 +183,12 @@ func buatAnak(in AnakInput) (*models.Anak, error) {
 		return nil, invalid("panjang lahir tidak wajar (30-65 cm)")
 	}
 	return &models.Anak{
-		Nama:         nama,
-		NIK:          in.NIK,
-		TglLahir:     *tgl,
-		JK:           in.JK,
-		BeratLahir:   in.BeratLahir,
-		PanjangLahir: in.PanjangLahir,
+		Nama:           nama,
+		NIK:            strPtr(in.NIK),
+		TanggalLahir:   *tgl,
+		JenisKelamin:   in.JK,
+		BeratLahirKg:   in.BeratLahir,
+		PanjangLahirCm: in.PanjangLahir,
 	}, nil
 }
 
@@ -191,44 +197,44 @@ func (s *KeluargaService) TambahAnak(uid uint, in AnakInput) (*models.Anak, erro
 	if err != nil {
 		return nil, err
 	}
-	k, err := s.pastikanKeluarga(uid)
+	kid, err := s.repo.PastikanKeluarga(uid)
 	if err != nil {
 		return nil, err
 	}
-	a.KeluargaID = k.ID
+	a.KeluargaID = kid
 	if err := s.repo.TambahAnak(a); err != nil {
 		return nil, err
 	}
 	return a, nil
 }
 
-func (s *KeluargaService) UbahAnak(uid, id uint, in AnakInput) (*models.Anak, error) {
+func (s *KeluargaService) UbahAnak(uid uint, id uuid.UUID, in AnakInput) (*models.Anak, error) {
 	a, err := buatAnak(in)
 	if err != nil {
 		return nil, err
 	}
-	k, err := s.repo.GetByUser(uid)
+	d, err := s.repo.GetByUser(uid)
 	if err != nil {
 		return nil, err
 	}
-	if k.ID == 0 {
+	if d.Keluarga == nil {
 		return nil, errors.New("data keluarga belum ada")
 	}
 	a.ID = id
-	a.KeluargaID = k.ID
+	a.KeluargaID = d.Keluarga.ID
 	if err := s.repo.UbahAnak(a); err != nil {
 		return nil, err
 	}
 	return a, nil
 }
 
-func (s *KeluargaService) HapusAnak(uid, id uint) error {
-	k, err := s.repo.GetByUser(uid)
+func (s *KeluargaService) HapusAnak(uid uint, id uuid.UUID) error {
+	d, err := s.repo.GetByUser(uid)
 	if err != nil {
 		return err
 	}
-	if k.ID == 0 {
+	if d.Keluarga == nil {
 		return errors.New("data keluarga belum ada")
 	}
-	return s.repo.HapusAnak(id, k.ID)
+	return s.repo.HapusAnak(id, d.Keluarga.ID)
 }
