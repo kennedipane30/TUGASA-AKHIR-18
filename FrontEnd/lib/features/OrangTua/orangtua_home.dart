@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import 'lengkapi_keluarga_page.dart';
-
-/// Status kehadiran anak pada posyandu terdekat (OT-06).
-enum StatusHadir { belumDaftar, terdaftar, sudahCheckin, tidakHadir }
+import 'orangtua_pendaftaran_page.dart';
 
 // Data kesehatan (pemeriksaan, KMS, imunisasi) belum punya endpoint di backend.
 // Selama false, bagian tersebut menampilkan pesan "belum ada data" dan TIDAK
@@ -145,31 +143,23 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   bool _memuat = true;
   String? _gagal;
 
-  // Status kehadiran per anak (berdasarkan id/UUID anak). Belum tersambung ke server.
-  final Map<String, StatusHadir> _status = {};
-
-  // Jadwal contoh: 3 hari dari sekarang, sehingga pendaftaran sudah dibuka tetapi
-  // check-in belum. Untuk menguji check-in, ubah menjadi Duration(minutes: 30).
-  late final DateTime _jadwal = DateTime.now().add(const Duration(days: 3));
-
-  DateTime get _pendaftaranBuka => _jadwal.subtract(const Duration(days: 7));
-  DateTime get _checkinBuka => _jadwal.subtract(const Duration(hours: 1));
-
-  bool get _bolehDaftar {
-    final n = DateTime.now();
-    return !n.isBefore(_pendaftaranBuka) && n.isBefore(_jadwal);
-  }
-
-  bool get _bolehCheckin {
-    final n = DateTime.now();
-    return !n.isBefore(_checkinBuka) && n.isBefore(_jadwal.add(const Duration(hours: 3)));
-  }
+  // Jadwal terdekat dari server (GET /jadwal/terdekat). Null = tidak ada jadwal aktif.
+  JadwalTerdekatData? _jadwal;
 
   DataAnak? get _anak => _daftar.isEmpty ? null : _daftar[_aktif];
   _Anak get _contoh => _daftarAnak[_aktif % _daftarAnak.length];
-  String get _kunci => _anak?.id ?? '';
-  StatusHadir get _hadir => _status[_kunci] ?? StatusHadir.belumDaftar;
-  void _setHadir(StatusHadir s) => setState(() => _status[_kunci] = s);
+
+  AnakStatusJadwal? get _statusAnak {
+    final a = _anak;
+    final j = _jadwal;
+    if (a == null || j == null) return null;
+    for (final s in j.anak) {
+      if (s.anakId == a.id) return s;
+    }
+    return null;
+  }
+
+  String get _hadir => _statusAnak?.status ?? 'belum_daftar';
 
   @override
   void initState() {
@@ -177,8 +167,15 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     _muat();
   }
 
-  // Ambil daftar anak dari server
+  // Ambil daftar anak dan jadwal terdekat dari server
   Future<void> _muat() async {
+    JadwalTerdekatData? jadwal;
+    try {
+      jadwal = await JadwalTerdekatData.ambil();
+    } catch (_) {
+      jadwal = null;
+    }
+
     try {
       final data = await KeluargaApi.ambil();
       final daftar = ((data['anak'] as List?) ?? [])
@@ -187,6 +184,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       if (!mounted) return;
       setState(() {
         _daftar = daftar;
+        _jadwal = jadwal;
         if (_aktif >= daftar.length) _aktif = 0;
         _gagal = null;
         _memuat = false;
@@ -200,10 +198,12 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     }
   }
 
-  void _pesan(String teks) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(teks)));
+  Future<void> _bukaPendaftaran() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const OrangTuaPendaftaranPage()),
+    );
+    _muat();
   }
 
   @override
@@ -313,7 +313,8 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   // OT-08: kartu anak digital dengan kode QR untuk check-in.
   Widget _kartuDigital() {
     final anak = _anak!;
-    final terdaftar = _hadir != StatusHadir.belumDaftar;
+    final terdaftar = _hadir == 'terdaftar' || _hadir == 'sudah_checkin';
+    final nomor = _statusAnak?.nomorAntrean;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -365,10 +366,13 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                         spacing: 6,
                         runSpacing: 4,
                         children: [
-                          Pill(terdaftar ? 'Antrean #14' : 'Belum terdaftar',
+                          Pill(
+                              terdaftar
+                                  ? (nomor != null ? 'Antrean #$nomor' : 'Terdaftar')
+                                  : 'Belum terdaftar',
                               bg: terdaftar ? AppColors.hijauMuda : AppColors.isiField,
                               fg: terdaftar ? AppColors.hijau : AppColors.teksRedup),
-                          if (_hadir == StatusHadir.sudahCheckin)
+                          if (_hadir == 'sudah_checkin')
                             const Pill('Siap Check-in',
                                 bg: AppColors.hijauMuda,
                                 fg: AppColors.hijau,
@@ -439,15 +443,21 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     );
   }
 
-  // OT-05 dan OT-06: jadwal posyandu, pendaftaran, check-in, batal.
+  // OT-05: info jadwal terdekat. Pendaftaran dan check-in ada di halaman terpisah.
   Widget _jadwalPosyandu() {
-    final selesai = _jadwal.add(const Duration(hours: 3));
-    final (labelStatus, bg, fg) = switch (_hadir) {
-      StatusHadir.belumDaftar => ('Belum daftar', AppColors.isiField, AppColors.teksRedup),
-      StatusHadir.terdaftar => ('Terdaftar', AppColors.biruMuda, AppColors.biru),
-      StatusHadir.sudahCheckin => ('Sudah check-in', AppColors.hijauMuda, AppColors.hijau),
-      StatusHadir.tidakHadir => ('Tidak hadir', AppColors.merahMuda, AppColors.merah),
-    };
+    final j = _jadwal;
+    if (j == null) {
+      return SectionCard(
+        title: 'Jadwal Posyandu Terdekat',
+        icon: Icons.event_note,
+        child: const Text(
+          'Belum ada jadwal posyandu mendatang.',
+          style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+        ),
+      );
+    }
+
+    final (labelStatus, bg, fg) = labelStatusHadir(_hadir);
 
     return SectionCard(
       title: 'Jadwal Posyandu Terdekat',
@@ -456,13 +466,12 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Posyandu Balita Melati - RW 05',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-          const SizedBox(height: 6),
-          Text('${formatTanggal(_jadwal)} · ${formatJam(_jadwal)} - ${formatJam(selesai)} WIB',
-              style: const TextStyle(fontSize: 12.5)),
-          const Text('Balai Warga RW 05',
-              style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+          Text('${formatTanggal(j.tanggal)} · ${j.jam} WIB',
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+          if (j.lokasi.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(j.lokasi, style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+          ],
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(10),
@@ -471,82 +480,21 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              'Pendaftaran dibuka ${formatTanggal(_pendaftaranBuka)}. '
-              'Check-in dibuka 1 jam sebelum mulai (${formatJam(_checkinBuka)}).',
+              [
+                if (j.pendaftaranBuka != null)
+                  'Pendaftaran dibuka ${formatTanggal(j.pendaftaranBuka!)}.',
+                if (j.checkinBuka != null)
+                  'Check-in dibuka 1 jam sebelum mulai (${formatJam(j.checkinBuka!)}).',
+              ].join(' '),
               style: const TextStyle(fontSize: 11.5),
             ),
           ),
           const SizedBox(height: 12),
-          ..._tombolKehadiran(),
-          const SizedBox(height: 8),
-          const Text(
-            'Pendaftaran dan check-in belum tersambung ke server (menyusul pada tahap berikutnya).',
-            style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup),
-          ),
+          AppButton('Buka Pendaftaran & Check-in',
+              icon: Icons.how_to_reg, onPressed: _bukaPendaftaran),
         ],
       ),
     );
-  }
-
-  List<Widget> _tombolKehadiran() {
-    final anak = _anak!;
-    switch (_hadir) {
-      case StatusHadir.belumDaftar:
-        return [
-          AppButton(
-            'Daftarkan ${anak.nama}',
-            icon: Icons.how_to_reg,
-            onPressed: _bolehDaftar
-                ? () {
-                    _setHadir(StatusHadir.terdaftar);
-                    _pesan('Pendaftaran berhasil disimpan');
-                  }
-                : () => _pesan('Pendaftaran belum dibuka atau sudah ditutup'),
-          ),
-        ];
-      case StatusHadir.terdaftar:
-        return [
-          Row(
-            children: [
-              Expanded(
-                child: AppButton(
-                  'Check-in',
-                  icon: Icons.login,
-                  onPressed: _bolehCheckin
-                      ? () {
-                          _setHadir(StatusHadir.sudahCheckin);
-                          _pesan('Check-in berhasil, status berubah hijau');
-                        }
-                      : () => _pesan('Check-in dibuka pukul ${formatJam(_checkinBuka)}'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: AppButton(
-                  'Batalkan',
-                  filled: false,
-                  color: AppColors.merah,
-                  icon: Icons.close,
-                  onPressed: () {
-                    _setHadir(StatusHadir.belumDaftar);
-                    _pesan('Pendaftaran dibatalkan');
-                  },
-                ),
-              ),
-            ],
-          ),
-        ];
-      case StatusHadir.sudahCheckin:
-        return [
-          const Pill('Check-in selesai, menunggu panggilan kader',
-              bg: AppColors.hijauMuda, fg: AppColors.hijau, icon: Icons.check_circle),
-        ];
-      case StatusHadir.tidakHadir:
-        return [
-          const Pill('Anak tidak hadir pada sesi ini',
-              bg: AppColors.merahMuda, fg: AppColors.merah),
-        ];
-    }
   }
 
   // OT-03: hasil pemeriksaan terakhir, status gizi warna, catatan bidan.
@@ -798,7 +746,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       title: 'Aksi Cepat Layanan',
       child: Row(
         children: [
-          item(Icons.calendar_month, 'Jadwal\nPosyandu', () => soon(context, 'Kalender jadwal')),
+          item(Icons.how_to_reg, 'Pendaftaran\nPosyandu', _bukaPendaftaran),
           item(Icons.show_chart, 'Riwayat\nKMS', () => soon(context, 'Riwayat KMS')),
           item(Icons.vaccines, 'Jadwal\nVaksin', () => soon(context, 'Jadwal vaksin')),
           item(Icons.menu_book, 'Buku KIA\nOffline', () => soon(context, 'Buku KIA offline')),
@@ -844,7 +792,6 @@ class _KmsPainter extends CustomPainter {
     final dx = size.width / (n - 1);
     double y(double v) => size.height - (v - minY) / (maxY - minY) * size.height;
 
-    // garis bantu horizontal
     final grid = Paint()
       ..color = const Color(0xFFE5E5EE)
       ..strokeWidth = 1;
@@ -853,7 +800,6 @@ class _KmsPainter extends CustomPainter {
       canvas.drawLine(Offset(0, gy), Offset(size.width, gy), grid);
     }
 
-    // pita hijau
     final pita = Path()..moveTo(0, y(atas[0]));
     for (var i = 1; i < n; i++) {
       pita.lineTo(dx * i, y(atas[i]));
@@ -864,7 +810,6 @@ class _KmsPainter extends CustomPainter {
     pita.close();
     canvas.drawPath(pita, Paint()..color = const Color(0xFFCFEBDD));
 
-    // garis berat badan
     final garis = Paint()
       ..color = AppColors.hijau
       ..strokeWidth = 3

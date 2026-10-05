@@ -505,3 +505,18 @@ func (s *JadwalService) CheckinManual(kaderID uint, pendaftaranID uuid.UUID) (*m
 	}
 	return p, nil
 }
+
+func (s *JadwalService) ScanQR(kaderID uint, jadwalID uuid.UUID, kode string) (*models.Pendaftaran, error) {
+	kode = strings.TrimSpace(kode)
+	if kode == "" {
+		return nil, validasi("kode QR kosong")
+	}
+	a, err := s.repo.GetAnakByKode(kode)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrAnakTidakAda
+	}
+	if err != nil {
+		return nil, err
+	}
+	return s.WalkIn(kaderID, jadwalID, a.ID)
+}

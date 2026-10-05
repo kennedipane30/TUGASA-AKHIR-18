@@ -29,9 +29,11 @@ func (r *JadwalRepository) GetJadwal(id uuid.UUID) (*models.JadwalPosyandu, erro
 	return &j, err
 }
 
+// ListJadwal: jadwal yang tidak dibatalkan.
 func (r *JadwalRepository) ListJadwal() ([]models.JadwalPosyandu, error) {
 	list := []models.JadwalPosyandu{}
-	err := r.db.Order("tanggal DESC, jam_mulai DESC").Find(&list).Error
+	err := r.db.Where("status <> ?", "dibatalkan").
+		Order("tanggal DESC, jam_mulai DESC").Find(&list).Error
 	return list, err
 }
 
@@ -119,4 +121,9 @@ func (r *JadwalRepository) CariAnak(kata string) ([]models.Anak, error) {
 	err := r.db.Where("status = ? AND (LOWER(nama) LIKE ? OR nik = ?)", "aktif", like, kata).
 		Order("nama").Limit(20).Find(&list).Error
 	return list, err
+}
+func (r *JadwalRepository) GetAnakByKode(kode string) (*models.Anak, error) {
+	var a models.Anak
+	err := r.db.Where("kode_qr = ? AND status = ?", kode, "aktif").First(&a).Error
+	return &a, err
 }

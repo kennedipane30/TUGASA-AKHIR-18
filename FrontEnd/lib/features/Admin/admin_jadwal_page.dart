@@ -14,7 +14,7 @@ class JadwalItem {
   final String jamMulai;
   final String jamSelesai;
   final String lokasi;
-  final String status; // terjadwal | dibatalkan | ...
+  final String status;
   final String alasanBatal;
 
   JadwalItem({
@@ -144,6 +144,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
       final r = await ApiClient.dio.get('/jadwal', options: _opsi);
       final list = _ambilList(r.data)
           .map((e) => JadwalItem.fromApi(Map<String, dynamic>.from(e as Map)))
+          .where((j) => j.status != 'dibatalkan')
           .toList();
       if (!mounted) return;
       setState(() {
@@ -184,41 +185,11 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
   }
 
   Future<void> _batalkan(JadwalItem j) async {
-    final c = TextEditingController();
     final alasan = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Batalkan jadwal?'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_tglPanjang(j.tanggal), style: const TextStyle(fontWeight: FontWeight.w700)),
-            const SizedBox(height: 10),
-            TextField(
-              controller: c,
-              maxLines: 2,
-              decoration: _dekor('Alasan pembatalan'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Kembali')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.merah, foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(ctx, c.text.trim()),
-            child: const Text('Batalkan Jadwal'),
-          ),
-        ],
-      ),
+      builder: (_) => _DialogBatal(tanggal: _tglPanjang(j.tanggal)),
     );
-    c.dispose();
     if (alasan == null) return;
-    if (alasan.isEmpty) {
-      _snack('Alasan pembatalan wajib diisi');
-      return;
-    }
     try {
       await ApiClient.dio
           .post('/admin/jadwal/${j.id}/batalkan', data: {'alasan': alasan}, options: _opsi);
@@ -233,8 +204,6 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
   Widget build(BuildContext context) {
     final aktif = _daftar.where((j) => j.aktif).toList()
       ..sort((a, b) => a.tanggal.compareTo(b.tanggal));
-    final riwayat = _daftar.where((j) => !j.aktif).toList()
-      ..sort((a, b) => b.tanggal.compareTo(a.tanggal));
 
     return Scaffold(
       backgroundColor: AppColors.latar,
@@ -311,7 +280,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                   ],
                 ),
               )
-            else ...[
+            else
               SectionCard(
                 title: 'Jadwal Mendatang',
                 icon: Icons.event,
@@ -327,13 +296,6 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                       )
                     : Column(children: [for (final j in aktif) _kartu(j)]),
               ),
-              if (riwayat.isNotEmpty)
-                SectionCard(
-                  title: 'Riwayat & Dibatalkan',
-                  icon: Icons.history,
-                  child: Column(children: [for (final j in riwayat) _kartu(j)]),
-                ),
-            ],
           ],
         ),
       ),
@@ -341,7 +303,6 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
   }
 
   Widget _kartu(JadwalItem j) {
-    final batal = j.status == 'dibatalkan';
     final jam = j.jamSelesai.isEmpty ? j.jamMulai : '${j.jamMulai} - ${j.jamSelesai}';
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -358,11 +319,10 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: batal ? AppColors.merahMuda : AppColors.hijauMuda,
+                  color: AppColors.hijauMuda,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(batal ? Icons.event_busy : Icons.event_available,
-                    color: batal ? AppColors.merah : AppColors.hijau, size: 22),
+                child: const Icon(Icons.event_available, color: AppColors.hijau, size: 22),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -376,10 +336,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                   ],
                 ),
               ),
-              batal
-                  ? const Pill('Dibatalkan', bg: AppColors.merahMuda, fg: AppColors.merah)
-                  : Pill(j.status == 'terjadwal' ? 'Terjadwal' : j.status,
-                      bg: AppColors.hijauMuda, fg: AppColors.hijau),
+              const Pill('Terjadwal', bg: AppColors.hijauMuda, fg: AppColors.hijau),
             ],
           ),
           if (j.lokasi.isNotEmpty) ...[
@@ -392,34 +349,90 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
               ],
             ),
           ],
-          if (batal && j.alasanBatal.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text('Alasan: ${j.alasanBatal}',
-                style: const TextStyle(fontSize: 11.5, color: AppColors.merah)),
-          ],
-          if (j.aktif) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton('Ubah',
-                      icon: Icons.edit_outlined,
-                      filled: false,
-                      onPressed: () => _form(awal: j)),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: AppButton('Batalkan',
-                      icon: Icons.close,
-                      filled: false,
-                      color: AppColors.merah,
-                      onPressed: () => _batalkan(j)),
-                ),
-              ],
-            ),
-          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton('Ubah',
+                    icon: Icons.edit_outlined,
+                    filled: false,
+                    onPressed: () => _form(awal: j)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppButton('Batalkan',
+                    icon: Icons.close,
+                    filled: false,
+                    color: AppColors.merah,
+                    onPressed: () => _batalkan(j)),
+              ),
+            ],
+          ),
         ],
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DIALOG PEMBATALAN
+// ---------------------------------------------------------------------------
+class _DialogBatal extends StatefulWidget {
+  final String tanggal;
+  const _DialogBatal({required this.tanggal});
+
+  @override
+  State<_DialogBatal> createState() => _DialogBatalState();
+}
+
+class _DialogBatalState extends State<_DialogBatal> {
+  final _c = TextEditingController();
+  String? _err;
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Batalkan jadwal?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.tanggal, style: const TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          const Text(
+            'Orang tua yang sudah mendaftar akan menerima pemberitahuan bahwa jadwal diperbarui.',
+            style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _c,
+            maxLines: 2,
+            decoration: _dekor('Alasan pembatalan').copyWith(errorText: _err),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kembali')),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.merah, foregroundColor: Colors.white),
+          onPressed: () {
+            final t = _c.text.trim();
+            if (t.isEmpty) {
+              setState(() => _err = 'Alasan wajib diisi');
+              return;
+            }
+            Navigator.pop(context, t);
+          },
+          child: const Text('Batalkan Jadwal'),
+        ),
+      ],
     );
   }
 }

@@ -19,24 +19,28 @@ func Setup(db *gorm.DB) *gin.Engine {
 	jadwalRepo := repository.NewJadwalRepository(db)
 	pelayananRepo := repository.NewPelayananRepository(db)
 
-	// handler (service dibuat di sini)
+	// service
+	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
+
+	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
 	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo))
-	jadwalH := handler.NewJadwalHandler(service.NewJadwalService(jadwalRepo, keluargaRepo))
+	jadwalH := handler.NewJadwalHandler(jadwalSvc)
+	scanH := handler.NewKaderScanHandler(jadwalSvc)
 	pelayananH := handler.NewPelayananHandler(service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo))
 
 	api := r.Group("/api/v1")
 	api.POST("/auth/register", authH.Register)
 	api.POST("/auth/login", authH.Login)
 
-	// ----------------------------------------------------------- semua role (sudah login)
+	// semua role (sudah login)
 	protected := api.Group("/", middleware.AuthRequired())
 	protected.GET("/auth/me", authH.Me)
 	protected.GET("/jadwal", jadwalH.List)
 	protected.GET("/jadwal/terdekat", jadwalH.Terdekat)
 	protected.GET("/vaksin", pelayananH.ListVaksin)
 
-	// ----------------------------------------------------------- admin: kelola akun dan jadwal
+	// admin
 	admin := protected.Group("/admin", middleware.RoleRequired("admin"))
 	admin.POST("/users", authH.CreateStaff)
 	admin.GET("/users", authH.ListStaff)
@@ -47,8 +51,13 @@ func Setup(db *gorm.DB) *gin.Engine {
 	admin.PUT("/jadwal/:id", jadwalH.Ubah)
 	admin.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
 
-	// ----------------------------------------------------------- orang tua
+	// orang tua
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
+	ortu.GET("/keluarga/saya", keluargaH.Get)
+	ortu.PUT("/keluarga/saya", keluargaH.SimpanProfil)
+	ortu.POST("/keluarga/saya/anak", keluargaH.TambahAnak)
+	ortu.PUT("/keluarga/saya/anak/:id", keluargaH.UbahAnak)
+	ortu.DELETE("/keluarga/saya/anak/:id", keluargaH.HapusAnak)
 	ortu.GET("/keluarga", keluargaH.Get)
 	ortu.PUT("/keluarga", keluargaH.SimpanProfil)
 	ortu.POST("/keluarga/anak", keluargaH.TambahAnak)
@@ -59,15 +68,16 @@ func Setup(db *gorm.DB) *gin.Engine {
 	ortu.POST("/jadwal/:id/checkin", jadwalH.Checkin)
 	ortu.GET("/riwayat", pelayananH.Riwayat)
 
-	// ----------------------------------------------------------- kader
+	// kader
 	kader := protected.Group("/kader", middleware.RoleRequired("kader"))
 	kader.GET("/anak", jadwalH.CariAnak)
 	kader.POST("/jadwal/:id/walkin", jadwalH.WalkIn)
+	kader.POST("/jadwal/:id/scan", scanH.Scan)
 	kader.POST("/pendaftaran/:id/checkin", jadwalH.CheckinManual)
 	kader.GET("/jadwal/:id/antrean", pelayananH.AntreanKader)
 	kader.PUT("/pendaftaran/:id/pengukuran", pelayananH.CatatPengukuran)
 
-	// ----------------------------------------------------------- bidan
+	// bidan
 	bidan := protected.Group("/bidan", middleware.RoleRequired("bidan"))
 	bidan.GET("/jadwal/:id/pengukuran", pelayananH.AntreanBidan)
 	bidan.GET("/pendaftaran/:id", pelayananH.DetailBidan)
