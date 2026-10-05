@@ -28,6 +28,15 @@ func Connect() (*gorm.DB, error) {
 		&models.Keluarga{},
 		&models.Ayah{},
 		&models.Anak{},
+
+		// BARU: jadwal, pendaftaran, pengukuran, catatan bidan
+		&models.JenisVaksin{},
+		&models.JadwalPosyandu{},
+		&models.Pendaftaran{},
+		&models.Pengukuran{},
+		&models.PemeriksaanBidan{},
+		&models.ImunisasiAnak{},
+		&models.SuplemenAnak{},
 	); err != nil {
 		return nil, err
 	}
