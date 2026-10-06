@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
+import 'buku_panduan_page.dart';
 import 'lengkapi_keluarga_page.dart';
 import 'orangtua_pendaftaran_page.dart';
 
@@ -205,6 +206,13 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       MaterialPageRoute(builder: (_) => const OrangTuaPendaftaranPage()),
     );
     _muat();
+  }
+
+  void _bukaBukuPanduan() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const BukuPanduanPage()),
+    );
   }
 
   @override
@@ -579,8 +587,8 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: () => soon(context, 'Buku KIA digital'),
-              child: const Text('Lihat Lengkap Buku KIA Digital →',
+              onPressed: _bukaBukuPanduan,
+              child: const Text('Buka Buku Panduan →',
                   style: TextStyle(color: AppColors.hijau, fontWeight: FontWeight.w700)),
             ),
           ),
@@ -756,7 +764,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           item(Icons.how_to_reg, 'Pendaftaran\nPosyandu', _bukaPendaftaran),
           item(Icons.show_chart, 'Riwayat\nKMS', () => soon(context, 'Riwayat KMS')),
           item(Icons.vaccines, 'Jadwal\nVaksin', () => soon(context, 'Jadwal vaksin')),
-          item(Icons.menu_book, 'Buku KIA\nOffline', () => soon(context, 'Buku KIA offline')),
+          item(Icons.menu_book, 'Buku\nPanduan', _bukaBukuPanduan),
         ],
       ),
     );
