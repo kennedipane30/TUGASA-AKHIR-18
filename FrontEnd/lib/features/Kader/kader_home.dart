@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
+import 'kader_scan_page.dart';
 
 /// Penanda status data pengukuran (KD-04 poin 7).
 enum StatusData { draft, lokal, sinkron, terverifikasi }
@@ -215,6 +216,11 @@ class _KaderHomeState extends State<KaderHome> {
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        AppButton('Scan Kehadiran Anak',
+            icon: Icons.qr_code_scanner,
+            onPressed: () => Navigator.push(
+                context, MaterialPageRoute(builder: (_) => const KaderScanPage()))),
         const SizedBox(height: 12),
 
         // Catatan dari bidan (KD-07 poin 2)

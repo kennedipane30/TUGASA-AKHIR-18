@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
@@ -343,14 +344,17 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
             ),
             child: Row(
               children: [
-                // Ganti Icon ini dengan QrImageView(data: id anak) dari package qr_flutter.
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.black12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.qr_code_2, size: 76),
+                  child: QrImageView(
+                    data: anak.kodeQr.isEmpty ? 'PSY-${anak.id}' : anak.kodeQr,
+                    size: 76,
+                    padding: EdgeInsets.zero,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -397,12 +401,15 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                     context: context,
                     builder: (ctx) => AlertDialog(
                       title: Text(anak.nama),
-                      content: const Column(
+                      content: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.qr_code_2, size: 220),
-                          SizedBox(height: 8),
-                          Text('Tunjukkan kode ini kepada kader di Meja 1'),
+                          QrImageView(
+                            data: anak.kodeQr.isEmpty ? 'PSY-${anak.id}' : anak.kodeQr,
+                            size: 220,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('Tunjukkan kode ini kepada kader di Meja 1'),
                         ],
                       ),
                       actions: [

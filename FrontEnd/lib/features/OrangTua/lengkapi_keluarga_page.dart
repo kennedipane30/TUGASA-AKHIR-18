@@ -13,10 +13,12 @@ import '../auth/auth_provider.dart';
 // ---------------------------------------------------------------------------
 class DataAnak {
   String? id; // UUID
+  String kodeQr;
   String nama, nik, tglLahir, jk, beratLahir, panjangLahir; // tglLahir: dd/mm/yyyy
 
   DataAnak({
     this.id,
+    this.kodeQr = '',
     this.nama = '',
     this.nik = '',
     this.tglLahir = '',
@@ -27,6 +29,7 @@ class DataAnak {
 
   factory DataAnak.fromApi(Map<String, dynamic> j) => DataAnak(
         id: j['id']?.toString(),
+        kodeQr: j['kode_qr']?.toString() ?? '',
         nama: j['nama']?.toString() ?? '',
         nik: j['nik']?.toString() ?? '',
         tglLahir: _dariApi(j['tanggal_lahir']),
