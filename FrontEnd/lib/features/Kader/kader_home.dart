@@ -64,6 +64,13 @@ class _KaderHomeState extends State<KaderHome> {
     });
   }
 
+  void _bukaScan() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const KaderScanPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final belum = _target - _checkin;
@@ -185,8 +192,7 @@ class _KaderHomeState extends State<KaderHome> {
               Row(
                 children: [
                   Expanded(
-                    child: _aksiPutih(Icons.qr_code_scanner, 'Scan QR',
-                        () => soon(context, 'Pemindai QR')),
+                    child: _aksiPutih(Icons.qr_code_scanner, 'Scan QR', _bukaScan),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -216,11 +222,6 @@ class _KaderHomeState extends State<KaderHome> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        AppButton('Scan Kehadiran Anak',
-            icon: Icons.qr_code_scanner,
-            onPressed: () => Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const KaderScanPage()))),
         const SizedBox(height: 12),
 
         // Catatan dari bidan (KD-07 poin 2)
