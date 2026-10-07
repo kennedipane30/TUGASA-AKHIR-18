@@ -18,9 +18,11 @@ func Setup(db *gorm.DB) *gin.Engine {
 	keluargaRepo := repository.NewKeluargaRepository(db)
 	jadwalRepo := repository.NewJadwalRepository(db)
 	pelayananRepo := repository.NewPelayananRepository(db)
+	vaksinRepo := repository.NewVaksinRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
+	vaksinSvc := service.NewVaksinService(vaksinRepo)
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
@@ -29,6 +31,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	jadwalH := handler.NewJadwalHandler(jadwalSvc)
 	scanH := handler.NewKaderScanHandler(jadwalSvc)
 	pelayananH := handler.NewPelayananHandler(service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo))
+	vaksinH := handler.NewVaksinHandler(vaksinSvc)
 
 	api := r.Group("/api/v1")
 	api.POST("/auth/register", authH.Register)
@@ -37,11 +40,21 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// semua role (sudah login)
 	protected := api.Group("/", middleware.AuthRequired())
 	protected.GET("/auth/me", authH.Me)
-	protected.POST("/auth/ubah-sandi", pinH.UbahSandi) // BARU
+	protected.POST("/auth/ubah-sandi", pinH.UbahSandi)                                              // BARU
 	protected.POST("/users/:id/reset-pin", middleware.RoleRequired("admin", "kader"), pinH.ResetPIN) // BARU
 	protected.GET("/jadwal", jadwalH.List)
 	protected.GET("/jadwal/terdekat", jadwalH.Terdekat)
 	protected.GET("/vaksin", pelayananH.ListVaksin)
+
+	// fitur vaksin (bidan: kelola; bidan, kader, orang tua: lihat rencana & riwayat)
+	vaksin := protected.Group("/vaksin", middleware.RoleRequired("bidan", "kader", "orang_tua"))
+	vaksin.GET("/master", middleware.RoleRequired("bidan"), vaksinH.ListJadwalMaster)
+	vaksin.POST("/rencana", middleware.RoleRequired("bidan"), vaksinH.BuatRencana)
+	vaksin.PUT("/rencana/:id", middleware.RoleRequired("bidan"), vaksinH.UbahRencana)
+	vaksin.PATCH("/rencana/:id/batal", middleware.RoleRequired("bidan"), vaksinH.BatalkanRencana)
+	vaksin.POST("/riwayat", middleware.RoleRequired("bidan"), vaksinH.CatatRiwayat)
+	vaksin.GET("/anak/:anak_id/rencana", vaksinH.ListRencanaAnak)
+	vaksin.GET("/anak/:anak_id/riwayat", vaksinH.ListRiwayatAnak)
 
 	// admin
 	admin := protected.Group("/admin", middleware.RoleRequired("admin"))
