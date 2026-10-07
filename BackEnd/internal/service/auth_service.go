@@ -23,11 +23,14 @@ type RegisterInput struct {
 	Nama     string `json:"nama" binding:"required"`
 	NIK      string `json:"nik" binding:"required,len=16,numeric"`
 	NoHP     string `json:"no_hp" binding:"required,min=10,max=15"`
-	Password string `json:"password" binding:"required,min=6"`
+	Password string `json:"password" binding:"required,len=6,numeric"` // PIN 6 digit
 }
 
 // Role selalu orang_tua, tidak diambil dari input client
 func (s *AuthService) RegisterOrangTua(in RegisterInput) (*models.User, error) {
+	if err := utils.ValidasiPIN(in.Password); err != nil {
+		return nil, ErrPin{err.Error()}
+	}
 	if s.repo.Exists("nik", in.NIK) || s.repo.Exists("no_hp", in.NoHP) {
 		return nil, ErrDuplicate
 	}

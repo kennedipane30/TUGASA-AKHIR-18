@@ -24,6 +24,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
+	pinH := handler.NewPinHandler(service.NewPinService(userRepo)) // BARU: login PIN
 	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo))
 	jadwalH := handler.NewJadwalHandler(jadwalSvc)
 	scanH := handler.NewKaderScanHandler(jadwalSvc)
@@ -31,11 +32,13 @@ func Setup(db *gorm.DB) *gin.Engine {
 
 	api := r.Group("/api/v1")
 	api.POST("/auth/register", authH.Register)
-	api.POST("/auth/login", authH.Login)
+	api.POST("/auth/login", pinH.Login) // BARU: sebelumnya authH.Login
 
 	// semua role (sudah login)
 	protected := api.Group("/", middleware.AuthRequired())
 	protected.GET("/auth/me", authH.Me)
+	protected.POST("/auth/ubah-sandi", pinH.UbahSandi) // BARU
+	protected.POST("/users/:id/reset-pin", middleware.RoleRequired("admin", "kader"), pinH.ResetPIN) // BARU
 	protected.GET("/jadwal", jadwalH.List)
 	protected.GET("/jadwal/terdekat", jadwalH.Terdekat)
 	protected.GET("/vaksin", pelayananH.ListVaksin)

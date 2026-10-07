@@ -25,6 +25,8 @@ type User struct {
 	UkuranHuruf        string     `gorm:"size:10;default:normal" json:"ukuran_huruf"`
 	IsActive           bool       `gorm:"default:true" json:"is_active"`
 	MustChangePassword bool       `json:"must_change_password"`
+	GagalLogin         int        `gorm:"default:0" json:"-"`
+	TerkunciSampai     *time.Time `json:"-"`
 	TerakhirLogin      *time.Time `json:"terakhir_login,omitempty"`
 	DiarsipkanPada     *time.Time `json:"diarsipkan_pada,omitempty"`
 	CreatedAt          time.Time  `json:"created_at"`

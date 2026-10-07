@@ -1,3 +1,4 @@
+// lib/features/auth/auth_service.dart
 import 'package:dio/dio.dart';
 import '../../core/api_client.dart';
 import '../../core/token_storage.dart';
@@ -61,6 +62,15 @@ class AuthService {
         'password': password,
         'role': role,
       });
+    } on DioException catch (e) {
+      throw Exception(_pesanError(e));
+    }
+  }
+
+  Future<void> ubahSandi(String lama, String baru) async {
+    try {
+      await ApiClient.dio.post('/auth/ubah-sandi',
+          data: {'sandi_lama': lama, 'sandi_baru': baru});
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }

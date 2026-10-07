@@ -1,6 +1,8 @@
+// lib/features/auth/register_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/pin_util.dart';
 import 'auth_service.dart';
 
 const _hijau = Color(0xFF0B6B4D);
@@ -291,8 +293,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             onPressed: () => setState(() => _hidePin = !_hidePin),
                           ),
                         ),
-                        validator: (v) =>
-                            (v == null || v.length != 6) ? 'PIN harus 6 digit angka' : null,
+                        validator: (v) => validasiPin(v ?? ''),
                       ),
                       const Padding(
                         padding: EdgeInsets.only(top: 2),

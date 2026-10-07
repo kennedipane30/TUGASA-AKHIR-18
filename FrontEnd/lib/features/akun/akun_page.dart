@@ -1,9 +1,11 @@
+// lib/features/akun/akun_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../auth/auth_provider.dart';
+import '../auth/ubah_sandi_page.dart';
 
 class AkunPage extends StatelessWidget {
   const AkunPage({super.key});
@@ -90,7 +92,10 @@ class AkunPage extends StatelessWidget {
                   leading: const Icon(Icons.lock_outline, color: AppColors.hijau),
                   title: const Text('Ubah Kata Sandi'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => soon(context, 'Ubah kata sandi'),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const UbahSandiPage()),
+                  ),
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,

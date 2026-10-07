@@ -1,3 +1,4 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,6 +14,7 @@ import 'features/OrangTua/orangtua_home.dart';
 import 'features/akun/akun_page.dart';
 import 'features/auth/auth_provider.dart';
 import 'features/auth/login_page.dart';
+import 'features/auth/ubah_sandi_page.dart';
 
 void main() {
   runApp(
@@ -62,6 +64,8 @@ class MyApp extends StatelessWidget {
     Widget home;
     if (!auth.initialized) {
       home = const Scaffold(body: Center(child: CircularProgressIndicator()));
+    } else if (auth.user != null && auth.user!['must_change_password'] == true) {
+      home = const UbahSandiPage();
     } else {
       switch (auth.role) {
         case 'admin':
