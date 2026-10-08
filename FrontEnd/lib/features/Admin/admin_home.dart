@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'admin_jadwal_page.dart';
+import 'jadwal/admin_jadwal_page.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../auth/auth_provider.dart';
-import 'create_staff_page.dart';
-import 'admin_kelola_akun_page.dart';
-import 'admin_vaksin_page.dart';
+import 'akun/create_staff_page.dart';
+import 'akun/admin_kelola_akun_page.dart';
+import 'vaksin/admin_vaksin_page.dart';
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});

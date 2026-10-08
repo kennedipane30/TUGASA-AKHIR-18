@@ -1,19 +1,25 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
-import 'buku_panduan_page.dart';
-import 'lengkapi_keluarga_page.dart';
-import 'orangtua_pendaftaran_page.dart';
-import 'orangtua_vaksin_page.dart';
+import '../auth/auth_provider.dart';
+import 'bukupanduan/buku_panduan_page.dart';
+import 'kartu digital/kartu_digital_page.dart';
+import 'datadiri/lengkapi_keluarga_page.dart';
+import 'pendaftaran/orangtua_pendaftaran_page.dart';
+import 'vaksin/orangtua_vaksin_page.dart';
 
 // Data kesehatan (pemeriksaan, KMS, imunisasi) belum punya endpoint di backend.
-// Selama false, bagian tersebut menampilkan pesan "belum ada data" dan TIDAK
+// Selama false, halaman Pemeriksaan menampilkan pesan "belum ada data" dan TIDAK
 // memakai data contoh di bawah. Ubah menjadi true hanya untuk keperluan demo.
 bool get _tampilDataContoh => false;
+
+// Warna aksen
+const _oranye = Color(0xFFFF7A1A);
+const _hijauTua = Color(0xFF0B4A38);
 
 // ---------------------------------------------------------------------------
 // DATA CONTOH (khusus bagian kesehatan, belum tersambung ke API)
@@ -131,6 +137,10 @@ String _usiaAnak(String tgl) {
   return bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
 }
 
+const _namaHari = [
+  'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu',
+];
+
 class OrangTuaHome extends StatefulWidget {
   const OrangTuaHome({super.key});
 
@@ -152,14 +162,19 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   DataAnak? get _anak => _daftar.isEmpty ? null : _daftar[_aktif];
   _Anak get _contoh => _daftarAnak[_aktif % _daftarAnak.length];
 
-  AnakStatusJadwal? get _statusAnak {
-    final a = _anak;
+  AnakStatusJadwal? _statusAnakDari(DataAnak a) {
     final j = _jadwal;
-    if (a == null || j == null) return null;
+    if (j == null) return null;
     for (final s in j.anak) {
       if (s.anakId == a.id) return s;
     }
     return null;
+  }
+
+  AnakStatusJadwal? get _statusAnak {
+    final a = _anak;
+    if (a == null) return null;
+    return _statusAnakDari(a);
   }
 
   String get _hadir => _statusAnak?.status ?? 'belum_daftar';
@@ -223,6 +238,78 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     );
   }
 
+  // Halaman terpisah: Kartu Digital Anak (pilih satu anak bila lebih dari satu).
+  void _bukaKartuDigital() {
+    if (_daftar.isEmpty) {
+      soon(context, 'Kartu digital (belum ada data anak)');
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KartuDigitalPage(
+          daftar: _daftar,
+          awal: _aktif,
+          status: (a) => _statusAnakDari(a)?.status ?? 'belum_daftar',
+          nomor: (a) => _statusAnakDari(a)?.nomorAntrean,
+        ),
+      ),
+    );
+  }
+
+  // Halaman terpisah: Hasil Pemeriksaan.
+  void _bukaPemeriksaan() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: AppColors.latar,
+          appBar: AppBar(
+            title: const Text('Hasil Pemeriksaan'),
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black87,
+            elevation: 0,
+          ),
+          body: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              if (_tampilDataContoh && _daftar.isNotEmpty) ...[
+                _hasilTerakhir(),
+                _grafikKms(),
+                _imunisasi(),
+                _riwayatKunjungan(),
+              ] else
+                _belumAdaPemeriksaan(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Halaman terpisah: Data Keluarga (menggantikan kartu "Data keluarga sudah lengkap").
+  Future<void> _bukaDataKeluarga() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: AppColors.latar,
+          appBar: AppBar(
+            title: const Text('Data Keluarga'),
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black87,
+            elevation: 0,
+          ),
+          body: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [KartuLengkapiKeluarga(onKembali: _muat)],
+          ),
+        ),
+      ),
+    );
+    _muat();
+  }
+
   @override
   Widget build(BuildContext context) {
     return HomeShell(
@@ -230,7 +317,6 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       lokasi: 'Posyandu Melati RW 05',
       notif: 2,
       children: [
-        KartuLengkapiKeluarga(onKembali: _muat),
         if (_memuat)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
@@ -242,17 +328,8 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           _kartuBelumAdaAnak()
         else ...[
           _pilihAnak(),
-          _kartuDigital(),
           _jadwalPosyandu(),
-          if (_tampilDataContoh) ...[
-            _hasilTerakhir(),
-            _grafikKms(),
-            _imunisasi(),
-            _riwayatKunjungan(),
-          ] else
-            _belumAdaPemeriksaan(),
-          _kartuVaksin(),
-          _aksiCepat(),
+          _layananPosyandu(),
         ],
       ],
     );
@@ -285,9 +362,20 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     return SectionCard(
       title: 'Data Anak',
       icon: Icons.child_care,
-      child: const Text(
-        'Belum ada data anak. Tambahkan lewat "Lengkapi Data Keluarga" di atas.',
-        style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Belum ada data anak. Lengkapi data keluarga terlebih dahulu.',
+            style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: AppButton('Lengkapi Data Keluarga',
+                icon: Icons.family_restroom, onPressed: _bukaDataKeluarga),
+          ),
+        ],
       ),
     );
   }
@@ -299,29 +387,6 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       child: const Text(
         'Belum ada data pemeriksaan. Berat badan, tinggi badan, grafik KMS, dan imunisasi akan muncul setelah anak diperiksa di posyandu.',
         style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
-      ),
-    );
-  }
-
-  // Pintasan ke halaman rencana dan riwayat vaksin (hanya lihat).
-  Widget _kartuVaksin() {
-    return SectionCard(
-      title: 'Vaksin Anak',
-      icon: Icons.vaccines_outlined,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Lihat jadwal vaksin berikutnya yang ditetapkan bidan dan riwayat vaksin yang sudah diterima anak.',
-            style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: AppButton('Lihat Rencana & Riwayat Vaksin',
-                icon: Icons.event_available_outlined, onPressed: _bukaVaksin),
-          ),
-        ],
       ),
     );
   }
@@ -351,194 +416,258 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     );
   }
 
-  // OT-08: kartu anak digital dengan kode QR untuk check-in.
-  Widget _kartuDigital() {
-    final anak = _anak!;
-    final terdaftar = _hadir == 'terdaftar' || _hadir == 'sudah_checkin';
-    final nomor = _statusAnak?.nomorAntrean;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.hijau,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.badge_outlined, color: Colors.white, size: 18),
-              SizedBox(width: 8),
-              Text('KARTU DIGITAL ANAK POSYANDU',
-                  style: TextStyle(
-                      color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: QrImageView(
-                    data: anak.kodeQr.isEmpty ? 'PSY-${anak.id}' : anak.kodeQr,
-                    size: 76,
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Nama Lengkap Anak',
-                          style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
-                      Text(anak.nama,
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          Pill(
-                              terdaftar
-                                  ? (nomor != null ? 'Antrean #$nomor' : 'Terdaftar')
-                                  : 'Belum terdaftar',
-                              bg: terdaftar ? AppColors.hijauMuda : AppColors.isiField,
-                              fg: terdaftar ? AppColors.hijau : AppColors.teksRedup),
-                          if (_hadir == 'sudah_checkin')
-                            const Pill('Siap Check-in',
-                                bg: AppColors.hijauMuda,
-                                fg: AppColors.hijau,
-                                icon: Icons.check_circle),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      const Text('Perlihatkan barcode ini ke Meja 1 Pendaftaran saat tiba di balai.',
-                          style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _tombolKartu(Icons.zoom_out_map, 'Perbesar', () {
-                  showDialog<void>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: Text(anak.nama),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          QrImageView(
-                            data: anak.kodeQr.isEmpty ? 'PSY-${anak.id}' : anak.kodeQr,
-                            size: 220,
-                          ),
-                          const SizedBox(height: 8),
-                          const Text('Tunjukkan kode ini kepada kader di Meja 1'),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                            onPressed: () => Navigator.pop(ctx), child: const Text('Tutup')),
-                      ],
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _tombolKartu(
-                    Icons.picture_as_pdf, 'Unduh PDF', () => soon(context, 'Unduh ringkasan PDF')),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _tombolKartu(Icons.share, 'Bagikan', () => soon(context, 'Bagikan kartu')),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tombolKartu(IconData icon, String label, VoidCallback onTap) {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: const BorderSide(color: Colors.white54),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-      onPressed: onTap,
-      icon: Icon(icon, size: 15),
-      label: Text(label, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
-    );
-  }
-
-  // OT-05: info jadwal terdekat. Pendaftaran dan check-in ada di halaman terpisah.
+  // OT-05: kartu jadwal terdekat (nama user, nama anak, jadwal).
   Widget _jadwalPosyandu() {
     final j = _jadwal;
+    final namaUser =
+        (context.watch<AuthProvider>().user?['nama'] ?? '').toString();
+    final anak = _anak;
+
+    final dekorasi = BoxDecoration(
+      borderRadius: BorderRadius.circular(22),
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [AppColors.hijau, _hijauTua],
+      ),
+    );
+
+    Widget kepala(Widget? kanan) => Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    namaUser.isEmpty ? 'Halo, Bunda' : 'Halo, $namaUser',
+                    style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    anak?.nama ?? '-',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800),
+                  ),
+                ],
+              ),
+            ),
+            if (kanan != null) kanan,
+          ],
+        );
+
     if (j == null) {
-      return SectionCard(
-        title: 'Jadwal Posyandu Terdekat',
-        icon: Icons.event_note,
-        child: const Text(
-          'Belum ada jadwal posyandu mendatang.',
-          style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: dekorasi,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            kepala(null),
+            const SizedBox(height: 14),
+            const Text('Jadwal Posyandu Terdekat',
+                style: TextStyle(
+                    color: Color(0xFF9FF0D0),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            const Text('Belum ada jadwal posyandu mendatang.',
+                style: TextStyle(color: Colors.white, fontSize: 13)),
+          ],
         ),
       );
     }
 
     final (labelStatus, bg, fg) = labelStatusHadir(_hadir);
+    final hariIni = DateTime.now();
+    final selisih = DateTime(j.tanggal.year, j.tanggal.month, j.tanggal.day)
+        .difference(DateTime(hariIni.year, hariIni.month, hariIni.day))
+        .inDays;
+    final hitung = selisih <= 0 ? 'HARI INI' : 'H-$selisih HARI';
+    final hari = _namaHari[j.tanggal.weekday - 1];
 
-    return SectionCard(
-      title: 'Jadwal Posyandu Terdekat',
-      icon: Icons.event_note,
-      trailing: Pill(labelStatus, bg: bg, fg: fg),
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: dekorasi,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('${formatTanggal(j.tanggal)} · ${j.jam} WIB',
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-          if (j.lokasi.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(j.lokasi, style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
-          ],
+          kepala(Pill(labelStatus, bg: bg, fg: fg)),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text('Jadwal Posyandu Terdekat',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700)),
+              ),
+              const Spacer(),
+              Text(hitung,
+                  style: const TextStyle(
+                      color: Color(0xFF9FF0D0),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800)),
+            ],
+          ),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.kuningMuda,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
+          Text(j.lokasi.isNotEmpty ? j.lokasi : 'Posyandu',
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(Icons.access_time, color: Colors.white70, size: 16),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '$hari, ${formatTanggal(j.tanggal)} • ${j.jam} WIB',
+                  style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                ),
+              ),
+            ],
+          ),
+          if (j.pendaftaranBuka != null || j.checkinBuka != null) ...[
+            const SizedBox(height: 10),
+            Text(
               [
                 if (j.pendaftaranBuka != null)
                   'Pendaftaran dibuka ${formatTanggal(j.pendaftaranBuka!)}.',
                 if (j.checkinBuka != null)
                   'Check-in dibuka 1 jam sebelum mulai (${formatJam(j.checkinBuka!)}).',
               ].join(' '),
-              style: const TextStyle(fontSize: 11.5),
+              style: const TextStyle(color: Color(0xFF9FF0D0), fontSize: 11.5),
+            ),
+          ],
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _oranye,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+              ),
+              onPressed: _bukaPendaftaran,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Buka Pendaftaran & Check-in',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward, size: 18),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          AppButton('Buka Pendaftaran & Check-in',
-              icon: Icons.how_to_reg, onPressed: _bukaPendaftaran),
+        ],
+      ),
+    );
+  }
+
+  // Layanan Posyandu: deretan ikon menu (4 per baris).
+  Widget _layananPosyandu() {
+    final menu = <(IconData, String, Color, Color, VoidCallback)>[
+      (Icons.how_to_reg, 'Pendaftaran\nPosyandu', const Color(0xFFD3F5E8),
+          AppColors.hijau, _bukaPendaftaran),
+      (Icons.badge_outlined, 'Kartu\nDigital', const Color(0xFFD6F7F1),
+          const Color(0xFF0E8F7E), _bukaKartuDigital),
+      (Icons.monitor_heart_outlined, 'Hasil\nPemeriksaan',
+          const Color(0xFFFFE3D3), _oranye, _bukaPemeriksaan),
+      (Icons.show_chart, 'KMS\nDigital', const Color(0xFFE1E4FF),
+          const Color(0xFF4F5BD5), () => soon(context, 'Riwayat KMS')),
+      (Icons.vaccines, 'Vaksin\nAnak', const Color(0xFFFFE3D3), _oranye,
+          _bukaVaksin),
+      (Icons.menu_book, 'Buku\nPanduan', const Color(0xFFE1E4FF),
+          const Color(0xFF4F5BD5), _bukaBukuPanduan),
+      (Icons.family_restroom, 'Data\nKeluarga', const Color(0xFFD3F5E8),
+          AppColors.hijau, _bukaDataKeluarga),
+    ];
+
+    Widget item((IconData, String, Color, Color, VoidCallback) m) => Expanded(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: m.$5,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(color: m.$3, shape: BoxShape.circle),
+                    child: Icon(m.$1, color: m.$4),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(m.$2,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 11, fontWeight: FontWeight.w800)),
+                ],
+              ),
+            ),
+          ),
+        );
+
+    final baris = <Widget>[];
+    for (var i = 0; i < menu.length; i += 4) {
+      final potong = menu.sublist(i, math.min(i + 4, menu.length));
+      baris.add(Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final m in potong) item(m),
+            for (var k = potong.length; k < 4; k++)
+              const Expanded(child: SizedBox()),
+          ],
+        ),
+      ));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(2, 4, 2, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text('Layanan Posyandu',
+                      style:
+                          TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                ),
+                Text('Layanan Utama',
+                    style: TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+              ],
+            ),
+          ),
+          ...baris,
         ],
       ),
     );
@@ -757,46 +886,6 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => soon(context, 'Detail pemeriksaan'),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _aksiCepat() {
-    Widget item(IconData icon, String label, VoidCallback onTap) => Expanded(
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.hijauMuda,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(icon, color: AppColors.hijau),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(label,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                ],
-              ),
-            ),
-          ),
-        );
-
-    return SectionCard(
-      title: 'Aksi Cepat Layanan',
-      child: Row(
-        children: [
-          item(Icons.how_to_reg, 'Pendaftaran\nPosyandu', _bukaPendaftaran),
-          item(Icons.show_chart, 'Riwayat\nKMS', () => soon(context, 'Riwayat KMS')),
-          item(Icons.vaccines, 'Jadwal\nVaksin', _bukaVaksin),
-          item(Icons.menu_book, 'Buku\nPanduan', _bukaBukuPanduan),
         ],
       ),
     );

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
+import '../../../core/app_colors.dart';
+import '../../../core/common_widgets.dart';
 import 'vaksin_model.dart';
-import '../../service/vaksin_service.dart';
+import '../../../service/vaksin_service.dart';
 
 /// Isi halaman vaksin (hanya lihat): rencana vaksin dan riwayat vaksin satu anak.
 class VaksinLihatBody extends StatefulWidget {

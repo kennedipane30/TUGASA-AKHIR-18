@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
-import 'kader_scan_page.dart';
-import 'kader_vaksin_page.dart';
+import 'pendaftaran/kader_scan_page.dart';
+import 'vaksin/kader_vaksin_page.dart';
 
 /// Penanda status data pengukuran (KD-04 poin 7).
 enum StatusData { draft, lokal, sinkron, terverifikasi }

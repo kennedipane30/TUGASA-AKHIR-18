@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
+import '../../../core/app_colors.dart';
+import '../../../core/common_widgets.dart';
 
 /// Kartu pintasan fitur vaksin di halaman home. [tujuan] adalah halaman yang dibuka.
 class VaksinRingkasanCard extends StatelessWidget {

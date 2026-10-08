@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/api_client.dart';
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
+import '../../../core/api_client.dart';
+import '../../../core/app_colors.dart';
+import '../../../core/common_widgets.dart';
 
 // ---------------------------------------------------------------------------
 // MODEL

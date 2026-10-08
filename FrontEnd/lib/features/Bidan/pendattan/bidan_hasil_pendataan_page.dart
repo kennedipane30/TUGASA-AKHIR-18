@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
-import 'bidan_vaksin_anak_page.dart';
+import '../../../core/app_colors.dart';
+import '../../../core/common_widgets.dart';
+import '../vaksin/bidan_vaksin_anak_page.dart';
 
 class _Hasil {
   final String anakId;

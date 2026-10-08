@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_colors.dart';
-import '../Bidan/vaksin_lihat_body.dart';
+import '../../../core/app_colors.dart';
+import '../../Bidan/vaksin/vaksin_lihat_body.dart';
 
 /// Halaman vaksin (hanya lihat) untuk satu anak yang sudah dipilih.
 class VaksinAnakLihatPage extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
+import '../../../core/app_colors.dart';
+import '../../../core/common_widgets.dart';
 
 class KaderPendataanPage extends StatelessWidget {
   const KaderPendataanPage({super.key});

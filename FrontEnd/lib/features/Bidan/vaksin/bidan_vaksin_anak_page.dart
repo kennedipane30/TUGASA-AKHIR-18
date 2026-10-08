@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
+import '../../../core/app_colors.dart';
+import '../../../core/common_widgets.dart';
 import 'bidan_vaksin_form_page.dart';
 import 'vaksin_model.dart';
-import '../../service/vaksin_service.dart';
+import '../../../service/vaksin_service.dart';
 
 /// Halaman vaksin per anak untuk bidan: rencana vaksin dan riwayat vaksin.
 class BidanVaksinAnakPage extends StatefulWidget {

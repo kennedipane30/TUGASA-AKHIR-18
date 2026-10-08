@@ -1,4 +1,4 @@
-import '../Bidan/vaksin_model.dart';
+import '../../Bidan/vaksin/vaksin_model.dart';
 
 class VaksinStatistikItem {
   final VaksinJenis vaksin;

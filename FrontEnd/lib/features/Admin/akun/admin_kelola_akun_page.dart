@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
-import 'admin_service.dart';
+import '../../../core/app_colors.dart';
+import '../../../core/common_widgets.dart';
+import '../admin_service.dart';
 
 class AdminKelolaAkunPage extends StatefulWidget {
   /// true jika halaman dibuka lewat Navigator.push (menu Aksi Cepat).

@@ -4,12 +4,12 @@ import 'package:provider/provider.dart';
 
 import 'core/role_home_scaffold.dart';
 import 'features/Admin/admin_home.dart';
-import 'features/Admin/admin_kelola_akun_page.dart';
-import 'features/Bidan/bidan_hasil_pendataan_page.dart';
+import 'features/Admin/akun/admin_kelola_akun_page.dart';
+import 'features/Bidan/pendattan/bidan_hasil_pendataan_page.dart';
 import 'features/Bidan/bidan_home.dart';
 import 'features/Kader/kader_home.dart';
-import 'features/Kader/kader_pendataan_page.dart';
-import 'features/OrangTua/orangtua_grafik_page.dart';
+import 'features/Kader/pendataan/kader_pendataan_page.dart';
+import 'features/OrangTua/riwayat/orangtua_grafik_page.dart';
 import 'features/OrangTua/orangtua_home.dart';
 import 'features/akun/akun_page.dart';
 import 'features/auth/auth_provider.dart';

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import '../../core/api_client.dart';
+import '../../../core/api_client.dart';
 import 'vaksin_model.dart';
 
 class VaksinService {

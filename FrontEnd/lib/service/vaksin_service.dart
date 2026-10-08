@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 
 import '../core/api_client.dart';
-import '../features/Admin/admin_vaksin_model.dart';
-import '../features/Bidan/vaksin_model.dart';
+import '../features/Admin/vaksin/admin_vaksin_model.dart';
+import '../features/Bidan/vaksin/vaksin_model.dart';
 
 /// Ringkasan data anak untuk daftar pilihan (orang tua dan kader).
 class AnakRingkas {

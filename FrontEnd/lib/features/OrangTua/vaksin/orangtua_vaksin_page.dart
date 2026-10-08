@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
-import '../../service/vaksin_service.dart';
-import '../Bidan/vaksin_lihat_body.dart';
+import '../../../core/app_colors.dart';
+import '../../../core/common_widgets.dart';
+import '../../../service/vaksin_service.dart';
+import '../../Bidan/vaksin/vaksin_lihat_body.dart';
 
 /// Orang tua: lihat rencana dan riwayat vaksin anak sendiri.
 class OrangTuaVaksinPage extends StatefulWidget {

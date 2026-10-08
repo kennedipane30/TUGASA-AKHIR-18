@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
-import '../../service/vaksin_service.dart';
+import '../../../core/app_colors.dart';
+import '../../../core/common_widgets.dart';
+import '../../../service/vaksin_service.dart';
 import 'admin_vaksin_model.dart';
 
 /// Admin: jumlah vaksin yang sudah diberikan dan jenis-jenis vaksin.

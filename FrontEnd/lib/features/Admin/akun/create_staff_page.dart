@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../auth/auth_service.dart';
+import '../../auth/auth_service.dart';
 
 class CreateStaffPage extends StatefulWidget {
   const CreateStaffPage({super.key});
