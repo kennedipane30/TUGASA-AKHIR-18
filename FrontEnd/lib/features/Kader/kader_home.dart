@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import 'kader_scan_page.dart';
+import 'kader_vaksin_page.dart';
 
 /// Penanda status data pengukuran (KD-04 poin 7).
 enum StatusData { draft, lokal, sinkron, terverifikasi }
@@ -68,6 +69,13 @@ class _KaderHomeState extends State<KaderHome> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const KaderScanPage()),
+    );
+  }
+
+  void _bukaVaksin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const KaderVaksinPage()),
     );
   }
 
@@ -220,6 +228,10 @@ class _KaderHomeState extends State<KaderHome> {
               child: _aksiKecil(Icons.person_add_alt_1, 'Daftar\nBalita Baru',
                   () => soon(context, 'Pendataan balita baru')),
             ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _aksiKecil(Icons.vaccines_outlined, 'Jadwal &\nRiwayat Vaksin', _bukaVaksin),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -263,6 +275,27 @@ class _KaderHomeState extends State<KaderHome> {
                 ),
               ),
               for (final a in _antrean) _barisAntrean(a),
+            ],
+          ),
+        ),
+
+        // Vaksin anak (hanya lihat)
+        SectionCard(
+          title: 'Vaksin Anak',
+          icon: Icons.vaccines_outlined,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Cari anak untuk melihat rencana vaksin yang ditetapkan bidan dan riwayat vaksin yang sudah diterima.',
+                style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: AppButton('Lihat Rencana & Riwayat Vaksin',
+                    icon: Icons.event_available_outlined, onPressed: _bukaVaksin),
+              ),
             ],
           ),
         ),

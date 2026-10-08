@@ -66,6 +66,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	admin.POST("/jadwal", jadwalH.Buat)
 	admin.PUT("/jadwal/:id", jadwalH.Ubah)
 	admin.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
+	vaksinStatRepo := repository.NewVaksinStatistikRepository(db)
+	vaksinStatH := handler.NewVaksinStatistikHandler(service.NewVaksinStatistikService(vaksinStatRepo))
 
 	// orang tua
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))

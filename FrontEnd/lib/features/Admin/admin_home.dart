@@ -6,6 +6,7 @@ import '../../core/common_widgets.dart';
 import '../auth/auth_provider.dart';
 import 'create_staff_page.dart';
 import 'admin_kelola_akun_page.dart';
+import 'admin_vaksin_page.dart';
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});
@@ -44,6 +45,13 @@ class _AdminHomeState extends State<AdminHome> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text('$judul diproses (contoh tampilan)')));
+  }
+
+  void _bukaVaksin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AdminVaksinPage()),
+    );
   }
 
   @override
@@ -85,7 +93,7 @@ class _AdminHomeState extends State<AdminHome> {
         SectionCard(
           title: 'Aksi Cepat Admin',
           icon: Icons.bolt,
-          trailing: const Pill('6 Menu Utama', bg: AppColors.biruMuda, fg: AppColors.biru),
+          trailing: const Pill('7 Menu Utama', bg: AppColors.biruMuda, fg: AppColors.biru),
           child: GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -106,11 +114,13 @@ class _AdminHomeState extends State<AdminHome> {
                   onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const AdminJadwalPage()))),
+              _menu(Icons.vaccines_outlined, 'Data Vaksin', 'Jumlah & jenis vaksin',
+                  _bukaVaksin),
               _menu(Icons.campaign_outlined, 'Pengumuman', 'Siaran ke pengguna',
                   () => soon(context, 'Pengumuman')),
               _menu(Icons.family_restroom, 'Data Keluarga', 'Orang tua & balita',
                   () => soon(context, 'Data orang tua dan balita')),
-              _menu(Icons.dataset_outlined, 'Data Master', 'Vaksin, standar gizi, wilayah',
+              _menu(Icons.dataset_outlined, 'Data Master', 'Standar gizi, wilayah',
                   () => soon(context, 'Data master')),
               _menu(Icons.summarize_outlined, 'Laporan', 'Rekap dan ekspor',
                   () => soon(context, 'Laporan')),
@@ -152,6 +162,27 @@ class _AdminHomeState extends State<AdminHome> {
               const SizedBox(height: 10),
               const Text('Laki-laki 178 (51%)  ·  Perempuan 170 (49%)',
                   style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+            ],
+          ),
+        ),
+
+        // Data vaksin: jumlah vaksin diberikan dan jenis vaksin
+        SectionCard(
+          title: 'Data Vaksin',
+          icon: Icons.vaccines_outlined,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Lihat jumlah vaksin yang sudah diberikan dan jenis-jenis vaksin.',
+                style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: AppButton('Lihat Data Vaksin',
+                    icon: Icons.bar_chart, onPressed: _bukaVaksin),
+              ),
             ],
           ),
         ),

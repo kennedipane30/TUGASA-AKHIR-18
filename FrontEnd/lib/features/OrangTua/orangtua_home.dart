@@ -8,6 +8,7 @@ import '../../core/common_widgets.dart';
 import 'buku_panduan_page.dart';
 import 'lengkapi_keluarga_page.dart';
 import 'orangtua_pendaftaran_page.dart';
+import 'orangtua_vaksin_page.dart';
 
 // Data kesehatan (pemeriksaan, KMS, imunisasi) belum punya endpoint di backend.
 // Selama false, bagian tersebut menampilkan pesan "belum ada data" dan TIDAK
@@ -215,6 +216,13 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     );
   }
 
+  void _bukaVaksin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const OrangTuaVaksinPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return HomeShell(
@@ -243,6 +251,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
             _riwayatKunjungan(),
           ] else
             _belumAdaPemeriksaan(),
+          _kartuVaksin(),
           _aksiCepat(),
         ],
       ],
@@ -290,6 +299,29 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       child: const Text(
         'Belum ada data pemeriksaan. Berat badan, tinggi badan, grafik KMS, dan imunisasi akan muncul setelah anak diperiksa di posyandu.',
         style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+      ),
+    );
+  }
+
+  // Pintasan ke halaman rencana dan riwayat vaksin (hanya lihat).
+  Widget _kartuVaksin() {
+    return SectionCard(
+      title: 'Vaksin Anak',
+      icon: Icons.vaccines_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Lihat jadwal vaksin berikutnya yang ditetapkan bidan dan riwayat vaksin yang sudah diterima anak.',
+            style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: AppButton('Lihat Rencana & Riwayat Vaksin',
+                icon: Icons.event_available_outlined, onPressed: _bukaVaksin),
+          ),
+        ],
       ),
     );
   }
@@ -763,7 +795,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
         children: [
           item(Icons.how_to_reg, 'Pendaftaran\nPosyandu', _bukaPendaftaran),
           item(Icons.show_chart, 'Riwayat\nKMS', () => soon(context, 'Riwayat KMS')),
-          item(Icons.vaccines, 'Jadwal\nVaksin', () => soon(context, 'Jadwal vaksin')),
+          item(Icons.vaccines, 'Jadwal\nVaksin', _bukaVaksin),
           item(Icons.menu_book, 'Buku\nPanduan', _bukaBukuPanduan),
         ],
       ),

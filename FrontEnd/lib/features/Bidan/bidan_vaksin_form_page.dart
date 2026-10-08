@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import 'vaksin_model.dart';
-import 'vaksin_service.dart';
+import '../../service/vaksin_service.dart';
 
 /// Form jadwalkan vaksin baru (rencana == null) atau ubah jadwal (rencana != null).
 class BidanVaksinFormPage extends StatefulWidget {
