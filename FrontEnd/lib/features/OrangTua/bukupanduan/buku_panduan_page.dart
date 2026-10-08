@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/app_colors.dart';
-import '../../../core/common_widgets.dart';
+// ---------------------------------------------------------------------------
+// WARNA
+// ---------------------------------------------------------------------------
+const _hijauTua = Color(0xFF0F5B45);
+const _hijau = Color(0xFF138A63);
+const _hijauMuda = Color(0xFFE9F6EF);
+const _hijauGaris = Color(0xFFCFE9DA);
+const _latar = Color(0xFFF5F9F6);
+const _teks = Color(0xFF1F2A37);
+const _teksRedup = Color(0xFF6B7280);
+const _merah = Color(0xFFD64545);
+const _merahMuda = Color(0xFFFDECEC);
+const _biru = Color(0xFF2F63D8);
+const _biruMuda = Color(0xFFEAF0FD);
+const _biruGaris = Color(0xFFA9C0F2);
+const _oranyeMuda = Color(0xFFFFE9C7);
+const _oranye = Color(0xFFB45309);
 
 // ---------------------------------------------------------------------------
 // MODEL MATERI (sumber: Buku KIA 2024, disimpan di aplikasi, bisa dibaca offline)
@@ -21,6 +36,14 @@ class _Bab {
   final List<_Blok> isi;
   const _Bab(this.judul, this.ringkasan, this.ikon, this.isi);
 
+  bool get darurat => ikon == Icons.warning_amber_rounded;
+
+  int get menitBaca {
+    final kata = isi.map((b) => b.teks).join(' ').split(RegExp(r'\s+')).length;
+    final m = (kata / 200).ceil();
+    return m < 1 ? 1 : m;
+  }
+
   String get teksCari => '$judul $ringkasan ${isi.map((b) => b.teks).join(' ')}'.toLowerCase();
 }
 
@@ -29,11 +52,30 @@ const _par = _Jenis.paragraf;
 const _pnt = _Jenis.poin;
 const _pen = _Jenis.penting;
 
+const List<String> _kategori = [
+  'Semua Materi',
+  'Masa Hamil',
+  'Nifas & Menyusui',
+  'Bayi Baru Lahir',
+  'Balita & Anak',
+  'Keluarga',
+];
+
+int _kategoriDari(int i) {
+  if (i <= 7) return 1;
+  if (i <= 13) return 2;
+  if (i <= 17) return 3;
+  if (i <= 27) return 4;
+  return 5;
+}
+
+final Set<int> _tersimpan = <int>{};
+
 const List<_Bab> _daftarBab = [
   // ========================= PERJALANAN IBU =========================
   _Bab(
     '1000 Hari Pertama & Kehamilan',
-    'Masa paling penting bagi tumbuh kembang anak',
+    'Masa paling krusial untuk tumbuh kembang anak',
     Icons.pregnant_woman,
     [
       _Blok(_par,
@@ -160,7 +202,7 @@ const List<_Bab> _daftarBab = [
   ),
   _Bab(
     'Tanda Bahaya pada Kehamilan',
-    'Kapan ibu hamil harus segera ke Puskesmas atau rumah sakit',
+    'Kondisi darurat wajib segera ke faskes',
     Icons.warning_amber_rounded,
     [
       _Blok(_pen,
@@ -197,7 +239,7 @@ const List<_Bab> _daftarBab = [
   ),
   _Bab(
     'Perawatan Sehari-hari Ibu Hamil',
-    'Kebiasaan baik dan hal yang perlu dihindari',
+    'Pola istirahat, gizi seimbang, & aktivitas',
     Icons.self_improvement,
     [
       _Blok(_sub, 'Perawatan sehari-hari'),
@@ -1104,6 +1146,8 @@ class BukuPanduanPage extends StatefulWidget {
 class _BukuPanduanPageState extends State<BukuPanduanPage> {
   final _cari = TextEditingController();
   String _kata = '';
+  int _filter = 0;
+  bool _hanyaTersimpan = false;
 
   @override
   void dispose() {
@@ -1116,44 +1160,91 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
     final q = _kata.trim().toLowerCase();
     final hasil = <int>[
       for (var i = 0; i < _daftarBab.length; i++)
-        if (q.isEmpty || _daftarBab[i].teksCari.contains(q)) i,
+        if ((_filter == 0 || _kategoriDari(i) == _filter) &&
+            (!_hanyaTersimpan || _tersimpan.contains(i)) &&
+            (q.isEmpty || _daftarBab[i].teksCari.contains(q)))
+          i,
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.latar,
+      backgroundColor: _latar,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: _teks),
+          onPressed: () => Navigator.maybePop(context),
+        ),
         title: const Text('Buku Panduan',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _teks)),
+        actions: [
+          IconButton(
+            tooltip: 'Materi tersimpan',
+            icon: Icon(_hanyaTersimpan ? Icons.bookmark : Icons.bookmark_border,
+                color: _hanyaTersimpan ? _hijau : _teks),
+            onPressed: () => setState(() => _hanyaTersimpan = !_hanyaTersimpan),
+          ),
+          IconButton(
+            tooltip: 'Tersedia offline',
+            icon: const Icon(Icons.file_download_outlined, color: _teks),
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Seluruh materi sudah tersimpan di perangkat dan dapat dibaca offline.')),
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          SectionCard(
-            color: AppColors.hijauMuda,
-            child: const Row(
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _hijauMuda,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _hijauGaris),
+            ),
+            child: Row(
               children: [
-                Icon(Icons.menu_book, color: AppColors.hijau),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Materi mengacu pada Buku KIA 2024 untuk orang tua. Dapat dibaca kapan saja tanpa internet.',
-                    style: TextStyle(fontSize: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: _hijauGaris),
+                  ),
+                  child: const Icon(Icons.menu_book_outlined, color: _hijauTua, size: 20),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      style: TextStyle(fontSize: 11.5, height: 1.4, color: _teks),
+                      children: [
+                        TextSpan(text: 'Materi mengacu pada '),
+                        TextSpan(text: 'Buku KIA 2024 resmi', style: TextStyle(fontWeight: FontWeight.w800)),
+                        TextSpan(text: ' Kementerian Kesehatan. Dapat dibaca lengkap tanpa koneksi internet.'),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 12),
           TextField(
             controller: _cari,
             onChanged: (v) => setState(() => _kata = v),
+            style: const TextStyle(fontSize: 13),
             decoration: InputDecoration(
-              hintText: 'Cari materi, misalnya "MP-ASI" atau "demam"',
-              prefixIcon: const Icon(Icons.search),
+              hintText: 'Cari materi atau keluhan kesehatan...',
+              hintStyle: const TextStyle(fontSize: 13, color: _teksRedup),
+              prefixIcon: const Icon(Icons.search, color: _teksRedup),
               suffixIcon: _kata.isEmpty
-                  ? null
+                  ? const Icon(Icons.tune, color: _teksRedup, size: 20)
                   : IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(Icons.close, color: _teksRedup),
                       onPressed: () {
                         _cari.clear();
                         setState(() => _kata = '');
@@ -1161,19 +1252,55 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                     ),
               filled: true,
               fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFE3E8E5)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: _hijau),
               ),
             ),
           ),
           const SizedBox(height: 12),
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _kategori.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, k) {
+                final aktif = _filter == k;
+                return GestureDetector(
+                  onTap: () => setState(() => _filter = k),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: aktif ? _hijauTua : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: aktif ? _hijauTua : const Color(0xFFE3E8E5)),
+                    ),
+                    child: Text(
+                      _kategori[k],
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: aktif ? Colors.white : _teks,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 14),
           if (hasil.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Center(
-                child: Text('Materi tidak ditemukan',
-                    style: TextStyle(color: AppColors.teksRedup)),
+                child: Text('Materi tidak ditemukan', style: TextStyle(color: _teksRedup)),
               ),
             )
           else
@@ -1185,51 +1312,82 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
 
   Widget _kartuBab(int i) {
     final b = _daftarBab[i];
-    final darurat = b.ikon == Icons.warning_amber_rounded;
+    final darurat = b.darurat;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: darurat ? const Color(0xFFF6CFCF) : _hijauGaris),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0F000000), blurRadius: 6, offset: Offset(0, 2)),
+        ],
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => BacaBabPage(indeks: i)),
-        ),
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => BacaBabPage(indeks: i)),
+          );
+          if (mounted) setState(() {});
+        },
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
-                  color: darurat ? AppColors.merahMuda : AppColors.hijauMuda,
-                  borderRadius: BorderRadius.circular(12),
+                  color: darurat ? _merahMuda : _hijauMuda,
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(b.ikon,
-                    color: darurat ? AppColors.merah : AppColors.hijau, size: 26),
+                child: Icon(b.ikon, color: darurat ? _merah : _hijauTua, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Bab ${i + 1}',
-                        style: const TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.teksRedup)),
+                    Row(
+                      children: [
+                        Text('BAB ${i + 1}',
+                            style: const TextStyle(
+                                fontSize: 10,
+                                letterSpacing: 0.5,
+                                fontWeight: FontWeight.w700,
+                                color: _teksRedup)),
+                        if (darurat) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: _merahMuda,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text('Penting',
+                                style: TextStyle(
+                                    fontSize: 9.5, fontWeight: FontWeight.w700, color: _merah)),
+                          ),
+                        ],
+                        if (_tersimpan.contains(i)) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.bookmark, size: 12, color: _hijau),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
                     Text(b.judul,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 14, color: _teks)),
                     const SizedBox(height: 2),
                     Text(b.ringkasan,
-                        style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                        style: const TextStyle(fontSize: 11.5, color: _teksRedup)),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.teksRedup),
+              const Icon(Icons.chevron_right, color: _teksRedup),
             ],
           ),
         ),
@@ -1269,31 +1427,101 @@ class _BacaBabPageState extends State<BacaBabPage> {
     final b = _daftarBab[_i];
     final ada = _i > 0;
     final lanjut = _i < _daftarBab.length - 1;
+    final simpan = _tersimpan.contains(_i);
 
     return Scaffold(
-      backgroundColor: AppColors.latar,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text('Bab ${_i + 1} dari ${_daftarBab.length}',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: _teks),
+          onPressed: () => Navigator.pop(context),
+        ),
+        titleSpacing: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(color: _hijau, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 5),
+                const Text('BUKU KIA ELEKTRONIK',
+                    style: TextStyle(
+                        fontSize: 9.5,
+                        letterSpacing: 0.6,
+                        fontWeight: FontWeight.w800,
+                        color: _hijau)),
+              ],
+            ),
+            const SizedBox(height: 1),
+            Text('Bab ${_i + 1} dari ${_daftarBab.length}',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: _teks)),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(simpan ? Icons.bookmark : Icons.bookmark_border,
+                color: simpan ? _hijau : _teks),
+            onPressed: () => setState(() {
+              if (simpan) {
+                _tersimpan.remove(_i);
+              } else {
+                _tersimpan.add(_i);
+              }
+            }),
+          ),
+        ],
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
-          color: Colors.white,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFEDF0EE))),
+          ),
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           child: Row(
             children: [
               Expanded(
-                child: AppButton('Sebelumnya',
-                    icon: Icons.chevron_left,
-                    filled: false,
-                    onPressed: ada ? () => _pindah(_i - 1) : () {}),
+                child: OutlinedButton.icon(
+                  onPressed: ada ? () => _pindah(_i - 1) : null,
+                  icon: const Icon(Icons.chevron_left, size: 20),
+                  label: const Text('Sebelumnya',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _teks,
+                    minimumSize: const Size.fromHeight(46),
+                    side: const BorderSide(color: Color(0xFFD9DFDB)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  ),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: AppButton(lanjut ? 'Berikutnya' : 'Selesai',
-                    icon: lanjut ? Icons.chevron_right : Icons.check,
-                    onPressed: lanjut ? () => _pindah(_i + 1) : () => Navigator.pop(context)),
+                child: ElevatedButton(
+                  onPressed: lanjut ? () => _pindah(_i + 1) : () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _hijauTua,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size.fromHeight(46),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(lanjut ? 'Berikutnya' : 'Selesai',
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      const SizedBox(width: 4),
+                      Icon(lanjut ? Icons.chevron_right : Icons.check, size: 20),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -1301,111 +1529,345 @@ class _BacaBabPageState extends State<BacaBabPage> {
       ),
       body: ListView(
         controller: _scroll,
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.hijau,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(b.ikon, color: AppColors.hijau, size: 28),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(b.judul,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 17)),
-                      const SizedBox(height: 2),
-                      Text(b.ringkasan,
-                          style: const TextStyle(color: Colors.white70, fontSize: 11.5)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          SectionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [for (final blok in b.isi) _tampil(blok)],
-            ),
-          ),
+          _header(b),
+          const SizedBox(height: 16),
+          ..._bangun(b.isi, b.darurat),
+          const SizedBox(height: 8),
           const Text(
             'Materi ini bersumber dari Buku KIA 2024, bersifat informasi umum, dan tidak menggantikan saran bidan atau dokter.',
-            style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup),
+            style: TextStyle(fontSize: 10.5, color: _teksRedup, height: 1.4),
           ),
         ],
       ),
     );
   }
 
-  Widget _tampil(_Blok b) {
-    switch (b.jenis) {
-      case _Jenis.subjudul:
-        return Padding(
-          padding: const EdgeInsets.only(top: 8, bottom: 6),
-          child: Text(b.teks,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.hijau)),
-        );
-      case _Jenis.paragraf:
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(b.teks, style: const TextStyle(fontSize: 13, height: 1.5)),
-        );
-      case _Jenis.poin:
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: Row(
+  Widget _header(_Bab b) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: b.darurat ? const Color(0xFF9F2D2D) : _hijauTua,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 6, right: 8),
-                child: Icon(Icons.circle, size: 6, color: AppColors.hijau),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(b.ikon, color: b.darurat ? _merah : _hijauTua, size: 26),
               ),
+              const SizedBox(width: 12),
               Expanded(
-                child: Text(b.teks, style: const TextStyle(fontSize: 13, height: 1.5)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(b.judul,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 17,
+                            height: 1.25)),
+                    const SizedBox(height: 4),
+                    Text(b.ringkasan,
+                        style: const TextStyle(color: Colors.white70, fontSize: 11.5, height: 1.3)),
+                  ],
+                ),
               ),
             ],
           ),
-        );
-      case _Jenis.penting:
-        return Container(
-          width: double.infinity,
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.kuningMuda,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 14),
+          Row(
             children: [
-              const Icon(Icons.lightbulb_outline, size: 18, color: AppColors.kuning),
+              _lencana(Icons.schedule, '${b.menitBaca} Menit Baca'),
+              const SizedBox(width: 8),
+              _lencana(Icons.offline_pin_outlined, 'Offline Ready'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _lencana(IconData ikon, String teks) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(ikon, size: 13, color: Colors.white),
+          const SizedBox(width: 5),
+          Text(teks,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+
+  // ----- Pembangun isi -----
+  bool _adalahChecklist(String t) {
+    final s = t.toLowerCase();
+    return s.startsWith('yang harus') || s.contains('persiapan') || s.startsWith('yang perlu dilakukan');
+  }
+
+  List<Widget> _bangun(List<_Blok> isi, bool darurat) {
+    final out = <Widget>[];
+    var i = 0;
+    while (i < isi.length) {
+      final b = isi[i];
+      switch (b.jenis) {
+        case _Jenis.paragraf:
+          out.add(Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text.rich(
+              _rich(b.teks, const TextStyle(fontSize: 13.5, height: 1.6, color: _teks)),
+            ),
+          ));
+          i++;
+          break;
+        case _Jenis.penting:
+          out.add(_pesan(b.teks, darurat));
+          i++;
+          break;
+        case _Jenis.subjudul:
+          final items = <String>[];
+          var j = i + 1;
+          while (j < isi.length && isi[j].jenis == _Jenis.poin) {
+            items.add(isi[j].teks);
+            j++;
+          }
+          out.add(_adalahChecklist(b.teks) && items.isNotEmpty
+              ? _kotakCek(b.teks, items)
+              : _bagian(b.teks, items));
+          i = j;
+          break;
+        case _Jenis.poin:
+          final items = <String>[];
+          var j = i;
+          while (j < isi.length && isi[j].jenis == _Jenis.poin) {
+            items.add(isi[j].teks);
+            j++;
+          }
+          out.add(_bagian(null, items));
+          i = j;
+          break;
+      }
+    }
+    return out;
+  }
+
+  Widget _bagian(String? judul, List<String> items) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (judul != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: _hijau,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(judul,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 14.5, color: _teks)),
+                  ),
+                ],
+              ),
+            ),
+          for (final t in items)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 7),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 7, right: 9, left: 2),
+                    child: Icon(Icons.circle, size: 6, color: _hijau),
+                  ),
+                  Expanded(
+                    child: Text.rich(
+                      _poin(t, const TextStyle(fontSize: 13.5, height: 1.55, color: _teks)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _kotakCek(String judul, List<String> items) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1FAF5),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFB9E1C9)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.check_box, color: _hijau, size: 20),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(b.teks,
+                child: Text(judul.toUpperCase(),
                     style: const TextStyle(
-                        fontSize: 12.5, fontWeight: FontWeight.w700, height: 1.4)),
+                        fontSize: 12,
+                        letterSpacing: 0.4,
+                        fontWeight: FontWeight.w800,
+                        color: _hijauTua)),
               ),
             ],
           ),
-        );
+          const SizedBox(height: 10),
+          for (final t in items)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 1, right: 8),
+                    child: Icon(Icons.check_box, size: 17, color: _hijau),
+                  ),
+                  Expanded(
+                    child: Text.rich(
+                      _poin(t, const TextStyle(fontSize: 13, height: 1.5, color: _teks)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _pesan(String teks, bool darurat) {
+    final warna = darurat ? _merah : _biru;
+    final muda = darurat ? _merahMuda : _biruMuda;
+    final garis = darurat ? const Color(0xFFF1B5B5) : _biruGaris;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: garis),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(darurat ? Icons.warning_amber_rounded : Icons.medical_information_outlined,
+                  color: warna, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(darurat ? 'PERHATIAN' : 'PESAN PENTING',
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        letterSpacing: 0.4,
+                        fontWeight: FontWeight.w800,
+                        color: warna)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: muda,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('Standar Kemenkes RI',
+                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: warna)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text('"$teks"',
+              style: const TextStyle(
+                  fontSize: 13, height: 1.55, fontStyle: FontStyle.italic, color: _teks)),
+        ],
+      ),
+    );
+  }
+
+  // ----- Pemformatan teks -----
+  static final RegExp _pola = RegExp(
+    r'(stunting(?: \(tubuh pendek\))?)|(\d[\d.,\-/]*(?:\s?(?:hari|kg|cm|gram|kali|bulan|minggu|jam|menit|ml|porsi|tahun|derajat C|kkal|detik|gelas|sendok teh|sendok makan|mangkuk|g)\b)?)',
+    caseSensitive: false,
+  );
+
+  InlineSpan _rich(String teks, TextStyle dasar) {
+    final spans = <InlineSpan>[];
+    var akhir = 0;
+    for (final m in _pola.allMatches(teks)) {
+      if (m.start > akhir) {
+        spans.add(TextSpan(text: teks.substring(akhir, m.start)));
+      }
+      if (m.group(1) != null) {
+        spans.add(TextSpan(
+          text: m.group(1),
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: _oranye,
+            backgroundColor: _oranyeMuda,
+          ),
+        ));
+      } else {
+        spans.add(TextSpan(
+          text: m.group(2),
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ));
+      }
+      akhir = m.end;
     }
+    if (akhir < teks.length) spans.add(TextSpan(text: teks.substring(akhir)));
+    return TextSpan(style: dasar, children: spans);
+  }
+
+  InlineSpan _poin(String teks, TextStyle dasar) {
+    final k = teks.indexOf(': ');
+    if (k > 0 && k <= 45) {
+      return TextSpan(
+        style: dasar,
+        children: [
+          TextSpan(
+            text: teks.substring(0, k + 1),
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          _rich(teks.substring(k + 1), dasar),
+        ],
+      );
+    }
+    return _rich(teks, dasar);
   }
 }
