@@ -19,10 +19,12 @@ func Setup(db *gorm.DB) *gin.Engine {
 	jadwalRepo := repository.NewJadwalRepository(db)
 	pelayananRepo := repository.NewPelayananRepository(db)
 	vaksinRepo := repository.NewVaksinRepository(db)
+	vaksinStatRepo := repository.NewVaksinStatistikRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
 	vaksinSvc := service.NewVaksinService(vaksinRepo)
+	vaksinStatSvc := service.NewVaksinStatistikService(vaksinStatRepo)
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
@@ -32,6 +34,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	scanH := handler.NewKaderScanHandler(jadwalSvc)
 	pelayananH := handler.NewPelayananHandler(service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo))
 	vaksinH := handler.NewVaksinHandler(vaksinSvc)
+	vaksinStatH := handler.NewVaksinStatistikHandler(vaksinStatSvc)
 
 	api := r.Group("/api/v1")
 	api.POST("/auth/register", authH.Register)
@@ -47,14 +50,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	protected.GET("/vaksin", pelayananH.ListVaksin)
 
 	// fitur vaksin (bidan: kelola; bidan, kader, orang tua: lihat rencana & riwayat)
-	vaksin := protected.Group("/vaksin", middleware.RoleRequired("bidan", "kader", "orang_tua"))
-	vaksin.GET("/master", middleware.RoleRequired("bidan"), vaksinH.ListJadwalMaster)
-	vaksin.POST("/rencana", middleware.RoleRequired("bidan"), vaksinH.BuatRencana)
-	vaksin.PUT("/rencana/:id", middleware.RoleRequired("bidan"), vaksinH.UbahRencana)
-	vaksin.PATCH("/rencana/:id/batal", middleware.RoleRequired("bidan"), vaksinH.BatalkanRencana)
-	vaksin.POST("/riwayat", middleware.RoleRequired("bidan"), vaksinH.CatatRiwayat)
-	vaksin.GET("/anak/:anak_id/rencana", vaksinH.ListRencanaAnak)
-	vaksin.GET("/anak/:anak_id/riwayat", vaksinH.ListRiwayatAnak)
+	RegisterVaksinRoutes(protected, vaksinH)
 
 	// admin
 	admin := protected.Group("/admin", middleware.RoleRequired("admin"))
@@ -66,8 +62,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	admin.POST("/jadwal", jadwalH.Buat)
 	admin.PUT("/jadwal/:id", jadwalH.Ubah)
 	admin.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
-	vaksinStatRepo := repository.NewVaksinStatistikRepository(db)
-	vaksinStatH := handler.NewVaksinStatistikHandler(service.NewVaksinStatistikService(vaksinStatRepo))
+	admin.GET("/vaksin/statistik", vaksinStatH.Statistik)
 
 	// orang tua
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
