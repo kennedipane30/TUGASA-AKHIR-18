@@ -45,16 +45,21 @@ class AntreanKader {
         sudahDicatatBidan: j['sudah_dicatat_bidan'] == true,
       );
 
-  /// GET /kader/jadwal/:id/antrean (anak yang sudah check-in lewat scan orang tua).
+  String get kodeNomor => nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
+
+  /// GET /kader/jadwal/:id/antrean (anak yang sudah check-in lewat scan orang tua),
+  /// diurutkan berdasarkan nomor antrean.
   static Future<List<AntreanKader>> ambil(String jadwalId) async {
     final r = await ApiClient.dio.get('/kader/jadwal/$jadwalId/antrean',
         options: Options(receiveTimeout: const Duration(seconds: 15)));
     dynamic d = r.data;
     if (d is Map && d.containsKey('data')) d = d['data'];
     if (d is! List) return [];
-    return d
+    final list = d
         .map((e) => AntreanKader.fromApi(Map<String, dynamic>.from(e as Map)))
         .toList();
+    list.sort((a, b) => (a.nomor ?? 1 << 30).compareTo(b.nomor ?? 1 << 30));
+    return list;
   }
 }
 
@@ -137,7 +142,11 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
   }
 
   Future<void> _ukur(AntreanKader a) async {
-    final ok = await showModalBottomSheet<bool>(
+    if (a.sudahDicatatBidan) {
+      _snack('Data ${a.nama} sudah dicatat bidan dan tidak dapat diubah');
+      return;
+    }
+    final hasil = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
@@ -146,8 +155,10 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
       ),
       builder: (_) => _FormUkur(anak: a),
     );
-    if (ok == true) {
-      _snack('Data pengukuran tersimpan');
+    if (hasil != null) {
+      _snack(hasil.isEmpty
+          ? 'Data pengukuran tersimpan dan diteruskan ke bidan'
+          : 'Data tersimpan dan diteruskan ke bidan. Perhatian: $hasil');
       _muat();
     }
   }
@@ -260,6 +271,8 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
               SectionCard(
                 title: 'Antrean Pendataan',
                 icon: Icons.format_list_numbered,
+                trailing: const Text('Ketuk untuk mendata',
+                    style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
                 child: _antrean.isEmpty
                     ? const Text(
                         'Belum ada anak. Data anak masuk ke sini setelah orang tua melakukan check-in dengan scan QR.',
@@ -275,53 +288,67 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
   }
 
   Widget _baris(AntreanKader a) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
         color: AppColors.latar,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: AppColors.hijauMuda,
-            child: Text(a.nomor?.toString() ?? '-',
-                style: const TextStyle(color: AppColors.hijau, fontWeight: FontWeight.w800)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _ukur(a),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
               children: [
-                Text(a.nama,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
-                Text('${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(a.usiaBulan)}',
-                    style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    a.sudahDiukur
-                        ? const Pill('Sudah diukur', icon: Icons.check)
-                        : const Pill('Belum diukur',
-                            bg: AppColors.kuningMuda, fg: AppColors.kuning),
-                    if (a.sudahDicatatBidan)
-                      const Pill('Dicatat bidan', bg: AppColors.biruMuda, fg: AppColors.biru),
-                  ],
+                Container(
+                  width: 52,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.hijauMuda,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(a.kodeNomor,
+                      style: const TextStyle(
+                          color: AppColors.hijau, fontWeight: FontWeight.w800, fontSize: 13)),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(a.nama,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                      Text('${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(a.usiaBulan)}',
+                          style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          a.sudahDiukur
+                              ? const Pill('Sudah diukur', icon: Icons.check)
+                              : const Pill('Belum diukur',
+                                  bg: AppColors.kuningMuda, fg: AppColors.kuning),
+                          if (a.sudahDicatatBidan)
+                            const Pill('Dicatat bidan',
+                                bg: AppColors.biruMuda, fg: AppColors.biru)
+                          else if (a.sudahDiukur)
+                            const Pill('Menunggu bidan',
+                                bg: AppColors.biruMuda, fg: AppColors.biru),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  a.sudahDicatatBidan ? Icons.lock_outline : Icons.chevron_right,
+                  color: AppColors.teksRedup,
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 6),
-          if (!a.sudahDicatatBidan)
-            SizedBox(
-              width: 92,
-              child: AppButton(a.sudahDiukur ? 'Ubah\nData' : 'Ukur\nSekarang',
-                  onPressed: () => _ukur(a)),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -348,7 +375,17 @@ class _FormUkurState extends State<_FormUkur> {
   bool _sakit = false;
   bool _asi = false;
   bool _kirim = false;
+  bool _memuat = false;
   String? _galat;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.anak.sudahDiukur) {
+      _memuat = true;
+      _muatData();
+    }
+  }
 
   @override
   void dispose() {
@@ -356,6 +393,37 @@ class _FormUkurState extends State<_FormUkur> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  String _angkaTeks(dynamic v) {
+    if (v == null) return '';
+    final d = double.tryParse(v.toString());
+    if (d == null) return '';
+    return d == d.roundToDouble() ? d.toStringAsFixed(0) : d.toString();
+  }
+
+  Future<void> _muatData() async {
+    try {
+      final r = await ApiClient.dio.get(
+        '/kader/pendaftaran/${widget.anak.pendaftaranId}/pengukuran',
+        options: Options(receiveTimeout: const Duration(seconds: 15)),
+      );
+      dynamic d = r.data;
+      if (d is Map && d.containsKey('data')) d = d['data'];
+      if (d is Map) {
+        _bb.text = _angkaTeks(d['bb_kg']);
+        _tb.text = _angkaTeks(d['tb_cm']);
+        _lk.text = _angkaTeks(d['lingkar_kepala_cm']);
+        _lila.text = _angkaTeks(d['lila_cm']);
+        _keluhan.text = d['keluhan']?.toString() ?? '';
+        _catatan.text = d['catatan']?.toString() ?? '';
+        _sakit = d['sedang_sakit'] == true;
+        _asi = d['asi_eksklusif'] == true;
+      }
+    } catch (e) {
+      _galat = _pesanError(e);
+    }
+    if (mounted) setState(() => _memuat = false);
   }
 
   double? _angka(TextEditingController c) =>
@@ -376,7 +444,7 @@ class _FormUkurState extends State<_FormUkur> {
       _galat = null;
     });
     try {
-      await ApiClient.dio.put(
+      final r = await ApiClient.dio.put(
         '/kader/pendaftaran/${widget.anak.pendaftaranId}/pengukuran',
         data: {
           'bb_kg': bb,
@@ -390,7 +458,10 @@ class _FormUkurState extends State<_FormUkur> {
         },
         options: Options(receiveTimeout: const Duration(seconds: 15)),
       );
-      if (mounted) Navigator.pop(context, true);
+      dynamic d = r.data;
+      if (d is Map && d.containsKey('data')) d = d['data'];
+      final peringatan = d is Map ? (d['peringatan_validasi']?.toString() ?? '') : '';
+      if (mounted) Navigator.pop(context, peringatan);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -423,58 +494,71 @@ class _FormUkurState extends State<_FormUkur> {
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Pengukuran ${widget.anak.nama}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-            Text('${widget.anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(widget.anak.usiaBulan)}',
-                style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(child: _kolom(_bb, 'Berat badan (kg)')),
-                const SizedBox(width: 10),
-                Expanded(child: _kolom(_tb, 'Tinggi/panjang (cm)')),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(child: _kolom(_lk, 'Lingkar kepala (cm)')),
-                const SizedBox(width: 10),
-                Expanded(child: _kolom(_lila, 'LiLA (cm)')),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _kolom(_keluhan, 'Keluhan', angka: false),
-            const SizedBox(height: 10),
-            _kolom(_catatan, 'Catatan', angka: false, baris: 2),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Sedang sakit', style: TextStyle(fontSize: 13)),
-              value: _sakit,
-              onChanged: (v) => setState(() => _sakit = v),
-            ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('ASI eksklusif', style: TextStyle(fontSize: 13)),
-              value: _asi,
-              onChanged: (v) => setState(() => _asi = v),
-            ),
-            if (_galat != null) ...[
-              const SizedBox(height: 6),
-              Text(_galat!, style: const TextStyle(color: AppColors.merah, fontSize: 12.5)),
-            ],
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: AppButton(_kirim ? 'Menyimpan...' : 'Simpan Pengukuran',
-                  icon: Icons.save_outlined, onPressed: _kirim ? () {} : _simpan),
-            ),
-          ],
-        ),
+        child: _memuat
+            ? const Padding(
+                padding: EdgeInsets.symmetric(vertical: 48),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text('Pendataan ${widget.anak.nama}',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                      ),
+                      Pill('Antrean ${widget.anak.kodeNomor}'),
+                    ],
+                  ),
+                  Text(
+                      '${widget.anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(widget.anak.usiaBulan)}',
+                      style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(child: _kolom(_bb, 'Berat badan (kg)')),
+                      const SizedBox(width: 10),
+                      Expanded(child: _kolom(_tb, 'Tinggi/panjang (cm)')),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(child: _kolom(_lk, 'Lingkar kepala (cm)')),
+                      const SizedBox(width: 10),
+                      Expanded(child: _kolom(_lila, 'LiLA (cm)')),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  _kolom(_keluhan, 'Keluhan', angka: false),
+                  const SizedBox(height: 10),
+                  _kolom(_catatan, 'Catatan', angka: false, baris: 2),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Sedang sakit', style: TextStyle(fontSize: 13)),
+                    value: _sakit,
+                    onChanged: (v) => setState(() => _sakit = v),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('ASI eksklusif', style: TextStyle(fontSize: 13)),
+                    value: _asi,
+                    onChanged: (v) => setState(() => _asi = v),
+                  ),
+                  if (_galat != null) ...[
+                    const SizedBox(height: 6),
+                    Text(_galat!, style: const TextStyle(color: AppColors.merah, fontSize: 12.5)),
+                  ],
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: AppButton(_kirim ? 'Menyimpan...' : 'Simpan & Teruskan ke Bidan',
+                        icon: Icons.send_outlined, onPressed: _kirim ? () {} : _simpan),
+                  ),
+                ],
+              ),
       ),
     );
   }

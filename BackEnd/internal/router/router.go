@@ -90,6 +90,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kader.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
 	kader.GET("/jadwal/:id/antrean", pelayananH.AntreanKader)
 	kader.PUT("/pendaftaran/:id/pengukuran", pelayananH.CatatPengukuran)
+		kader.GET("/pendaftaran/:id/pengukuran", pelayananH.PengukuranKader)
 
 	// bidan
 	bidan := protected.Group("/bidan", middleware.RoleRequired("bidan"))

@@ -61,10 +61,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
+    // Hanya orang tua (PIN hasil reset) yang wajib ganti sandi saat masuk.
+    // Admin, bidan, dan kader langsung ke beranda; ganti kata sandi tetap
+    // bisa dilakukan sendiri lewat menu Akun.
+    final wajibGanti = auth.user != null &&
+        auth.role == 'orang_tua' &&
+        auth.user!['must_change_password'] == true;
+
     Widget home;
     if (!auth.initialized) {
       home = const Scaffold(body: Center(child: CircularProgressIndicator()));
-    } else if (auth.user != null && auth.user!['must_change_password'] == true) {
+    } else if (wajibGanti) {
       home = const UbahSandiPage();
     } else {
       switch (auth.role) {

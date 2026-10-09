@@ -127,3 +127,16 @@ func (h *PelayananHandler) Riwayat(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": list})
 }
+// GET /kader/pendaftaran/:id/pengukuran
+func (h *PelayananHandler) PengukuranKader(c *gin.Context) {
+	id, ok := idParam(c, "id")
+	if !ok {
+		return
+	}
+	m, err := h.svc.PengukuranKader(id)
+	if err != nil {
+		tulisError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": m})
+}

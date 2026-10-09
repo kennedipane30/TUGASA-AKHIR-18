@@ -679,3 +679,17 @@ func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatIte
 	})
 	return out, nil
 }
+// PengukuranKader: data pengukuran satu kunjungan (nil bila belum diinput kader).
+func (s *PelayananService) PengukuranKader(pendaftaranID uuid.UUID) (*models.Pengukuran, error) {
+	if _, err := s.pendaftaran(pendaftaranID); err != nil {
+		return nil, err
+	}
+	m, err := s.repo.GetPengukuran(pendaftaranID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
+}

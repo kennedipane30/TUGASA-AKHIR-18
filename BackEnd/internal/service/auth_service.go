@@ -50,6 +50,8 @@ type CreateStaffInput struct {
 	Role     models.Role `json:"role" binding:"required"`
 }
 
+// Akun kader/bidan langsung masuk ke beranda (tidak dipaksa ganti sandi);
+// penggantian kata sandi dilakukan sendiri lewat menu Akun.
 func (s *AuthService) CreateStaff(in CreateStaffInput) (*models.User, error) {
 	if in.Role != models.RoleKader && in.Role != models.RoleBidan {
 		return nil, ErrInvalidRole
@@ -62,7 +64,7 @@ func (s *AuthService) CreateStaff(in CreateStaffInput) (*models.User, error) {
 		return nil, err
 	}
 	u := &models.User{Nama: in.Nama, Username: &in.Username, Password: hash,
-		Role: in.Role, IsActive: true, MustChangePassword: true}
+		Role: in.Role, IsActive: true, MustChangePassword: false}
 	return u, s.repo.Create(u)
 }
 
