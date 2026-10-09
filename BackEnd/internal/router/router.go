@@ -28,23 +28,22 @@ func Setup(db *gorm.DB) *gin.Engine {
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
-	pinH := handler.NewPinHandler(service.NewPinService(userRepo)) // BARU: login PIN
+	pinH := handler.NewPinHandler(service.NewPinService(userRepo))
 	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo))
 	jadwalH := handler.NewJadwalHandler(jadwalSvc)
-	scanH := handler.NewKaderScanHandler(jadwalSvc)
 	pelayananH := handler.NewPelayananHandler(service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo))
 	vaksinH := handler.NewVaksinHandler(vaksinSvc)
 	vaksinStatH := handler.NewVaksinStatistikHandler(vaksinStatSvc)
 
 	api := r.Group("/api/v1")
 	api.POST("/auth/register", authH.Register)
-	api.POST("/auth/login", pinH.Login) // BARU: sebelumnya authH.Login
+	api.POST("/auth/login", pinH.Login)
 
 	// semua role (sudah login)
 	protected := api.Group("/", middleware.AuthRequired())
 	protected.GET("/auth/me", authH.Me)
-	protected.POST("/auth/ubah-sandi", pinH.UbahSandi)                                              // BARU
-	protected.POST("/users/:id/reset-pin", middleware.RoleRequired("admin", "kader"), pinH.ResetPIN) // BARU
+	protected.POST("/auth/ubah-sandi", pinH.UbahSandi)
+	protected.POST("/users/:id/reset-pin", middleware.RoleRequired("admin", "kader"), pinH.ResetPIN)
 	protected.GET("/jadwal", jadwalH.List)
 	protected.GET("/jadwal/terdekat", jadwalH.Terdekat)
 	protected.GET("/vaksin", pelayananH.ListVaksin)
@@ -62,6 +61,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	admin.POST("/jadwal", jadwalH.Buat)
 	admin.PUT("/jadwal/:id", jadwalH.Ubah)
 	admin.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
+	admin.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
 	admin.GET("/vaksin/statistik", vaksinStatH.Statistik)
 
 	// orang tua
@@ -78,15 +78,16 @@ func Setup(db *gorm.DB) *gin.Engine {
 	ortu.DELETE("/keluarga/anak/:id", keluargaH.HapusAnak)
 	ortu.POST("/jadwal/:id/daftar", jadwalH.Daftar)
 	ortu.POST("/jadwal/:id/batal", jadwalH.BatalDaftar)
-	ortu.POST("/jadwal/:id/checkin", jadwalH.Checkin)
+	ortu.POST("/jadwal/:id/scan", jadwalH.Scan)
+	ortu.GET("/jadwal/:id/kartu", jadwalH.Kartu)
 	ortu.GET("/riwayat", pelayananH.Riwayat)
 
 	// kader
 	kader := protected.Group("/kader", middleware.RoleRequired("kader"))
 	kader.GET("/anak", jadwalH.CariAnak)
 	kader.POST("/jadwal/:id/walkin", jadwalH.WalkIn)
-	kader.POST("/jadwal/:id/scan", scanH.Scan)
 	kader.POST("/pendaftaran/:id/checkin", jadwalH.CheckinManual)
+	kader.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
 	kader.GET("/jadwal/:id/antrean", pelayananH.AntreanKader)
 	kader.PUT("/pendaftaran/:id/pengukuran", pelayananH.CatatPengukuran)
 

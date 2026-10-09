@@ -181,11 +181,19 @@ func idPendaftaran(list []models.Pendaftaran) []uuid.UUID {
 // ---------------------------------------------------------------- kader
 
 // AntreanKader: anak yang terdaftar atau sudah check-in pada satu jadwal.
+// AntreanKader: antrean pendataan, yaitu anak yang sudah check-in (scan QR oleh orang tua) pada satu jadwal.
 func (s *PelayananService) AntreanKader(jadwalID uuid.UUID) ([]AntreanItem, error) {
-	list, err := s.jadwal.ListPendaftaranJadwal(jadwalID, "terdaftar", "sudah_checkin")
+	list, err := s.jadwal.ListPendaftaranJadwal(jadwalID, "sudah_checkin")
 	if err != nil {
 		return nil, err
 	}
+	sort.SliceStable(list, func(i, j int) bool {
+		a, b := list[i].WaktuCheckin, list[j].WaktuCheckin
+		if a == nil || b == nil {
+			return a != nil
+		}
+		return a.Before(*b)
+	})
 	ids := idPendaftaran(list)
 	ukur, err := s.repo.ListPengukuran(ids)
 	if err != nil {

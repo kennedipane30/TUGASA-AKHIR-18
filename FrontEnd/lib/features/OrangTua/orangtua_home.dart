@@ -541,15 +541,11 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
               ),
             ],
           ),
-          if (j.pendaftaranBuka != null || j.checkinBuka != null) ...[
+          if (j.checkinBuka != null) ...[
             const SizedBox(height: 10),
             Text(
-              [
-                if (j.pendaftaranBuka != null)
-                  'Pendaftaran dibuka ${formatTanggal(j.pendaftaranBuka!)}.',
-                if (j.checkinBuka != null)
-                  'Check-in dibuka 1 jam sebelum mulai (${formatJam(j.checkinBuka!)}).',
-              ].join(' '),
+              'Pendaftaran dapat dilakukan kapan saja. '
+              'Check-in scan QR dibuka 1 jam sebelum mulai (${formatJam(j.checkinBuka!)}).',
               style: const TextStyle(color: Color(0xFF9FF0D0), fontSize: 11.5),
             ),
           ],

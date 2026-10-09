@@ -23,6 +23,11 @@ var wib = func() *time.Location {
 
 var reJam = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d$`)
 
+// check-in hanya dibuka 1 jam sebelum jadwal dimulai
+const bukaCheckinMenit = 60
+
+const prefixQRJadwal = "POSYANDU-CHECKIN:"
+
 type JadwalService struct {
 	repo *repository.JadwalRepository
 	kel  *repository.KeluargaRepository
@@ -56,6 +61,13 @@ func selesaiJadwal(j *models.JadwalPosyandu) time.Time {
 	return mulaiJadwal(j).Add(4 * time.Hour)
 }
 
+func checkinDibuka(j *models.JadwalPosyandu) time.Time {
+	return mulaiJadwal(j).Add(-bukaCheckinMenit * time.Minute)
+}
+
+// KodeQRJadwal: isi QR yang dipasang di lokasi posyandu untuk dipindai orang tua.
+func KodeQRJadwal(id uuid.UUID) string { return prefixQRJadwal + id.String() }
+
 // ---------------------------------------------------------------- input dan keluaran
 
 type JadwalInput struct {
@@ -65,14 +77,34 @@ type JadwalInput struct {
 	Lokasi     string `json:"lokasi"`                       // opsional
 }
 
+// KartuAntrean: kartu yang tampil di orang tua setelah pendaftaran berhasil (aksi: batalkan / check-in).
+type KartuAntrean struct {
+	PendaftaranID     uuid.UUID  `json:"pendaftaran_id"`
+	AnakID            uuid.UUID  `json:"anak_id"`
+	NamaAnak          string     `json:"nama_anak"`
+	JadwalID          uuid.UUID  `json:"jadwal_id"`
+	Tanggal           time.Time  `json:"tanggal"`
+	JamMulai          string     `json:"jam_mulai"`
+	JamSelesai        *string    `json:"jam_selesai"`
+	Lokasi            string     `json:"lokasi"`
+	NomorAntrean      *int16     `json:"nomor_antrean"`
+	StatusKehadiran   string     `json:"status_kehadiran"` // terdaftar | sudah_checkin | batal | tidak_hadir
+	MulaiPada         time.Time  `json:"mulai_pada"`
+	CheckinDibukaPada time.Time  `json:"checkin_dibuka_pada"`
+	WaktuCheckin      *time.Time `json:"waktu_checkin"`
+	BolehBatal        bool       `json:"boleh_batal"`
+	BolehCheckin      bool       `json:"boleh_checkin"`
+}
+
 type AnakStatus struct {
-	AnakID          uuid.UUID `json:"anak_id"`
-	Nama            string    `json:"nama"`
-	StatusKehadiran string    `json:"status_kehadiran"` // belum_daftar | terdaftar | sudah_checkin | tidak_hadir
-	NomorAntrean    *int16    `json:"nomor_antrean"`
-	BolehDaftar     bool      `json:"boleh_daftar"`
-	BolehBatal      bool      `json:"boleh_batal"`
-	BolehCheckin    bool      `json:"boleh_checkin"`
+	AnakID          uuid.UUID     `json:"anak_id"`
+	Nama            string        `json:"nama"`
+	StatusKehadiran string        `json:"status_kehadiran"` // belum_daftar | terdaftar | sudah_checkin | tidak_hadir
+	NomorAntrean    *int16        `json:"nomor_antrean"`
+	BolehDaftar     bool          `json:"boleh_daftar"`
+	BolehBatal      bool          `json:"boleh_batal"`
+	BolehCheckin    bool          `json:"boleh_checkin"`
+	Kartu           *KartuAntrean `json:"kartu"`
 }
 
 type JadwalTerdekat struct {
@@ -108,6 +140,30 @@ func cekJadwal(in JadwalInput, baru bool) (time.Time, *string, error) {
 	return tgl, selesai, nil
 }
 
+func buatKartu(j *models.JadwalPosyandu, a *models.Anak, p *models.Pendaftaran) *KartuAntrean {
+	now := time.Now()
+	mulai := mulaiJadwal(j)
+	aktif := j.Status == "terjadwal"
+	terdaftar := p.StatusKehadiran == "terdaftar"
+	return &KartuAntrean{
+		PendaftaranID:     p.ID,
+		AnakID:            p.AnakID,
+		NamaAnak:          a.Nama,
+		JadwalID:          j.ID,
+		Tanggal:           j.Tanggal,
+		JamMulai:          j.JamMulai,
+		JamSelesai:        j.JamSelesai,
+		Lokasi:            j.Lokasi,
+		NomorAntrean:      p.NomorAntrean,
+		StatusKehadiran:   p.StatusKehadiran,
+		MulaiPada:         mulai,
+		CheckinDibukaPada: checkinDibuka(j),
+		WaktuCheckin:      p.WaktuCheckin,
+		BolehBatal:        aktif && terdaftar && now.Before(mulai),
+		BolehCheckin:      aktif && terdaftar && !now.Before(checkinDibuka(j)) && now.Before(selesaiJadwal(j)),
+	}
+}
+
 // ---------------------------------------------------------------- admin
 
 func (s *JadwalService) Buat(adminID uint, in JadwalInput) (*models.JadwalPosyandu, error) {
@@ -124,7 +180,7 @@ func (s *JadwalService) Buat(adminID uint, in JadwalInput) (*models.JadwalPosyan
 		JamSelesai:       selesai,
 		Lokasi:           strings.TrimSpace(in.Lokasi),
 		BukaDaftarHari:   7,
-		BukaCheckinMenit: 60,
+		BukaCheckinMenit: bukaCheckinMenit,
 		Status:           "terjadwal",
 		DibuatOleh:       adminID,
 		Version:          1,
@@ -157,6 +213,7 @@ func (s *JadwalService) Ubah(id uuid.UUID, in JadwalInput) (*models.JadwalPosyan
 	j.JamMulai = in.JamMulai
 	j.JamSelesai = selesai
 	j.Lokasi = strings.TrimSpace(in.Lokasi)
+	j.BukaCheckinMenit = bukaCheckinMenit
 	j.Version++
 	if err := s.repo.SaveJadwal(j); err != nil {
 		return nil, err
@@ -190,6 +247,15 @@ func (s *JadwalService) Batalkan(id uuid.UUID, alasan string) (*models.JadwalPos
 
 func (s *JadwalService) List() ([]models.JadwalPosyandu, error) { return s.repo.ListJadwal() }
 
+// QRJadwal: isi QR check-in untuk satu jadwal (ditampilkan admin/kader di lokasi).
+func (s *JadwalService) QRJadwal(id uuid.UUID) (string, error) {
+	j, err := s.jadwalAktif(id)
+	if err != nil {
+		return "", err
+	}
+	return KodeQRJadwal(j.ID), nil
+}
+
 // ---------------------------------------------------------------- jadwal terdekat (semua role)
 
 func (s *JadwalService) Terdekat(userID uint, role string) (*JadwalTerdekat, error) {
@@ -205,8 +271,8 @@ func (s *JadwalService) Terdekat(userID uint, role string) (*JadwalTerdekat, err
 	out := &JadwalTerdekat{
 		Jadwal:                *j,
 		MulaiPada:             mulai,
-		PendaftaranDibukaPada: mulai.Add(-time.Duration(j.BukaDaftarHari) * 24 * time.Hour),
-		CheckinDibukaPada:     mulai.Add(-time.Duration(j.BukaCheckinMenit) * time.Minute),
+		PendaftaranDibukaPada: j.CreatedAt, // pendaftaran terbuka sejak jadwal diterbitkan admin
+		CheckinDibukaPada:     checkinDibuka(j),
 		Anak:                  []AnakStatus{},
 	}
 	if role != string(models.RoleOrangTua) {
@@ -238,23 +304,26 @@ func (s *JadwalService) Terdekat(userID uint, role string) (*JadwalTerdekat, err
 	}
 
 	now := time.Now()
-	bukaDaftar := !now.Before(out.PendaftaranDibukaPada) && now.Before(mulai)
-	bukaCheckin := !now.Before(out.CheckinDibukaPada) && now.Before(selesaiJadwal(j))
-	for _, a := range anak {
+	bukaDaftar := now.Before(selesaiJadwal(j))
+	for i := range anak {
+		a := anak[i]
 		st := AnakStatus{AnakID: a.ID, Nama: a.Nama, StatusKehadiran: "belum_daftar"}
 		if p, ok := peta[a.ID]; ok && p.StatusKehadiran != "batal" {
+			pp := p
+			k := buatKartu(j, &a, &pp)
 			st.StatusKehadiran = p.StatusKehadiran
 			st.NomorAntrean = p.NomorAntrean
+			st.BolehBatal = k.BolehBatal
+			st.BolehCheckin = k.BolehCheckin
+			st.Kartu = k
 		}
 		st.BolehDaftar = bukaDaftar && st.StatusKehadiran == "belum_daftar"
-		st.BolehBatal = now.Before(mulai) && st.StatusKehadiran == "terdaftar"
-		st.BolehCheckin = bukaCheckin && st.StatusKehadiran == "terdaftar"
 		out.Anak = append(out.Anak, st)
 	}
 	return out, nil
 }
 
-// ---------------------------------------------------------------- orang tua: daftar, batal, check-in
+// ---------------------------------------------------------------- orang tua: daftar, batal, scan check-in
 
 func (s *JadwalService) cekAnakMilik(userID uint, anakID uuid.UUID) (*models.Anak, error) {
 	ibu, err := s.kel.FindIbuByUser(userID)
@@ -291,7 +360,8 @@ func (s *JadwalService) jadwalAktif(id uuid.UUID) (*models.JadwalPosyandu, error
 	return j, nil
 }
 
-func (s *JadwalService) Daftar(userID uint, jadwalID, anakID uuid.UUID) (*models.Pendaftaran, error) {
+// Daftar: orang tua dapat mendaftar kapan saja selama jadwal yang diterbitkan admin belum selesai.
+func (s *JadwalService) Daftar(userID uint, jadwalID, anakID uuid.UUID) (*KartuAntrean, error) {
 	a, err := s.cekAnakMilik(userID, anakID)
 	if err != nil {
 		return nil, err
@@ -300,13 +370,9 @@ func (s *JadwalService) Daftar(userID uint, jadwalID, anakID uuid.UUID) (*models
 	if err != nil {
 		return nil, err
 	}
-	mulai := mulaiJadwal(j)
 	now := time.Now()
-	if now.Before(mulai.Add(-time.Duration(j.BukaDaftarHari) * 24 * time.Hour)) {
-		return nil, konflik("pendaftaran belum dibuka")
-	}
-	if !now.Before(mulai) {
-		return nil, konflik("pendaftaran sudah ditutup")
+	if !now.Before(selesaiJadwal(j)) {
+		return nil, konflik("jadwal sudah selesai, pendaftaran ditutup")
 	}
 
 	var hasil *models.Pendaftaran
@@ -319,6 +385,8 @@ func (s *JadwalService) Daftar(userID uint, jadwalID, anakID uuid.UUID) (*models
 			p.StatusKehadiran = "terdaftar"
 			p.Sumber = "mandiri"
 			p.WaktuBatal = nil
+			p.WaktuCheckin = nil
+			p.MetodeCheckin = ""
 			p.Version++
 			hasil = p
 			return r.SavePendaftaran(p)
@@ -342,10 +410,10 @@ func (s *JadwalService) Daftar(userID uint, jadwalID, anakID uuid.UUID) (*models
 	if err != nil {
 		return nil, err
 	}
-	return hasil, nil
+	return buatKartu(j, a, hasil), nil
 }
 
-func (s *JadwalService) BatalDaftar(userID uint, jadwalID, anakID uuid.UUID) (*models.Pendaftaran, error) {
+func (s *JadwalService) BatalDaftar(userID uint, jadwalID, anakID uuid.UUID) (*KartuAntrean, error) {
 	a, err := s.cekAnakMilik(userID, anakID)
 	if err != nil {
 		return nil, err
@@ -374,10 +442,16 @@ func (s *JadwalService) BatalDaftar(userID uint, jadwalID, anakID uuid.UUID) (*m
 	if err := s.repo.SavePendaftaran(p); err != nil {
 		return nil, err
 	}
-	return p, nil
+	return buatKartu(j, a, p), nil
 }
 
-func (s *JadwalService) Checkin(userID uint, jadwalID, anakID uuid.UUID) (*models.Pendaftaran, error) {
+// ScanCheckin: orang tua memindai QR jadwal di lokasi, lalu anak otomatis check-in
+// dan masuk ke antrean pendataan kader. Check-in hanya dibuka 1 jam sebelum jadwal dimulai.
+func (s *JadwalService) ScanCheckin(userID uint, jadwalID, anakID uuid.UUID, kode string) (*KartuAntrean, error) {
+	kode = strings.TrimSpace(kode)
+	if kode == "" {
+		return nil, validasi("kode QR kosong")
+	}
 	a, err := s.cekAnakMilik(userID, anakID)
 	if err != nil {
 		return nil, err
@@ -386,20 +460,26 @@ func (s *JadwalService) Checkin(userID uint, jadwalID, anakID uuid.UUID) (*model
 	if err != nil {
 		return nil, err
 	}
+	if !strings.EqualFold(kode, KodeQRJadwal(j.ID)) {
+		return nil, validasi("kode QR tidak sesuai dengan jadwal ini")
+	}
 	p, err := s.repo.FindPendaftaran(j.ID, a.ID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrPendaftaranTidakAda
+		return nil, konflik("anak belum terdaftar pada jadwal ini")
 	}
 	if err != nil {
 		return nil, err
+	}
+	if p.StatusKehadiran == "sudah_checkin" {
+		return nil, konflik("anak sudah check-in")
 	}
 	if p.StatusKehadiran != "terdaftar" {
 		return nil, konflik("anak berstatus %s, check-in tidak dapat dilakukan", p.StatusKehadiran)
 	}
 	now := time.Now()
-	buka := mulaiJadwal(j).Add(-time.Duration(j.BukaCheckinMenit) * time.Minute)
+	buka := checkinDibuka(j)
 	if now.Before(buka) {
-		return nil, konflik("check-in dibuka pukul %s WIB", buka.In(wib).Format("15:04"))
+		return nil, konflik("check-in dibuka pukul %s WIB (1 jam sebelum jadwal dimulai)", buka.In(wib).Format("15:04"))
 	}
 	if !now.Before(selesaiJadwal(j)) {
 		return nil, konflik("jadwal sudah selesai")
@@ -411,10 +491,33 @@ func (s *JadwalService) Checkin(userID uint, jadwalID, anakID uuid.UUID) (*model
 	if err := s.repo.SavePendaftaran(p); err != nil {
 		return nil, err
 	}
-	return p, nil
+	return buatKartu(j, a, p), nil
 }
 
-// ---------------------------------------------------------------- kader: cari anak, walk-in, check-in manual
+// KartuAntrean: kartu antrean satu anak pada satu jadwal.
+func (s *JadwalService) KartuAntrean(userID uint, jadwalID, anakID uuid.UUID) (*KartuAntrean, error) {
+	a, err := s.cekAnakMilik(userID, anakID)
+	if err != nil {
+		return nil, err
+	}
+	j, err := s.repo.GetJadwal(jadwalID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrJadwalTidakAda
+	}
+	if err != nil {
+		return nil, err
+	}
+	p, err := s.repo.FindPendaftaran(j.ID, a.ID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrPendaftaranTidakAda
+	}
+	if err != nil {
+		return nil, err
+	}
+	return buatKartu(j, a, p), nil
+}
+
+// ---------------------------------------------------------------- kader: cari anak, walk-in, check-in manual (cadangan)
 
 func (s *JadwalService) CariAnak(kata string) ([]models.Anak, error) {
 	kata = strings.TrimSpace(kata)
@@ -504,19 +607,4 @@ func (s *JadwalService) CheckinManual(kaderID uint, pendaftaranID uuid.UUID) (*m
 		return nil, err
 	}
 	return p, nil
-}
-
-func (s *JadwalService) ScanQR(kaderID uint, jadwalID uuid.UUID, kode string) (*models.Pendaftaran, error) {
-	kode = strings.TrimSpace(kode)
-	if kode == "" {
-		return nil, validasi("kode QR kosong")
-	}
-	a, err := s.repo.GetAnakByKode(kode)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrAnakTidakAda
-	}
-	if err != nil {
-		return nil, err
-	}
-	return s.WalkIn(kaderID, jadwalID, a.ID)
 }
