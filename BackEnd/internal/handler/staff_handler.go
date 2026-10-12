@@ -15,6 +15,7 @@ type staffResponse struct {
 	Nama     string `json:"nama"`
 	Username string `json:"username"`
 	Role     string `json:"role"`
+	Posyandu string `json:"posyandu"`
 	IsActive bool   `json:"is_active"`
 }
 
@@ -28,6 +29,7 @@ func toStaff(u *models.User) staffResponse {
 		Nama:     u.Nama,
 		Username: username,
 		Role:     string(u.Role),
+		Posyandu: u.Posyandu,
 		IsActive: u.IsActive,
 	}
 }
@@ -54,10 +56,11 @@ func staffIDParam(c *gin.Context) (uint, bool) {
 	return uint(n), true
 }
 
+// GET /admin/users?role=&posyandu=
 func (h *AuthHandler) ListStaff(c *gin.Context) {
-	list, err := h.svc.ListStaff(c.Query("role"))
+	list, err := h.svc.ListStaff(c.Query("role"), c.Query("posyandu"))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		staffError(c, err)
 		return
 	}
 	out := make([]staffResponse, 0, len(list))

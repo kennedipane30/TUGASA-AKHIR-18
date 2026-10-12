@@ -17,14 +17,24 @@ type UpdateStaffInput struct {
 	Username string      `json:"username" binding:"required,min=4"`
 	Password string      `json:"password" binding:"omitempty,min=6"`
 	Role     models.Role `json:"role" binding:"required"`
+	Posyandu string      `json:"posyandu"` // kosong = tidak diubah
 }
 
-func (s *AuthService) ListStaff(role string) ([]models.User, error) {
+// ListStaff: posyandu kosong = semua posyandu (khusus admin).
+func (s *AuthService) ListStaff(role, posyandu string) ([]models.User, error) {
 	roles := []string{string(models.RoleKader), string(models.RoleBidan)}
 	if role == string(models.RoleKader) || role == string(models.RoleBidan) {
 		roles = []string{role}
 	}
-	return s.repo.FindByRoles(roles)
+	pos := ""
+	if posyandu != "" {
+		p, ok := models.NormalisasiPosyandu(posyandu)
+		if !ok {
+			return nil, ErrPosyanduTidakValid
+		}
+		pos = p
+	}
+	return s.repo.FindByRoles(roles, pos)
 }
 
 func (s *AuthService) staffByID(id uint) (*models.User, error) {
@@ -48,6 +58,13 @@ func (s *AuthService) UpdateStaff(id uint, in UpdateStaffInput) (*models.User, e
 	}
 	if s.repo.ExistsExcept("username", in.Username, u.ID) {
 		return nil, ErrDuplicate
+	}
+	if in.Posyandu != "" {
+		pos, ok := models.NormalisasiPosyandu(in.Posyandu)
+		if !ok {
+			return nil, ErrPosyanduTidakValid
+		}
+		u.Posyandu = pos
 	}
 	u.Nama = in.Nama
 	u.Username = &in.Username

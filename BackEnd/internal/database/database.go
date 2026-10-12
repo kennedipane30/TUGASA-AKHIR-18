@@ -43,9 +43,45 @@ END $$;`, kolom)
 		}
 	}
 
-	// Seluruh tabel dibuat dari daftar model di models/registry.go.
 	if err := db.AutoMigrate(models.AllModels()...); err != nil {
 		return nil, err
 	}
+
+	samakanKodePosyandu(db)
+	isiPosyanduData(db)
 	return db, nil
+}
+
+// samakanKodePosyandu: ubah kode lama menjadi kode baku (silimbat, sitoluama, aekbolon).
+func samakanKodePosyandu(db *gorm.DB) {
+	ganti := map[string]string{
+		"aek_bolon": models.PosyanduAekBolon,
+		"silaen":    models.PosyanduSilimbat,
+	}
+	for _, tabel := range []string{"keluarga", "jadwal_posyandu", "users"} {
+		for lama, baru := range ganti {
+			if err := db.Exec("UPDATE "+tabel+" SET posyandu = ? WHERE posyandu = ?", baru, lama).Error; err != nil {
+				log.Printf("peringatan: samakan kode posyandu tabel %s gagal: %v", tabel, err)
+			}
+		}
+	}
+}
+
+// isiPosyanduData: data lama yang belum punya posyandu dianggap milik posyandu bawaan.
+// Ubah lewat DEFAULT_POSYANDU di .env (silimbat | sitoluama | aekbolon).
+func isiPosyanduData(db *gorm.DB) {
+	def, ok := models.NormalisasiPosyandu(os.Getenv("DEFAULT_POSYANDU"))
+	if !ok {
+		def = models.PosyanduSitoluama
+	}
+	for _, tabel := range []string{"keluarga", "jadwal_posyandu"} {
+		if err := db.Exec("UPDATE "+tabel+" SET posyandu = ? WHERE posyandu IS NULL OR posyandu = ''", def).Error; err != nil {
+			log.Printf("peringatan: isi posyandu tabel %s gagal: %v", tabel, err)
+		}
+	}
+	if err := db.Exec(
+		"UPDATE users SET posyandu = ? WHERE role <> 'admin' AND (posyandu IS NULL OR posyandu = '')", def,
+	).Error; err != nil {
+		log.Printf("peringatan: isi posyandu akun gagal: %v", err)
+	}
 }

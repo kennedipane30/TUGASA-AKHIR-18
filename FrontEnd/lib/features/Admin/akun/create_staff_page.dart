@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/app_colors.dart';
+import '../../../core/posyandu.dart';
 import '../../auth/auth_service.dart';
 
 const _hijauTua = Color(0xFF0B3D2E);
@@ -22,6 +23,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
   final _username = TextEditingController();
   final _pw = TextEditingController();
   String _role = 'kader';
+  String _posyandu = daftarPosyandu.first.kode;
   bool _loading = false;
   bool _lihat = false;
 
@@ -42,10 +44,11 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
         username: _username.text.trim(),
         password: _pw.text,
         role: _role,
+        posyandu: _posyandu,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Akun $_role berhasil dibuat')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Akun $_role ${labelPosyandu(_posyandu)} berhasil dibuat')));
       _nama.clear();
       _username.clear();
       _pw.clear();
@@ -201,7 +204,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                                 style: TextStyle(
                                     fontSize: 14, fontWeight: FontWeight.w800, color: _hijauTua)),
                             Text(
-                              'Lengkapi informasi akun kader atau bidan untuk akses Posyandu Care',
+                              'Setiap petugas hanya bertugas di satu posyandu',
                               style: TextStyle(
                                   fontSize: 10.5, height: 1.3, color: AppColors.teksRedup),
                             ),
@@ -209,6 +212,14 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                         ),
                       ),
                     ],
+                  ),
+                  _label('POSYANDU TUGAS', 'Wajib Pilih', _hijauGelap, AppColors.hijauMuda),
+                  DropdownButtonFormField<String>(
+                    value: _posyandu,
+                    icon: const Icon(Icons.keyboard_arrow_down, color: _hijauGelap),
+                    decoration: _dekor('', Icons.place_outlined, _hijauGaris),
+                    items: itemPosyandu(),
+                    onChanged: (v) => setState(() => _posyandu = v ?? _posyandu),
                   ),
                   _label('ROLE PETUGAS', 'Wajib Pilih', _hijauGelap, AppColors.hijauMuda),
                   DropdownButtonFormField<String>(
@@ -258,43 +269,6 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                     ),
                     validator: (v) =>
                         (v == null || v.length < 6) ? 'Minimal 6 karakter' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE3F6EC),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          radius: 13,
-                          backgroundColor: _hijauGelap,
-                          child: Icon(Icons.shield_outlined, color: Colors.white, size: 14),
-                        ),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                    text: 'Penyimpanan Terenkripsi Lokal: ',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w800, color: _hijauTua)),
-                                TextSpan(
-                                  text:
-                                      'Akun baru dapat langsung digunakan untuk mencatat pertumbuhan & kegiatan posyandu walau tanpa jaringan internet.',
-                                  style: TextStyle(color: AppColors.teksRedup),
-                                ),
-                              ],
-                            ),
-                            style: TextStyle(fontSize: 10.5, height: 1.4),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),

@@ -37,9 +37,14 @@ func (r *UserRepository) ExistsExcept(field, value string, exceptID uint) bool {
 	return n > 0
 }
 
-func (r *UserRepository) FindByRoles(roles []string) ([]models.User, error) {
+// FindByRoles: posyandu opsional; jika diisi, hanya akun posyandu tersebut.
+func (r *UserRepository) FindByRoles(roles []string, posyandu ...string) ([]models.User, error) {
 	var list []models.User
-	err := r.db.Where("role IN ?", roles).Order("nama ASC").Find(&list).Error
+	q := r.db.Where("role IN ?", roles)
+	if p := pilihPosyandu(posyandu); p != "" {
+		q = q.Where("posyandu = ?", p)
+	}
+	err := q.Order("nama ASC").Find(&list).Error
 	return list, err
 }
 

@@ -22,13 +22,19 @@ class AuthService {
   }
 
   Future<void> register(
-      String nama, String nik, String noHp, String password) async {
+    String nama,
+    String nik,
+    String noHp,
+    String password, {
+    String posyandu = '',
+  }) async {
     try {
       await ApiClient.dio.post('/auth/register', data: {
         'nama': nama,
         'nik': nik,
         'no_hp': noHp,
         'password': password,
+        'posyandu': posyandu,
       });
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
@@ -48,12 +54,13 @@ class AuthService {
     }
   }
 
-  // Khusus admin: membuat akun kader atau bidan
+  // Khusus admin: membuat akun kader atau bidan pada satu posyandu
   Future<void> createStaff({
     required String nama,
     required String username,
     required String password,
     required String role, // 'kader' atau 'bidan'
+    required String posyandu, // silimbat | sitoluama | aekbolon
   }) async {
     try {
       await ApiClient.dio.post('/admin/users', data: {
@@ -61,6 +68,7 @@ class AuthService {
         'username': username,
         'password': password,
         'role': role,
+        'posyandu': posyandu,
       });
     } on DioException catch (e) {
       throw Exception(_pesanError(e));

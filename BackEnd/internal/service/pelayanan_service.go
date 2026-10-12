@@ -170,6 +170,36 @@ func (s *PelayananService) pendaftaran(id uuid.UUID) (*models.Pendaftaran, error
 	return p, err
 }
 
+// pendaftaranPos: pendaftaran hanya boleh diakses staf dari posyandu pemilik jadwal.
+func (s *PelayananService) pendaftaranPos(id uuid.UUID, pos string) (*models.Pendaftaran, error) {
+	p, err := s.pendaftaran(id)
+	if err != nil {
+		return nil, err
+	}
+	if p.Jadwal == nil {
+		return nil, ErrJadwalTidakAda
+	}
+	if err := jadwalMilik(p.Jadwal, pos); err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
+// jadwalPos: jadwal hanya boleh diakses staf dari posyandu pemilik jadwal.
+func (s *PelayananService) jadwalPos(jadwalID uuid.UUID, pos string) (*models.JadwalPosyandu, error) {
+	j, err := s.jadwal.GetJadwal(jadwalID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrJadwalTidakAda
+	}
+	if err != nil {
+		return nil, err
+	}
+	if err := jadwalMilik(j, pos); err != nil {
+		return nil, err
+	}
+	return j, nil
+}
+
 func idPendaftaran(list []models.Pendaftaran) []uuid.UUID {
 	ids := make([]uuid.UUID, 0, len(list))
 	for _, p := range list {
@@ -180,9 +210,11 @@ func idPendaftaran(list []models.Pendaftaran) []uuid.UUID {
 
 // ---------------------------------------------------------------- kader
 
-// AntreanKader: anak yang terdaftar atau sudah check-in pada satu jadwal.
-// AntreanKader: antrean pendataan, yaitu anak yang sudah check-in (scan QR oleh orang tua) pada satu jadwal.
-func (s *PelayananService) AntreanKader(jadwalID uuid.UUID) ([]AntreanItem, error) {
+// AntreanKader: antrean pendataan, yaitu anak yang sudah check-in pada satu jadwal di posyandu kader.
+func (s *PelayananService) AntreanKader(jadwalID uuid.UUID, pos string) ([]AntreanItem, error) {
+	if _, err := s.jadwalPos(jadwalID, pos); err != nil {
+		return nil, err
+	}
 	list, err := s.jadwal.ListPendaftaranJadwal(jadwalID, "sudah_checkin")
 	if err != nil {
 		return nil, err
@@ -234,8 +266,8 @@ func (s *PelayananService) AntreanKader(jadwalID uuid.UUID) ([]AntreanItem, erro
 	return out, nil
 }
 
-func (s *PelayananService) CatatPengukuran(kaderID uint, pendaftaranID uuid.UUID, in PengukuranInput) (*models.Pengukuran, error) {
-	p, err := s.pendaftaran(pendaftaranID)
+func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaranID uuid.UUID, in PengukuranInput) (*models.Pengukuran, error) {
+	p, err := s.pendaftaranPos(pendaftaranID, pos)
 	if err != nil {
 		return nil, err
 	}
@@ -342,10 +374,28 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pendaftaranID uuid.UUID
 	return m, nil
 }
 
+// PengukuranKader: data pengukuran satu kunjungan (nil bila belum diinput kader).
+func (s *PelayananService) PengukuranKader(pos string, pendaftaranID uuid.UUID) (*models.Pengukuran, error) {
+	if _, err := s.pendaftaranPos(pendaftaranID, pos); err != nil {
+		return nil, err
+	}
+	m, err := s.repo.GetPengukuran(pendaftaranID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ---------------------------------------------------------------- bidan
 
-// AntreanBidan: kunjungan yang sudah diinput kader pada satu jadwal.
-func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID) ([]BidanItem, error) {
+// AntreanBidan: kunjungan yang sudah diinput kader pada satu jadwal di posyandu bidan.
+func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID, pos string) ([]BidanItem, error) {
+	if _, err := s.jadwalPos(jadwalID, pos); err != nil {
+		return nil, err
+	}
 	list, err := s.repo.PendaftaranBerpengukuran(jadwalID)
 	if err != nil {
 		return nil, err
@@ -394,12 +444,12 @@ func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID) ([]BidanItem, error)
 	return out, nil
 }
 
-func (s *PelayananService) DetailBidan(pendaftaranID uuid.UUID) (*DetailBidan, error) {
-	p, err := s.pendaftaran(pendaftaranID)
+func (s *PelayananService) DetailBidan(pos string, pendaftaranID uuid.UUID) (*DetailBidan, error) {
+	p, err := s.pendaftaranPos(pendaftaranID, pos)
 	if err != nil {
 		return nil, err
 	}
-	if p.Anak == nil || p.Jadwal == nil {
+	if p.Anak == nil {
 		return nil, ErrPendaftaranTidakAda
 	}
 	ukur, err := s.repo.GetPengukuran(p.ID)
@@ -442,8 +492,8 @@ func (s *PelayananService) DetailBidan(pendaftaranID uuid.UUID) (*DetailBidan, e
 
 func (s *PelayananService) ListVaksin() ([]models.JenisVaksin, error) { return s.repo.ListVaksin() }
 
-func (s *PelayananService) SimpanCatatan(bidanID uint, pendaftaranID uuid.UUID, in CatatanBidanInput) (*DetailBidan, error) {
-	p, err := s.pendaftaran(pendaftaranID)
+func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID uuid.UUID, in CatatanBidanInput) (*DetailBidan, error) {
+	p, err := s.pendaftaranPos(pendaftaranID, pos)
 	if err != nil {
 		return nil, err
 	}
@@ -562,12 +612,12 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pendaftaranID uuid.UUID, 
 	if err != nil {
 		return nil, err
 	}
-	return s.DetailBidan(p.ID)
+	return s.DetailBidan(pos, p.ID)
 }
 
 // ---------------------------------------------------------------- orang tua: riwayat
 
-// Riwayat menampilkan kunjungan yang SUDAH diberi catatan bidan.
+// Riwayat menampilkan kunjungan yang SUDAH diberi catatan bidan, hanya untuk anak keluarga sendiri.
 func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatItem, error) {
 	kosong := []RiwayatItem{}
 	ibu, err := s.kel.FindIbuByUser(userID)
@@ -678,18 +728,4 @@ func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatIte
 		return out[i].JamMulai > out[j].JamMulai
 	})
 	return out, nil
-}
-// PengukuranKader: data pengukuran satu kunjungan (nil bila belum diinput kader).
-func (s *PelayananService) PengukuranKader(pendaftaranID uuid.UUID) (*models.Pengukuran, error) {
-	if _, err := s.pendaftaran(pendaftaranID); err != nil {
-		return nil, err
-	}
-	m, err := s.repo.GetPengukuran(pendaftaranID)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
 }

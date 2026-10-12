@@ -23,6 +23,16 @@ func (r *VaksinRepository) GetAnak(id uuid.UUID) (*models.Anak, error) {
 	return &a, err
 }
 
+// PosyanduAnak: kode posyandu tempat anak terdaftar (melalui keluarga).
+func (r *VaksinRepository) PosyanduAnak(anakID uuid.UUID) (string, error) {
+	var pos string
+	err := r.db.Model(&models.Keluarga{}).
+		Select("posyandu").
+		Where("id IN (?)", r.db.Model(&models.Anak{}).Select("keluarga_id").Where("id = ?", anakID)).
+		Scan(&pos).Error
+	return pos, err
+}
+
 func (r *VaksinRepository) KeluargaIDByUser(uid uint) (uuid.UUID, error) {
 	var o models.OrangTua
 	err := r.db.Where("user_id = ?", uid).First(&o).Error

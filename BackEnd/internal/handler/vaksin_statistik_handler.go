@@ -14,8 +14,13 @@ func NewVaksinStatistikHandler(svc *service.VaksinStatistikService) *VaksinStati
 	return &VaksinStatistikHandler{svc}
 }
 
+// GET /admin/vaksin/statistik?posyandu=   (kosong = semua posyandu)
 func (h *VaksinStatistikHandler) Statistik(c *gin.Context) {
-	data, err := h.svc.Statistik()
+	pos, ok := scopePosyandu(c)
+	if !ok {
+		return
+	}
+	data, err := h.svc.Statistik(pos)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "terjadi kesalahan pada server"})
 		return

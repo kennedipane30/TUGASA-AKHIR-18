@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../core/posyandu.dart';
 import '../admin_service.dart';
 
 const _hijauTua = Color(0xFF0B3D2E);
@@ -25,6 +26,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
   final _service = AdminService();
 
   String _aktif = 'Kader';
+  String _posyandu = ''; // kosong = semua posyandu
   bool _memuat = true;
   String? _galat;
   List<StaffAkun> _data = [];
@@ -47,7 +49,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
   Future<void> _muat({bool tampilLoading = true}) async {
     if (tampilLoading) setState(() => _memuat = true);
     try {
-      final hasil = await _service.daftarStaff();
+      final hasil = await _service.daftarStaff(posyandu: _posyandu);
       if (!mounted) return;
       setState(() {
         _data = hasil;
@@ -67,7 +69,11 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
     final hasil = await Navigator.push<_HasilForm>(
       context,
       MaterialPageRoute(
-          builder: (_) => _AkunFormPage(peranAwal: _aktif == 'Bidan' ? 'bidan' : 'kader')),
+        builder: (_) => _AkunFormPage(
+          peranAwal: _aktif == 'Bidan' ? 'bidan' : 'kader',
+          posyanduAwal: _posyandu.isEmpty ? daftarPosyandu.first.kode : _posyandu,
+        ),
+      ),
     );
     if (hasil == null) return;
     try {
@@ -76,8 +82,9 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
         username: hasil.username,
         password: hasil.sandi ?? '',
         role: hasil.role,
+        posyandu: hasil.posyandu,
       );
-      _pesan('Akun ${hasil.nama} berhasil dibuat');
+      _pesan('Akun ${hasil.nama} berhasil dibuat di ${labelPosyandu(hasil.posyandu)}');
       await _muat(tampilLoading: false);
     } catch (e) {
       _pesan(_bersih(e));
@@ -96,6 +103,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
         nama: hasil.nama,
         username: hasil.username,
         role: hasil.role,
+        posyandu: hasil.posyandu,
         password: hasil.sandi,
       );
       _pesan('Akun ${hasil.nama} diperbarui');
@@ -110,7 +118,8 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Hapus akun?'),
-        content: Text('Akun ${a.nama} (${a.labelPeran}) akan dihapus dan tidak dapat login lagi.'),
+        content: Text(
+            'Akun ${a.nama} (${a.labelPeran} ${a.labelPosyandu}) akan dihapus dan tidak dapat login lagi.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
           ElevatedButton(
@@ -140,6 +149,31 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
     } catch (e) {
       _pesan(_bersih(e));
     }
+  }
+
+  Widget _chipPosyandu(String kode, String label) {
+    final dipilih = _posyandu == kode;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: dipilih,
+        selectedColor: _hijauGelap,
+        backgroundColor: Colors.white,
+        showCheckmark: false,
+        side: BorderSide(color: dipilih ? _hijauGelap : const Color(0xFFE3E8E5)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+          color: dipilih ? Colors.white : Colors.black87,
+        ),
+        onSelected: (_) {
+          setState(() => _posyandu = kode);
+          _muat();
+        },
+      ),
+    );
   }
 
   @override
@@ -213,26 +247,9 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                           style: const TextStyle(
                               fontWeight: FontWeight.w800, fontSize: 13.5, color: _hijauTua),
                         ),
-                        Text('${daftar.length} akun • $jumlahAktif aktif bertugas',
+                        Text(
+                            '${daftar.length} akun • $jumlahAktif aktif • ${labelPosyandu(_posyandu)}',
                             style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFBFE5D0)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.circle, size: 7, color: _hijauGaris),
-                        SizedBox(width: 4),
-                        Text('Lokal Aman',
-                            style: TextStyle(
-                                fontSize: 10, fontWeight: FontWeight.w800, color: _hijauGelap)),
                       ],
                     ),
                   ),
@@ -256,6 +273,19 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
               ),
             ),
             const SizedBox(height: 12),
+            const Text('Posyandu',
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _chipPosyandu('', 'Semua'),
+                  for (final p in daftarPosyandu) _chipPosyandu(p.kode, p.nama),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -298,34 +328,6 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
             ),
             const SizedBox(height: 10),
             _isiDaftar(daftar),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE6ECE8)),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.shield_outlined, size: 17, color: _hijauGelap),
-                      SizedBox(width: 6),
-                      Text('Otoritas & Keamanan Data',
-                          style: TextStyle(
-                              fontSize: 12.5, fontWeight: FontWeight.w800, color: _hijauTua)),
-                    ],
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'Kader terdaftar berwenang mencatat pertumbuhan balita (Meja 1-4) dan data imunisasi. Seluruh data disimpan terenkripsi lokal dan otomatis sinkron saat terhubung jaringan.',
-                    style: TextStyle(fontSize: 11, height: 1.4, color: AppColors.teksRedup),
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
@@ -430,6 +432,9 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                    const SizedBox(height: 4),
+                    Pill('Posyandu ${a.labelPosyandu}',
+                        bg: Colors.white, fg: _biruGaris, icon: Icons.place_outlined),
                   ],
                 ),
               ),
@@ -506,14 +511,16 @@ class _HasilForm {
   final String nama;
   final String username;
   final String role; // 'kader' atau 'bidan'
+  final String posyandu;
   final String? sandi;
-  const _HasilForm(this.nama, this.username, this.role, this.sandi);
+  const _HasilForm(this.nama, this.username, this.role, this.posyandu, this.sandi);
 }
 
 class _AkunFormPage extends StatefulWidget {
   final StaffAkun? akun;
   final String peranAwal;
-  const _AkunFormPage({this.akun, this.peranAwal = 'kader'});
+  final String posyanduAwal;
+  const _AkunFormPage({this.akun, this.peranAwal = 'kader', this.posyanduAwal = 'silimbat'});
 
   @override
   State<_AkunFormPage> createState() => _AkunFormPageState();
@@ -525,6 +532,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
   late final TextEditingController _username;
   final _sandi = TextEditingController();
   late String _peran;
+  late String _posyandu;
   bool _lihat = false;
 
   bool get _edit => widget.akun != null;
@@ -535,6 +543,8 @@ class _AkunFormPageState extends State<_AkunFormPage> {
     _nama = TextEditingController(text: widget.akun?.nama ?? '');
     _username = TextEditingController(text: widget.akun?.username ?? '');
     _peran = widget.akun?.role ?? widget.peranAwal;
+    final p = widget.akun?.posyandu ?? widget.posyanduAwal;
+    _posyandu = daftarPosyandu.any((e) => e.kode == p) ? p : daftarPosyandu.first.kode;
   }
 
   @override
@@ -608,7 +618,8 @@ class _AkunFormPageState extends State<_AkunFormPage> {
     final sandi = _sandi.text.trim();
     Navigator.pop(
       context,
-      _HasilForm(_nama.text.trim(), _username.text.trim(), _peran, sandi.isEmpty ? null : sandi),
+      _HasilForm(_nama.text.trim(), _username.text.trim(), _peran, _posyandu,
+          sandi.isEmpty ? null : sandi),
     );
   }
 
@@ -697,8 +708,8 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                                     fontSize: 14, fontWeight: FontWeight.w800, color: _hijauTua)),
                             Text(
                               _edit
-                                  ? 'Perbarui informasi kredensial & hak otoritas tugas'
-                                  : 'Lengkapi informasi akun kader atau bidan untuk akses Posyandu Care',
+                                  ? 'Perbarui informasi akun dan posyandu tempat bertugas'
+                                  : 'Setiap petugas hanya bertugas di satu posyandu',
                               style: const TextStyle(
                                   fontSize: 10.5, height: 1.3, color: AppColors.teksRedup),
                             ),
@@ -707,10 +718,17 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                       ),
                     ],
                   ),
-                  _label(_edit ? 'Role Petugas' : 'ROLE PETUGAS', _edit ? 'Wajib' : 'Wajib Pilih',
-                      _edit ? _oranyeGaris : _hijauGelap,
-                      _edit ? Colors.transparent : AppColors.hijauMuda,
-                      wajib: !_edit),
+                  _label('POSYANDU TUGAS', 'Wajib Pilih', _hijauGelap, AppColors.hijauMuda,
+                      wajib: true),
+                  DropdownButtonFormField<String>(
+                    value: _posyandu,
+                    icon: const Icon(Icons.keyboard_arrow_down, color: _hijauGelap),
+                    decoration: _dekor('', Icons.place_outlined, _hijauGaris),
+                    items: itemPosyandu(),
+                    onChanged: (v) => setState(() => _posyandu = v ?? _posyandu),
+                  ),
+                  _label('ROLE PETUGAS', 'Wajib Pilih', _hijauGelap, AppColors.hijauMuda,
+                      wajib: true),
                   DropdownButtonFormField<String>(
                     value: nilaiPeran,
                     icon: const Icon(Icons.keyboard_arrow_down, color: _hijauGelap),
@@ -721,11 +739,8 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                     ],
                     onChanged: (v) => setState(() => _peran = v ?? _peran),
                   ),
-                  _label(_edit ? 'Nama Lengkap' : 'NAMA LENGKAP',
-                      _edit ? 'Sesuai KTP' : 'Sesuai KTP / SK',
-                      _edit ? _oranyeGaris : _hijauGelap,
-                      _edit ? Colors.transparent : AppColors.hijauMuda,
-                      wajib: !_edit),
+                  _label('NAMA LENGKAP', 'Sesuai KTP / SK', _hijauGelap, AppColors.hijauMuda,
+                      wajib: true),
                   TextFormField(
                     controller: _nama,
                     textCapitalization: TextCapitalization.words,
@@ -734,9 +749,9 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                     validator: (v) =>
                         (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
                   ),
-                  _label(_edit ? 'Username Akun' : 'USERNAME AKUN', 'Min. 4 karakter',
-                      _biruGaris, const Color(0xFFE6F1FF),
-                      wajib: !_edit),
+                  _label('USERNAME AKUN', 'Min. 4 karakter', _biruGaris,
+                      const Color(0xFFE6F1FF),
+                      wajib: true),
                   TextFormField(
                     controller: _username,
                     decoration: _dekor(
@@ -744,7 +759,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                     validator: (v) =>
                         (v == null || v.trim().length < 4) ? 'Minimal 4 karakter' : null,
                   ),
-                  _label(_edit ? 'Kata Sandi Baru' : 'KATA SANDI AWAL',
+                  _label(_edit ? 'KATA SANDI BARU' : 'KATA SANDI AWAL',
                       _edit ? 'Opsional' : 'Min. 6 karakter',
                       _edit ? AppColors.teksRedup : _oranyeGaris,
                       _edit ? Colors.transparent : const Color(0xFFFFF1E6),
@@ -769,59 +784,6 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                       if (_edit && t.isEmpty) return null;
                       return t.length < 6 ? 'Minimal 6 karakter' : null;
                     },
-                  ),
-                  if (_edit)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6),
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline, size: 13, color: AppColors.teksRedup),
-                          SizedBox(width: 5),
-                          Text('Minimal 6 karakter kombinasi angka & huruf',
-                              style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
-                        ],
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _edit ? const Color(0xFFF1F4F2) : const Color(0xFFE3F6EC),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 26,
-                          height: 26,
-                          decoration: const BoxDecoration(
-                              color: _hijauGelap, shape: BoxShape.circle),
-                          child: const Icon(Icons.shield_outlined,
-                              color: Colors.white, size: 14),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              children: [
-                                const TextSpan(
-                                    text: 'Penyimpanan Terenkripsi Lokal: ',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w800, color: _hijauTua)),
-                                TextSpan(
-                                  text: _edit
-                                      ? 'Perubahan langsung tersimpan di tablet/ponsel Posyandu dan disinkronkan ke server saat jaringan stabil.'
-                                      : 'Akun baru dapat langsung digunakan untuk mencatat pertumbuhan & kegiatan posyandu walau tanpa jaringan internet.',
-                                  style: const TextStyle(color: AppColors.teksRedup),
-                                ),
-                              ],
-                            ),
-                            style: const TextStyle(fontSize: 10.5, height: 1.4),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),

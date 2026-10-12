@@ -8,9 +8,10 @@ import (
 )
 
 // Keluarga: satu keluarga balita (alamat dan RT/RW).
-// Karena posyandu hanya satu, tidak ada kolom pilihan posyandu.
+// Posyandu: kode posyandu keluarga (sitoluama | aek_bolon | silaen), dipilih saat registrasi.
 type Keluarga struct {
 	ID            uuid.UUID      `gorm:"type:uuid;primaryKey;column:id" json:"id"`
+	Posyandu      string         `gorm:"column:posyandu;size:20;not null;default:'';index" json:"posyandu"`
 	NoKK          *string        `gorm:"column:no_kk;size:16;uniqueIndex:ux_keluarga_no_kk,where:deleted_at IS NULL" json:"no_kk,omitempty"`
 	Alamat        string         `gorm:"column:alamat;type:text" json:"alamat"`
 	RT            string         `gorm:"column:rt;size:5" json:"rt"`

@@ -21,7 +21,7 @@ func (h *PelayananHandler) AntreanKader(c *gin.Context) {
 	if !ok {
 		return
 	}
-	list, err := h.svc.AntreanKader(id)
+	list, err := h.svc.AntreanKader(id, c.GetString("posyandu"))
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -40,7 +40,21 @@ func (h *PelayananHandler) CatatPengukuran(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	m, err := h.svc.CatatPengukuran(c.GetUint("user_id"), id, in)
+	m, err := h.svc.CatatPengukuran(c.GetUint("user_id"), c.GetString("posyandu"), id, in)
+	if err != nil {
+		tulisError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": m})
+}
+
+// GET /kader/pendaftaran/:id/pengukuran
+func (h *PelayananHandler) PengukuranKader(c *gin.Context) {
+	id, ok := idParam(c, "id")
+	if !ok {
+		return
+	}
+	m, err := h.svc.PengukuranKader(c.GetString("posyandu"), id)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -56,7 +70,7 @@ func (h *PelayananHandler) AntreanBidan(c *gin.Context) {
 	if !ok {
 		return
 	}
-	list, err := h.svc.AntreanBidan(id)
+	list, err := h.svc.AntreanBidan(id, c.GetString("posyandu"))
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -70,7 +84,7 @@ func (h *PelayananHandler) DetailBidan(c *gin.Context) {
 	if !ok {
 		return
 	}
-	d, err := h.svc.DetailBidan(id)
+	d, err := h.svc.DetailBidan(c.GetString("posyandu"), id)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -89,7 +103,7 @@ func (h *PelayananHandler) SimpanCatatan(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	d, err := h.svc.SimpanCatatan(c.GetUint("user_id"), id, in)
+	d, err := h.svc.SimpanCatatan(c.GetUint("user_id"), c.GetString("posyandu"), id, in)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -126,17 +140,4 @@ func (h *PelayananHandler) Riwayat(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": list})
-}
-// GET /kader/pendaftaran/:id/pengukuran
-func (h *PelayananHandler) PengukuranKader(c *gin.Context) {
-	id, ok := idParam(c, "id")
-	if !ok {
-		return
-	}
-	m, err := h.svc.PengukuranKader(id)
-	if err != nil {
-		tulisError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"data": m})
 }

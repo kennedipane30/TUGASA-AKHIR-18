@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../core/posyandu.dart';
 
 // ---------------------------------------------------------------------------
 // MODEL
 // ---------------------------------------------------------------------------
 class JadwalItem {
   final String id;
+  final String posyandu;
   final DateTime tanggal;
   final String jamMulai;
   final String jamSelesai;
@@ -19,6 +21,7 @@ class JadwalItem {
 
   JadwalItem({
     required this.id,
+    required this.posyandu,
     required this.tanggal,
     required this.jamMulai,
     required this.jamSelesai,
@@ -37,6 +40,7 @@ class JadwalItem {
 
     return JadwalItem(
       id: j['id']?.toString() ?? '',
+      posyandu: j['posyandu']?.toString() ?? '',
       tanggal: tgl ?? DateTime.now(),
       jamMulai: jam(j['jam_mulai']),
       jamSelesai: jam(j['jam_selesai']),
@@ -109,7 +113,6 @@ TimeOfDay? _parseJam(String s) {
 }
 
 const _namaHari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-const _namaHariSingkat = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 const _namaBulan = [
   'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
 ];
@@ -118,7 +121,7 @@ String _tglPanjang(DateTime d) =>
     '${_namaHari[d.weekday - 1]}, ${d.day} ${_namaBulan[d.month - 1]} ${d.year}';
 
 String _tglRiwayat(DateTime d) =>
-    '${_namaHariSingkat[d.weekday - 1].substring(0, 5)}, ${d.day} ${_namaBulan[d.month - 1]} ${d.year}';
+    '${_namaHari[d.weekday - 1].substring(0, 5)}, ${d.day} ${_namaBulan[d.month - 1]} ${d.year}';
 
 InputDecoration _dekor(String label, {String? hint, IconData? icon}) {
   return InputDecoration(
@@ -149,6 +152,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
   bool _memuat = true;
   bool _semuaRiwayat = false;
   String? _gagal;
+  String _posyandu = ''; // kosong = semua posyandu
 
   @override
   void initState() {
@@ -158,7 +162,9 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
 
   Future<void> _muat() async {
     try {
-      final r = await ApiClient.dio.get('/jadwal', options: _opsi);
+      final r = await ApiClient.dio.get('/jadwal',
+          queryParameters: {if (_posyandu.isNotEmpty) 'posyandu': _posyandu},
+          options: _opsi);
       final list = _ambilList(r.data)
           .map((e) => JadwalItem.fromApi(Map<String, dynamic>.from(e as Map)))
           .where((j) => j.status != 'dibatalkan')
@@ -193,7 +199,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => _FormJadwal(awal: awal),
+      builder: (_) => _FormJadwal(awal: awal, posyanduAwal: _posyandu),
     );
     if (ok == true) {
       _snack(awal == null ? 'Jadwal berhasil dibuat' : 'Jadwal berhasil diubah');
@@ -204,7 +210,8 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
   Future<void> _batalkan(JadwalItem j) async {
     final alasan = await showDialog<String>(
       context: context,
-      builder: (_) => _DialogBatal(tanggal: _tglPanjang(j.tanggal)),
+      builder: (_) => _DialogBatal(
+          tanggal: '${_tglPanjang(j.tanggal)} • Posyandu ${labelPosyandu(j.posyandu)}'),
     );
     if (alasan == null) return;
     try {
@@ -215,6 +222,34 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
     } catch (e) {
       _snack(_pesanError(e));
     }
+  }
+
+  Widget _chipPosyandu(String kode, String label) {
+    final dipilih = _posyandu == kode;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: dipilih,
+        selectedColor: _hijauTua,
+        backgroundColor: Colors.white,
+        showCheckmark: false,
+        side: BorderSide(color: dipilih ? _hijauTua : const Color(0xFFE3E8E5)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+          color: dipilih ? Colors.white : Colors.black87,
+        ),
+        onSelected: (_) {
+          setState(() {
+            _posyandu = kode;
+            _memuat = true;
+          });
+          _muat();
+        },
+      ),
+    );
   }
 
   @override
@@ -304,6 +339,16 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
             _infoAtas(),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _chipPosyandu('', 'Semua'),
+                  for (final p in daftarPosyandu) _chipPosyandu(p.kode, p.nama),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             if (_memuat)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 32),
@@ -346,7 +391,6 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                       )
                     : Column(children: [for (final j in mendatang) _kartu(j)]),
               ),
-              _broadcast(),
               const SizedBox(height: 12),
               _riwayat(riwayat, riwayatTampil),
             ],
@@ -372,63 +416,8 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Pendaftaran orang tua dibuka kapan saja setelah jadwal terbit dan check-in dibuka 1 jam sebelum mulai. Hanya satu jadwal per tanggal.',
+              'Jadwal dibuat per posyandu dan hanya terlihat oleh orang tua, kader, dan bidan posyandu tersebut. Satu posyandu hanya boleh punya satu jadwal per tanggal. Check-in dibuka 1 jam sebelum mulai.',
               style: TextStyle(fontSize: 12, height: 1.4, color: _hijauTua),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _broadcast() {
-    return Container(
-      margin: const EdgeInsets.only(top: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE9F7F3),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFCDEBE2)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.chat_bubble_outline, color: _hijauGelap, size: 20),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Broadcast WhatsApp Kader',
-                    style: TextStyle(
-                        fontSize: 12.5, fontWeight: FontWeight.w800, color: _hijauTua)),
-                SizedBox(height: 2),
-                Text('Kirim pesan reminder otomatis H-2 ke ibu balita.',
-                    style: TextStyle(fontSize: 11, color: AppColors.teksRedup, height: 1.3)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            height: 32,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _biru,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: () => soon(context, 'Broadcast WhatsApp'),
-              child: const Text('Kirim',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
             ),
           ),
         ],
@@ -495,7 +484,8 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
               children: [
                 Text(_tglRiwayat(j.tanggal),
                     style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
-                Text(j.lokasi.isEmpty ? 'Posyandu' : j.lokasi,
+                Text(
+                    'Posyandu ${labelPosyandu(j.posyandu)}${j.lokasi.isEmpty ? '' : ' • ${j.lokasi}'}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
@@ -594,7 +584,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
             spacing: 8,
             runSpacing: 6,
             children: [
-              _chip(Icons.groups_outlined, 'Balita Terdaftar', _biru,
+              _chip(Icons.home_work_outlined, 'Posyandu ${labelPosyandu(j.posyandu)}', _biru,
                   const Color(0xFFEAF4FB)),
               _chip(Icons.circle, 'Imunisasi & Gizi', _oranye, const Color(0xFFFFF1E6),
                   kecil: true),
@@ -728,7 +718,8 @@ class _DialogBatalState extends State<_DialogBatal> {
 // ---------------------------------------------------------------------------
 class _FormJadwal extends StatefulWidget {
   final JadwalItem? awal;
-  const _FormJadwal({this.awal});
+  final String posyanduAwal;
+  const _FormJadwal({this.awal, this.posyanduAwal = ''});
 
   @override
   State<_FormJadwal> createState() => _FormJadwalState();
@@ -741,6 +732,7 @@ class _FormJadwalState extends State<_FormJadwal> {
   final _selesai = TextEditingController();
   final _lokasi = TextEditingController();
   DateTime? _tanggal;
+  String? _posyandu;
   bool _menyimpan = false;
   String? _error;
 
@@ -749,12 +741,14 @@ class _FormJadwalState extends State<_FormJadwal> {
     super.initState();
     final a = widget.awal;
     if (a != null) {
+      _posyandu = a.posyandu;
       _tanggal = a.tanggal;
       _tgl.text = _tglPanjang(a.tanggal);
       _mulai.text = a.jamMulai;
       _selesai.text = a.jamSelesai;
       _lokasi.text = a.lokasi;
     } else {
+      _posyandu = widget.posyanduAwal.isEmpty ? null : widget.posyanduAwal;
       _mulai.text = '08:00';
       _selesai.text = '11:30';
     }
@@ -775,7 +769,9 @@ class _FormJadwalState extends State<_FormJadwal> {
     final d = await showDatePicker(
       context: context,
       initialDate: awal.isBefore(now) ? now : awal,
-      firstDate: widget.awal == null ? DateTime(now.year, now.month, now.day) : DateTime(now.year - 1),
+      firstDate: widget.awal == null
+          ? DateTime(now.year, now.month, now.day)
+          : DateTime(now.year - 1),
       lastDate: DateTime(now.year + 2),
     );
     if (d != null) {
@@ -808,6 +804,7 @@ class _FormJadwalState extends State<_FormJadwal> {
     });
 
     final body = {
+      'posyandu': _posyandu,
       'tanggal': _fmtApi(_tanggal!),
       'jam_mulai': _mulai.text.trim(),
       'jam_selesai': _selesai.text.trim(),
@@ -833,6 +830,7 @@ class _FormJadwalState extends State<_FormJadwal> {
 
   @override
   Widget build(BuildContext context) {
+    final ubah = widget.awal != null;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
@@ -842,9 +840,24 @@ class _FormJadwalState extends State<_FormJadwal> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.awal == null ? 'Tambah Jadwal Posyandu' : 'Ubah Jadwal Posyandu',
+              Text(ubah ? 'Ubah Jadwal Posyandu' : 'Tambah Jadwal Posyandu',
                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
               const SizedBox(height: 14),
+              DropdownButtonFormField<String>(
+                value: _posyandu,
+                decoration: _dekor('Posyandu', icon: Icons.home_work_outlined),
+                hint: const Text('Pilih posyandu'),
+                items: itemPosyandu(),
+                onChanged: ubah ? null : (v) => setState(() => _posyandu = v),
+                validator: (v) => v == null ? 'Posyandu wajib dipilih' : null,
+              ),
+              if (ubah)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4, left: 4),
+                  child: Text('Posyandu tidak dapat dipindahkan. Buat jadwal baru jika perlu.',
+                      style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
+                ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _tgl,
                 readOnly: true,
@@ -885,7 +898,7 @@ class _FormJadwalState extends State<_FormJadwal> {
               TextFormField(
                 controller: _lokasi,
                 textCapitalization: TextCapitalization.words,
-                decoration: _dekor('Lokasi', hint: 'Contoh: Balai Warga RW 05',
+                decoration: _dekor('Lokasi', hint: 'Contoh: Balai Desa',
                     icon: Icons.place_outlined),
               ),
               const SizedBox(height: 10),
@@ -896,7 +909,7 @@ class _FormJadwalState extends State<_FormJadwal> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Text(
-                  'Pendaftaran dibuka kapan saja setelah jadwal terbit dan check-in dibuka 1 jam sebelum mulai.',
+                  'Jadwal hanya terlihat oleh orang tua, kader, dan bidan pada posyandu yang dipilih. Check-in dibuka 1 jam sebelum mulai.',
                   style: TextStyle(fontSize: 11.5),
                 ),
               ),

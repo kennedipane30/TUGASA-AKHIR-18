@@ -20,29 +20,42 @@ type JumlahPerVaksin struct {
 	Anak          int64     `gorm:"column:anak"`
 }
 
-func (r *VaksinStatistikRepository) TotalDiberikan() (int64, error) {
+// Semua fungsi menerima posyandu opsional; kosong = semua posyandu (admin).
+
+func (r *VaksinStatistikRepository) imunisasi(posyandu []string) *gorm.DB {
+	q := r.db.Model(&models.ImunisasiAnak{})
+	if p := pilihPosyandu(posyandu); p != "" {
+		q = q.Where("anak_id IN (?)", subAnakPosyandu(r.db, p))
+	}
+	return q
+}
+
+func (r *VaksinStatistikRepository) TotalDiberikan(posyandu ...string) (int64, error) {
 	var n int64
-	err := r.db.Model(&models.ImunisasiAnak{}).Count(&n).Error
+	err := r.imunisasi(posyandu).Count(&n).Error
 	return n, err
 }
 
-func (r *VaksinStatistikRepository) TotalAnakDivaksin() (int64, error) {
+func (r *VaksinStatistikRepository) TotalAnakDivaksin(posyandu ...string) (int64, error) {
 	var n int64
-	err := r.db.Model(&models.ImunisasiAnak{}).Distinct("anak_id").Count(&n).Error
+	err := r.imunisasi(posyandu).Distinct("anak_id").Count(&n).Error
 	return n, err
 }
 
-func (r *VaksinStatistikRepository) TotalRencanaAktif() (int64, error) {
+func (r *VaksinStatistikRepository) TotalRencanaAktif(posyandu ...string) (int64, error) {
 	var n int64
-	err := r.db.Model(&models.RencanaImunisasi{}).
-		Where("status IN ?", []string{"direncanakan", "terlewat"}).
-		Count(&n).Error
+	q := r.db.Model(&models.RencanaImunisasi{}).
+		Where("status IN ?", []string{"direncanakan", "terlewat"})
+	if p := pilihPosyandu(posyandu); p != "" {
+		q = q.Where("anak_id IN (?)", subAnakPosyandu(r.db, p))
+	}
+	err := q.Count(&n).Error
 	return n, err
 }
 
-func (r *VaksinStatistikRepository) JumlahPerVaksin() ([]JumlahPerVaksin, error) {
+func (r *VaksinStatistikRepository) JumlahPerVaksin(posyandu ...string) ([]JumlahPerVaksin, error) {
 	list := []JumlahPerVaksin{}
-	err := r.db.Model(&models.ImunisasiAnak{}).
+	err := r.imunisasi(posyandu).
 		Select("jenis_vaksin_id, COUNT(*) AS jumlah, COUNT(DISTINCT anak_id) AS anak").
 		Group("jenis_vaksin_id").
 		Scan(&list).Error

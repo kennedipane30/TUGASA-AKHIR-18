@@ -9,19 +9,26 @@ import (
 )
 
 type Claims struct {
-	UserID uint   `json:"uid"`
-	Role   string `json:"role"`
+	UserID   uint   `json:"uid"`
+	Role     string `json:"role"`
+	Posyandu string `json:"pos,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userID uint, role string) (string, error) {
+// GenerateToken: posyandu bersifat opsional (kosong untuk admin).
+func GenerateToken(userID uint, role string, posyandu ...string) (string, error) {
 	hours, _ := strconv.Atoi(os.Getenv("JWT_EXPIRE_HOURS"))
 	if hours == 0 {
 		hours = 72
 	}
+	pos := ""
+	if len(posyandu) > 0 {
+		pos = posyandu[0]
+	}
 	claims := Claims{
-		UserID: userID,
-		Role:   role,
+		UserID:   userID,
+		Role:     role,
+		Posyandu: pos,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(hours) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

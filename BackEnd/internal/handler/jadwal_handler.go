@@ -43,7 +43,7 @@ func bacaAnakID(c *gin.Context) (uuid.UUID, bool) {
 
 // ---------------------------------------------------------------- admin
 
-// POST /admin/jadwal
+// POST /admin/jadwal   body wajib memuat "posyandu"
 func (h *JadwalHandler) Buat(c *gin.Context) {
 	var in service.JadwalInput
 	if err := c.ShouldBindJSON(&in); err != nil {
@@ -104,7 +104,11 @@ func (h *JadwalHandler) QRJadwal(c *gin.Context) {
 	if !ok {
 		return
 	}
-	kode, err := h.svc.QRJadwal(id)
+	pos := ""
+	if c.GetString("role") != "admin" {
+		pos = c.GetString("posyandu")
+	}
+	kode, err := h.svc.QRJadwal(id, pos)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -114,9 +118,13 @@ func (h *JadwalHandler) QRJadwal(c *gin.Context) {
 
 // ---------------------------------------------------------------- semua role
 
-// GET /jadwal
+// GET /jadwal   (admin: semua atau ?posyandu=; lainnya: hanya posyandu sendiri)
 func (h *JadwalHandler) List(c *gin.Context) {
-	list, err := h.svc.List()
+	pos, ok := scopePosyandu(c)
+	if !ok {
+		return
+	}
+	list, err := h.svc.List(pos)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -126,7 +134,11 @@ func (h *JadwalHandler) List(c *gin.Context) {
 
 // GET /jadwal/terdekat  (data bernilai null jika belum ada jadwal)
 func (h *JadwalHandler) Terdekat(c *gin.Context) {
-	d, err := h.svc.Terdekat(c.GetUint("user_id"), c.GetString("role"))
+	pos, ok := scopePosyandu(c)
+	if !ok {
+		return
+	}
+	d, err := h.svc.Terdekat(c.GetUint("user_id"), c.GetString("role"), pos)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -222,7 +234,7 @@ func (h *JadwalHandler) Kartu(c *gin.Context) {
 
 // GET /kader/anak?cari=...
 func (h *JadwalHandler) CariAnak(c *gin.Context) {
-	list, err := h.svc.CariAnak(c.Query("cari"))
+	list, err := h.svc.CariAnak(c.Query("cari"), c.GetString("posyandu"))
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -240,7 +252,7 @@ func (h *JadwalHandler) WalkIn(c *gin.Context) {
 	if !ok {
 		return
 	}
-	p, err := h.svc.WalkIn(c.GetUint("user_id"), jadwalID, anakID)
+	p, err := h.svc.WalkIn(c.GetUint("user_id"), c.GetString("posyandu"), jadwalID, anakID)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -254,7 +266,7 @@ func (h *JadwalHandler) CheckinManual(c *gin.Context) {
 	if !ok {
 		return
 	}
-	p, err := h.svc.CheckinManual(c.GetUint("user_id"), id)
+	p, err := h.svc.CheckinManual(c.GetUint("user_id"), c.GetString("posyandu"), id)
 	if err != nil {
 		tulisError(c, err)
 		return

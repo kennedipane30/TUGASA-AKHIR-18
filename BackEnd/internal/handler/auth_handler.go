@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"posyandu-api/internal/service"
@@ -21,8 +22,12 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	u, err := h.svc.RegisterOrangTua(in)
 	if err != nil {
 		code := http.StatusInternalServerError
-		if err == service.ErrDuplicate {
+		var ep service.ErrPin
+		switch {
+		case errors.Is(err, service.ErrDuplicate):
 			code = http.StatusConflict
+		case errors.Is(err, service.ErrPosyanduTidakValid), errors.As(err, &ep):
+			code = http.StatusBadRequest
 		}
 		c.JSON(code, gin.H{"error": err.Error()})
 		return
@@ -54,6 +59,11 @@ func (h *AuthHandler) Me(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"user": u})
+}
+
+// GET /posyandu-pilihan  (publik, untuk dropdown registrasi dan form admin)
+func (h *AuthHandler) PilihanPosyandu(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"data": modelsDaftarPosyandu()})
 }
 
 // khusus admin

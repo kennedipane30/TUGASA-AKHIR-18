@@ -13,6 +13,7 @@ var (
 	ErrInactive           = errors.New("akun tidak aktif, hubungi admin")
 	ErrDuplicate          = errors.New("NIK, No. HP, atau username sudah terdaftar")
 	ErrInvalidRole        = errors.New("role hanya boleh kader atau bidan")
+	ErrPosyanduTidakValid = errors.New("posyandu harus dipilih: silimbat, sitoluama, atau aekbolon")
 )
 
 type AuthService struct{ repo *repository.UserRepository }
@@ -24,12 +25,17 @@ type RegisterInput struct {
 	NIK      string `json:"nik" binding:"required,len=16,numeric"`
 	NoHP     string `json:"no_hp" binding:"required,min=10,max=15"`
 	Password string `json:"password" binding:"required,len=6,numeric"` // PIN 6 digit
+	Posyandu string `json:"posyandu" binding:"required"`               // silimbat | sitoluama | aekbolon
 }
 
 // Role selalu orang_tua, tidak diambil dari input client
 func (s *AuthService) RegisterOrangTua(in RegisterInput) (*models.User, error) {
 	if err := utils.ValidasiPIN(in.Password); err != nil {
 		return nil, ErrPin{err.Error()}
+	}
+	pos, ok := models.NormalisasiPosyandu(in.Posyandu)
+	if !ok {
+		return nil, ErrPosyanduTidakValid
 	}
 	if s.repo.Exists("nik", in.NIK) || s.repo.Exists("no_hp", in.NoHP) {
 		return nil, ErrDuplicate
@@ -39,7 +45,7 @@ func (s *AuthService) RegisterOrangTua(in RegisterInput) (*models.User, error) {
 		return nil, err
 	}
 	u := &models.User{Nama: in.Nama, NIK: &in.NIK, NoHP: &in.NoHP,
-		Password: hash, Role: models.RoleOrangTua, IsActive: true}
+		Password: hash, Role: models.RoleOrangTua, Posyandu: pos, IsActive: true}
 	return u, s.repo.Create(u)
 }
 
@@ -48,6 +54,7 @@ type CreateStaffInput struct {
 	Username string      `json:"username" binding:"required,min=4"`
 	Password string      `json:"password" binding:"required,min=6"`
 	Role     models.Role `json:"role" binding:"required"`
+	Posyandu string      `json:"posyandu" binding:"required"` // silimbat | sitoluama | aekbolon
 }
 
 // Akun kader/bidan langsung masuk ke beranda (tidak dipaksa ganti sandi);
@@ -55,6 +62,10 @@ type CreateStaffInput struct {
 func (s *AuthService) CreateStaff(in CreateStaffInput) (*models.User, error) {
 	if in.Role != models.RoleKader && in.Role != models.RoleBidan {
 		return nil, ErrInvalidRole
+	}
+	pos, ok := models.NormalisasiPosyandu(in.Posyandu)
+	if !ok {
+		return nil, ErrPosyanduTidakValid
 	}
 	if s.repo.Exists("username", in.Username) {
 		return nil, ErrDuplicate
@@ -64,7 +75,7 @@ func (s *AuthService) CreateStaff(in CreateStaffInput) (*models.User, error) {
 		return nil, err
 	}
 	u := &models.User{Nama: in.Nama, Username: &in.Username, Password: hash,
-		Role: in.Role, IsActive: true, MustChangePassword: false}
+		Role: in.Role, Posyandu: pos, IsActive: true, MustChangePassword: false}
 	return u, s.repo.Create(u)
 }
 
@@ -76,7 +87,7 @@ func (s *AuthService) Login(idf, password string) (string, *models.User, error) 
 	if !u.IsActive {
 		return "", nil, ErrInactive
 	}
-	token, err := utils.GenerateToken(u.ID, string(u.Role))
+	token, err := utils.GenerateToken(u.ID, string(u.Role), u.Posyandu)
 	return token, u, err
 }
 

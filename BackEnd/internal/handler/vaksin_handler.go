@@ -77,7 +77,10 @@ func vaksinBidan(c *gin.Context) (uint, bool) {
 }
 
 func vaksinError(c *gin.Context, err error) {
+	var t service.ErrTerlarang
 	switch {
+	case errors.As(err, &t):
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 	case errors.Is(err, service.ErrVaksinAnakTidakDitemukan),
 		errors.Is(err, service.ErrVaksinJadwalTidakDitemukan),
 		errors.Is(err, service.ErrVaksinRencanaTidakDitemukan),
@@ -134,7 +137,7 @@ func (h *VaksinHandler) BuatRencana(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "data tidak lengkap atau tidak valid"})
 		return
 	}
-	data, err := h.svc.BuatRencana(uid, service.BuatRencanaInput{
+	data, err := h.svc.BuatRencana(uid, c.GetString("posyandu"), service.BuatRencanaInput{
 		AnakID:            req.AnakID,
 		JadwalImunisasiID: req.JadwalImunisasiID,
 		PerkiraanTanggal:  req.PerkiraanTanggal,
@@ -161,7 +164,7 @@ func (h *VaksinHandler) UbahRencana(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "data tidak lengkap atau tidak valid"})
 		return
 	}
-	data, err := h.svc.UbahRencana(uid, id, service.UbahRencanaInput{
+	data, err := h.svc.UbahRencana(uid, c.GetString("posyandu"), id, service.UbahRencanaInput{
 		PerkiraanTanggal: req.PerkiraanTanggal,
 		Alasan:           req.Alasan,
 	})
@@ -183,7 +186,7 @@ func (h *VaksinHandler) BatalkanRencana(c *gin.Context) {
 	}
 	var req batalRencanaReq
 	_ = c.ShouldBindJSON(&req)
-	data, err := h.svc.BatalkanRencana(uid, id, req.Alasan)
+	data, err := h.svc.BatalkanRencana(uid, c.GetString("posyandu"), id, req.Alasan)
 	if err != nil {
 		vaksinError(c, err)
 		return
@@ -201,7 +204,7 @@ func (h *VaksinHandler) CatatRiwayat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "data tidak lengkap atau tidak valid"})
 		return
 	}
-	data, err := h.svc.CatatRiwayat(uid, service.CatatRiwayatInput{
+	data, err := h.svc.CatatRiwayat(uid, c.GetString("posyandu"), service.CatatRiwayatInput{
 		AnakID:           req.AnakID,
 		JenisVaksinID:    req.JenisVaksinID,
 		DosisKe:          req.DosisKe,
@@ -228,7 +231,7 @@ func (h *VaksinHandler) ListRencanaAnak(c *gin.Context) {
 	if !ok {
 		return
 	}
-	data, err := h.svc.ListRencana(anakID, uid, role)
+	data, err := h.svc.ListRencana(anakID, uid, role, c.GetString("posyandu"))
 	if err != nil {
 		vaksinError(c, err)
 		return
@@ -246,7 +249,7 @@ func (h *VaksinHandler) ListRiwayatAnak(c *gin.Context) {
 	if !ok {
 		return
 	}
-	data, err := h.svc.ListRiwayat(anakID, uid, role)
+	data, err := h.svc.ListRiwayat(anakID, uid, role, c.GetString("posyandu"))
 	if err != nil {
 		vaksinError(c, err)
 		return

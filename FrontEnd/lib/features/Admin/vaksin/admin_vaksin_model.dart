@@ -19,6 +19,7 @@ class VaksinStatistikItem {
 }
 
 class VaksinStatistik {
+  final String posyandu; // kosong = semua posyandu
   final int totalDiberikan;
   final int totalAnakDivaksin;
   final int rencanaAktif;
@@ -26,6 +27,7 @@ class VaksinStatistik {
   final List<VaksinStatistikItem> jenis;
 
   const VaksinStatistik({
+    required this.posyandu,
     required this.totalDiberikan,
     required this.totalAnakDivaksin,
     required this.rencanaAktif,
@@ -34,6 +36,7 @@ class VaksinStatistik {
   });
 
   factory VaksinStatistik.fromJson(Map<String, dynamic> j) => VaksinStatistik(
+        posyandu: (j['posyandu'] ?? '').toString(),
         totalDiberikan: (j['total_diberikan'] ?? 0) as int,
         totalAnakDivaksin: (j['total_anak_divaksin'] ?? 0) as int,
         rencanaAktif: (j['rencana_aktif'] ?? 0) as int,

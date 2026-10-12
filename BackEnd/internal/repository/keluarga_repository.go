@@ -17,10 +17,10 @@ func NewKeluargaRepository(db *gorm.DB) *KeluargaRepository {
 }
 
 type KeluargaData struct {
-	Keluarga *models.Keluarga  `json:"keluarga"`
-	Ibu      *models.OrangTua  `json:"ibu"`
-	Ayah     *models.OrangTua  `json:"ayah"`
-	Anak     []models.Anak     `json:"anak"`
+	Keluarga *models.Keluarga `json:"keluarga"`
+	Ibu      *models.OrangTua `json:"ibu"`
+	Ayah     *models.OrangTua `json:"ayah"`
+	Anak     []models.Anak    `json:"anak"`
 }
 
 type ProfilData struct {
@@ -64,6 +64,8 @@ func (r *KeluargaRepository) GetByUser(uid uint) (*KeluargaData, error) {
 	return data, nil
 }
 
+// ensure membuat keluarga + data ibu bila belum ada.
+// Posyandu keluarga diambil dari posyandu akun saat registrasi.
 func (r *KeluargaRepository) ensure(tx *gorm.DB, uid uint) (*models.Keluarga, *models.OrangTua, error) {
 	var ibu models.OrangTua
 	err := tx.Where("user_id = ?", uid).First(&ibu).Error
@@ -83,7 +85,7 @@ func (r *KeluargaRepository) ensure(tx *gorm.DB, uid uint) (*models.Keluarga, *m
 		return nil, nil, err
 	}
 
-	k := &models.Keluarga{}
+	k := &models.Keluarga{Posyandu: u.Posyandu}
 	if err := tx.Create(k).Error; err != nil {
 		return nil, nil, err
 	}
@@ -190,11 +192,18 @@ func (r *KeluargaRepository) FindIbuByUser(uid uint) (*models.OrangTua, error) {
 	return &ibu, err
 }
 
+func (r *KeluargaRepository) GetKeluarga(id uuid.UUID) (*models.Keluarga, error) {
+	var k models.Keluarga
+	err := r.db.First(&k, "id = ?", id).Error
+	return &k, err
+}
+
 func (r *KeluargaRepository) ListAnak(keluargaID uuid.UUID) ([]models.Anak, error) {
 	list := []models.Anak{}
 	err := r.db.Where("keluarga_id = ?", keluargaID).Order("tanggal_lahir").Find(&list).Error
 	return list, err
 }
+
 func (r *KeluargaRepository) AnakSudahAda(keluargaID uuid.UUID, nama string, tgl time.Time, kecuali uuid.UUID) bool {
 	var n int64
 	q := r.db.Model(&models.Anak{}).

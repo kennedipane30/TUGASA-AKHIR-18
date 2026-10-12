@@ -38,9 +38,14 @@ func Setup(db *gorm.DB) *gin.Engine {
 	api := r.Group("/api/v1")
 	api.POST("/auth/register", authH.Register)
 	api.POST("/auth/login", pinH.Login)
+	api.GET("/posyandu-pilihan", authH.PilihanPosyandu)
 
-	// semua role (sudah login)
-	protected := api.Group("/", middleware.AuthRequired())
+	// semua role (sudah login). Posyandu akun selalu dibaca dari database.
+	protected := api.Group("/",
+		middleware.AuthRequired(),
+		middleware.LoadPosyandu(db),
+		middleware.PosyanduRequired(),
+	)
 	protected.GET("/auth/me", authH.Me)
 	protected.POST("/auth/ubah-sandi", pinH.UbahSandi)
 	protected.POST("/users/:id/reset-pin", middleware.RoleRequired("admin", "kader"), pinH.ResetPIN)
@@ -90,7 +95,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kader.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
 	kader.GET("/jadwal/:id/antrean", pelayananH.AntreanKader)
 	kader.PUT("/pendaftaran/:id/pengukuran", pelayananH.CatatPengukuran)
-		kader.GET("/pendaftaran/:id/pengukuran", pelayananH.PengukuranKader)
+	kader.GET("/pendaftaran/:id/pengukuran", pelayananH.PengukuranKader)
 
 	// bidan
 	bidan := protected.Group("/bidan", middleware.RoleRequired("bidan"))

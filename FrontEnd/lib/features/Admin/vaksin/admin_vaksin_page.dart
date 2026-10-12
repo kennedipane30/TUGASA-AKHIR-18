@@ -1,11 +1,13 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
-import '../../../service/vaksin_service.dart';
+import '../../../core/posyandu.dart';
 import 'admin_vaksin_model.dart';
 
-/// Admin: jumlah vaksin yang sudah diberikan dan jenis-jenis vaksin.
+/// Admin: jumlah vaksin yang sudah diberikan dan jenis-jenis vaksin, per posyandu.
 class AdminVaksinPage extends StatefulWidget {
   const AdminVaksinPage({super.key});
 
@@ -14,11 +16,10 @@ class AdminVaksinPage extends StatefulWidget {
 }
 
 class _AdminVaksinPageState extends State<AdminVaksinPage> {
-  final _svc = VaksinService();
-
   VaksinStatistik? _data;
   bool _loading = true;
   String? _error;
+  String _posyandu = ''; // kosong = semua posyandu
 
   @override
   void initState() {
@@ -32,7 +33,9 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
       _error = null;
     });
     try {
-      final data = await _svc.statistikAdmin();
+      final res = await ApiClient.dio.get('/admin/vaksin/statistik',
+          queryParameters: {if (_posyandu.isNotEmpty) 'posyandu': _posyandu});
+      final data = VaksinStatistik.fromJson(Map<String, dynamic>.from(res.data['data']));
       if (!mounted) return;
       setState(() {
         _data = data;
@@ -40,11 +43,42 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
       });
     } catch (e) {
       if (!mounted) return;
+      String pesan = e.toString().replaceFirst('Exception: ', '');
+      if (e is DioException) {
+        final d = e.response?.data;
+        pesan = (d is Map && d['error'] != null)
+            ? d['error'].toString()
+            : 'Tidak dapat terhubung ke server';
+      }
       setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = pesan;
         _loading = false;
       });
     }
+  }
+
+  Widget _chipPosyandu(String kode, String label) {
+    final dipilih = _posyandu == kode;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: dipilih,
+        selectedColor: AppColors.hijau,
+        backgroundColor: Colors.white,
+        showCheckmark: false,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+          color: dipilih ? Colors.white : Colors.black87,
+        ),
+        onSelected: (_) {
+          setState(() => _posyandu = kode);
+          _muat();
+        },
+      ),
+    );
   }
 
   @override
@@ -84,8 +118,18 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _chipPosyandu('', 'Semua'),
+              for (final p in daftarPosyandu) _chipPosyandu(p.kode, p.nama),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         SectionCard(
-          title: 'Ringkasan Vaksin',
+          title: 'Ringkasan Vaksin • ${labelPosyandu(_posyandu)}',
           icon: Icons.vaccines_outlined,
           child: Column(
             children: [

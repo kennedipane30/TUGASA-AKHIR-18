@@ -15,7 +15,8 @@ import (
 const (
 	vaksinRoleBidan    = "bidan"
 	vaksinRoleKader    = "kader"
-	vaksinRoleOrangTua = "orangtua"
+	vaksinRoleAdmin    = "admin"
+	vaksinRoleOrangTua = "orang_tua"
 
 	vaksinTglLayout = "2006-01-02"
 )
@@ -164,15 +165,35 @@ func toRiwayatResp(m *models.ImunisasiAnak) RiwayatVaksinResp {
 	return resp
 }
 
+// cekPosyandu: staf hanya boleh mengakses anak dari posyandu yang sama.
+func (s *VaksinService) cekPosyandu(anakID uuid.UUID, pos string) error {
+	if pos == "" {
+		return ErrVaksinAksesDitolak
+	}
+	p, err := s.repo.PosyanduAnak(anakID)
+	if err != nil {
+		return err
+	}
+	if p != pos {
+		return ErrVaksinAksesDitolak
+	}
+	return nil
+}
+
 // ---------------------------------------------------------------- akses
 
-func (s *VaksinService) CekAkses(anakID uuid.UUID, uid uint, role string) (*models.Anak, error) {
+func (s *VaksinService) CekAkses(anakID uuid.UUID, uid uint, role, pos string) (*models.Anak, error) {
 	a, err := s.repo.GetAnak(anakID)
 	if err != nil {
 		return nil, vaksinNotFound(err, ErrVaksinAnakTidakDitemukan)
 	}
 	switch role {
+	case vaksinRoleAdmin:
+		return a, nil
 	case vaksinRoleBidan, vaksinRoleKader:
+		if err := s.cekPosyandu(a.ID, pos); err != nil {
+			return nil, err
+		}
 		return a, nil
 	case vaksinRoleOrangTua:
 		kid, err := s.repo.KeluargaIDByUser(uid)
@@ -211,7 +232,7 @@ func (s *VaksinService) ListJadwalMaster() ([]JadwalMasterResp, error) {
 
 // ---------------------------------------------------------------- rencana
 
-func (s *VaksinService) BuatRencana(bidanID uint, in BuatRencanaInput) (*RencanaVaksinResp, error) {
+func (s *VaksinService) BuatRencana(bidanID uint, pos string, in BuatRencanaInput) (*RencanaVaksinResp, error) {
 	alasan := strings.TrimSpace(in.Alasan)
 	if alasan == "" {
 		return nil, ErrVaksinAlasanWajib
@@ -227,6 +248,9 @@ func (s *VaksinService) BuatRencana(bidanID uint, in BuatRencanaInput) (*Rencana
 	anak, err := s.repo.GetAnak(in.AnakID)
 	if err != nil {
 		return nil, vaksinNotFound(err, ErrVaksinAnakTidakDitemukan)
+	}
+	if err := s.cekPosyandu(anak.ID, pos); err != nil {
+		return nil, err
 	}
 	if anak.Status != "aktif" {
 		return nil, ErrVaksinAnakTidakDitemukan
@@ -263,7 +287,7 @@ func (s *VaksinService) BuatRencana(bidanID uint, in BuatRencanaInput) (*Rencana
 	return &resp, nil
 }
 
-func (s *VaksinService) UbahRencana(bidanID uint, id uuid.UUID, in UbahRencanaInput) (*RencanaVaksinResp, error) {
+func (s *VaksinService) UbahRencana(bidanID uint, pos string, id uuid.UUID, in UbahRencanaInput) (*RencanaVaksinResp, error) {
 	alasan := strings.TrimSpace(in.Alasan)
 	if alasan == "" {
 		return nil, ErrVaksinAlasanWajib
@@ -279,6 +303,9 @@ func (s *VaksinService) UbahRencana(bidanID uint, id uuid.UUID, in UbahRencanaIn
 	m, err := s.repo.GetRencana(id)
 	if err != nil {
 		return nil, vaksinNotFound(err, ErrVaksinRencanaTidakDitemukan)
+	}
+	if err := s.cekPosyandu(m.AnakID, pos); err != nil {
+		return nil, err
 	}
 	if m.Status != "direncanakan" && m.Status != "terlewat" {
 		return nil, ErrVaksinRencanaTidakBisaDiubah
@@ -305,10 +332,13 @@ func (s *VaksinService) UbahRencana(bidanID uint, id uuid.UUID, in UbahRencanaIn
 	return &resp, nil
 }
 
-func (s *VaksinService) BatalkanRencana(bidanID uint, id uuid.UUID, alasan string) (*RencanaVaksinResp, error) {
+func (s *VaksinService) BatalkanRencana(bidanID uint, pos string, id uuid.UUID, alasan string) (*RencanaVaksinResp, error) {
 	m, err := s.repo.GetRencana(id)
 	if err != nil {
 		return nil, vaksinNotFound(err, ErrVaksinRencanaTidakDitemukan)
+	}
+	if err := s.cekPosyandu(m.AnakID, pos); err != nil {
+		return nil, err
 	}
 	if m.Status != "direncanakan" && m.Status != "terlewat" {
 		return nil, ErrVaksinRencanaTidakBisaDiubah
@@ -328,8 +358,8 @@ func (s *VaksinService) BatalkanRencana(bidanID uint, id uuid.UUID, alasan strin
 	return &resp, nil
 }
 
-func (s *VaksinService) ListRencana(anakID uuid.UUID, uid uint, role string) ([]RencanaVaksinResp, error) {
-	if _, err := s.CekAkses(anakID, uid, role); err != nil {
+func (s *VaksinService) ListRencana(anakID uuid.UUID, uid uint, role, pos string) ([]RencanaVaksinResp, error) {
+	if _, err := s.CekAkses(anakID, uid, role, pos); err != nil {
 		return nil, err
 	}
 	list, err := s.repo.ListRencanaAnak(anakID, "direncanakan", "terlewat")
@@ -345,7 +375,7 @@ func (s *VaksinService) ListRencana(anakID uuid.UUID, uid uint, role string) ([]
 
 // ---------------------------------------------------------------- riwayat
 
-func (s *VaksinService) CatatRiwayat(bidanID uint, in CatatRiwayatInput) (*RiwayatVaksinResp, error) {
+func (s *VaksinService) CatatRiwayat(bidanID uint, pos string, in CatatRiwayatInput) (*RiwayatVaksinResp, error) {
 	if in.DosisKe <= 0 {
 		return nil, ErrVaksinDosisTidakValid
 	}
@@ -360,6 +390,9 @@ func (s *VaksinService) CatatRiwayat(bidanID uint, in CatatRiwayatInput) (*Riway
 	anak, err := s.repo.GetAnak(in.AnakID)
 	if err != nil {
 		return nil, vaksinNotFound(err, ErrVaksinAnakTidakDitemukan)
+	}
+	if err := s.cekPosyandu(anak.ID, pos); err != nil {
+		return nil, err
 	}
 	if anak.Status != "aktif" {
 		return nil, ErrVaksinAnakTidakDitemukan
@@ -415,8 +448,8 @@ func (s *VaksinService) CatatRiwayat(bidanID uint, in CatatRiwayatInput) (*Riway
 	return &resp, nil
 }
 
-func (s *VaksinService) ListRiwayat(anakID uuid.UUID, uid uint, role string) ([]RiwayatVaksinResp, error) {
-	if _, err := s.CekAkses(anakID, uid, role); err != nil {
+func (s *VaksinService) ListRiwayat(anakID uuid.UUID, uid uint, role, pos string) ([]RiwayatVaksinResp, error) {
+	if _, err := s.CekAkses(anakID, uid, role, pos); err != nil {
 		return nil, err
 	}
 	list, err := s.repo.ListRiwayatAnak(anakID)

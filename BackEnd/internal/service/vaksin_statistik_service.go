@@ -22,27 +22,29 @@ type VaksinStatistikItem struct {
 }
 
 type VaksinStatistikResp struct {
-	TotalDiberikan   int64                 `json:"total_diberikan"`
-	TotalAnakDivaksin int64                `json:"total_anak_divaksin"`
-	RencanaAktif     int64                 `json:"rencana_aktif"`
-	JumlahJenis      int                   `json:"jumlah_jenis"`
-	Jenis            []VaksinStatistikItem `json:"jenis"`
+	Posyandu          string                `json:"posyandu"` // kosong = semua posyandu
+	TotalDiberikan    int64                 `json:"total_diberikan"`
+	TotalAnakDivaksin int64                 `json:"total_anak_divaksin"`
+	RencanaAktif      int64                 `json:"rencana_aktif"`
+	JumlahJenis       int                   `json:"jumlah_jenis"`
+	Jenis             []VaksinStatistikItem `json:"jenis"`
 }
 
-func (s *VaksinStatistikService) Statistik() (*VaksinStatistikResp, error) {
-	total, err := s.repo.TotalDiberikan()
+// Statistik: posyandu kosong = semua posyandu (admin).
+func (s *VaksinStatistikService) Statistik(posyandu string) (*VaksinStatistikResp, error) {
+	total, err := s.repo.TotalDiberikan(posyandu)
 	if err != nil {
 		return nil, err
 	}
-	anak, err := s.repo.TotalAnakDivaksin()
+	anak, err := s.repo.TotalAnakDivaksin(posyandu)
 	if err != nil {
 		return nil, err
 	}
-	rencana, err := s.repo.TotalRencanaAktif()
+	rencana, err := s.repo.TotalRencanaAktif(posyandu)
 	if err != nil {
 		return nil, err
 	}
-	agregat, err := s.repo.JumlahPerVaksin()
+	agregat, err := s.repo.JumlahPerVaksin(posyandu)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +72,7 @@ func (s *VaksinStatistikService) Statistik() (*VaksinStatistikResp, error) {
 	})
 
 	return &VaksinStatistikResp{
+		Posyandu:          posyandu,
 		TotalDiberikan:    total,
 		TotalAnakDivaksin: anak,
 		RencanaAktif:      rencana,
