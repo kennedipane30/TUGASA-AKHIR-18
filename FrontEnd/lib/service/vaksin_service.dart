@@ -68,10 +68,10 @@ class VaksinService {
     }
   }
 
-  /// Kader: cari anak berdasarkan nama atau NIK.
+  /// Kader: cari anak berdasarkan nama atau NIK (hanya posyandu kader, disaring backend).
   Future<List<AnakRingkas>> cariAnak(String kata) async {
     try {
-      final res = await ApiClient.dio.get('/kader/anak', queryParameters: {'q': kata});
+      final res = await ApiClient.dio.get('/kader/anak', queryParameters: {'cari': kata});
       final root = res.data;
       return _parseAnak(root is Map ? root['data'] : root);
     } on DioException catch (e) {
@@ -178,9 +178,11 @@ class VaksinService {
   // ---------------------------------------------------------------- admin
 
   /// Admin: jumlah vaksin yang diberikan dan rincian per jenis vaksin.
-  Future<VaksinStatistik> statistikAdmin() async {
+  /// [posyandu] kosong = semua posyandu.
+  Future<VaksinStatistik> statistikAdmin({String posyandu = ''}) async {
     try {
-      final res = await ApiClient.dio.get('/admin/vaksin/statistik');
+      final res = await ApiClient.dio.get('/admin/vaksin/statistik',
+          queryParameters: {if (posyandu.isNotEmpty) 'posyandu': posyandu});
       final root = res.data;
       final data = (root is Map && root['data'] is Map) ? root['data'] : root;
       return VaksinStatistik.fromJson(Map<String, dynamic>.from(data as Map));

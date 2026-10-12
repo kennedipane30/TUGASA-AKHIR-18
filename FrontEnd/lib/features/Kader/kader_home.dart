@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
+import '../../core/posyandu.dart';
 import '../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
+import '../auth/auth_provider.dart';
 import 'pendataan/kader_pendataan_page.dart';
 import 'vaksin/kader_vaksin_page.dart';
 
@@ -31,6 +34,7 @@ class _KaderHomeState extends State<KaderHome> {
 
   Future<void> _muat() async {
     try {
+      // Backend hanya mengembalikan jadwal dan antrean milik posyandu kader yang login.
       final j = await JadwalTerdekatData.ambil();
       final list = j == null ? <AntreanKader>[] : await AntreanKader.ambil(j.id);
       if (!mounted) return;
@@ -77,6 +81,11 @@ class _KaderHomeState extends State<KaderHome> {
 
   @override
   Widget build(BuildContext context) {
+    final pos = (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
+    final lokasi = pos.isEmpty
+        ? 'Posyandu belum ditetapkan, hubungi admin'
+        : 'Posyandu ${labelPosyandu(pos)}';
+
     final j = _jadwal;
     final hadir = _antrean.length;
     final diukur = _antrean.where((a) => a.sudahDiukur).length;
@@ -85,7 +94,7 @@ class _KaderHomeState extends State<KaderHome> {
 
     return HomeShell(
       peran: 'Kader',
-      lokasi: 'Posyandu Melati RW 04',
+      lokasi: lokasi,
       notif: 3,
       children: [
         SyncStrip(
@@ -124,10 +133,10 @@ class _KaderHomeState extends State<KaderHome> {
           )
         else if (j == null)
           SectionCard(
-            title: 'Jadwal Posyandu',
+            title: 'Jadwal $lokasi',
             icon: Icons.event_busy,
             child: const Text(
-              'Belum ada jadwal posyandu aktif. Antrean pendataan muncul setelah admin menerbitkan jadwal.',
+              'Belum ada jadwal aktif untuk posyandu Anda. Antrean pendataan muncul setelah admin menerbitkan jadwal.',
               style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
             ),
           )
@@ -280,7 +289,7 @@ class _KaderHomeState extends State<KaderHome> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Cari anak untuk melihat rencana vaksin yang ditetapkan bidan dan riwayat vaksin yang sudah diterima.',
+                'Cari anak di posyandu Anda untuk melihat rencana vaksin yang ditetapkan bidan dan riwayat vaksin yang sudah diterima.',
                 style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
               ),
               const SizedBox(height: 10),

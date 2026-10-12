@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
+import '../../core/posyandu.dart';
 import '../auth/auth_provider.dart';
 import '../auth/ubah_sandi_page.dart';
 
@@ -40,6 +41,7 @@ class AkunPage extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final nama = (auth.user?['nama'] ?? 'Pengguna').toString();
     final inisial = nama.isNotEmpty ? nama[0].toUpperCase() : '?';
+    final pos = (auth.user?['posyandu'] ?? '').toString();
 
     return Scaffold(
       backgroundColor: AppColors.latar,
@@ -70,7 +72,20 @@ class AkunPage extends StatelessWidget {
                       Text(nama,
                           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 4),
-                      Pill(_labelPeran(auth.role)),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          Pill(_labelPeran(auth.role)),
+                          if (auth.role != 'admin')
+                            Pill(
+                              pos.isEmpty ? 'Posyandu belum dipilih' : 'Posyandu ${labelPosyandu(pos)}',
+                              bg: AppColors.biruMuda,
+                              fg: AppColors.biru,
+                              icon: Icons.place_outlined,
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

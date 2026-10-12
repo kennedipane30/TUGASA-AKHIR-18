@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/pin_util.dart';
+import '../../core/posyandu.dart';
 import 'auth_service.dart';
 
 const _hijau = Color(0xFF0B6B4D);
@@ -29,6 +30,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _pin = TextEditingController();
   final _pin2 = TextEditingController();
 
+  String? _posyandu;
   bool _hidePin = true;
   bool _hidePin2 = true;
   bool _setuju = false;
@@ -62,6 +64,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _nik.text.trim(),
         _hp.text.trim(),
         _pin.text,
+        posyandu: _posyandu ?? '',
       );
       if (!mounted) return;
       _snack('Akun berhasil dibuat. Silakan masuk, lalu lengkapi data keluarga.');
@@ -283,8 +286,6 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Info khusus orang tua
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(14),
@@ -321,6 +322,25 @@ class _RegisterPageState extends State<RegisterPage> {
 
           // 1. Identitas akun
           _judulBagian(1, 'Identitas Akun', 'Wajib Diisi'),
+          _label('Posyandu Tempat Anak Dilayani', 'Wajib'),
+          DropdownButtonFormField<String>(
+            value: _posyandu,
+            isExpanded: true,
+            icon: const Icon(Icons.keyboard_arrow_down, color: _hijau),
+            hint: Text('Pilih posyandu',
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 13.5)),
+            decoration: _dekor('', Icons.place_outlined),
+            items: itemPosyandu(),
+            onChanged: (v) => setState(() => _posyandu = v),
+            validator: (v) => v == null ? 'Posyandu wajib dipilih' : null,
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text(
+              'Pendaftaran, jadwal, dan data anak hanya berlaku di posyandu yang dipilih.',
+              style: TextStyle(fontSize: 11, color: Colors.black54, height: 1.4),
+            ),
+          ),
           _label('Nama Lengkap Ibu / Wali', 'Wajib'),
           TextFormField(
             controller: _nama,
@@ -412,7 +432,6 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           const SizedBox(height: 16),
 
-          // Pernyataan
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(4, 6, 12, 6),
@@ -444,7 +463,6 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           const SizedBox(height: 20),
 
-          // Tombol
           Container(
             width: double.infinity,
             height: 54,

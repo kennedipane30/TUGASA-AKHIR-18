@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
+import '../../core/posyandu.dart';
+import '../auth/auth_provider.dart';
 
 // ---------------------------------------------------------------------------
 // DATA CONTOH. Ganti dengan data dari API / database lokal perangkat bidan.
@@ -128,9 +131,15 @@ class _BidanHomeState extends State<BidanHome> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+    final pos = (user?['posyandu'] ?? '').toString();
+    final lokasi = pos.isEmpty
+        ? 'Posyandu belum ditetapkan, hubungi admin'
+        : 'Wilayah kerja Posyandu ${labelPosyandu(pos)}';
+
     return HomeShell(
       peran: 'Bidan',
-      lokasi: 'Wilayah kerja Posyandu Melati',
+      lokasi: lokasi,
       notif: 4,
       children: [
         // BD-02: verifikasi dan kunci data

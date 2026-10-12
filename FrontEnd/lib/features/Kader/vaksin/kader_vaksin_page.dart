@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../core/posyandu.dart';
 import '../../../service/vaksin_service.dart';
+import '../../auth/auth_provider.dart';
 import 'vaksin_anak_lihat_page.dart';
 
-/// Kader: cari anak lalu lihat rencana dan riwayat vaksinnya.
+/// Kader: cari anak (hanya posyandu kader sendiri) lalu lihat rencana dan riwayat vaksinnya.
 class KaderVaksinPage extends StatefulWidget {
   const KaderVaksinPage({super.key});
 
@@ -14,18 +17,13 @@ class KaderVaksinPage extends StatefulWidget {
 }
 
 class _KaderVaksinPageState extends State<KaderVaksinPage> {
-final _svc = VaksinService();
+  final _svc = VaksinService();
   final _cari = TextEditingController();
 
   List<AnakRingkas> _hasil = [];
-  bool _loading = true;
+  bool _loading = false;
+  bool _sudahCari = false;
   String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _muat();
-  }
 
   @override
   void dispose() {
@@ -34,15 +32,25 @@ final _svc = VaksinService();
   }
 
   Future<void> _muat() async {
+    final kata = _cari.text.trim();
+    if (kata.length < 2) {
+      setState(() {
+        _error = 'Ketik minimal 2 karakter nama atau NIK anak';
+        _hasil = [];
+        _sudahCari = false;
+      });
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final data = await _svc.cariAnak(_cari.text.trim());
+      final data = await _svc.cariAnak(kata);
       if (!mounted) return;
       setState(() {
         _hasil = data;
+        _sudahCari = true;
         _loading = false;
       });
     } catch (e) {
@@ -65,6 +73,9 @@ final _svc = VaksinService();
 
   @override
   Widget build(BuildContext context) {
+    final pos = (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
+    final labelPos = pos.isEmpty ? 'Posyandu belum ditetapkan' : 'Posyandu ${labelPosyandu(pos)}';
+
     return Scaffold(
       backgroundColor: AppColors.latar,
       appBar: AppBar(
@@ -75,7 +86,7 @@ final _svc = VaksinService();
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: TextField(
               controller: _cari,
               textInputAction: TextInputAction.search,
@@ -93,6 +104,14 @@ final _svc = VaksinService();
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Pill(labelPos,
+                  bg: AppColors.biruMuda, fg: AppColors.biru, icon: Icons.place_outlined),
+            ),
+          ),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -100,58 +119,65 @@ final _svc = VaksinService();
                     ? Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(_error!, textAlign: TextAlign.center),
-                              const SizedBox(height: 12),
-                              AppButton('Coba Lagi', icon: Icons.refresh, onPressed: _muat),
-                            ],
-                          ),
+                          child: Text(_error!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: AppColors.teksRedup)),
                         ),
                       )
-                    : _hasil.isEmpty
+                    : !_sudahCari
                         ? const Center(
-                            child: Text('Anak tidak ditemukan',
-                                style: TextStyle(color: AppColors.teksRedup)),
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text(
+                                'Ketik nama atau NIK anak untuk mencari di posyandu Anda.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: AppColors.teksRedup),
+                              ),
+                            ),
                           )
-                        : ListView(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            children: [
-                              for (final a in _hasil)
-                                SectionCard(
-                                  child: InkWell(
-                                    onTap: () => _buka(a),
-                                    child: Row(
-                                      children: [
-                                        const CircleAvatar(
-                                          backgroundColor: AppColors.hijauMuda,
-                                          child: Icon(Icons.child_care, color: AppColors.hijau),
+                        : _hasil.isEmpty
+                            ? const Center(
+                                child: Text('Anak tidak ditemukan di posyandu Anda',
+                                    style: TextStyle(color: AppColors.teksRedup)),
+                              )
+                            : ListView(
+                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                children: [
+                                  for (final a in _hasil)
+                                    SectionCard(
+                                      child: InkWell(
+                                        onTap: () => _buka(a),
+                                        child: Row(
+                                          children: [
+                                            const CircleAvatar(
+                                              backgroundColor: AppColors.hijauMuda,
+                                              child: Icon(Icons.child_care,
+                                                  color: AppColors.hijau),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(a.nama,
+                                                      style: const TextStyle(
+                                                          fontWeight: FontWeight.w800,
+                                                          fontSize: 13.5)),
+                                                  Text('Usia ${a.usia}',
+                                                      style: const TextStyle(
+                                                          fontSize: 11,
+                                                          color: AppColors.teksRedup)),
+                                                ],
+                                              ),
+                                            ),
+                                            const Icon(Icons.chevron_right,
+                                                color: AppColors.teksRedup),
+                                          ],
                                         ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(a.nama,
-                                                  style: const TextStyle(
-                                                      fontWeight: FontWeight.w800,
-                                                      fontSize: 13.5)),
-                                              Text('Usia ${a.usia}',
-                                                  style: const TextStyle(
-                                                      fontSize: 11,
-                                                      color: AppColors.teksRedup)),
-                                            ],
-                                          ),
-                                        ),
-                                        const Icon(Icons.chevron_right,
-                                            color: AppColors.teksRedup),
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                ),
-                            ],
-                          ),
+                                ],
+                              ),
           ),
         ],
       ),

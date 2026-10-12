@@ -5,9 +5,9 @@ import 'package:provider/provider.dart';
 
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
+import '../../core/posyandu.dart';
 import '../auth/auth_provider.dart';
 import 'bukupanduan/buku_panduan_page.dart';
-import 'kartu digital/kartu_digital_page.dart';
 import 'datadiri/lengkapi_keluarga_page.dart';
 import 'pendaftaran/orangtua_pendaftaran_page.dart';
 import 'vaksin/orangtua_vaksin_page.dart';
@@ -157,6 +157,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   String? _gagal;
 
   // Jadwal terdekat dari server (GET /jadwal/terdekat). Null = tidak ada jadwal aktif.
+  // Backend hanya mengembalikan jadwal milik posyandu yang dipilih saat registrasi.
   JadwalTerdekatData? _jadwal;
 
   DataAnak? get _anak => _daftar.isEmpty ? null : _daftar[_aktif];
@@ -244,17 +245,17 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       soon(context, 'Kartu digital (belum ada data anak)');
       return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => KartuDigitalPage(
-          daftar: _daftar,
-          awal: _aktif,
-          status: (a) => _statusAnakDari(a)?.status ?? 'belum_daftar',
-          nomor: (a) => _statusAnakDari(a)?.nomorAntrean,
-        ),
-      ),
-    );
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (_) => KartuDigitalPage(
+    //       daftar: _daftar,
+    //       awal: _aktif,
+    //       status: (a) => _statusAnakDari(a)?.status ?? 'belum_daftar',
+    //       nomor: (a) => _statusAnakDari(a)?.nomorAntrean,
+    //     ),
+    //   ),
+    // );
   }
 
   // Halaman terpisah: Hasil Pemeriksaan.
@@ -312,9 +313,14 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
 
   @override
   Widget build(BuildContext context) {
+    final pos = (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
+    final lokasi = pos.isEmpty
+        ? 'Posyandu belum ditetapkan, hubungi admin'
+        : 'Posyandu ${labelPosyandu(pos)}';
+
     return HomeShell(
       peran: 'Orang Tua',
-      lokasi: 'Posyandu Melati RW 05',
+      lokasi: lokasi,
       notif: 2,
       children: [
         if (_memuat)
@@ -419,8 +425,9 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   // OT-05: kartu jadwal terdekat (nama user, nama anak, jadwal).
   Widget _jadwalPosyandu() {
     final j = _jadwal;
-    final namaUser =
-        (context.watch<AuthProvider>().user?['nama'] ?? '').toString();
+    final user = context.watch<AuthProvider>().user;
+    final namaUser = (user?['nama'] ?? '').toString();
+    final pos = (user?['posyandu'] ?? '').toString();
     final anak = _anak;
 
     final dekorasi = BoxDecoration(
@@ -477,8 +484,11 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                     fontSize: 11,
                     fontWeight: FontWeight.w800)),
             const SizedBox(height: 6),
-            const Text('Belum ada jadwal posyandu mendatang.',
-                style: TextStyle(color: Colors.white, fontSize: 13)),
+            Text(
+                pos.isEmpty
+                    ? 'Belum ada jadwal posyandu mendatang.'
+                    : 'Belum ada jadwal mendatang untuk Posyandu ${labelPosyandu(pos)}.',
+                style: const TextStyle(color: Colors.white, fontSize: 13)),
           ],
         ),
       );

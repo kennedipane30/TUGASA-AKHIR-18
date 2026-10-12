@@ -1,9 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../core/posyandu.dart';
+import '../../auth/auth_provider.dart';
 import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 import 'bidan_catatan_page.dart';
 
@@ -91,6 +94,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
 
   Future<void> _muat() async {
     try {
+      // Backend hanya mengembalikan jadwal milik posyandu bidan yang login.
       final j = await JadwalTerdekatData.ambil();
       var list = <_ItemBidan>[];
       if (j != null) {
@@ -136,6 +140,8 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
 
   @override
   Widget build(BuildContext context) {
+    final pos = (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
+    final labelPos = pos.isEmpty ? 'Posyandu belum ditetapkan' : 'Posyandu ${labelPosyandu(pos)}';
     final j = _jadwal;
     final daftar = switch (_aktif) {
       'Perlu Catatan' => _data.where((d) => !d.selesai).toList(),
@@ -158,6 +164,14 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Pill(labelPos,
+                    bg: AppColors.biruMuda, fg: AppColors.biru, icon: Icons.place_outlined),
+              ),
+            ),
             if (_memuat)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 32),
@@ -188,14 +202,14 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
               SectionCard(
                 title: 'Jadwal Posyandu',
                 icon: Icons.event_busy,
-                child: const Text(
-                  'Belum ada jadwal posyandu aktif.',
-                  style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+                child: Text(
+                  'Belum ada jadwal aktif untuk $labelPos.',
+                  style: const TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
                 ),
               )
             else ...[
               SectionCard(
-                title: 'Sesi Posyandu',
+                title: 'Sesi $labelPos',
                 icon: Icons.event_note,
                 trailing: Pill('$perlu perlu catatan',
                     bg: AppColors.kuningMuda, fg: AppColors.kuning),
@@ -211,7 +225,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                     ],
                     const SizedBox(height: 6),
                     const Text(
-                      'Hanya anak yang sudah didata kader yang muncul di sini.',
+                      'Hanya anak posyandu Anda yang sudah didata kader yang muncul di sini.',
                       style: TextStyle(fontSize: 11.5, color: AppColors.teksRedup),
                     ),
                   ],
