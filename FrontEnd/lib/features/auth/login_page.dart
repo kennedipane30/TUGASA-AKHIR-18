@@ -87,37 +87,25 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _kepala() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.cloud_done_outlined, color: Colors.white, size: 14),
-                SizedBox(width: 6),
-                Text('Mode Offline Siap Digunakan',
-                    style: TextStyle(
-                        color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-              ],
+          const SizedBox(height: 28),
+          ClipRect(
+            child: Align(
+              alignment: Alignment.center,
+              heightFactor: 0.82,
+              child: Image.asset(
+                'logo.png',
+                width: 190,
+                height: 190,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 100),
+              ),
             ),
           ),
-          const SizedBox(height: 18),
-          Image.asset(
-            'logo.png',
-            width: 270,
-            height: 270,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) =>
-                const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 140),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 4),
           const Text('Posyandu Care',
               style: TextStyle(
                   color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
@@ -142,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           // Latar gradien hijau di bagian atas
           Container(
-            height: 520,
+            height: 370,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,

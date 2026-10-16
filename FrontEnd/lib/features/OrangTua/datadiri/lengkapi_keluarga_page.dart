@@ -11,8 +11,131 @@ import 'keluarga_common.dart';
 
 export 'keluarga_common.dart' show DataAnak, DataKeluarga, KeluargaApi;
 
+const _hijauTua = Color(0xFF0B4D3A);
+const _garis = Color(0xFFD7E6DD);
+
+Widget _pillSinkron() => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3F4EA),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.circle, size: 8, color: Color(0xFF2EAD6A)),
+          SizedBox(width: 6),
+          Text('Tersinkron',
+              style: TextStyle(
+                  fontSize: 11.5, fontWeight: FontWeight.w700, color: _hijauTua)),
+        ],
+      ),
+    );
+
+InputDecoration _dekor(String hint,
+    {IconData? icon, String? counter, bool terkunci = false}) {
+  OutlineInputBorder b(Color c) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: c),
+      );
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: const TextStyle(fontSize: 13, color: Colors.black38),
+    prefixIcon: icon == null ? null : Icon(icon, size: 20, color: Colors.black45),
+    counterText: counter ?? '',
+    filled: true,
+    fillColor: terkunci ? const Color(0xFFF1F5F3) : Colors.white,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    border: b(_garis),
+    enabledBorder: b(terkunci ? Colors.transparent : _garis),
+    focusedBorder: b(_hijauTua),
+    errorBorder: b(AppColors.merah),
+    focusedErrorBorder: b(AppColors.merah),
+  );
+}
+
+Widget _label(String teks, {String? ket}) => Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text.rich(TextSpan(children: [
+        TextSpan(
+            text: teks,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+        if (ket != null)
+          TextSpan(
+              text: ' $ket',
+              style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+      ])),
+    );
+
+Widget _gap() => const SizedBox(height: 14);
+
+class _Kartu extends StatelessWidget {
+  final String? title;
+  final IconData? icon;
+  final Widget? trailing;
+  final Color? color;
+  final Widget child;
+  const _Kartu({this.title, this.icon, this.trailing, this.color, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color ?? Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _garis),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            Row(
+              children: [
+                if (icon != null)
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: AppColors.hijauMuda,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, size: 18, color: _hijauTua),
+                  ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(title!,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 14)),
+                ),
+                if (trailing != null) trailing!,
+              ],
+            ),
+            const SizedBox(height: 14),
+          ],
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+Widget _pillStatus(bool lengkap) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: lengkap ? AppColors.hijauMuda : AppColors.kuningMuda,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(lengkap ? 'Lengkap' : 'Belum lengkap',
+          style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: lengkap ? _hijauTua : AppColors.kuning)),
+    );
+
 // ---------------------------------------------------------------------------
-// HALAMAN LENGKAPI DATA KELUARGA (khusus ibu / wali dan suami / ayah)
+// HALAMAN LENGKAPI DATA KELUARGA
 // ---------------------------------------------------------------------------
 class LengkapiKeluargaPage extends StatefulWidget {
   const LengkapiKeluargaPage({super.key});
@@ -27,7 +150,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
   bool _menyimpan = false;
   String? _gagal;
 
-  // Ibu / wali
   bool _tanpaIbu = false;
   final _namaIbu = TextEditingController();
   final _nikIbu = TextEditingController();
@@ -38,7 +160,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
   final _rt = TextEditingController();
   final _rw = TextEditingController();
 
-  // Suami / ayah
   bool _tanpaAyah = false;
   final _namaAyah = TextEditingController();
   final _nikAyah = TextEditingController();
@@ -70,12 +191,12 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
     super.dispose();
   }
 
-  // Ambil data dari server (GET /keluarga)
   Future<void> _muat() async {
     final user = context.read<AuthProvider>().user;
     try {
       final data = await KeluargaApi.ambil();
-      final m = KeluargaApi.keModel(data, user: user == null ? null : Map<String, dynamic>.from(user));
+      final m = KeluargaApi.keModel(data,
+          user: user == null ? null : Map<String, dynamic>.from(user));
 
       if (!mounted) return;
 
@@ -133,7 +254,8 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
     snackDi(context, msg);
   }
 
-  Future<void> _pilihTanggal(TextEditingController c, {int tahunMin = 90, int tahunMaks = 15}) async {
+  Future<void> _pilihTanggal(TextEditingController c,
+      {int tahunMin = 90, int tahunMaks = 15}) async {
     final now = DateTime.now();
     final d = await showDatePicker(
       context: context,
@@ -144,7 +266,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
     if (d != null) c.text = fmtTgl(d);
   }
 
-  // Body untuk PUT /keluarga (service.ProfilInput)
   Map<String, dynamic> _bodyProfil() => {
         'tanpa_ibu': _tanpaIbu,
         'tgl_lahir_ibu': keApi(_tglIbu.text),
@@ -181,20 +302,87 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
     }
   }
 
-  Widget _langkah(String label, bool selesai) => Expanded(
-        child: Column(
-          children: [
-            Icon(selesai ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: selesai ? AppColors.hijau : Colors.grey, size: 26),
-            const SizedBox(height: 4),
-            Text(label,
-                textAlign: TextAlign.center,
+  PreferredSizeWidget _appBar() => AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text('Lengkapi Data Keluarga',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+        actions: [
+          Center(child: _pillSinkron()),
+          const SizedBox(width: 16),
+        ],
+      );
+
+  Widget _bulat(String no, bool selesai) => Container(
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(
+              color: selesai ? AppColors.hijau : Colors.grey.shade400, width: 1.6),
+        ),
+        child: selesai
+            ? const Icon(Icons.check, size: 18, color: AppColors.hijau)
+            : Text(no,
                 style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: selesai ? AppColors.hijau : AppColors.teksRedup)),
+                    fontWeight: FontWeight.w800,
+                    color: no == '1' ? AppColors.hijau : Colors.grey)),
+      );
+
+  Widget _stepper(DataKeluarga d) {
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(children: [
+              _bulat('1', d.ibuLengkap),
+              const SizedBox(height: 4),
+              const Text('Data Diri',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+            ]),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 15, left: 8, right: 8),
+                child: Divider(height: 2, thickness: 2, color: Colors.grey.shade300),
+              ),
+            ),
+            Column(children: [
+              _bulat('2', d.ayahLengkap),
+              const SizedBox(height: 4),
+              const Text('Suami / Ayah',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+            ]),
           ],
         ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(
+            value: d.langkahSelesai / 2,
+            minHeight: 7,
+            backgroundColor: const Color(0xFFE6EEEA),
+            color: AppColors.hijau,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('${d.langkahSelesai} dari 2 bagian lengkap. Data boleh disimpan bertahap.',
+            style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+      ],
+    );
+  }
+
+  Widget _centang(bool nilai, String teks, ValueChanged<bool?> onChanged) =>
+      CheckboxListTile(
+        contentPadding: EdgeInsets.zero,
+        dense: true,
+        controlAffinity: ListTileControlAffinity.leading,
+        activeColor: AppColors.hijau,
+        value: nilai,
+        title: Text(teks, style: const TextStyle(fontSize: 13)),
+        onChanged: onChanged,
       );
 
   @override
@@ -205,11 +393,7 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
     if (_gagal != null) {
       return Scaffold(
         backgroundColor: AppColors.latar,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          title: const Text('Lengkapi Data Keluarga',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-        ),
+        appBar: _appBar(),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -237,33 +421,29 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
 
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text('Lengkapi Data Keluarga',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-      ),
+      appBar: _appBar(),
       bottomNavigationBar: SafeArea(
-        child: Container(
-          color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: SizedBox(
-            width: double.infinity,
-            height: 50,
+            height: 54,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.hijau,
+                backgroundColor: _hijauTua,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 3,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
               onPressed: _menyimpan ? null : _simpan,
               icon: _menyimpan
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.save_outlined),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.save_alt_outlined),
               label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Data Keluarga',
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
             ),
           ),
         ),
@@ -271,111 +451,95 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
       body: Form(
         key: _key,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           children: [
-            // Progres
-            SectionCard(
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      _langkah('Data Diri', d.ibuLengkap),
-                      _langkah('Suami / Ayah', d.ayahLengkap),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: d.langkahSelesai / 2,
-                      minHeight: 8,
-                      backgroundColor: AppColors.isiField,
-                      color: AppColors.hijau,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text('${d.langkahSelesai} dari 2 bagian lengkap. Data boleh disimpan bertahap.',
-                      style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
-                ],
-              ),
-            ),
-
-            // 1. Data diri ibu / wali
-            SectionCard(
+            _Kartu(child: _stepper(d)),
+            _Kartu(
               title: '1. Data Diri Ibu / Wali',
               icon: Icons.person_outline,
-              trailing: d.ibuLengkap
-                  ? const Pill('Lengkap', icon: Icons.check)
-                  : const Pill('Belum lengkap', bg: AppColors.kuningMuda, fg: AppColors.kuning),
+              trailing: _pillStatus(d.ibuLengkap),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    activeColor: AppColors.hijau,
-                    value: _tanpaIbu,
-                    title: const Text('Tidak ada data ibu', style: TextStyle(fontSize: 13)),
-                    onChanged: (v) => setState(() => _tanpaIbu = v ?? false),
-                  ),
-
+                  _centang(_tanpaIbu, 'Tidak ada data ibu',
+                      (v) => setState(() => _tanpaIbu = v ?? false)),
                   if (!_tanpaIbu) ...[
+                    _label('Nama lengkap', ket: '(dari akun)'),
                     TextFormField(
                       controller: _namaIbu,
                       readOnly: true,
-                      decoration: dekorInput('Nama lengkap (dari akun)', icon: Icons.person_outline),
+                      decoration: _dekor('Nama', icon: Icons.person_outline, terkunci: true),
                     ),
-                    jarak(),
+                    _gap(),
+                    _label('NIK', ket: '(dari akun)'),
                     TextFormField(
                       controller: _nikIbu,
                       readOnly: true,
-                      decoration: dekorInput('NIK (dari akun)', icon: Icons.badge_outlined),
+                      decoration: _dekor('NIK', icon: Icons.badge_outlined, terkunci: true),
                     ),
-                    jarak(),
+                    _gap(),
+                    _label('Tanggal Lahir'),
                     TextFormField(
                       controller: _tglIbu,
                       readOnly: true,
                       onTap: () => _pilihTanggal(_tglIbu),
-                      decoration: dekorInput('Tanggal lahir', hint: 'dd/mm/yyyy', icon: Icons.calendar_today_outlined),
+                      decoration: _dekor('dd/mm/yyyy', icon: Icons.calendar_today_outlined),
                     ),
-                    jarak(),
+                    _gap(),
+                    _label('No. WhatsApp', ket: '(dari akun)'),
                     TextFormField(
                       controller: _hpIbu,
                       readOnly: true,
-                      decoration: dekorInput('No. WhatsApp (dari akun)', icon: Icons.phone_outlined),
+                      decoration: _dekor('No. WhatsApp', icon: Icons.phone_outlined, terkunci: true),
                     ),
-                    jarak(),
+                    _gap(),
+                    _label('Pekerjaan', ket: '(opsional)'),
                     TextFormField(
                       controller: _kerjaIbu,
                       textCapitalization: TextCapitalization.words,
-                      decoration: dekorInput('Pekerjaan (opsional)', icon: Icons.work_outline),
+                      decoration: _dekor('Pekerjaan (opsional)', icon: Icons.work_outline),
                     ),
-                    jarak(),
+                    _gap(),
                   ],
+                  _label('Alamat Tempat Tinggal'),
                   TextFormField(
                     controller: _alamat,
-                    maxLines: 2,
-                    decoration: dekorInput('Alamat tempat tinggal', icon: Icons.home_outlined),
+                    maxLines: 3,
+                    decoration: _dekor('Alamat tempat tinggal lengkap...', icon: Icons.home_outlined),
                   ),
-                  jarak(),
+                  _gap(),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: TextFormField(
-                          controller: _rt,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          maxLength: 3,
-                          decoration: dekorInput('RT', counter: ''),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('RT'),
+                            TextFormField(
+                              controller: _rt,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              maxLength: 3,
+                              decoration: _dekor('RT'),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: TextFormField(
-                          controller: _rw,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          maxLength: 3,
-                          decoration: dekorInput('RW', counter: ''),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('RW'),
+                            TextFormField(
+                              controller: _rw,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              maxLength: 3,
+                              decoration: _dekor('RW'),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -383,66 +547,61 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
                 ],
               ),
             ),
-
-            // 2. Suami / ayah
-            SectionCard(
+            _Kartu(
               title: '2. Data Suami / Ayah',
               icon: Icons.man_outlined,
-              trailing: d.ayahLengkap
-                  ? const Pill('Lengkap', icon: Icons.check)
-                  : const Pill('Belum lengkap', bg: AppColors.kuningMuda, fg: AppColors.kuning),
+              trailing: _pillStatus(d.ayahLengkap),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    activeColor: AppColors.hijau,
-                    value: _tanpaAyah,
-                    title: const Text('Tidak ada data suami / ayah yang diisi',
-                        style: TextStyle(fontSize: 13)),
-                    onChanged: (v) => setState(() => _tanpaAyah = v ?? false),
-                  ),
+                  _centang(_tanpaAyah, 'Tidak ada data suami / ayah yang diisi',
+                      (v) => setState(() => _tanpaAyah = v ?? false)),
                   if (!_tanpaAyah) ...[
+                    _label('Nama lengkap'),
                     TextFormField(
                       controller: _namaAyah,
                       textCapitalization: TextCapitalization.words,
-                      decoration: dekorInput('Nama lengkap', icon: Icons.person_outline),
+                      decoration: _dekor('Nama lengkap', icon: Icons.person_outline),
                     ),
-                    jarak(),
+                    _gap(),
+                    _label('NIK', ket: '(opsional)'),
                     TextFormField(
                       controller: _nikAyah,
                       keyboardType: TextInputType.number,
                       maxLength: 16,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: dekorInput('NIK (opsional)',
-                          icon: Icons.badge_outlined, counter: '${_nikAyah.text.length}/16'),
+                      decoration: _dekor('16 digit NIK',
+                          icon: Icons.badge_outlined,
+                          counter: '${_nikAyah.text.length}/16'),
                       validator: (v) => (v != null && v.isNotEmpty && v.length != 16)
                           ? 'NIK harus 16 digit'
                           : null,
                     ),
-                    jarak(),
+                    _gap(),
+                    _label('Tanggal Lahir'),
                     TextFormField(
                       controller: _tglAyah,
                       readOnly: true,
                       onTap: () => _pilihTanggal(_tglAyah),
-                      decoration: dekorInput('Tanggal lahir',
-                          hint: 'dd/mm/yyyy', icon: Icons.calendar_today_outlined),
+                      decoration: _dekor('dd/mm/yyyy', icon: Icons.calendar_today_outlined),
                     ),
-                    jarak(),
+                    _gap(),
+                    _label('No. HP', ket: '(opsional)'),
                     TextFormField(
                       controller: _hpAyah,
                       keyboardType: TextInputType.phone,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: dekorInput('No. HP (opsional)', icon: Icons.phone_outlined),
+                      decoration: _dekor('No. HP (opsional)', icon: Icons.phone_outlined),
                       validator: (v) => (v != null && v.isNotEmpty && v.length < 10)
                           ? 'No. HP tidak valid'
                           : null,
                     ),
-                    jarak(),
+                    _gap(),
+                    _label('Pekerjaan', ket: '(opsional)'),
                     TextFormField(
                       controller: _kerjaAyah,
                       textCapitalization: TextCapitalization.words,
-                      decoration: dekorInput('Pekerjaan (opsional)', icon: Icons.work_outline),
+                      decoration: _dekor('Pekerjaan (opsional)', icon: Icons.work_outline),
                     ),
                   ],
                 ],
@@ -456,9 +615,7 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
 }
 
 // ---------------------------------------------------------------------------
-// KARTU DATA KELUARGA (halaman Data Keluarga): status + 2 tombol
-//   - Data Orang Tua  -> form lengkapi data diri ibu / ayah
-//   - Data Anak       -> halaman / form data anak
+// KARTU DATA KELUARGA
 // ---------------------------------------------------------------------------
 class KartuLengkapiKeluarga extends StatefulWidget {
   final VoidCallback? onKembali;
@@ -516,13 +673,13 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
 
   Widget _status(int selesai) {
     if (_lengkap) {
-      return SectionCard(
+      return const _Kartu(
         color: AppColors.hijauMuda,
         child: Row(
           children: [
-            const Icon(Icons.check_circle, color: AppColors.hijau),
-            const SizedBox(width: 10),
-            const Expanded(
+            Icon(Icons.check_circle, color: AppColors.hijau),
+            SizedBox(width: 10),
+            Expanded(
               child: Text('Data keluarga sudah lengkap',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
             ),
@@ -530,11 +687,18 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
         ),
       );
     }
-    return SectionCard(
+    return _Kartu(
       color: AppColors.kuningMuda,
       title: 'Lengkapi Data Keluarga',
       icon: Icons.assignment_ind_outlined,
-      trailing: Pill('$selesai/2', bg: Colors.white, fg: AppColors.kuning),
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(20)),
+        child: Text('$selesai/2',
+            style: const TextStyle(
+                fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.kuning)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -547,12 +711,72 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: selesai / 2,
-              minHeight: 8,
+              minHeight: 7,
               backgroundColor: Colors.white,
               color: AppColors.hijau,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _tombol(
+      {required String judul,
+      required String sub,
+      required IconData icon,
+      required bool terisi,
+      required VoidCallback onTap}) {
+    final fg = terisi ? Colors.white : Colors.black87;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: terisi ? _hijauTua : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _hijauTua, width: 1.4),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: terisi ? Colors.white.withOpacity(.15) : AppColors.hijauMuda,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 22, color: terisi ? Colors.white : _hijauTua),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(judul,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 14, color: fg)),
+                  const SizedBox(height: 2),
+                  Text(sub,
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: terisi ? const Color(0xFFA8F0C6) : AppColors.teksRedup)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: terisi ? Colors.white.withOpacity(.15) : AppColors.hijauMuda,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.chevron_right,
+                  size: 18, color: terisi ? Colors.white : _hijauTua),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -563,7 +787,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
 
     if (selesai == null) {
       if (!_gagal) return const SizedBox.shrink();
-      return SectionCard(
+      return _Kartu(
         color: AppColors.kuningMuda,
         child: Row(
           children: [
@@ -583,25 +807,60 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _status(selesai),
-        SectionCard(
-          title: 'Kelola Data Keluarga',
-          icon: Icons.family_restroom,
+        _Kartu(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: double.infinity,
-                child: AppButton('Data Orang Tua',
-                    icon: Icons.people_outline, onPressed: _bukaOrtu),
+              const Row(
+                children: [
+                  Icon(Icons.people_outline, size: 22),
+                  SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Kelola Data Keluarga',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                      Text('Pilih berkas profil yang ingin diperbarui',
+                          style: TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: AppButton(
-                    _jumlahAnak > 0 ? 'Data Anak ($_jumlahAnak)' : 'Data Anak',
-                    icon: Icons.child_care,
-                    filled: false,
-                    onPressed: _bukaAnak),
+              const SizedBox(height: 14),
+              _tombol(
+                judul: 'Data Orang Tua',
+                sub: 'Ibu & Ayah / Wali',
+                icon: Icons.person_add_alt_1_outlined,
+                terisi: true,
+                onTap: _bukaOrtu,
+              ),
+              const SizedBox(height: 10),
+              _tombol(
+                judul: _jumlahAnak > 0 ? 'Data Anak ($_jumlahAnak)' : 'Data Anak',
+                sub: 'Balita & Tumbuh Kembang',
+                icon: Icons.sentiment_satisfied_alt_outlined,
+                terisi: false,
+                onTap: _bukaAnak,
+              ),
+            ],
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(.6),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.lock_outline, size: 18, color: AppColors.teksRedup),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Data keluarga tersimpan aman secara terenkripsi di perangkat Anda dan otomatis disinkronkan ke server Posyandu Care saat terhubung internet.',
+                  style: TextStyle(fontSize: 11, color: AppColors.teksRedup),
+                ),
               ),
             ],
           ),

@@ -193,34 +193,22 @@ class _RegisterPageState extends State<RegisterPage> {
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.28)),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.cloud_done_outlined, color: Colors.white, size: 16),
-                SizedBox(width: 6),
-                Text('Mode Offline Siap Digunakan',
-                    style: TextStyle(
-                        color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w600)),
-              ],
+          const SizedBox(height: 28),
+          ClipRect(
+            child: Align(
+              alignment: Alignment.center,
+              heightFactor: 0.82,
+              child: Image.asset(
+                'logo.png',
+                width: 190,
+                height: 190,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 100),
+              ),
             ),
           ),
-          const SizedBox(height: 18),
-          Image.asset(
-            'logo.png',
-            width: 270,
-            height: 270,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) =>
-                const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 140),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 4),
           const Text('Posyandu Care',
               style: TextStyle(
                   color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
