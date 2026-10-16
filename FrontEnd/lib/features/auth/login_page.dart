@@ -109,21 +109,13 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           const SizedBox(height: 18),
-          Container(
-            width: 76,
-            height: 76,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF1FA27F), _hijau],
-              ),
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: const [
-                BoxShadow(color: Colors.black26, blurRadius: 14, offset: Offset(0, 6)),
-              ],
-            ),
-            child: const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 42),
+          Image.asset(
+            'logo.png',
+            width: 270,
+            height: 270,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 140),
           ),
           const SizedBox(height: 14),
           const Text('Posyandu Care',
@@ -150,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           // Latar gradien hijau di bagian atas
           Container(
-            height: 330,
+            height: 520,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,

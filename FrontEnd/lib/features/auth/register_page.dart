@@ -212,21 +212,13 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           const SizedBox(height: 18),
-          Container(
-            width: 82,
-            height: 82,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF1FA67C), Color(0xFF0B7A58)],
-              ),
-              boxShadow: const [
-                BoxShadow(color: Color(0x55000000), blurRadius: 16, offset: Offset(0, 8)),
-              ],
-            ),
-            child: const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 42),
+          Image.asset(
+            'logo.png',
+            width: 270,
+            height: 270,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 140),
           ),
           const SizedBox(height: 14),
           const Text('Posyandu Care',
