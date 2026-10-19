@@ -56,11 +56,14 @@ func staffIDParam(c *gin.Context) (uint, bool) {
 	return uint(n), true
 }
 
-// GET /admin/users?role=&posyandu=
 func (h *AuthHandler) ListStaff(c *gin.Context) {
-	list, err := h.svc.ListStaff(c.Query("role"), c.Query("posyandu"))
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
+	list, err := h.svc.ListStaff(c.Query("role"), pos)
 	if err != nil {
-		staffError(c, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	out := make([]staffResponse, 0, len(list))
@@ -71,6 +74,10 @@ func (h *AuthHandler) ListStaff(c *gin.Context) {
 }
 
 func (h *AuthHandler) UpdateStaff(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
 	id, ok := staffIDParam(c)
 	if !ok {
 		return
@@ -80,7 +87,7 @@ func (h *AuthHandler) UpdateStaff(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	u, err := h.svc.UpdateStaff(id, in)
+	u, err := h.svc.UpdateStaff(id, pos, in)
 	if err != nil {
 		staffError(c, err)
 		return
@@ -89,6 +96,10 @@ func (h *AuthHandler) UpdateStaff(c *gin.Context) {
 }
 
 func (h *AuthHandler) SetStaffActive(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
 	id, ok := staffIDParam(c)
 	if !ok {
 		return
@@ -100,7 +111,7 @@ func (h *AuthHandler) SetStaffActive(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	u, err := h.svc.SetStaffActive(id, *in.IsActive)
+	u, err := h.svc.SetStaffActive(id, pos, *in.IsActive)
 	if err != nil {
 		staffError(c, err)
 		return
@@ -109,11 +120,15 @@ func (h *AuthHandler) SetStaffActive(c *gin.Context) {
 }
 
 func (h *AuthHandler) DeleteStaff(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
 	id, ok := staffIDParam(c)
 	if !ok {
 		return
 	}
-	if err := h.svc.DeleteStaff(id); err != nil {
+	if err := h.svc.DeleteStaff(id, pos); err != nil {
 		staffError(c, err)
 		return
 	}

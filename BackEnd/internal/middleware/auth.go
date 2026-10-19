@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strings"
 
+	"posyandu-api/internal/repository"
 	"posyandu-api/internal/utils"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func AuthRequired() gin.HandlerFunc {
@@ -24,27 +24,25 @@ func AuthRequired() gin.HandlerFunc {
 		}
 		c.Set("user_id", claims.UserID)
 		c.Set("role", claims.Role)
-		c.Set("posyandu", claims.Posyandu)
 		c.Next()
 	}
 }
 
-// LoadPosyandu: posyandu selalu dibaca dari database (bukan dari token), sehingga
-// perubahan posyandu akun oleh admin langsung berlaku dan akun nonaktif langsung ditolak.
-func LoadPosyandu(db *gorm.DB) gin.HandlerFunc {
+// Posyandu memuat posyandu akun dari database (bukan dari token).
+// Semua role wajib punya posyandu; tidak ada akun yang melihat lintas posyandu.
+func Posyandu(users *repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var u struct {
-			Posyandu string
-			IsActive bool
-		}
-		err := db.Table("users").Select("posyandu, is_active").
-			Where("id = ?", c.GetUint("user_id")).Take(&u).Error
+		u, err := users.FindByID(c.GetUint("user_id"))
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "akun tidak ditemukan"})
 			return
 		}
 		if !u.IsActive {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "akun tidak aktif, hubungi admin"})
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "akun tidak aktif, hubungi sekretaris"})
+			return
+		}
+		if u.Posyandu == "" {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "akun belum terhubung ke posyandu"})
 			return
 		}
 		c.Set("posyandu", u.Posyandu)
@@ -62,21 +60,5 @@ func RoleRequired(roles ...string) gin.HandlerFunc {
 			}
 		}
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "akses ditolak"})
-	}
-}
-
-// PosyanduRequired: kader, bidan, dan orang tua wajib punya posyandu.
-// Admin dikecualikan (admin melihat semua posyandu).
-func PosyanduRequired() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if c.GetString("role") == "admin" {
-			c.Next()
-			return
-		}
-		if c.GetString("posyandu") == "" {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "akun belum memiliki posyandu, hubungi admin"})
-			return
-		}
-		c.Next()
 	}
 }

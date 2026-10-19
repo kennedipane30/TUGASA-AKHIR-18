@@ -76,10 +76,18 @@ func jadwalMilik(j *models.JadwalPosyandu, pos string) error {
 	return nil
 }
 
+// wajibPosyandu: semua akun (termasuk sekretaris) harus terikat pada satu posyandu.
+func wajibPosyandu(pos string) error {
+	if pos == "" {
+		return terlarang("akun belum memiliki posyandu")
+	}
+	return nil
+}
+
 // ---------------------------------------------------------------- input dan keluaran
 
+// JadwalInput: posyandu tidak diinput; selalu mengikuti posyandu milik sekretaris.
 type JadwalInput struct {
-	Posyandu   string `json:"posyandu"`                     // wajib saat membuat jadwal
 	Tanggal    string `json:"tanggal" binding:"required"`   // YYYY-MM-DD
 	JamMulai   string `json:"jam_mulai" binding:"required"` // HH:MM
 	JamSelesai string `json:"jam_selesai"`                  // opsional
@@ -175,13 +183,16 @@ func buatKartu(j *models.JadwalPosyandu, a *models.Anak, p *models.Pendaftaran) 
 	}
 }
 
-// ---------------------------------------------------------------- admin
+// ---------------------------------------------------------------- sekretaris
 
-// Buat: admin wajib memilih posyandu; satu posyandu hanya boleh punya satu jadwal per tanggal.
-func (s *JadwalService) Buat(adminID uint, in JadwalInput) (*models.JadwalPosyandu, error) {
-	pos, ok := models.NormalisasiPosyandu(in.Posyandu)
+// Buat: jadwal otomatis milik posyandu sekretaris; satu posyandu hanya boleh punya satu jadwal per tanggal.
+func (s *JadwalService) Buat(sekretarisID uint, pos string, in JadwalInput) (*models.JadwalPosyandu, error) {
+	if err := wajibPosyandu(pos); err != nil {
+		return nil, err
+	}
+	pos, ok := models.NormalisasiPosyandu(pos)
 	if !ok {
-		return nil, validasi("posyandu harus dipilih: silimbat, sitoluama, atau aekbolon")
+		return nil, terlarang("posyandu akun tidak valid")
 	}
 	tgl, selesai, err := cekJadwal(in, true)
 	if err != nil {
@@ -199,7 +210,7 @@ func (s *JadwalService) Buat(adminID uint, in JadwalInput) (*models.JadwalPosyan
 		BukaDaftarHari:   7,
 		BukaCheckinMenit: bukaCheckinMenit,
 		Status:           "terjadwal",
-		DibuatOleh:       adminID,
+		DibuatOleh:       sekretarisID,
 		Version:          1,
 	}
 	if err := s.repo.CreateJadwal(j); err != nil {
@@ -208,13 +219,19 @@ func (s *JadwalService) Buat(adminID uint, in JadwalInput) (*models.JadwalPosyan
 	return j, nil
 }
 
-// Ubah: posyandu jadwal tidak dapat dipindahkan.
-func (s *JadwalService) Ubah(id uuid.UUID, in JadwalInput) (*models.JadwalPosyandu, error) {
+// Ubah: hanya jadwal milik posyandu sekretaris; posyandu jadwal tidak dapat dipindahkan.
+func (s *JadwalService) Ubah(id uuid.UUID, pos string, in JadwalInput) (*models.JadwalPosyandu, error) {
+	if err := wajibPosyandu(pos); err != nil {
+		return nil, err
+	}
 	j, err := s.repo.GetJadwal(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrJadwalTidakAda
 	}
 	if err != nil {
+		return nil, err
+	}
+	if err := jadwalMilik(j, pos); err != nil {
 		return nil, err
 	}
 	if j.Status != "terjadwal" {
@@ -239,7 +256,11 @@ func (s *JadwalService) Ubah(id uuid.UUID, in JadwalInput) (*models.JadwalPosyan
 	return j, nil
 }
 
-func (s *JadwalService) Batalkan(id uuid.UUID, alasan string) (*models.JadwalPosyandu, error) {
+// Batalkan: hanya jadwal milik posyandu sekretaris.
+func (s *JadwalService) Batalkan(id uuid.UUID, pos, alasan string) (*models.JadwalPosyandu, error) {
+	if err := wajibPosyandu(pos); err != nil {
+		return nil, err
+	}
 	alasan = strings.TrimSpace(alasan)
 	if alasan == "" {
 		return nil, validasi("alasan pembatalan wajib diisi")
@@ -249,6 +270,9 @@ func (s *JadwalService) Batalkan(id uuid.UUID, alasan string) (*models.JadwalPos
 		return nil, ErrJadwalTidakAda
 	}
 	if err != nil {
+		return nil, err
+	}
+	if err := jadwalMilik(j, pos); err != nil {
 		return nil, err
 	}
 	if j.Status == "dibatalkan" {
@@ -263,29 +287,35 @@ func (s *JadwalService) Batalkan(id uuid.UUID, alasan string) (*models.JadwalPos
 	return j, nil
 }
 
-// List: pos kosong = semua posyandu (hanya admin); selain itu hanya posyandu sendiri.
+// List: hanya jadwal pada posyandu akun (semua role terikat posyandu).
 func (s *JadwalService) List(pos string) ([]models.JadwalPosyandu, error) {
+	if err := wajibPosyandu(pos); err != nil {
+		return nil, err
+	}
 	return s.repo.ListJadwal(pos)
 }
 
-// QRJadwal: isi QR check-in untuk satu jadwal. pos kosong = admin (semua posyandu).
+// QRJadwal: isi QR check-in untuk satu jadwal milik posyandu akun (sekretaris atau kader).
 func (s *JadwalService) QRJadwal(id uuid.UUID, pos string) (string, error) {
+	if err := wajibPosyandu(pos); err != nil {
+		return "", err
+	}
 	j, err := s.jadwalAktif(id)
 	if err != nil {
 		return "", err
 	}
-	if pos != "" && j.Posyandu != pos {
-		return "", terlarang("jadwal ini bukan milik posyandu Anda")
+	if err := jadwalMilik(j, pos); err != nil {
+		return "", err
 	}
 	return KodeQRJadwal(j.ID), nil
 }
 
 // ---------------------------------------------------------------- jadwal terdekat
 
-// Terdekat: pos kosong = admin (semua posyandu); selain itu hanya posyandu sendiri.
+// Terdekat: hanya jadwal pada posyandu akun.
 func (s *JadwalService) Terdekat(userID uint, role, pos string) (*JadwalTerdekat, error) {
-	if role != string(models.RoleAdmin) && pos == "" {
-		return nil, terlarang("akun belum memiliki posyandu")
+	if err := wajibPosyandu(pos); err != nil {
+		return nil, err
 	}
 	j, err := s.repo.JadwalTerdekat(hariIni().Format("2006-01-02"), pos)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -299,7 +329,7 @@ func (s *JadwalService) Terdekat(userID uint, role, pos string) (*JadwalTerdekat
 	out := &JadwalTerdekat{
 		Jadwal:                *j,
 		MulaiPada:             mulai,
-		PendaftaranDibukaPada: j.CreatedAt, // pendaftaran terbuka sejak jadwal diterbitkan admin
+		PendaftaranDibukaPada: j.CreatedAt, // pendaftaran terbuka sejak jadwal diterbitkan sekretaris
 		CheckinDibukaPada:     checkinDibuka(j),
 		Anak:                  []AnakStatus{},
 	}
@@ -565,8 +595,8 @@ func (s *JadwalService) KartuAntrean(userID uint, jadwalID, anakID uuid.UUID) (*
 // ---------------------------------------------------------------- kader: cari anak, walk-in, check-in manual (cadangan)
 
 func (s *JadwalService) CariAnak(kata, pos string) ([]models.Anak, error) {
-	if pos == "" {
-		return nil, terlarang("akun belum memiliki posyandu")
+	if err := wajibPosyandu(pos); err != nil {
+		return nil, err
 	}
 	kata = strings.TrimSpace(kata)
 	if len(kata) < 2 {

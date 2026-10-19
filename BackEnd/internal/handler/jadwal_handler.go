@@ -41,16 +41,20 @@ func bacaAnakID(c *gin.Context) (uuid.UUID, bool) {
 	return id, true
 }
 
-// ---------------------------------------------------------------- admin
+// ---------------------------------------------------------------- sekretaris
 
-// POST /admin/jadwal   body wajib memuat "posyandu"
+// POST /sekretaris/jadwal  (jadwal otomatis milik posyandu sekretaris)
 func (h *JadwalHandler) Buat(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
 	var in service.JadwalInput
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	j, err := h.svc.Buat(c.GetUint("user_id"), in)
+	j, err := h.svc.Buat(c.GetUint("user_id"), pos, in)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -58,8 +62,12 @@ func (h *JadwalHandler) Buat(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": j})
 }
 
-// PUT /admin/jadwal/:id
+// PUT /sekretaris/jadwal/:id
 func (h *JadwalHandler) Ubah(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
 	id, ok := idParam(c, "id")
 	if !ok {
 		return
@@ -69,7 +77,7 @@ func (h *JadwalHandler) Ubah(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	j, err := h.svc.Ubah(id, in)
+	j, err := h.svc.Ubah(id, pos, in)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -77,8 +85,12 @@ func (h *JadwalHandler) Ubah(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": j})
 }
 
-// POST /admin/jadwal/:id/batalkan
+// POST /sekretaris/jadwal/:id/batalkan
 func (h *JadwalHandler) Batalkan(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
 	id, ok := idParam(c, "id")
 	if !ok {
 		return
@@ -90,7 +102,7 @@ func (h *JadwalHandler) Batalkan(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	j, err := h.svc.Batalkan(id, in.Alasan)
+	j, err := h.svc.Batalkan(id, pos, in.Alasan)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -98,15 +110,15 @@ func (h *JadwalHandler) Batalkan(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": j})
 }
 
-// GET /admin/jadwal/:id/qr  dan  GET /kader/jadwal/:id/qr
+// GET /sekretaris/jadwal/:id/qr  dan  GET /kader/jadwal/:id/qr
 func (h *JadwalHandler) QRJadwal(c *gin.Context) {
-	id, ok := idParam(c, "id")
+	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
-	pos := ""
-	if c.GetString("role") != "admin" {
-		pos = c.GetString("posyandu")
+	id, ok := idParam(c, "id")
+	if !ok {
+		return
 	}
 	kode, err := h.svc.QRJadwal(id, pos)
 	if err != nil {
@@ -118,9 +130,9 @@ func (h *JadwalHandler) QRJadwal(c *gin.Context) {
 
 // ---------------------------------------------------------------- semua role
 
-// GET /jadwal   (admin: semua atau ?posyandu=; lainnya: hanya posyandu sendiri)
+// GET /jadwal  (hanya jadwal di posyandu akun)
 func (h *JadwalHandler) List(c *gin.Context) {
-	pos, ok := scopePosyandu(c)
+	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
@@ -132,9 +144,9 @@ func (h *JadwalHandler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": list})
 }
 
-// GET /jadwal/terdekat  (data bernilai null jika belum ada jadwal)
+// GET /jadwal/terdekat  (data bernilai null jika belum ada jadwal di posyandu akun)
 func (h *JadwalHandler) Terdekat(c *gin.Context) {
-	pos, ok := scopePosyandu(c)
+	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
@@ -232,9 +244,13 @@ func (h *JadwalHandler) Kartu(c *gin.Context) {
 
 // ---------------------------------------------------------------- kader (cadangan)
 
-// GET /kader/anak?cari=...
+// GET /kader/anak?cari=...   (hanya anak di posyandu kader)
 func (h *JadwalHandler) CariAnak(c *gin.Context) {
-	list, err := h.svc.CariAnak(c.Query("cari"), c.GetString("posyandu"))
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
+	list, err := h.svc.CariAnak(c.Query("cari"), pos)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -244,6 +260,10 @@ func (h *JadwalHandler) CariAnak(c *gin.Context) {
 
 // POST /kader/jadwal/:id/walkin   body: {"anak_id": "..."}
 func (h *JadwalHandler) WalkIn(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
 	jadwalID, ok := idParam(c, "id")
 	if !ok {
 		return
@@ -252,7 +272,7 @@ func (h *JadwalHandler) WalkIn(c *gin.Context) {
 	if !ok {
 		return
 	}
-	p, err := h.svc.WalkIn(c.GetUint("user_id"), c.GetString("posyandu"), jadwalID, anakID)
+	p, err := h.svc.WalkIn(c.GetUint("user_id"), pos, jadwalID, anakID)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -262,11 +282,15 @@ func (h *JadwalHandler) WalkIn(c *gin.Context) {
 
 // POST /kader/pendaftaran/:id/checkin
 func (h *JadwalHandler) CheckinManual(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
 	id, ok := idParam(c, "id")
 	if !ok {
 		return
 	}
-	p, err := h.svc.CheckinManual(c.GetUint("user_id"), c.GetString("posyandu"), id)
+	p, err := h.svc.CheckinManual(c.GetUint("user_id"), pos, id)
 	if err != nil {
 		tulisError(c, err)
 		return

@@ -10,17 +10,34 @@ type UserRepository struct{ db *gorm.DB }
 
 func NewUserRepository(db *gorm.DB) *UserRepository { return &UserRepository{db} }
 
+var namaPosyandu = map[string]string{
+	"sitoluama": "Sitoluama",
+	"silimbat":  "Silimbat",
+	"aekbolon":  "Aek Bolon",
+}
+
+func (r *UserRepository) isiNama(u *models.User) {
+	u.PosyanduNama = namaPosyandu[u.Posyandu]
+}
+
 func (r *UserRepository) Create(u *models.User) error { return r.db.Create(u).Error }
 
 func (r *UserRepository) FindByID(id uint) (*models.User, error) {
 	var u models.User
-	return &u, r.db.First(&u, id).Error
+	err := r.db.First(&u, id).Error
+	if err == nil {
+		r.isiNama(&u)
+	}
+	return &u, err
 }
 
 // identifier bisa username, NIK, atau no HP
 func (r *UserRepository) FindByIdentifier(idf string) (*models.User, error) {
 	var u models.User
 	err := r.db.Where("username = ? OR nik = ? OR no_hp = ?", idf, idf, idf).First(&u).Error
+	if err == nil {
+		r.isiNama(&u)
+	}
 	return &u, err
 }
 
@@ -37,14 +54,11 @@ func (r *UserRepository) ExistsExcept(field, value string, exceptID uint) bool {
 	return n > 0
 }
 
-// FindByRoles: posyandu opsional; jika diisi, hanya akun posyandu tersebut.
-func (r *UserRepository) FindByRoles(roles []string, posyandu ...string) ([]models.User, error) {
+// FindByRoles: akun dengan role tertentu pada satu posyandu.
+func (r *UserRepository) FindByRoles(roles []string, posyandu string) ([]models.User, error) {
 	var list []models.User
-	q := r.db.Where("role IN ?", roles)
-	if p := pilihPosyandu(posyandu); p != "" {
-		q = q.Where("posyandu = ?", p)
-	}
-	err := q.Order("nama ASC").Find(&list).Error
+	err := r.db.Where("role IN ? AND posyandu = ?", roles, posyandu).
+		Order("nama ASC").Find(&list).Error
 	return list, err
 }
 

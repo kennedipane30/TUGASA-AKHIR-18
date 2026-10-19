@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"strings"
 
 	"posyandu-api/internal/models"
 	"posyandu-api/internal/repository"
@@ -10,22 +11,37 @@ import (
 
 var (
 	ErrInvalidCredentials = errors.New("identitas atau kata sandi salah")
-	ErrInactive           = errors.New("akun tidak aktif, hubungi admin")
+	ErrInactive           = errors.New("akun tidak aktif, hubungi sekretaris")
 	ErrDuplicate          = errors.New("NIK, No. HP, atau username sudah terdaftar")
 	ErrInvalidRole        = errors.New("role hanya boleh kader atau bidan")
-	ErrPosyanduTidakValid = errors.New("posyandu harus dipilih: silimbat, sitoluama, atau aekbolon")
+	ErrPosyandu           = errors.New("posyandu tidak valid: pilih sitoluama, silimbat, atau aekbolon")
 )
 
 type AuthService struct{ repo *repository.UserRepository }
 
 func NewAuthService(r *repository.UserRepository) *AuthService { return &AuthService{r} }
 
+// PilihanPosyandu: daftar titik untuk halaman registrasi.
+type PilihanPosyandu struct {
+	ID   string `json:"id"`
+	Nama string `json:"nama"`
+}
+
+func (s *AuthService) ListPosyandu() []PilihanPosyandu {
+	return []PilihanPosyandu{
+		{ID: "sitoluama", Nama: "Sitoluama"},
+		{ID: "silimbat", Nama: "Silimbat"},
+		{ID: "aekbolon", Nama: "Aek Bolon"},
+	}
+}
+
 type RegisterInput struct {
-	Nama     string `json:"nama" binding:"required"`
-	NIK      string `json:"nik" binding:"required,len=16,numeric"`
-	NoHP     string `json:"no_hp" binding:"required,min=10,max=15"`
-	Password string `json:"password" binding:"required,len=6,numeric"` // PIN 6 digit
-	Posyandu string `json:"posyandu" binding:"required"`               // silimbat | sitoluama | aekbolon
+	Nama       string `json:"nama" binding:"required"`
+	NIK        string `json:"nik" binding:"required,len=16,numeric"`
+	NoHP       string `json:"no_hp" binding:"required,min=10,max=15"`
+	Password   string `json:"password" binding:"required,len=6,numeric"` // PIN 6 digit
+	Posyandu   string `json:"posyandu"`
+	PosyanduID string `json:"posyandu_id"` // alias dari Posyandu
 }
 
 // Role selalu orang_tua, tidak diambil dari input client
@@ -33,9 +49,13 @@ func (s *AuthService) RegisterOrangTua(in RegisterInput) (*models.User, error) {
 	if err := utils.ValidasiPIN(in.Password); err != nil {
 		return nil, ErrPin{err.Error()}
 	}
-	pos, ok := models.NormalisasiPosyandu(in.Posyandu)
+	raw := strings.TrimSpace(in.Posyandu)
+	if raw == "" {
+		raw = strings.TrimSpace(in.PosyanduID)
+	}
+	pos, ok := models.NormalisasiPosyandu(raw)
 	if !ok {
-		return nil, ErrPosyanduTidakValid
+		return nil, ErrPosyandu
 	}
 	if s.repo.Exists("nik", in.NIK) || s.repo.Exists("no_hp", in.NoHP) {
 		return nil, ErrDuplicate
@@ -54,18 +74,16 @@ type CreateStaffInput struct {
 	Username string      `json:"username" binding:"required,min=4"`
 	Password string      `json:"password" binding:"required,min=6"`
 	Role     models.Role `json:"role" binding:"required"`
-	Posyandu string      `json:"posyandu" binding:"required"` // silimbat | sitoluama | aekbolon
 }
 
-// Akun kader/bidan langsung masuk ke beranda (tidak dipaksa ganti sandi);
-// penggantian kata sandi dilakukan sendiri lewat menu Akun.
-func (s *AuthService) CreateStaff(in CreateStaffInput) (*models.User, error) {
+// Akun kader/bidan selalu dibuat pada posyandu milik sekretaris yang membuatnya.
+func (s *AuthService) CreateStaff(posyandu string, in CreateStaffInput) (*models.User, error) {
 	if in.Role != models.RoleKader && in.Role != models.RoleBidan {
 		return nil, ErrInvalidRole
 	}
-	pos, ok := models.NormalisasiPosyandu(in.Posyandu)
+	pos, ok := models.NormalisasiPosyandu(posyandu)
 	if !ok {
-		return nil, ErrPosyanduTidakValid
+		return nil, ErrPosyandu
 	}
 	if s.repo.Exists("username", in.Username) {
 		return nil, ErrDuplicate
@@ -87,7 +105,7 @@ func (s *AuthService) Login(idf, password string) (string, *models.User, error) 
 	if !u.IsActive {
 		return "", nil, ErrInactive
 	}
-	token, err := utils.GenerateToken(u.ID, string(u.Role), u.Posyandu)
+	token, err := utils.GenerateToken(u.ID, string(u.Role))
 	return token, u, err
 }
 

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 
 	"posyandu-api/internal/service"
@@ -13,6 +12,11 @@ type AuthHandler struct{ svc *service.AuthService }
 
 func NewAuthHandler(s *service.AuthService) *AuthHandler { return &AuthHandler{s} }
 
+// GET /posyandu  (publik, dipakai halaman registrasi)
+func (h *AuthHandler) ListPosyandu(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"data": h.svc.ListPosyandu()})
+}
+
 func (h *AuthHandler) Register(c *gin.Context) {
 	var in service.RegisterInput
 	if err := c.ShouldBindJSON(&in); err != nil {
@@ -22,12 +26,15 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	u, err := h.svc.RegisterOrangTua(in)
 	if err != nil {
 		code := http.StatusInternalServerError
-		var ep service.ErrPin
-		switch {
-		case errors.Is(err, service.ErrDuplicate):
+		switch err {
+		case service.ErrDuplicate:
 			code = http.StatusConflict
-		case errors.Is(err, service.ErrPosyanduTidakValid), errors.As(err, &ep):
+		case service.ErrPosyandu:
 			code = http.StatusBadRequest
+		default:
+			if _, ok := err.(service.ErrPin); ok {
+				code = http.StatusBadRequest
+			}
 		}
 		c.JSON(code, gin.H{"error": err.Error()})
 		return
@@ -61,19 +68,18 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": u})
 }
 
-// GET /posyandu-pilihan  (publik, untuk dropdown registrasi dan form admin)
-func (h *AuthHandler) PilihanPosyandu(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"data": modelsDaftarPosyandu()})
-}
-
-// khusus admin
+// khusus sekretaris: akun dibuat pada posyandu milik sekretaris
 func (h *AuthHandler) CreateStaff(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
 	var in service.CreateStaffInput
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	u, err := h.svc.CreateStaff(in)
+	u, err := h.svc.CreateStaff(pos, in)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

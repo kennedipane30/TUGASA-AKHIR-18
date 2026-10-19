@@ -5,15 +5,13 @@ import "time"
 type Role string
 
 const (
-	RoleAdmin    Role = "admin"
-	RoleBidan    Role = "bidan"
-	RoleKader    Role = "kader"
-	RoleOrangTua Role = "orang_tua"
+	RoleSekretaris Role = "sekretaris"
+	RoleBidan      Role = "bidan"
+	RoleKader      Role = "kader"
+	RoleOrangTua   Role = "orang_tua"
 )
 
-// User: akun untuk keempat role. ID tetap berupa angka agar akun admin yang
-// sudah ada tidak hilang; kunci asing dari tabel lain ke users bertipe BIGINT.
-// Posyandu: kode posyandu akun. Kosong untuk admin (admin melihat semua posyandu).
+// User: akun untuk keempat role. Posyandu berisi kode titik: silimbat, sitoluama, atau aekbolon.
 type User struct {
 	ID                 uint       `gorm:"primaryKey" json:"id"`
 	Nama               string     `gorm:"size:100;not null" json:"nama"`
@@ -22,7 +20,8 @@ type User struct {
 	NoHP               *string    `gorm:"size:20;uniqueIndex" json:"no_hp,omitempty"`
 	Password           string     `gorm:"not null" json:"-"`
 	Role               Role       `gorm:"size:20;not null;index" json:"role"`
-	Posyandu           string     `gorm:"column:posyandu;size:20;not null;default:'';index" json:"posyandu"`
+	Posyandu           string     `gorm:"size:20;index" json:"posyandu"`
+	PosyanduNama       string     `gorm:"-" json:"posyandu_nama,omitempty"`
 	Bahasa             string     `gorm:"size:10;default:id" json:"bahasa"`
 	UkuranHuruf        string     `gorm:"size:10;default:normal" json:"ukuran_huruf"`
 	IsActive           bool       `gorm:"default:true" json:"is_active"`

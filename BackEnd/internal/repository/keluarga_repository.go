@@ -86,9 +86,9 @@ func (r *KeluargaRepository) ensure(tx *gorm.DB, uid uint) (*models.Keluarga, *m
 	}
 
 	k := &models.Keluarga{Posyandu: u.Posyandu}
-	if err := tx.Create(k).Error; err != nil {
-		return nil, nil, err
-	}
+	// if err := tx.Create(k).Error; err != nil {
+	// 	return nil, nil, err
+	// }
 
 	id := uid
 	ibu = models.OrangTua{
