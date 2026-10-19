@@ -3,7 +3,6 @@ package router
 import (
 	"posyandu-api/internal/handler"
 	"posyandu-api/internal/middleware"
-	"posyandu-api/internal/models"
 	"posyandu-api/internal/repository"
 	"posyandu-api/internal/service"
 
@@ -14,16 +13,11 @@ import (
 func Setup(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
 
-	_ = db.AutoMigrate(&models.MateriPanduan{})
-
 	// repository
 	userRepo := repository.NewUserRepository(db)
 	keluargaRepo := repository.NewKeluargaRepository(db)
 	jadwalRepo := repository.NewJadwalRepository(db)
 	pelayananRepo := repository.NewPelayananRepository(db)
-
-	// pembatasan data per posyandu
-	akses := handler.NewAkses(jadwalRepo)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
@@ -33,8 +27,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo))
 	jadwalH := handler.NewJadwalHandler(jadwalSvc)
 	pelayananH := handler.NewPelayananHandler(
-		service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo), akses)
-	panduanH := handler.NewPanduanHandler(repository.NewPanduanRepository(db))
+		service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo))
 
 	api := r.Group("/api/v1")
 	api.GET("/posyandu", authH.ListPosyandu) // publik, untuk registrasi
@@ -47,7 +40,6 @@ func Setup(db *gorm.DB) *gin.Engine {
 	protected.GET("/jadwal", jadwalH.List)
 	protected.GET("/jadwal/terdekat", jadwalH.Terdekat)
 	protected.GET("/vaksin", pelayananH.ListVaksin)
-	protected.GET("/panduan", panduanH.List)
 
 	// sekretaris (satu akun per desa, hanya mengelola desanya sendiri)
 	sekretaris := protected.Group("/sekretaris", middleware.RoleRequired("sekretaris"))
@@ -60,10 +52,6 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.PUT("/jadwal/:id", jadwalH.Ubah)
 	sekretaris.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
 	sekretaris.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
-	sekretaris.GET("/panduan", panduanH.ListAdmin)
-	sekretaris.POST("/panduan", panduanH.Create)
-	sekretaris.PUT("/panduan/:id", panduanH.Update)
-	sekretaris.DELETE("/panduan/:id", panduanH.Delete)
 
 	// orang tua (check-in dengan memindai QR jadwal)
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
@@ -90,7 +78,6 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kader.POST("/jadwal/:id/walkin", jadwalH.WalkIn)
 	kader.POST("/pendaftaran/:id/checkin", jadwalH.CheckinManual)
 	kader.GET("/jadwal/:id/antrean", pelayananH.AntreanKader)
-	kader.GET("/pendaftaran/:id/pengukuran", pelayananH.PengukuranKader)
 	kader.PUT("/pendaftaran/:id/pengukuran", pelayananH.CatatPengukuran)
 
 	// bidan

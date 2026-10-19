@@ -42,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _submit() async {
     if (_idf.text.trim().isEmpty || _pw.text.isEmpty) {
-      _snack('Nomor WhatsApp/NIK dan kata sandi wajib diisi');
+      _snack('No. HP, NIK, atau username dan kata sandi wajib diisi');
       return;
     }
     try {
@@ -191,13 +191,13 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         const SizedBox(height: 18),
-                        _label('No. HP atau NIK', 'Wajib', _oranye),
+                        _label('No. HP, NIK, atau Username', 'Wajib', _oranye),
                         TextField(
                           controller: _idf,
                           keyboardType: TextInputType.text,
                           textInputAction: TextInputAction.next,
-                          decoration:
-                              _dekor('Contoh: 0812-3456-7890 atau 16 Digit'),
+                          decoration: _dekor(
+                              'Contoh: 0812-3456-7890, 16 digit NIK, atau username'),
                         ),
                         const SizedBox(height: 14),
                         _label('Kata Sandi / PIN 6 Digit', 'Enkripsi Lokal',
@@ -249,7 +249,7 @@ class _LoginPageState extends State<LoginPage> {
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                               onPressed: () => _snack(
-                                  'Hubungi kader atau admin posyandu untuk reset kata sandi'),
+                                  'Hubungi sekretaris posyandu desa Anda untuk reset kata sandi'),
                               child: const Text('Lupa Sandi?',
                                   style: TextStyle(
                                       color: _oranye,

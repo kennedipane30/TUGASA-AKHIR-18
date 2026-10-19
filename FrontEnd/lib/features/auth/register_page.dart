@@ -289,7 +289,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               color: Colors.white)),
                       SizedBox(height: 4),
                       Text(
-                        'Akun Kader Posyandu & Tenaga Bidan dibuatkan resmi oleh Puskesmas/Admin Wilayah.',
+                        'Akun Kader Posyandu & Tenaga Bidan dibuatkan oleh Sekretaris posyandu di desa Anda.',
                         style: TextStyle(fontSize: 12, color: Colors.white, height: 1.4),
                       ),
                     ],

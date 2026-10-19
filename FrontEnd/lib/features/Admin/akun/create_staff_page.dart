@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/app_colors.dart';
-import '../../../core/posyandu.dart';
+import '../../auth/auth_provider.dart';
 import '../../auth/auth_service.dart';
 
 const _hijauTua = Color(0xFF0B3D2E);
@@ -23,7 +24,6 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
   final _username = TextEditingController();
   final _pw = TextEditingController();
   String _role = 'kader';
-  String _posyandu = daftarPosyandu.first.kode;
   bool _loading = false;
   bool _lihat = false;
 
@@ -35,6 +35,12 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
     super.dispose();
   }
 
+  String _desa() {
+    final u = context.read<AuthProvider>().user;
+    final n = (u?['posyandu_nama'] ?? '').toString();
+    return n.isEmpty ? 'desa Anda' : n;
+  }
+
   Future<void> _submit() async {
     if (!_key.currentState!.validate()) return;
     setState(() => _loading = true);
@@ -44,11 +50,10 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
         username: _username.text.trim(),
         password: _pw.text,
         role: _role,
-        posyandu: _posyandu,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Akun $_role ${labelPosyandu(_posyandu)} berhasil dibuat')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Akun $_role di ${_desa()} berhasil dibuat')));
       _nama.clear();
       _username.clear();
       _pw.clear();
@@ -119,6 +124,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
 
   @override
   Widget build(BuildContext context) {
+    final desa = _desa();
     return Scaffold(
       backgroundColor: AppColors.latar,
       appBar: AppBar(
@@ -196,30 +202,22 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                         child: const Icon(Icons.badge_outlined, color: _hijauGelap, size: 22),
                       ),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Data Akun Petugas',
+                            const Text('Data Akun Petugas',
                                 style: TextStyle(
                                     fontSize: 14, fontWeight: FontWeight.w800, color: _hijauTua)),
                             Text(
-                              'Setiap petugas hanya bertugas di satu posyandu',
-                              style: TextStyle(
+                              'Akun otomatis bertugas di Posyandu $desa',
+                              style: const TextStyle(
                                   fontSize: 10.5, height: 1.3, color: AppColors.teksRedup),
                             ),
                           ],
                         ),
                       ),
                     ],
-                  ),
-                  _label('POSYANDU TUGAS', 'Wajib Pilih', _hijauGelap, AppColors.hijauMuda),
-                  DropdownButtonFormField<String>(
-                    value: _posyandu,
-                    icon: const Icon(Icons.keyboard_arrow_down, color: _hijauGelap),
-                    decoration: _dekor('', Icons.place_outlined, _hijauGaris),
-                    items: itemPosyandu(),
-                    onChanged: (v) => setState(() => _posyandu = v ?? _posyandu),
                   ),
                   _label('ROLE PETUGAS', 'Wajib Pilih', _hijauGelap, AppColors.hijauMuda),
                   DropdownButtonFormField<String>(

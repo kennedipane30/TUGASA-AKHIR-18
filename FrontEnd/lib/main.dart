@@ -62,7 +62,7 @@ class MyApp extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
 
     // Hanya orang tua (PIN hasil reset) yang wajib ganti sandi saat masuk.
-    // Admin, bidan, dan kader langsung ke beranda; ganti kata sandi tetap
+    // Sekretaris, bidan, dan kader langsung ke beranda; ganti kata sandi tetap
     // bisa dilakukan sendiri lewat menu Akun.
     final wajibGanti = auth.user != null &&
         auth.role == 'orang_tua' &&
@@ -75,7 +75,7 @@ class MyApp extends StatelessWidget {
       home = const UbahSandiPage();
     } else {
       switch (auth.role) {
-        case 'admin':
+        case 'sekretaris':
           home = _nav(
             beranda: const AdminHome(),
             tengah: const AdminKelolaAkunPage(),

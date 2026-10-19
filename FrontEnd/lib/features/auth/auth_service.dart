@@ -54,21 +54,20 @@ class AuthService {
     }
   }
 
-  // Khusus admin: membuat akun kader atau bidan pada satu posyandu
+  // Khusus sekretaris: membuat akun kader atau bidan. Posyandu otomatis
+  // mengikuti desa sekretaris (ditentukan server, bukan dikirim dari aplikasi).
   Future<void> createStaff({
     required String nama,
     required String username,
     required String password,
     required String role, // 'kader' atau 'bidan'
-    required String posyandu, // silimbat | sitoluama | aekbolon
   }) async {
     try {
-      await ApiClient.dio.post('/admin/users', data: {
+      await ApiClient.dio.post('/sekretaris/users', data: {
         'nama': nama,
         'username': username,
         'password': password,
         'role': role,
-        'posyandu': posyandu,
       });
     } on DioException catch (e) {
       throw Exception(_pesanError(e));

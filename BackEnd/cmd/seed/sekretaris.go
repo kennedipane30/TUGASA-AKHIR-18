@@ -11,10 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
-var daftarSekretaris = []struct{ Nama, Username, Posyandu string }{
-	{"Sekretaris Sitoluama", "sekretaris.sitoluama", "sitoluama"},
-	{"Sekretaris Silimbat", "sekretaris.silimbat", "silimbat"},
-	{"Sekretaris Aek Bolon", "sekretaris.aekbolon", "aekbolon"},
+var daftarSekretaris = []struct{ Nama, Username, NoHP, Posyandu string }{
+	{"Sekretaris Sitoluama", "sekretaris.sitoluama", "082235805348", "sitoluama"},
+	{"Sekretaris Silimbat", "sekretaris.silimbat", "082235805349", "silimbat"},
+	{"Sekretaris Aek Bolon", "sekretaris.aekbolon", "082235805310", "aekbolon"},
 }
 
 // seedSekretaris membuat satu akun sekretaris untuk setiap desa.
@@ -29,13 +29,16 @@ func seedSekretaris(db *gorm.DB) {
 	}
 
 	for _, s := range daftarSekretaris {
+		username := s.Username
+		noHP := s.NoHP
+
 		var u models.User
 		err := db.Where("username = ?", s.Username).First(&u).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			username := s.Username
 			u = models.User{
 				Nama:     s.Nama,
 				Username: &username,
+				NoHP:     &noHP,
 				Password: hash,
 				Role:     models.RoleSekretaris,
 				Posyandu: s.Posyandu,
@@ -44,19 +47,21 @@ func seedSekretaris(db *gorm.DB) {
 			if err := db.Create(&u).Error; err != nil {
 				log.Fatal("gagal membuat sekretaris ", s.Posyandu, ": ", err)
 			}
-			log.Println("sekretaris dibuat:", s.Username)
+			log.Println("sekretaris dibuat:", s.Username, "| No. HP:", s.NoHP)
 			continue
 		}
 		if err != nil {
 			log.Fatal(err)
 		}
 
+		u.Nama = s.Nama
+		u.NoHP = &noHP
 		u.Role = models.RoleSekretaris
 		u.Posyandu = s.Posyandu
 		u.IsActive = true
 		if err := db.Save(&u).Error; err != nil {
 			log.Fatal("gagal memperbarui sekretaris ", s.Posyandu, ": ", err)
 		}
-		log.Println("sekretaris sudah ada, diperbarui:", s.Username)
+		log.Println("sekretaris sudah ada, diperbarui:", s.Username, "| No. HP:", s.NoHP)
 	}
 }

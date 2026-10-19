@@ -4,7 +4,6 @@ import 'jadwal/admin_jadwal_page.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../auth/auth_provider.dart';
-import 'akun/create_staff_page.dart';
 import 'akun/admin_kelola_akun_page.dart';
 import 'vaksin/admin_vaksin_page.dart';
 
@@ -54,13 +53,31 @@ class _AdminHomeState extends State<AdminHome> {
     );
   }
 
+  void _bukaJadwal() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AdminJadwalPage()),
+    );
+  }
+
+  void _bukaAkun() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (_) => const AdminKelolaAkunPage(denganTombolKembali: true)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final nama = (context.watch<AuthProvider>().user?['nama'] ?? 'Admin').toString();
+    final user = context.watch<AuthProvider>().user;
+    final nama = (user?['nama'] ?? 'Sekretaris').toString();
+    final desa = (user?['posyandu_nama'] ?? '').toString();
+    final labelDesa = desa.isEmpty ? 'Posyandu' : 'Posyandu $desa';
 
     return HomeShell(
-      peran: 'Admin',
-      lokasi: 'Sekretaris & Administrator',
+      peran: 'Sekretaris',
+      lokasi: labelDesa,
       notif: _tugas.length,
       children: [
         // Sapaan
@@ -69,12 +86,14 @@ class _AdminHomeState extends State<AdminHome> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Pill('Sekretaris & Administrator', bg: Colors.white, fg: AppColors.hijau),
+              Pill(desa.isEmpty ? 'Sekretaris Posyandu' : 'Sekretaris $desa',
+                  bg: Colors.white, fg: AppColors.hijau),
               const SizedBox(height: 8),
               Text('Selamat bertugas, $nama',
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               const SizedBox(height: 2),
-              const Text('Kelola akun, jadwal, data master, dan laporan posyandu.',
+              const Text(
+                  'Kelola akun kader dan bidan, jadwal, data vaksin, dan laporan untuk desa Anda.',
                   style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
             ],
           ),
@@ -91,7 +110,7 @@ class _AdminHomeState extends State<AdminHome> {
 
         // Aksi cepat
         SectionCard(
-          title: 'Aksi Cepat Admin',
+          title: 'Aksi Cepat Sekretaris',
           icon: Icons.bolt,
           trailing: const Pill('7 Menu Utama', bg: AppColors.biruMuda, fg: AppColors.biru),
           child: GridView.count(
@@ -102,18 +121,10 @@ class _AdminHomeState extends State<AdminHome> {
             crossAxisSpacing: 8,
             childAspectRatio: 1.9,
             children: [
-              _menu(Icons.manage_accounts, 'Kelola Akun', 'Kader, bidan, orang tua',
-                  () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) =>
-                              const AdminKelolaAkunPage(denganTombolKembali: true)))),
-              AppButton('Kelola Jadwal',
-                  icon: Icons.edit_calendar,
-                  filled: false,
-                  onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AdminJadwalPage()))),
+              _menu(Icons.manage_accounts, 'Kelola Akun', 'Kader dan bidan desa ini',
+                  _bukaAkun),
+              _menu(Icons.calendar_month, 'Jadwal & Agenda', 'Jadwal posyandu desa',
+                  _bukaJadwal),
               _menu(Icons.vaccines_outlined, 'Data Vaksin', 'Jumlah & jenis vaksin',
                   _bukaVaksin),
               _menu(Icons.campaign_outlined, 'Pengumuman', 'Siaran ke pengguna',
@@ -249,27 +260,24 @@ class _AdminHomeState extends State<AdminHome> {
           ),
         ),
 
-        // AD-04: jadwal berikutnya
+        // AD-04: jadwal posyandu desa
         SectionCard(
-          title: 'Posyandu Berikutnya',
+          title: 'Jadwal $labelDesa',
           icon: Icons.event,
-          trailing: const Pill('Aktif Pekan Ini', bg: AppColors.hijauMuda, fg: AppColors.hijau),
+          trailing: const Pill('Jadwal Desa', bg: AppColors.hijauMuda, fg: AppColors.hijau),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Posyandu Melati (RW 05)',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 2),
-              const Text('Senin, 14 Okt 2024 · 08.00 - 11.30 WIB',
-                  style: TextStyle(fontSize: 12.5)),
+              const Text(
+                'Buat, ubah, atau batalkan jadwal posyandu di desa Anda. Orang tua di desa lain tidak melihat jadwal ini.',
+                style: TextStyle(fontSize: 12.5),
+              ),
               const SizedBox(height: 4),
-              const Text('Pendaftaran dibuka 7 hari sebelumnya, check-in 1 jam sebelumnya.',
+              const Text('Pendaftaran dibuka sejak jadwal dibuat, check-in 1 jam sebelumnya.',
                   style: TextStyle(fontSize: 11, color: AppColors.teksRedup)),
               const SizedBox(height: 10),
               AppButton('Kelola Jadwal',
-                  icon: Icons.edit_calendar,
-                  filled: false,
-                  onPressed: () => soon(context, 'Kelola jadwal')),
+                  icon: Icons.edit_calendar, filled: false, onPressed: _bukaJadwal),
             ],
           ),
         ),

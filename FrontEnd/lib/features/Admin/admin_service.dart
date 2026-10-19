@@ -35,6 +35,8 @@ class StaffAkun {
 
 String posyanduLabel(String kode) => labelPosyandu(kode);
 
+/// Layanan akun untuk sekretaris. Server hanya mengembalikan dan mengubah
+/// akun milik desa sekretaris yang sedang login.
 class AdminService {
   String _pesan(DioException e) {
     final d = e.response?.data;
@@ -42,12 +44,9 @@ class AdminService {
     return 'Tidak dapat terhubung ke server';
   }
 
-  /// [posyandu] kosong = semua posyandu.
-  Future<List<StaffAkun>> daftarStaff({String? posyandu}) async {
+  Future<List<StaffAkun>> daftarStaff() async {
     try {
-      final res = await ApiClient.dio.get('/admin/users', queryParameters: {
-        if (posyandu != null && posyandu.isNotEmpty) 'posyandu': posyandu,
-      });
+      final res = await ApiClient.dio.get('/sekretaris/users');
       final list = (res.data['users'] as List?) ?? [];
       return list
           .map((e) => StaffAkun.fromJson(Map<String, dynamic>.from(e as Map)))
@@ -62,15 +61,13 @@ class AdminService {
     required String username,
     required String password,
     required String role,
-    required String posyandu,
   }) async {
     try {
-      await ApiClient.dio.post('/admin/users', data: {
+      await ApiClient.dio.post('/sekretaris/users', data: {
         'nama': nama,
         'username': username,
         'password': password,
         'role': role,
-        'posyandu': posyandu,
       });
     } on DioException catch (e) {
       throw Exception(_pesan(e));
@@ -82,15 +79,13 @@ class AdminService {
     required String nama,
     required String username,
     required String role,
-    required String posyandu,
     String? password,
   }) async {
     try {
-      await ApiClient.dio.put('/admin/users/$id', data: {
+      await ApiClient.dio.put('/sekretaris/users/$id', data: {
         'nama': nama,
         'username': username,
         'role': role,
-        'posyandu': posyandu,
         if (password != null && password.isNotEmpty) 'password': password,
       });
     } on DioException catch (e) {
@@ -100,7 +95,7 @@ class AdminService {
 
   Future<void> setAktif(int id, bool aktif) async {
     try {
-      await ApiClient.dio.patch('/admin/users/$id/aktif', data: {'is_active': aktif});
+      await ApiClient.dio.patch('/sekretaris/users/$id/aktif', data: {'is_active': aktif});
     } on DioException catch (e) {
       throw Exception(_pesan(e));
     }
@@ -108,7 +103,7 @@ class AdminService {
 
   Future<void> hapus(int id) async {
     try {
-      await ApiClient.dio.delete('/admin/users/$id');
+      await ApiClient.dio.delete('/sekretaris/users/$id');
     } on DioException catch (e) {
       throw Exception(_pesan(e));
     }

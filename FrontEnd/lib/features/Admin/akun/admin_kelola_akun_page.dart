@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
-import '../../../core/posyandu.dart';
+import '../../auth/auth_provider.dart';
 import '../admin_service.dart';
 
 const _hijauTua = Color(0xFF0B3D2E);
@@ -26,7 +27,6 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
   final _service = AdminService();
 
   String _aktif = 'Kader';
-  String _posyandu = ''; // kosong = semua posyandu
   bool _memuat = true;
   String? _galat;
   List<StaffAkun> _data = [];
@@ -35,6 +35,12 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
   void initState() {
     super.initState();
     _muat();
+  }
+
+  String get _desa {
+    final u = context.read<AuthProvider>().user;
+    final n = (u?['posyandu_nama'] ?? '').toString();
+    return n.isEmpty ? 'desa Anda' : n;
   }
 
   String _bersih(Object e) => e.toString().replaceFirst('Exception: ', '');
@@ -49,7 +55,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
   Future<void> _muat({bool tampilLoading = true}) async {
     if (tampilLoading) setState(() => _memuat = true);
     try {
-      final hasil = await _service.daftarStaff(posyandu: _posyandu);
+      final hasil = await _service.daftarStaff();
       if (!mounted) return;
       setState(() {
         _data = hasil;
@@ -71,7 +77,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
       MaterialPageRoute(
         builder: (_) => _AkunFormPage(
           peranAwal: _aktif == 'Bidan' ? 'bidan' : 'kader',
-          posyanduAwal: _posyandu.isEmpty ? daftarPosyandu.first.kode : _posyandu,
+          desa: _desa,
         ),
       ),
     );
@@ -82,9 +88,8 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
         username: hasil.username,
         password: hasil.sandi ?? '',
         role: hasil.role,
-        posyandu: hasil.posyandu,
       );
-      _pesan('Akun ${hasil.nama} berhasil dibuat di ${labelPosyandu(hasil.posyandu)}');
+      _pesan('Akun ${hasil.nama} berhasil dibuat di $_desa');
       await _muat(tampilLoading: false);
     } catch (e) {
       _pesan(_bersih(e));
@@ -94,7 +99,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
   Future<void> _ubah(StaffAkun a) async {
     final hasil = await Navigator.push<_HasilForm>(
       context,
-      MaterialPageRoute(builder: (_) => _AkunFormPage(akun: a)),
+      MaterialPageRoute(builder: (_) => _AkunFormPage(akun: a, desa: _desa)),
     );
     if (hasil == null) return;
     try {
@@ -103,7 +108,6 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
         nama: hasil.nama,
         username: hasil.username,
         role: hasil.role,
-        posyandu: hasil.posyandu,
         password: hasil.sandi,
       );
       _pesan('Akun ${hasil.nama} diperbarui');
@@ -119,7 +123,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
       builder: (ctx) => AlertDialog(
         title: const Text('Hapus akun?'),
         content: Text(
-            'Akun ${a.nama} (${a.labelPeran} ${a.labelPosyandu}) akan dihapus dan tidak dapat login lagi.'),
+            'Akun ${a.nama} (${a.labelPeran} $_desa) akan dihapus dan tidak dapat login lagi.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
           ElevatedButton(
@@ -149,31 +153,6 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
     } catch (e) {
       _pesan(_bersih(e));
     }
-  }
-
-  Widget _chipPosyandu(String kode, String label) {
-    final dipilih = _posyandu == kode;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: dipilih,
-        selectedColor: _hijauGelap,
-        backgroundColor: Colors.white,
-        showCheckmark: false,
-        side: BorderSide(color: dipilih ? _hijauGelap : const Color(0xFFE3E8E5)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        labelStyle: TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
-          color: dipilih ? Colors.white : Colors.black87,
-        ),
-        onSelected: (_) {
-          setState(() => _posyandu = kode);
-          _muat();
-        },
-      ),
-    );
   }
 
   @override
@@ -247,8 +226,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                           style: const TextStyle(
                               fontWeight: FontWeight.w800, fontSize: 13.5, color: _hijauTua),
                         ),
-                        Text(
-                            '${daftar.length} akun • $jumlahAktif aktif • ${labelPosyandu(_posyandu)}',
+                        Text('${daftar.length} akun • $jumlahAktif aktif • Posyandu $_desa',
                             style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
                       ],
                     ),
@@ -273,19 +251,6 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
               ),
             ),
             const SizedBox(height: 12),
-            const Text('Posyandu',
-                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 6),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _chipPosyandu('', 'Semua'),
-                  for (final p in daftarPosyandu) _chipPosyandu(p.kode, p.nama),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -433,7 +398,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
                     const SizedBox(height: 4),
-                    Pill('Posyandu ${a.labelPosyandu}',
+                    Pill('Posyandu $_desa',
                         bg: Colors.white, fg: _biruGaris, icon: Icons.place_outlined),
                   ],
                 ),
@@ -511,16 +476,15 @@ class _HasilForm {
   final String nama;
   final String username;
   final String role; // 'kader' atau 'bidan'
-  final String posyandu;
   final String? sandi;
-  const _HasilForm(this.nama, this.username, this.role, this.posyandu, this.sandi);
+  const _HasilForm(this.nama, this.username, this.role, this.sandi);
 }
 
 class _AkunFormPage extends StatefulWidget {
   final StaffAkun? akun;
   final String peranAwal;
-  final String posyanduAwal;
-  const _AkunFormPage({this.akun, this.peranAwal = 'kader', this.posyanduAwal = 'silimbat'});
+  final String desa;
+  const _AkunFormPage({this.akun, this.peranAwal = 'kader', required this.desa});
 
   @override
   State<_AkunFormPage> createState() => _AkunFormPageState();
@@ -532,7 +496,6 @@ class _AkunFormPageState extends State<_AkunFormPage> {
   late final TextEditingController _username;
   final _sandi = TextEditingController();
   late String _peran;
-  late String _posyandu;
   bool _lihat = false;
 
   bool get _edit => widget.akun != null;
@@ -543,8 +506,6 @@ class _AkunFormPageState extends State<_AkunFormPage> {
     _nama = TextEditingController(text: widget.akun?.nama ?? '');
     _username = TextEditingController(text: widget.akun?.username ?? '');
     _peran = widget.akun?.role ?? widget.peranAwal;
-    final p = widget.akun?.posyandu ?? widget.posyanduAwal;
-    _posyandu = daftarPosyandu.any((e) => e.kode == p) ? p : daftarPosyandu.first.kode;
   }
 
   @override
@@ -618,7 +579,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
     final sandi = _sandi.text.trim();
     Navigator.pop(
       context,
-      _HasilForm(_nama.text.trim(), _username.text.trim(), _peran, _posyandu,
+      _HasilForm(_nama.text.trim(), _username.text.trim(), _peran,
           sandi.isEmpty ? null : sandi),
     );
   }
@@ -708,8 +669,8 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                                     fontSize: 14, fontWeight: FontWeight.w800, color: _hijauTua)),
                             Text(
                               _edit
-                                  ? 'Perbarui informasi akun dan posyandu tempat bertugas'
-                                  : 'Setiap petugas hanya bertugas di satu posyandu',
+                                  ? 'Perbarui informasi akun petugas Posyandu ${widget.desa}'
+                                  : 'Akun otomatis bertugas di Posyandu ${widget.desa}',
                               style: const TextStyle(
                                   fontSize: 10.5, height: 1.3, color: AppColors.teksRedup),
                             ),
@@ -717,15 +678,6 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                         ),
                       ),
                     ],
-                  ),
-                  _label('POSYANDU TUGAS', 'Wajib Pilih', _hijauGelap, AppColors.hijauMuda,
-                      wajib: true),
-                  DropdownButtonFormField<String>(
-                    value: _posyandu,
-                    icon: const Icon(Icons.keyboard_arrow_down, color: _hijauGelap),
-                    decoration: _dekor('', Icons.place_outlined, _hijauGaris),
-                    items: itemPosyandu(),
-                    onChanged: (v) => setState(() => _posyandu = v ?? _posyandu),
                   ),
                   _label('ROLE PETUGAS', 'Wajib Pilih', _hijauGelap, AppColors.hijauMuda,
                       wajib: true),
