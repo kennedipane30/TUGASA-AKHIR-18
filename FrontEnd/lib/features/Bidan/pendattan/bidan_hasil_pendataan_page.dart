@@ -9,6 +9,7 @@ import '../../../core/posyandu.dart';
 import '../../auth/auth_provider.dart';
 import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 import 'bidan_catatan_page.dart';
+import 'bidan_data_anak_page.dart';
 
 class _ItemBidan {
   final String pendaftaranId;
@@ -17,8 +18,7 @@ class _ItemBidan {
   final String jk;
   final int usiaBulan;
   final int? nomor;
-  final double bb;
-  final double tb;
+  final bool sudahDiukur;
   final String peringatan;
   final bool selesai;
 
@@ -29,8 +29,7 @@ class _ItemBidan {
     required this.jk,
     required this.usiaBulan,
     required this.nomor,
-    required this.bb,
-    required this.tb,
+    required this.sudahDiukur,
     required this.peringatan,
     required this.selesai,
   });
@@ -42,8 +41,7 @@ class _ItemBidan {
         jk: j['jenis_kelamin']?.toString() ?? '',
         usiaBulan: int.tryParse(j['usia_bulan']?.toString() ?? '') ?? 0,
         nomor: int.tryParse(j['nomor_antrean']?.toString() ?? ''),
-        bb: double.tryParse(j['bb_kg']?.toString() ?? '') ?? 0,
-        tb: double.tryParse(j['tb_cm']?.toString() ?? '') ?? 0,
+        sudahDiukur: j['sudah_diukur'] == true,
         peringatan: j['peringatan_validasi']?.toString() ?? '',
         selesai: j['status_catatan']?.toString() == 'selesai',
       );
@@ -94,7 +92,6 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
 
   Future<void> _muat() async {
     try {
-      // Backend hanya mengembalikan jadwal milik posyandu bidan yang login.
       final j = await JadwalTerdekatData.ambil();
       var list = <_ItemBidan>[];
       if (j != null) {
@@ -125,7 +122,8 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
     }
   }
 
-  Future<void> _buka(_ItemBidan d) async {
+  // Ketuk antrean: tampilkan form catatan bidan.
+  Future<void> _bukaForm(_ItemBidan d) async {
     final ok = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -136,6 +134,19 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
       ),
     );
     if (ok == true) _muat();
+  }
+
+  // Ketuk ikon: tampilkan data pencatatan anak (halaman terpisah).
+  void _bukaDataAnak(_ItemBidan d) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BidanDataAnakPage(
+          pendaftaranId: d.pendaftaranId,
+          nomor: d.kodeNomor,
+        ),
+      ),
+    );
   }
 
   @override
@@ -224,9 +235,9 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                           style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
                     ],
                     const SizedBox(height: 6),
-                    const Text(
-                      'Hanya anak posyandu Anda yang sudah didata kader yang muncul di sini.',
-                      style: TextStyle(fontSize: 11.5, color: AppColors.teksRedup),
+                    Text(
+                      '${_data.length} anak sudah check-in. Ketuk antrean untuk mengisi catatan, ketuk ikon untuk melihat data pencatatan anak.',
+                      style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup),
                     ),
                   ],
                 ),
@@ -258,7 +269,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                   child: Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text('Belum ada data dari kader',
+                      child: Text('Belum ada anak yang check-in',
                           style: TextStyle(color: AppColors.teksRedup)),
                     ),
                   ),
@@ -273,87 +284,70 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
 
   Widget _kartu(_ItemBidan d) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _buka(d),
+          onTap: () => _bukaForm(d),
           child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(12, 12, 6, 12),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.hijauMuda,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(d.kodeNomor,
+                Container(
+                  width: 52,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.hijauMuda,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(d.kodeNomor,
+                      style: const TextStyle(
+                          color: AppColors.hijau,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13)),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(d.nama,
                           style: const TextStyle(
-                              color: AppColors.hijau,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13)),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                              fontWeight: FontWeight.w800, fontSize: 13.5)),
+                      Text('${d.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${d.usia}',
+                          style: const TextStyle(
+                              fontSize: 11, color: AppColors.teksRedup)),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
                         children: [
-                          Text(d.nama,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 13.5)),
-                          Text('${d.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${d.usia}',
-                              style: const TextStyle(
-                                  fontSize: 11, color: AppColors.teksRedup)),
+                          d.sudahDiukur
+                              ? const Pill('Sudah diukur kader', icon: Icons.straighten)
+                              : const Pill('Belum diukur kader',
+                                  bg: AppColors.kuningMuda, fg: AppColors.kuning),
+                          d.selesai
+                              ? const Pill('Catatan selesai', icon: Icons.check)
+                              : const Pill('Perlu catatan',
+                                  bg: AppColors.biruMuda, fg: AppColors.biru),
+                          if (d.peringatan.isNotEmpty)
+                            const Pill('Ada peringatan',
+                                bg: AppColors.merahMuda,
+                                fg: AppColors.merah,
+                                icon: Icons.warning_amber_rounded),
                         ],
                       ),
-                    ),
-                    d.selesai
-                        ? const Pill('Selesai', icon: Icons.check)
-                        : const Pill('Perlu catatan',
-                            bg: AppColors.kuningMuda, fg: AppColors.kuning),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                        child: StatBox(
-                            nilai: d.bb.toString(), label: 'BB (kg)', bg: AppColors.latar)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child: StatBox(
-                            nilai: d.tb.toString(), label: 'TB (cm)', bg: AppColors.latar)),
-                  ],
-                ),
-                if (d.peringatan.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.merahMuda,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.warning_amber_rounded,
-                            color: AppColors.merah, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                            child: Text(d.peringatan, style: const TextStyle(fontSize: 11.5))),
-                      ],
-                    ),
+                    ],
                   ),
-                ],
+                ),
+                IconButton(
+                  tooltip: 'Data pencatatan anak',
+                  icon: const Icon(Icons.assignment_ind_outlined, color: AppColors.hijau),
+                  onPressed: () => _bukaDataAnak(d),
+                ),
               ],
             ),
           ),

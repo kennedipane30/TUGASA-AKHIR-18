@@ -87,6 +87,7 @@ type BidanItem struct {
 	JenisKelamin       string    `json:"jenis_kelamin"`
 	UsiaBulan          int       `json:"usia_bulan"`
 	NomorAntrean       *int16    `json:"nomor_antrean"`
+	SudahDiukur        bool      `json:"sudah_diukur"`
 	BbKg               float64   `json:"bb_kg"`
 	TbCm               float64   `json:"tb_cm"`
 	PeringatanValidasi string    `json:"peringatan_validasi"`
@@ -391,12 +392,12 @@ func (s *PelayananService) PengukuranKader(pos string, pendaftaranID uuid.UUID) 
 
 // ---------------------------------------------------------------- bidan
 
-// AntreanBidan: kunjungan yang sudah diinput kader pada satu jadwal di posyandu bidan.
+// AntreanBidan: semua anak yang sudah check-in pada satu jadwal di posyandu bidan.
 func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID, pos string) ([]BidanItem, error) {
 	if _, err := s.jadwalPos(jadwalID, pos); err != nil {
 		return nil, err
 	}
-	list, err := s.repo.PendaftaranBerpengukuran(jadwalID)
+	list, err := s.jadwal.ListPendaftaranJadwal(jadwalID, "sudah_checkin")
 	if err != nil {
 		return nil, err
 	}
@@ -421,11 +422,12 @@ func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID, pos string) ([]Bidan
 	now := time.Now()
 	out := make([]BidanItem, 0, len(list))
 	for _, p := range list {
-		u := petaUkur[p.ID]
+		u, diukur := petaUkur[p.ID]
 		it := BidanItem{
 			PendaftaranID:      p.ID,
 			AnakID:             p.AnakID,
 			NomorAntrean:       p.NomorAntrean,
+			SudahDiukur:        diukur,
 			BbKg:               u.BbKg,
 			TbCm:               u.TbCm,
 			PeringatanValidasi: u.PeringatanValidasi,
@@ -444,6 +446,7 @@ func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID, pos string) ([]Bidan
 	return out, nil
 }
 
+// DetailBidan: pengukuran boleh kosong (kader belum mengukur).
 func (s *PelayananService) DetailBidan(pos string, pendaftaranID uuid.UUID) (*DetailBidan, error) {
 	p, err := s.pendaftaranPos(pendaftaranID, pos)
 	if err != nil {
@@ -452,19 +455,16 @@ func (s *PelayananService) DetailBidan(pos string, pendaftaranID uuid.UUID) (*De
 	if p.Anak == nil {
 		return nil, ErrPendaftaranTidakAda
 	}
-	ukur, err := s.repo.GetPengukuran(p.ID)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, konflik("kader belum menginput pengukuran")
-	}
-	if err != nil {
-		return nil, err
-	}
 
 	d := &DetailBidan{
-		Anak:       *p.Anak,
-		Jadwal:     *p.Jadwal,
-		UsiaBulan:  usiaBulan(p.Anak.TanggalLahir, time.Now()),
-		Pengukuran: ukur,
+		Anak:      *p.Anak,
+		Jadwal:    *p.Jadwal,
+		UsiaBulan: usiaBulan(p.Anak.TanggalLahir, time.Now()),
+	}
+	if m, err := s.repo.GetPengukuran(p.ID); err == nil {
+		d.Pengukuran = m
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
 	}
 	if prev, err := s.repo.PengukuranSebelumnya(p.AnakID, p.ID); err == nil {
 		d.Sebelumnya = prev
