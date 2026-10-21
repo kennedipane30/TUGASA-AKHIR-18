@@ -1,17 +1,17 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
-import '../../../core/posyandu.dart';
+import '../../auth/auth_provider.dart';
 
 // ---------------------------------------------------------------------------
 // MODEL
 // ---------------------------------------------------------------------------
 class JadwalItem {
   final String id;
-  final String posyandu;
   final DateTime tanggal;
   final String jamMulai;
   final String jamSelesai;
@@ -21,7 +21,6 @@ class JadwalItem {
 
   JadwalItem({
     required this.id,
-    required this.posyandu,
     required this.tanggal,
     required this.jamMulai,
     required this.jamSelesai,
@@ -40,7 +39,6 @@ class JadwalItem {
 
     return JadwalItem(
       id: j['id']?.toString() ?? '',
-      posyandu: j['posyandu']?.toString() ?? '',
       tanggal: tgl ?? DateTime.now(),
       jamMulai: jam(j['jam_mulai']),
       jamSelesai: jam(j['jam_selesai']),
@@ -51,24 +49,12 @@ class JadwalItem {
   }
 
   bool get aktif => status == 'terjadwal';
-
-  /// Jadwal yang sudah lewat (tanggal sebelum hari ini) dianggap selesai.
-  bool get selesai {
-    final n = DateTime.now();
-    final hari = DateTime(n.year, n.month, n.day);
-    return status == 'selesai' || (aktif && tanggal.isBefore(hari));
-  }
 }
 
 // ---------------------------------------------------------------------------
 // HELPER
 // ---------------------------------------------------------------------------
 final Options _opsi = Options(receiveTimeout: const Duration(seconds: 15));
-
-const _hijauTua = Color(0xFF0B3D2E);
-const _hijauGelap = Color(0xFF14634A);
-const _oranye = Color(0xFFEA580C);
-const _biru = Color(0xFF2B7BB9);
 
 String _pesanError(Object e) {
   if (e is DioException) {
@@ -120,9 +106,6 @@ const _namaBulan = [
 String _tglPanjang(DateTime d) =>
     '${_namaHari[d.weekday - 1]}, ${d.day} ${_namaBulan[d.month - 1]} ${d.year}';
 
-String _tglRiwayat(DateTime d) =>
-    '${_namaHari[d.weekday - 1].substring(0, 5)}, ${d.day} ${_namaBulan[d.month - 1]} ${d.year}';
-
 InputDecoration _dekor(String label, {String? hint, IconData? icon}) {
   return InputDecoration(
     labelText: label,
@@ -137,8 +120,14 @@ InputDecoration _dekor(String label, {String? hint, IconData? icon}) {
   );
 }
 
+String _namaDesa(BuildContext context) {
+  final u = context.read<AuthProvider>().user;
+  final n = (u?['posyandu_nama'] ?? '').toString();
+  return n.isEmpty ? 'desa Anda' : n;
+}
+
 // ---------------------------------------------------------------------------
-// HALAMAN KELOLA JADWAL (ADMIN)
+// HALAMAN KELOLA JADWAL (SEKRETARIS)
 // ---------------------------------------------------------------------------
 class AdminJadwalPage extends StatefulWidget {
   const AdminJadwalPage({super.key});
@@ -150,9 +139,7 @@ class AdminJadwalPage extends StatefulWidget {
 class _AdminJadwalPageState extends State<AdminJadwalPage> {
   List<JadwalItem> _daftar = [];
   bool _memuat = true;
-  bool _semuaRiwayat = false;
   String? _gagal;
-  String _posyandu = ''; // kosong = semua posyandu
 
   @override
   void initState() {
@@ -162,9 +149,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
 
   Future<void> _muat() async {
     try {
-      final r = await ApiClient.dio.get('/jadwal',
-          queryParameters: {if (_posyandu.isNotEmpty) 'posyandu': _posyandu},
-          options: _opsi);
+      final r = await ApiClient.dio.get('/jadwal', options: _opsi);
       final list = _ambilList(r.data)
           .map((e) => JadwalItem.fromApi(Map<String, dynamic>.from(e as Map)))
           .where((j) => j.status != 'dibatalkan')
@@ -199,7 +184,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => _FormJadwal(awal: awal, posyanduAwal: _posyandu),
+      builder: (_) => _FormJadwal(awal: awal, desa: _namaDesa(context)),
     );
     if (ok == true) {
       _snack(awal == null ? 'Jadwal berhasil dibuat' : 'Jadwal berhasil diubah');
@@ -210,13 +195,12 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
   Future<void> _batalkan(JadwalItem j) async {
     final alasan = await showDialog<String>(
       context: context,
-      builder: (_) => _DialogBatal(
-          tanggal: '${_tglPanjang(j.tanggal)} • Posyandu ${labelPosyandu(j.posyandu)}'),
+      builder: (_) => _DialogBatal(tanggal: _tglPanjang(j.tanggal)),
     );
     if (alasan == null) return;
     try {
-      await ApiClient.dio
-          .post('/admin/jadwal/${j.id}/batalkan', data: {'alasan': alasan}, options: _opsi);
+      await ApiClient.dio.post('/sekretaris/jadwal/${j.id}/batalkan',
+          data: {'alasan': alasan}, options: _opsi);
       _snack('Jadwal dibatalkan');
       _muat();
     } catch (e) {
@@ -224,91 +208,18 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
     }
   }
 
-  Widget _chipPosyandu(String kode, String label) {
-    final dipilih = _posyandu == kode;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: dipilih,
-        selectedColor: _hijauTua,
-        backgroundColor: Colors.white,
-        showCheckmark: false,
-        side: BorderSide(color: dipilih ? _hijauTua : const Color(0xFFE3E8E5)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        labelStyle: TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
-          color: dipilih ? Colors.white : Colors.black87,
-        ),
-        onSelected: (_) {
-          setState(() {
-            _posyandu = kode;
-            _memuat = true;
-          });
-          _muat();
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final mendatang = _daftar.where((j) => j.aktif && !j.selesai).toList()
+    final desa = _namaDesa(context);
+    final aktif = _daftar.where((j) => j.aktif).toList()
       ..sort((a, b) => a.tanggal.compareTo(b.tanggal));
-    final riwayat = _daftar.where((j) => j.selesai).toList()
-      ..sort((a, b) => b.tanggal.compareTo(a.tanggal));
-    final riwayatTampil = _semuaRiwayat ? riwayat : riwayat.take(2).toList();
 
     return Scaffold(
       backgroundColor: AppColors.latar,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Jadwal',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-        actions: [
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.hijauMuda,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: _gagal == null ? AppColors.hijau : AppColors.kuning,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(_gagal == null ? 'Online' : 'Offline',
-                      style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.hijau)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 36,
-            height: 36,
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE3E8E5)),
-            ),
-            child: const Icon(Icons.calendar_month_outlined, size: 19, color: _hijauGelap),
-          ),
-        ],
+        title: const Text('Jadwal & Agenda',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
@@ -319,15 +230,14 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
             height: 50,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _hijauTua,
+                backgroundColor: AppColors.hijau,
                 foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () => _form(),
               icon: const Icon(Icons.add),
               label: const Text('Tambah Jadwal Posyandu',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
+                  style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
         ),
@@ -338,17 +248,21 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            _infoAtas(),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            SectionCard(
+              color: AppColors.hijauMuda,
               child: Row(
                 children: [
-                  _chipPosyandu('', 'Semua'),
-                  for (final p in daftarPosyandu) _chipPosyandu(p.kode, p.nama),
+                  const Icon(Icons.info_outline, color: AppColors.hijau),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Jadwal otomatis milik Posyandu $desa dan hanya terlihat oleh orang tua, kader, dan bidan di desa ini. Satu jadwal per tanggal. Check-in dibuka 1 jam sebelum mulai.',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
             if (_memuat)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 32),
@@ -375,13 +289,13 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                   ],
                 ),
               )
-            else ...[
+            else
               SectionCard(
                 title: 'Jadwal Mendatang',
                 icon: Icons.event,
-                trailing: Pill('${mendatang.length} jadwal',
+                trailing: Pill('${aktif.length} jadwal',
                     bg: AppColors.hijauMuda, fg: AppColors.hijau),
-                child: mendatang.isEmpty
+                child: aktif.isEmpty
                     ? const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
                         child: Text(
@@ -389,119 +303,10 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                           style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
                         ),
                       )
-                    : Column(children: [for (final j in mendatang) _kartu(j)]),
+                    : Column(children: [for (final j in aktif) _kartu(j)]),
               ),
-              const SizedBox(height: 12),
-              _riwayat(riwayat, riwayatTampil),
-            ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _infoAtas() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE3F6EC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFBFE5D0)),
-      ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, color: _hijauGelap, size: 20),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Jadwal dibuat per posyandu dan hanya terlihat oleh orang tua, kader, dan bidan posyandu tersebut. Satu posyandu hanya boleh punya satu jadwal per tanggal. Check-in dibuka 1 jam sebelum mulai.',
-              style: TextStyle(fontSize: 12, height: 1.4, color: _hijauTua),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _riwayat(List<JadwalItem> semua, List<JadwalItem> tampil) {
-    return SectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text('Riwayat Kegiatan Selesai',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-              ),
-              if (semua.length > 2)
-                InkWell(
-                  onTap: () => setState(() => _semuaRiwayat = !_semuaRiwayat),
-                  child: Text(_semuaRiwayat ? 'Ringkas' : 'Lihat Semua',
-                      style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w700, color: _biru)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (tampil.isEmpty)
-            const Text('Belum ada kegiatan yang selesai.',
-                style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
-          else
-            for (final j in tampil) _barisRiwayat(j),
-        ],
-      ),
-    );
-  }
-
-  Widget _barisRiwayat(JadwalItem j) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppColors.latar,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE3E8E5),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(j.tanggal.day.toString().padLeft(2, '0'),
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_tglRiwayat(j.tanggal),
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
-                Text(
-                    'Posyandu ${labelPosyandu(j.posyandu)}${j.lokasi.isEmpty ? '' : ' • ${j.lokasi}'}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE3E8E5),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Text('Selesai',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
-          ),
-        ],
       ),
     );
   }
@@ -512,9 +317,8 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE6ECE8)),
+        color: AppColors.latar,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -522,13 +326,12 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
           Row(
             children: [
               Container(
-                width: 42,
-                height: 42,
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppColors.hijauMuda,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.event_available, color: _hijauGelap, size: 22),
+                child: const Icon(Icons.event_available, color: AppColors.hijau, size: 22),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -536,114 +339,44 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_tglPanjang(j.tanggal),
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        const Icon(Icons.schedule, size: 13, color: AppColors.teksRedup),
-                        const SizedBox(width: 4),
-                        Text('$jam WIB',
-                            style: const TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
-                      ],
-                    ),
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                    Text('$jam WIB',
+                        style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.hijauMuda,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text('Terjadwal',
-                    style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.hijau)),
-              ),
+              const Pill('Terjadwal', bg: AppColors.hijauMuda, fg: AppColors.hijau),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(height: 1, color: Color(0xFFE6ECE8)),
-          ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.place_outlined, size: 16, color: AppColors.teksRedup),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(j.lokasi.isEmpty ? 'Lokasi belum diisi' : j.lokasi,
-                    style: const TextStyle(fontSize: 12, height: 1.3)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              _chip(Icons.home_work_outlined, 'Posyandu ${labelPosyandu(j.posyandu)}', _biru,
-                  const Color(0xFFEAF4FB)),
-              _chip(Icons.circle, 'Imunisasi & Gizi', _oranye, const Color(0xFFFFF1E6),
-                  kecil: true),
-            ],
-          ),
-          const SizedBox(height: 12),
+          if (j.lokasi.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.place_outlined, size: 16, color: AppColors.teksRedup),
+                const SizedBox(width: 4),
+                Expanded(child: Text(j.lokasi, style: const TextStyle(fontSize: 12))),
+              ],
+            ),
+          ],
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _hijauGelap,
-                      side: const BorderSide(color: _hijauGelap),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onPressed: () => _form(awal: j),
-                    icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: const Text('Ubah',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                  ),
-                ),
+                child: AppButton('Ubah',
+                    icon: Icons.edit_outlined,
+                    filled: false,
+                    onPressed: () => _form(awal: j)),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.merah,
-                      side: const BorderSide(color: AppColors.merah),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onPressed: () => _batalkan(j),
-                    icon: const Icon(Icons.close, size: 16),
-                    label: const Text('Batalkan',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                  ),
-                ),
+                child: AppButton('Batalkan',
+                    icon: Icons.close,
+                    filled: false,
+                    color: AppColors.merah,
+                    onPressed: () => _batalkan(j)),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _chip(IconData ikon, String teks, Color fg, Color bg, {bool kecil = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(ikon, size: kecil ? 7 : 13, color: fg),
-          const SizedBox(width: 5),
-          Text(teks,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg)),
         ],
       ),
     );
@@ -682,7 +415,7 @@ class _DialogBatalState extends State<_DialogBatal> {
           Text(widget.tanggal, style: const TextStyle(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           const Text(
-            'Orang tua yang sudah mendaftar akan menerima pemberitahuan bahwa jadwal diperbarui.',
+            'Orang tua yang sudah mendaftar akan melihat bahwa jadwal berubah.',
             style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
           ),
           const SizedBox(height: 10),
@@ -718,8 +451,8 @@ class _DialogBatalState extends State<_DialogBatal> {
 // ---------------------------------------------------------------------------
 class _FormJadwal extends StatefulWidget {
   final JadwalItem? awal;
-  final String posyanduAwal;
-  const _FormJadwal({this.awal, this.posyanduAwal = ''});
+  final String desa;
+  const _FormJadwal({this.awal, required this.desa});
 
   @override
   State<_FormJadwal> createState() => _FormJadwalState();
@@ -732,7 +465,6 @@ class _FormJadwalState extends State<_FormJadwal> {
   final _selesai = TextEditingController();
   final _lokasi = TextEditingController();
   DateTime? _tanggal;
-  String? _posyandu;
   bool _menyimpan = false;
   String? _error;
 
@@ -741,14 +473,12 @@ class _FormJadwalState extends State<_FormJadwal> {
     super.initState();
     final a = widget.awal;
     if (a != null) {
-      _posyandu = a.posyandu;
       _tanggal = a.tanggal;
       _tgl.text = _tglPanjang(a.tanggal);
       _mulai.text = a.jamMulai;
       _selesai.text = a.jamSelesai;
       _lokasi.text = a.lokasi;
     } else {
-      _posyandu = widget.posyanduAwal.isEmpty ? null : widget.posyanduAwal;
       _mulai.text = '08:00';
       _selesai.text = '11:30';
     }
@@ -803,8 +533,8 @@ class _FormJadwalState extends State<_FormJadwal> {
       _error = null;
     });
 
+    // Posyandu tidak dikirim: server memakai posyandu milik sekretaris.
     final body = {
-      'posyandu': _posyandu,
       'tanggal': _fmtApi(_tanggal!),
       'jam_mulai': _mulai.text.trim(),
       'jam_selesai': _selesai.text.trim(),
@@ -813,9 +543,10 @@ class _FormJadwalState extends State<_FormJadwal> {
 
     try {
       if (widget.awal == null) {
-        await ApiClient.dio.post('/admin/jadwal', data: body, options: _opsi);
+        await ApiClient.dio.post('/sekretaris/jadwal', data: body, options: _opsi);
       } else {
-        await ApiClient.dio.put('/admin/jadwal/${widget.awal!.id}', data: body, options: _opsi);
+        await ApiClient.dio
+            .put('/sekretaris/jadwal/${widget.awal!.id}', data: body, options: _opsi);
       }
       if (!mounted) return;
       Navigator.pop(context, true);
@@ -830,7 +561,6 @@ class _FormJadwalState extends State<_FormJadwal> {
 
   @override
   Widget build(BuildContext context) {
-    final ubah = widget.awal != null;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
@@ -840,24 +570,12 @@ class _FormJadwalState extends State<_FormJadwal> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(ubah ? 'Ubah Jadwal Posyandu' : 'Tambah Jadwal Posyandu',
+              Text(widget.awal == null ? 'Tambah Jadwal Posyandu' : 'Ubah Jadwal Posyandu',
                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 4),
+              Text('Posyandu ${widget.desa}',
+                  style: const TextStyle(fontSize: 12.5, color: AppColors.teksRedup)),
               const SizedBox(height: 14),
-              DropdownButtonFormField<String>(
-                value: _posyandu,
-                decoration: _dekor('Posyandu', icon: Icons.home_work_outlined),
-                hint: const Text('Pilih posyandu'),
-                items: itemPosyandu(),
-                onChanged: ubah ? null : (v) => setState(() => _posyandu = v),
-                validator: (v) => v == null ? 'Posyandu wajib dipilih' : null,
-              ),
-              if (ubah)
-                const Padding(
-                  padding: EdgeInsets.only(top: 4, left: 4),
-                  child: Text('Posyandu tidak dapat dipindahkan. Buat jadwal baru jika perlu.',
-                      style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
-                ),
-              const SizedBox(height: 12),
               TextFormField(
                 controller: _tgl,
                 readOnly: true,
@@ -898,8 +616,8 @@ class _FormJadwalState extends State<_FormJadwal> {
               TextFormField(
                 controller: _lokasi,
                 textCapitalization: TextCapitalization.words,
-                decoration: _dekor('Lokasi', hint: 'Contoh: Balai Desa',
-                    icon: Icons.place_outlined),
+                decoration: _dekor('Lokasi',
+                    hint: 'Contoh: Balai Desa ${widget.desa}', icon: Icons.place_outlined),
               ),
               const SizedBox(height: 10),
               Container(
@@ -909,7 +627,7 @@ class _FormJadwalState extends State<_FormJadwal> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Text(
-                  'Jadwal hanya terlihat oleh orang tua, kader, dan bidan pada posyandu yang dipilih. Check-in dibuka 1 jam sebelum mulai.',
+                  'Jadwal hanya terlihat oleh orang tua, kader, dan bidan di posyandu Anda. Check-in dibuka 1 jam sebelum mulai.',
                   style: TextStyle(fontSize: 11.5),
                 ),
               ),

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type KeluargaRepository struct{ db *gorm.DB }
@@ -33,9 +34,28 @@ type ProfilData struct {
 	Ayah         *models.OrangTua
 }
 
-func (r *KeluargaRepository) GetByUser(uid uint) (*KeluargaData, error) {
+// ---------------------------------------------------------------- baca
+
+func (r *KeluargaRepository) FindIbuByUser(uid uint) (*models.OrangTua, error) {
 	var ibu models.OrangTua
 	err := r.db.Where("user_id = ?", uid).First(&ibu).Error
+	return &ibu, err
+}
+
+func (r *KeluargaRepository) GetKeluarga(id uuid.UUID) (*models.Keluarga, error) {
+	var k models.Keluarga
+	err := r.db.First(&k, "id = ?", id).Error
+	return &k, err
+}
+
+func (r *KeluargaRepository) ListAnak(keluargaID uuid.UUID) ([]models.Anak, error) {
+	list := []models.Anak{}
+	err := r.db.Where("keluarga_id = ?", keluargaID).Order("tanggal_lahir").Find(&list).Error
+	return list, err
+}
+
+func (r *KeluargaRepository) GetByUser(uid uint) (*KeluargaData, error) {
+	ibu, err := r.FindIbuByUser(uid)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return &KeluargaData{Anak: []models.Anak{}}, nil
 	}
@@ -43,12 +63,12 @@ func (r *KeluargaRepository) GetByUser(uid uint) (*KeluargaData, error) {
 		return nil, err
 	}
 
-	var k models.Keluarga
-	if err := r.db.First(&k, "id = ?", ibu.KeluargaID).Error; err != nil {
+	k, err := r.GetKeluarga(ibu.KeluargaID)
+	if err != nil {
 		return nil, err
 	}
 
-	data := &KeluargaData{Keluarga: &k, Ibu: &ibu, Anak: []models.Anak{}}
+	data := &KeluargaData{Keluarga: k, Ibu: ibu, Anak: []models.Anak{}}
 
 	var ayah models.OrangTua
 	err = r.db.Where("keluarga_id = ? AND peran_keluarga = ?", k.ID, "ayah").First(&ayah).Error
@@ -58,14 +78,18 @@ func (r *KeluargaRepository) GetByUser(uid uint) (*KeluargaData, error) {
 		return nil, err
 	}
 
-	if err := r.db.Where("keluarga_id = ?", k.ID).Order("tanggal_lahir").Find(&data.Anak).Error; err != nil {
+	anak, err := r.ListAnak(k.ID)
+	if err != nil {
 		return nil, err
 	}
+	data.Anak = anak
 	return data, nil
 }
 
-// ensure membuat keluarga + data ibu bila belum ada.
-// Posyandu keluarga diambil dari posyandu akun saat registrasi.
+// ---------------------------------------------------------------- tulis
+
+// ensure memastikan akun orang tua punya baris keluarga dan baris ibu.
+// Keluarga selalu dibuat lebih dulu, lalu ibu memakai ID keluarga yang sudah tersimpan.
 func (r *KeluargaRepository) ensure(tx *gorm.DB, uid uint) (*models.Keluarga, *models.OrangTua, error) {
 	var ibu models.OrangTua
 	err := tx.Where("user_id = ?", uid).First(&ibu).Error
@@ -84,15 +108,25 @@ func (r *KeluargaRepository) ensure(tx *gorm.DB, uid uint) (*models.Keluarga, *m
 	if err := tx.First(&u, uid).Error; err != nil {
 		return nil, nil, err
 	}
+	if u.Posyandu == "" {
+		return nil, nil, errors.New("akun belum terhubung ke posyandu")
+	}
 
-	k := &models.Keluarga{Posyandu: u.Posyandu}
-	// if err := tx.Create(k).Error; err != nil {
-	// 	return nil, nil, err
-	// }
+	k := &models.Keluarga{ID: uuid.New(), Posyandu: u.Posyandu}
+	if err := tx.Omit(clause.Associations).Create(k).Error; err != nil {
+		return nil, nil, err
+	}
+
+	// pastikan baris keluarga benar-benar ada sebelum ibu dibuat
+	var cek models.Keluarga
+	if err := tx.First(&cek, "id = ?", k.ID).Error; err != nil {
+		return nil, nil, err
+	}
 
 	id := uid
 	ibu = models.OrangTua{
-		KeluargaID:    k.ID,
+		ID:            uuid.New(),
+		KeluargaID:    cek.ID,
 		UserID:        &id,
 		PeranKeluarga: "ibu",
 		Nama:          u.Nama,
@@ -101,10 +135,10 @@ func (r *KeluargaRepository) ensure(tx *gorm.DB, uid uint) (*models.Keluarga, *m
 	if u.NoHP != nil {
 		ibu.NoHP = *u.NoHP
 	}
-	if err := tx.Create(&ibu).Error; err != nil {
+	if err := tx.Omit(clause.Associations).Create(&ibu).Error; err != nil {
 		return nil, nil, err
 	}
-	return k, &ibu, nil
+	return &cek, &ibu, nil
 }
 
 func (r *KeluargaRepository) PastikanKeluarga(uid uint) (uuid.UUID, error) {
@@ -131,13 +165,13 @@ func (r *KeluargaRepository) SimpanProfil(uid uint, p ProfilData) error {
 		k.RT = p.RT
 		k.RW = p.RW
 		k.TanpaAyah = p.TanpaAyah
-		if err := tx.Save(k).Error; err != nil {
+		if err := tx.Omit(clause.Associations).Save(k).Error; err != nil {
 			return err
 		}
 
 		ibu.TanggalLahir = p.TglLahirIbu
 		ibu.Pekerjaan = p.PekerjaanIbu
-		if err := tx.Save(ibu).Error; err != nil {
+		if err := tx.Omit(clause.Associations).Save(ibu).Error; err != nil {
 			return err
 		}
 
@@ -154,18 +188,26 @@ func (r *KeluargaRepository) SimpanProfil(uid uint, p ProfilData) error {
 			ada.TanggalLahir = p.Ayah.TanggalLahir
 			ada.NoHP = p.Ayah.NoHP
 			ada.Pekerjaan = p.Ayah.Pekerjaan
-			return tx.Save(&ada).Error
+			return tx.Omit(clause.Associations).Save(&ada).Error
 		}
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}
-		p.Ayah.KeluargaID = k.ID
-		p.Ayah.PeranKeluarga = "ayah"
-		return tx.Create(p.Ayah).Error
+
+		ayah := *p.Ayah
+		ayah.ID = uuid.New()
+		ayah.KeluargaID = k.ID
+		ayah.PeranKeluarga = "ayah"
+		ayah.UserID = nil
+		return tx.Omit(clause.Associations).Create(&ayah).Error
 	})
 }
 
-func (r *KeluargaRepository) TambahAnak(a *models.Anak) error { return r.db.Create(a).Error }
+// ---------------------------------------------------------------- anak
+
+func (r *KeluargaRepository) TambahAnak(a *models.Anak) error {
+	return r.db.Omit(clause.Associations).Create(a).Error
+}
 
 func (r *KeluargaRepository) UbahAnak(a *models.Anak) error {
 	res := r.db.Model(&models.Anak{}).
@@ -184,24 +226,6 @@ func (r *KeluargaRepository) UbahAnak(a *models.Anak) error {
 func (r *KeluargaRepository) HapusAnak(id, keluargaID uuid.UUID) error {
 	return r.db.Where("id = ? AND keluarga_id = ?", id, keluargaID).
 		Delete(&models.Anak{}).Error
-}
-
-func (r *KeluargaRepository) FindIbuByUser(uid uint) (*models.OrangTua, error) {
-	var ibu models.OrangTua
-	err := r.db.Where("user_id = ?", uid).First(&ibu).Error
-	return &ibu, err
-}
-
-func (r *KeluargaRepository) GetKeluarga(id uuid.UUID) (*models.Keluarga, error) {
-	var k models.Keluarga
-	err := r.db.First(&k, "id = ?", id).Error
-	return &k, err
-}
-
-func (r *KeluargaRepository) ListAnak(keluargaID uuid.UUID) ([]models.Anak, error) {
-	list := []models.Anak{}
-	err := r.db.Where("keluarga_id = ?", keluargaID).Order("tanggal_lahir").Find(&list).Error
-	return list, err
 }
 
 func (r *KeluargaRepository) AnakSudahAda(keluargaID uuid.UUID, nama string, tgl time.Time, kecuali uuid.UUID) bool {
