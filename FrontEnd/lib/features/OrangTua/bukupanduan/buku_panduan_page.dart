@@ -6,12 +6,15 @@ import 'package:flutter/material.dart';
 const _hijauTua = Color(0xFF0F5B45);
 const _hijau = Color(0xFF138A63);
 const _hijauMuda = Color(0xFFE9F6EF);
-const _hijauGaris = Color(0xFFCFE9DA);
-const _latar = Color(0xFFF5F9F6);
+const _hijauGaris = Color(0xFFD5EBDF);
+const _latar = Color(0xFFF7FAF8);
 const _teks = Color(0xFF1F2A37);
 const _teksRedup = Color(0xFF6B7280);
+const _teksBiru = Color(0xFF5B7C99);
 const _merah = Color(0xFFD64545);
 const _merahMuda = Color(0xFFFDECEC);
+const _merahKartu = Color(0xFFFFF6F6);
+const _merahGaris = Color(0xFFF3C9C9);
 const _biru = Color(0xFF2F63D8);
 const _biruMuda = Color(0xFFEAF0FD);
 const _biruGaris = Color(0xFFA9C0F2);
@@ -76,7 +79,7 @@ const List<_Bab> _daftarBab = [
   _Bab(
     '1000 Hari Pertama & Kehamilan',
     'Masa paling krusial untuk tumbuh kembang anak',
-    Icons.pregnant_woman,
+    Icons.person_outline,
     [
       _Blok(_par,
           'Seribu hari pertama kehidupan (1000 HPK) adalah masa paling penting dalam pertumbuhan dan perkembangan anak. Masa ini terdiri dari 270 hari selama bayi di dalam kandungan, dan 730 hari atau dua tahun pertama setelah lahir.'),
@@ -112,7 +115,7 @@ const List<_Bab> _daftarBab = [
   _Bab(
     'Kehamilan Trimester 1',
     'Usia kehamilan 1-3 bulan',
-    Icons.child_care,
+    Icons.sentiment_satisfied_alt_outlined,
     [
       _Blok(_par,
           'Selama 3 bulan pertama, ibu dan bayi mengalami berbagai perubahan. Ini adalah masa penting pembentukan bagian tubuh janin.'),
@@ -141,7 +144,7 @@ const List<_Bab> _daftarBab = [
   _Bab(
     'Kehamilan Trimester 2',
     'Usia kehamilan 4-6 bulan',
-    Icons.child_friendly_outlined,
+    Icons.shopping_cart_outlined,
     [
       _Blok(_par, 'Saatnya mulai merencanakan kelahiran bersama tenaga kesehatan.'),
       _Blok(_sub, 'Yang akan dialami ibu'),
@@ -165,7 +168,7 @@ const List<_Bab> _daftarBab = [
   _Bab(
     'Kehamilan Trimester 3',
     'Usia kehamilan 7-9 bulan dan persiapan melahirkan',
-    Icons.event_note_outlined,
+    Icons.calendar_month_outlined,
     [
       _Blok(_par,
           'Sebentar lagi ibu, ayah, dan keluarga bertemu anggota keluarga baru. Persiapan sebaiknya dilakukan jauh-jauh hari, mulai trimester kedua.'),
@@ -1196,7 +1199,7 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
         children: [
           Container(
             padding: const EdgeInsets.all(12),
@@ -1208,15 +1211,15 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: _hijauGaris),
                   ),
-                  child: const Icon(Icons.menu_book_outlined, color: _hijauTua, size: 20),
+                  child: const Icon(Icons.menu_book_outlined, color: _hijauTua, size: 22),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 const Expanded(
                   child: Text.rich(
                     TextSpan(
@@ -1232,7 +1235,7 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           TextField(
             controller: _cari,
             onChanged: (v) => setState(() => _kata = v),
@@ -1255,7 +1258,7 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
               contentPadding: const EdgeInsets.symmetric(vertical: 12),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFE3E8E5)),
+                borderSide: const BorderSide(color: Color(0xFFE6EAE8)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -1263,7 +1266,7 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           SizedBox(
             height: 36,
             child: ListView.separated(
@@ -1275,12 +1278,12 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                 return GestureDetector(
                   onTap: () => setState(() => _filter = k),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: aktif ? _hijauTua : Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: aktif ? _hijauTua : const Color(0xFFE3E8E5)),
+                      border: Border.all(color: aktif ? _hijauTua : const Color(0xFFE6EAE8)),
                     ),
                     child: Text(
                       _kategori[k],
@@ -1295,7 +1298,7 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
               },
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           if (hasil.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
@@ -1314,81 +1317,86 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
     final b = _daftarBab[i];
     final darurat = b.darurat;
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: darurat ? _merahKartu : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: darurat ? const Color(0xFFF6CFCF) : _hijauGaris),
+        border: Border.all(color: darurat ? _merahGaris : const Color(0xFFE6EDE9)),
         boxShadow: const [
-          BoxShadow(color: Color(0x0F000000), blurRadius: 6, offset: Offset(0, 2)),
+          BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
-      child: InkWell(
+      child: Material(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
-        onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => BacaBabPage(indeks: i)),
-          );
-          if (mounted) setState(() {});
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: darurat ? _merahMuda : _hijauMuda,
-                  shape: BoxShape.circle,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => BacaBabPage(indeks: i)),
+            );
+            if (mounted) setState(() {});
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: darurat ? _merahMuda : _hijauMuda,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(b.ikon, color: darurat ? _merah : _hijau, size: 22),
                 ),
-                child: Icon(b.ikon, color: darurat ? _merah : _hijauTua, size: 24),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text('BAB ${i + 1}',
-                            style: const TextStyle(
-                                fontSize: 10,
-                                letterSpacing: 0.5,
-                                fontWeight: FontWeight.w700,
-                                color: _teksRedup)),
-                        if (darurat) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: _merahMuda,
-                              borderRadius: BorderRadius.circular(6),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text('BAB ${i + 1}',
+                              style: const TextStyle(
+                                  fontSize: 9.5,
+                                  letterSpacing: 0.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: _teksRedup)),
+                          if (darurat) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: _merahMuda,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text('Penting',
+                                  style: TextStyle(
+                                      fontSize: 9.5, fontWeight: FontWeight.w700, color: _merah)),
                             ),
-                            child: const Text('Penting',
-                                style: TextStyle(
-                                    fontSize: 9.5, fontWeight: FontWeight.w700, color: _merah)),
-                          ),
+                          ],
+                          if (_tersimpan.contains(i)) ...[
+                            const SizedBox(width: 6),
+                            const Icon(Icons.bookmark, size: 12, color: _hijau),
+                          ],
                         ],
-                        if (_tersimpan.contains(i)) ...[
-                          const SizedBox(width: 6),
-                          const Icon(Icons.bookmark, size: 12, color: _hijau),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(b.judul,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 14, color: _teks)),
-                    const SizedBox(height: 2),
-                    Text(b.ringkasan,
-                        style: const TextStyle(fontSize: 11.5, color: _teksRedup)),
-                  ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(b.judul,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 13.5, color: _teks)),
+                      const SizedBox(height: 2),
+                      Text(b.ringkasan,
+                          style: const TextStyle(
+                              fontSize: 11, height: 1.3, color: _teksBiru)),
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(Icons.chevron_right, color: _teksRedup),
-            ],
+                const Icon(Icons.chevron_right, color: Color(0xFFC3CBD2)),
+              ],
+            ),
           ),
         ),
       ),
