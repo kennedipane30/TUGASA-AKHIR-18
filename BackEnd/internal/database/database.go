@@ -84,4 +84,4 @@ func isiPosyanduData(db *gorm.DB) {
 	).Error; err != nil {
 		log.Printf("peringatan: isi posyandu akun gagal: %v", err)
 	}
-} ////NAMA TASYA AJDBFQUEABAFP
+} 
