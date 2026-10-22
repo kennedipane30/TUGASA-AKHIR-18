@@ -49,7 +49,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.PATCH("/users/:id/aktif", authH.SetStaffActive)
 	sekretaris.DELETE("/users/:id", authH.DeleteStaff)
 	sekretaris.POST("/jadwal", jadwalH.Buat)
+	sekretaris.GET("/jadwal/riwayat", jadwalH.Riwayat) // harus sebelum /jadwal/:id
 	sekretaris.PUT("/jadwal/:id", jadwalH.Ubah)
+	sekretaris.DELETE("/jadwal/:id", jadwalH.Hapus)
 	sekretaris.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
 	sekretaris.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
 

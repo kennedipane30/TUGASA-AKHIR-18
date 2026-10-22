@@ -19,7 +19,6 @@ func (r *JadwalRepository) Tx(fn func(tx *JadwalRepository) error) error {
 }
 
 // pilihPosyandu mengambil kode posyandu opsional dari parameter variadic.
-// Kosong berarti tanpa penyaringan (hanya untuk admin).
 func pilihPosyandu(p []string) string {
 	if len(p) > 0 {
 		return strings.TrimSpace(p[0])
@@ -27,12 +26,10 @@ func pilihPosyandu(p []string) string {
 	return ""
 }
 
-// subKeluargaPosyandu: subquery id keluarga pada satu posyandu.
 func subKeluargaPosyandu(db *gorm.DB, posyandu string) *gorm.DB {
 	return db.Model(&models.Keluarga{}).Select("id").Where("posyandu = ?", posyandu)
 }
 
-// subAnakPosyandu: subquery id anak pada satu posyandu.
 func subAnakPosyandu(db *gorm.DB, posyandu string) *gorm.DB {
 	return db.Model(&models.Anak{}).Select("id").
 		Where("keluarga_id IN (?)", subKeluargaPosyandu(db, posyandu))
@@ -49,6 +46,10 @@ func (r *JadwalRepository) GetJadwal(id uuid.UUID) (*models.JadwalPosyandu, erro
 	return &j, err
 }
 
+func (r *JadwalRepository) DeleteJadwal(id uuid.UUID) error {
+	return r.db.Delete(&models.JadwalPosyandu{}, "id = ?", id).Error
+}
+
 // ListJadwal: jadwal yang tidak dibatalkan; posyandu opsional.
 func (r *JadwalRepository) ListJadwal(posyandu ...string) ([]models.JadwalPosyandu, error) {
 	list := []models.JadwalPosyandu{}
@@ -60,15 +61,16 @@ func (r *JadwalRepository) ListJadwal(posyandu ...string) ([]models.JadwalPosyan
 	return list, err
 }
 
-// JadwalTerdekat: jadwal berstatus terjadwal pada hari ini atau setelahnya (hariIni = YYYY-MM-DD).
-func (r *JadwalRepository) JadwalTerdekat(hariIni string, posyandu ...string) (*models.JadwalPosyandu, error) {
-	var j models.JadwalPosyandu
+// JadwalMendatang: jadwal terjadwal mulai hari ini, berurutan.
+// Penyaringan jadwal yang sudah lewat jam selesai dilakukan di service.
+func (r *JadwalRepository) JadwalMendatang(hariIni string, posyandu ...string) ([]models.JadwalPosyandu, error) {
+	list := []models.JadwalPosyandu{}
 	q := r.db.Where("status = ? AND tanggal >= ?", "terjadwal", hariIni)
 	if p := pilihPosyandu(posyandu); p != "" {
 		q = q.Where("posyandu = ?", p)
 	}
-	err := q.Order("tanggal ASC, jam_mulai ASC").First(&j).Error
-	return &j, err
+	err := q.Order("tanggal ASC, jam_mulai ASC").Find(&list).Error
+	return list, err
 }
 
 // JadwalPadaTanggal: satu posyandu hanya boleh punya satu jadwal per tanggal.
@@ -84,6 +86,50 @@ func (r *JadwalRepository) JadwalPadaTanggal(tgl time.Time, kecuali uuid.UUID, p
 	}
 	q.Count(&n)
 	return n > 0
+}
+
+type RingkasanKehadiran struct {
+	Terdaftar  int
+	Checkin    int
+	Batal      int
+	TidakHadir int
+}
+
+// RingkasanPendaftaran: jumlah pendaftaran per status untuk beberapa jadwal.
+func (r *JadwalRepository) RingkasanPendaftaran(ids []uuid.UUID) (map[uuid.UUID]RingkasanKehadiran, error) {
+	out := map[uuid.UUID]RingkasanKehadiran{}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	type baris struct {
+		JadwalID uuid.UUID
+		Status   string
+		N        int
+	}
+	var rows []baris
+	err := r.db.Model(&models.Pendaftaran{}).
+		Select("jadwal_id, status_kehadiran AS status, COUNT(*) AS n").
+		Where("jadwal_id IN ?", ids).
+		Group("jadwal_id, status_kehadiran").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, b := range rows {
+		x := out[b.JadwalID]
+		switch b.Status {
+		case "terdaftar":
+			x.Terdaftar += b.N
+		case "sudah_checkin":
+			x.Checkin += b.N
+		case "batal":
+			x.Batal += b.N
+		case "tidak_hadir":
+			x.TidakHadir += b.N
+		}
+		out[b.JadwalID] = x
+	}
+	return out, nil
 }
 
 // ---------------------------------------------------------------- pendaftaran
@@ -155,7 +201,6 @@ func (r *JadwalRepository) AnakKeluarga(keluargaID uuid.UUID) ([]models.Anak, er
 	return list, err
 }
 
-// CariAnak: posyandu opsional; jika diisi, hanya anak dari posyandu tersebut.
 func (r *JadwalRepository) CariAnak(kata string, posyandu ...string) ([]models.Anak, error) {
 	list := []models.Anak{}
 	like := "%" + strings.ToLower(kata) + "%"

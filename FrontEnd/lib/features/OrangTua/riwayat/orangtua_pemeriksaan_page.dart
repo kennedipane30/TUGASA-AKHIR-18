@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import 'orangtua_grafik_page.dart';
 
 // Warna tampilan
 const _latarHalaman = Color(0xFFF3F5FB);
@@ -250,7 +251,7 @@ class _KepalaKartu extends StatelessWidget {
   }
 }
 
-AppBar _appBar(String judul) => AppBar(
+AppBar _appBar(String judul, {List<Widget>? actions}) => AppBar(
       title: Text(judul,
           style: const TextStyle(
               fontWeight: FontWeight.w800, fontSize: 20, color: _teksGelap)),
@@ -258,13 +259,15 @@ AppBar _appBar(String judul) => AppBar(
       foregroundColor: _teksGelap,
       elevation: 0,
       scrolledUnderElevation: 0,
+      actions: actions,
     );
 
 // ---------------------------------------------------------------------------
 // HALAMAN DAFTAR PEMERIKSAAN (BERDASARKAN TANGGAL)
 // ---------------------------------------------------------------------------
 class OrangTuaPemeriksaanPage extends StatefulWidget {
-  const OrangTuaPemeriksaanPage({super.key});
+  final String? anakId;
+  const OrangTuaPemeriksaanPage({super.key, this.anakId});
 
   @override
   State<OrangTuaPemeriksaanPage> createState() => _OrangTuaPemeriksaanPageState();
@@ -275,6 +278,8 @@ class _OrangTuaPemeriksaanPageState extends State<OrangTuaPemeriksaanPage> {
   bool _memuat = true;
   String? _gagal;
   String _anakAktif = '';
+
+  bool get _terkunci => widget.anakId != null && widget.anakId!.isNotEmpty;
 
   @override
   void initState() {
@@ -320,6 +325,9 @@ class _OrangTuaPemeriksaanPageState extends State<OrangTuaPemeriksaanPage> {
         final tb = b.tanggal ?? DateTime(1970);
         return tb.compareTo(ta);
       });
+      if (_terkunci) {
+        list.removeWhere((e) => e.anakId != widget.anakId);
+      }
       if (!mounted) return;
       setState(() {
         _data = list;
@@ -345,6 +353,16 @@ class _OrangTuaPemeriksaanPageState extends State<OrangTuaPemeriksaanPage> {
     );
   }
 
+  void _bukaGrafik() {
+    final id = _terkunci
+        ? widget.anakId
+        : (_anakAktif.isNotEmpty ? _anakAktif : null);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => OrangTuaGrafikPage(anakId: id)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final anak = <String, String>{};
@@ -357,7 +375,18 @@ class _OrangTuaPemeriksaanPageState extends State<OrangTuaPemeriksaanPage> {
 
     return Scaffold(
       backgroundColor: _latarHalaman,
-      appBar: _appBar('Riwayat Pemeriksaan'),
+      appBar: _appBar(
+        _terkunci && _data.isNotEmpty
+            ? 'Riwayat ${_data.first.namaAnak}'
+            : 'Riwayat Pemeriksaan',
+        actions: [
+          IconButton(
+            tooltip: 'Grafik',
+            icon: const Icon(Icons.show_chart_rounded),
+            onPressed: _bukaGrafik,
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _muat,
         child: ListView(
@@ -411,7 +440,7 @@ class _OrangTuaPemeriksaanPageState extends State<OrangTuaPemeriksaanPage> {
                 ),
               )
             else ...[
-              if (anak.length > 1)
+              if (!_terkunci && anak.length > 1)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: SingleChildScrollView(

@@ -1,4 +1,3 @@
-
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import '../auth/auth_provider.dart';
 import 'bukupanduan/buku_panduan_page.dart';
 import 'datadiri/lengkapi_keluarga_page.dart';
 import 'pendaftaran/orangtua_pendaftaran_page.dart';
+import 'riwayat/orangtua_grafik_page.dart';
 import 'riwayat/orangtua_pemeriksaan_page.dart';
 import 'vaksin/orangtua_vaksin_page.dart';
 
@@ -135,9 +135,22 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   }
 
   void _bukaPemeriksaan() {
+    final a = _anak;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const OrangTuaPemeriksaanPage()),
+      MaterialPageRoute(
+        builder: (_) => OrangTuaPemeriksaanPage(anakId: a?.id?.toString()),
+      ),
+    );
+  }
+
+  void _bukaGrafik() {
+    final a = _anak;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OrangTuaGrafikPage(anakId: a?.id?.toString()),
+      ),
     );
   }
 
@@ -616,6 +629,8 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           const Color(0xFFE8FBF4), const Color(0xFF0B6B55), _bukaPendaftaran),
       (Icons.bar_chart_rounded, 'Hasil\nPemeriksaan', const Color(0xFFFFEEE2),
           const Color(0xFFEA580C), _bukaPemeriksaan),
+      (Icons.show_chart_rounded, 'Grafik\nAnak', const Color(0xFFE3F2FD),
+          const Color(0xFF0369A1), _bukaGrafik),
       (Icons.science_outlined, 'Vaksin\nAnak', const Color(0xFFFFF6DD),
           const Color(0xFFB45309), _bukaVaksin),
       (Icons.menu_book_outlined, 'Buku\nPanduan', const Color(0xFFEBEDFF),

@@ -1,6 +1,3 @@
-// ===========================================================================
-// FILE 1: orangtua_grafik_page.dart
-// ===========================================================================
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
@@ -156,7 +153,8 @@ String _fmt(double v) =>
 // HALAMAN
 // ---------------------------------------------------------------------------
 class OrangTuaGrafikPage extends StatefulWidget {
-  const OrangTuaGrafikPage({super.key});
+  final String? anakId;
+  const OrangTuaGrafikPage({super.key, this.anakId});
 
   @override
   State<OrangTuaGrafikPage> createState() => _OrangTuaGrafikPageState();
@@ -215,10 +213,16 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
         hasil.add(_AnakGrafik(a.id ?? '', a.nama, a.jk != 'P', lahir, titik));
       }
 
+      var tampilAnak = hasil;
+      if (widget.anakId != null && widget.anakId!.isNotEmpty) {
+        final f = hasil.where((x) => x.id == widget.anakId).toList();
+        if (f.isNotEmpty) tampilAnak = f;
+      }
+
       if (!mounted) return;
       setState(() {
-        _anak = hasil;
-        if (_aktif >= hasil.length) _aktif = 0;
+        _anak = tampilAnak;
+        _aktif = 0;
         _gagal = null;
         _memuat = false;
       });
@@ -471,6 +475,15 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 ),
             ],
           ),
+        )
+      else
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+          child: Text(a.nama,
+              style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: _hijauTua)),
         ),
       Padding(
         padding: const EdgeInsets.only(bottom: 14),
