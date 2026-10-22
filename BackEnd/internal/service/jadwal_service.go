@@ -26,7 +26,7 @@ var reJam = regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d$`)
 // check-in hanya dibuka 1 jam sebelum jadwal dimulai
 const bukaCheckinMenit = 60
 
-const prefixQRJadwal = "POSYANDU-CHECKIN:"
+const prefixQRPosyandu = "POSYANDU-CHECKIN:"
 
 type JadwalService struct {
 	repo *repository.JadwalRepository
@@ -69,8 +69,8 @@ func jadwalSelesai(j *models.JadwalPosyandu) bool {
 	return !time.Now().Before(selesaiJadwal(j))
 }
 
-// KodeQRJadwal: isi QR yang dipasang di lokasi posyandu untuk dipindai orang tua.
-func KodeQRJadwal(id uuid.UUID) string { return prefixQRJadwal + id.String() }
+// KodeQRPosyandu: isi QR tetap (satu per posyandu) yang dipasang di lokasi posyandu.
+func KodeQRPosyandu(pos string) string { return prefixQRPosyandu + pos }
 
 // jadwalMilik: jadwal harus berada di posyandu yang sama (ketat, tidak boleh kosong).
 func jadwalMilik(j *models.JadwalPosyandu, pos string) error {
@@ -379,22 +379,34 @@ func (s *JadwalService) Hapus(id uuid.UUID, pos string) error {
 	return s.repo.DeleteJadwal(j.ID)
 }
 
-// QRJadwal: isi QR check-in untuk satu jadwal milik posyandu akun (sekretaris atau kader).
+// QRPosyandu: isi QR tetap untuk posyandu akun (sekretaris atau kader); tidak bergantung jadwal.
+func (s *JadwalService) QRPosyandu(pos string) (string, error) {
+	if err := wajibPosyandu(pos); err != nil {
+		return "", err
+	}
+	pos, ok := models.NormalisasiPosyandu(pos)
+	if !ok {
+		return "", terlarang("posyandu akun tidak valid")
+	}
+	return KodeQRPosyandu(pos), nil
+}
+
+// QRJadwal: dipertahankan agar kompatibel; mengembalikan QR tetap milik posyandu jadwal tersebut.
 func (s *JadwalService) QRJadwal(id uuid.UUID, pos string) (string, error) {
 	if err := wajibPosyandu(pos); err != nil {
 		return "", err
 	}
-	j, err := s.jadwalAktif(id)
+	j, err := s.repo.GetJadwal(id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", ErrJadwalTidakAda
+	}
 	if err != nil {
 		return "", err
 	}
 	if err := jadwalMilik(j, pos); err != nil {
 		return "", err
 	}
-	if jadwalSelesai(j) {
-		return "", konflik("jadwal sudah lewat")
-	}
-	return KodeQRJadwal(j.ID), nil
+	return KodeQRPosyandu(j.Posyandu), nil
 }
 
 // ---------------------------------------------------------------- jadwal terdekat
@@ -622,8 +634,8 @@ func (s *JadwalService) ScanCheckin(userID uint, jadwalID, anakID uuid.UUID, kod
 	if err := jadwalMilik(j, posKel); err != nil {
 		return nil, err
 	}
-	if !strings.EqualFold(kode, KodeQRJadwal(j.ID)) {
-		return nil, validasi("kode QR tidak sesuai dengan jadwal ini")
+	if !strings.EqualFold(kode, KodeQRPosyandu(j.Posyandu)) {
+		return nil, validasi("kode QR tidak sesuai dengan posyandu ini")
 	}
 	p, err := s.repo.FindPendaftaran(j.ID, a.ID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {

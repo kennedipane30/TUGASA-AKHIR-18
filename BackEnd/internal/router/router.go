@@ -53,9 +53,10 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.PUT("/jadwal/:id", jadwalH.Ubah)
 	sekretaris.DELETE("/jadwal/:id", jadwalH.Hapus)
 	sekretaris.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
+	sekretaris.GET("/qr", jadwalH.QRPosyandu) // QR tetap, satu per posyandu
 	sekretaris.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
 
-	// orang tua (check-in dengan memindai QR jadwal)
+	// orang tua (check-in dengan memindai QR tetap posyandu)
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
 	ortu.GET("/keluarga/saya", keluargaH.Get)
 	ortu.PUT("/keluarga/saya", keluargaH.SimpanProfil)
@@ -73,9 +74,10 @@ func Setup(db *gorm.DB) *gin.Engine {
 	ortu.GET("/jadwal/:id/kartu", jadwalH.Kartu)
 	ortu.GET("/riwayat", pelayananH.Riwayat)
 
-	// kader (menampilkan QR jadwal, bukan memindai)
+	// kader (menampilkan QR tetap posyandu, bukan memindai)
 	kader := protected.Group("/kader", middleware.RoleRequired("kader"))
 	kader.GET("/anak", jadwalH.CariAnak)
+	kader.GET("/qr", jadwalH.QRPosyandu) // QR tetap, satu per posyandu
 	kader.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
 	kader.POST("/jadwal/:id/walkin", jadwalH.WalkIn)
 	kader.POST("/pendaftaran/:id/checkin", jadwalH.CheckinManual)

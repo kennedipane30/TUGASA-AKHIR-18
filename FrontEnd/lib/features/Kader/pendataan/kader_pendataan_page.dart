@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
@@ -132,15 +131,6 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
       ..showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  void _bukaQr() {
-    final j = _jadwal;
-    if (j == null) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => _QrJadwalPage(jadwalId: j.id)),
-    );
-  }
-
   Future<void> _ukur(AntreanKader a) async {
     if (a.sudahDicatatBidan) {
       _snack('Data ${a.nama} sudah dicatat bidan dan tidak dapat diubah');
@@ -258,12 +248,6 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                               fg: AppColors.kuning),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: AppButton('Tampilkan QR Check-in untuk Orang Tua',
-                          icon: Icons.qr_code_2, filled: false, onPressed: _bukaQr),
                     ),
                   ],
                 ),
@@ -562,79 +546,4 @@ class _FormUkurState extends State<_FormUkur> {
       ),
     );
   }
-}
-
-// ---------------------------------------------------------------------------
-// QR CHECK-IN JADWAL (DIPINDAI ORANG TUA)
-// ---------------------------------------------------------------------------
-class _QrJadwalPage extends StatefulWidget {
-  final String jadwalId;
-  const _QrJadwalPage({required this.jadwalId});
-
-  @override
-  State<_QrJadwalPage> createState() => _QrJadwalPageState();
-}
-
-class _QrJadwalPageState extends State<_QrJadwalPage> {
-  String? _kode;
-  String? _gagal;
-
-  @override
-  void initState() {
-    super.initState();
-    _muat();
-  }
-
-  Future<void> _muat() async {
-    try {
-      final r = await ApiClient.dio.get('/kader/jadwal/${widget.jadwalId}/qr');
-      dynamic d = r.data;
-      if (d is Map && d.containsKey('data')) d = d['data'];
-      if (!mounted) return;
-      setState(() => _kode = (d as Map)['kode_qr']?.toString());
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _gagal = _pesanError(e));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        title: const Text('QR Check-in Posyandu', style: TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: _gagal != null
-              ? Text(_gagal!, textAlign: TextAlign.center)
-              : _kode == null
-                  ? const CircularProgressIndicator()
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: QrImageView(data: _kode!, size: 260, backgroundColor: Colors.white),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Orang tua memindai QR ini dari aplikasi untuk check-in.\nCheck-in hanya dibuka 1 jam sebelum jadwal dimulai.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup, height: 1.4),
-                        ),
-                      ],
-                    ),
-        ),
-      ),
-    );
-  }
-}
+} 

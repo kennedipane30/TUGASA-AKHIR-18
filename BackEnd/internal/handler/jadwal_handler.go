@@ -140,7 +140,21 @@ func (h *JadwalHandler) Hapus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "jadwal dihapus"})
 }
 
-// GET /sekretaris/jadwal/:id/qr  dan  GET /kader/jadwal/:id/qr
+// GET /sekretaris/qr  dan  GET /kader/qr  (QR tetap, satu per posyandu)
+func (h *JadwalHandler) QRPosyandu(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
+	kode, err := h.svc.QRPosyandu(pos)
+	if err != nil {
+		tulisError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": gin.H{"posyandu": pos, "kode_qr": kode}})
+}
+
+// GET /sekretaris/jadwal/:id/qr  dan  GET /kader/jadwal/:id/qr  (kompatibel, isi QR tetap sama)
 func (h *JadwalHandler) QRJadwal(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
@@ -155,7 +169,7 @@ func (h *JadwalHandler) QRJadwal(c *gin.Context) {
 		tulisError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": gin.H{"jadwal_id": id, "kode_qr": kode}})
+	c.JSON(http.StatusOK, gin.H{"data": gin.H{"jadwal_id": id, "posyandu": pos, "kode_qr": kode}})
 }
 
 // ---------------------------------------------------------------- semua role

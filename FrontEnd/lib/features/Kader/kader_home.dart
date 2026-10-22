@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../../core/posyandu.dart';
+import '../../core/qr_checkin_page.dart';
 import '../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 import '../auth/auth_provider.dart';
 import 'pendataan/kader_pendataan_page.dart';
@@ -80,6 +81,13 @@ class _KaderHomeState extends State<KaderHome> {
       MaterialPageRoute(builder: (_) => const KaderPendataanPage()),
     );
     _muat();
+  }
+
+  void _bukaQr() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const QrCheckinPage(role: 'kader')),
+    );
   }
 
   void _bukaVaksin() {
@@ -478,7 +486,7 @@ class _KaderHomeState extends State<KaderHome> {
   Widget _layananUtama() {
     final menu = <(IconData, String, Color, Color, VoidCallback)>[
       (Icons.qr_code_2_rounded, 'QR\nCheck-in\nPosyandu', const Color(0xFFE7F1FD),
-          const Color(0xFF1D6FD6), _bukaAntrean),
+          const Color(0xFF1D6FD6), _bukaQr),
       (Icons.calendar_view_week_rounded, 'Ukur Data\nBB TB LiLA',
           const Color(0xFFE3F8EE), const Color(0xFF0B6B55), _bukaAntrean),
       (Icons.person_add_alt_1_outlined, 'Daftar\nBalita Baru',

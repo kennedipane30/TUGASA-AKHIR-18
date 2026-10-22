@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'jadwal/admin_jadwal_page.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
+import '../../core/qr_checkin_page.dart';
 import '../auth/auth_provider.dart';
 import 'akun/admin_kelola_akun_page.dart';
 import 'vaksin/admin_vaksin_page.dart';
@@ -68,6 +69,13 @@ class _AdminHomeState extends State<AdminHome> {
     );
   }
 
+  void _bukaQr() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const QrCheckinPage(role: 'sekretaris')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -112,7 +120,7 @@ class _AdminHomeState extends State<AdminHome> {
         SectionCard(
           title: 'Aksi Cepat Sekretaris',
           icon: Icons.bolt,
-          trailing: const Pill('7 Menu Utama', bg: AppColors.biruMuda, fg: AppColors.biru),
+          trailing: const Pill('8 Menu Utama', bg: AppColors.biruMuda, fg: AppColors.biru),
           child: GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -125,6 +133,8 @@ class _AdminHomeState extends State<AdminHome> {
                   _bukaAkun),
               _menu(Icons.calendar_month, 'Jadwal & Agenda', 'Jadwal posyandu desa',
                   _bukaJadwal),
+              _menu(Icons.qr_code_2, 'QR Check-in', 'QR tetap posyandu desa',
+                  _bukaQr),
               _menu(Icons.vaccines_outlined, 'Data Vaksin', 'Jumlah & jenis vaksin',
                   _bukaVaksin),
               _menu(Icons.campaign_outlined, 'Pengumuman', 'Siaran ke pengguna',
