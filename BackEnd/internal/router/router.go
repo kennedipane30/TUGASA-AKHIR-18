@@ -55,6 +55,10 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
 	sekretaris.GET("/qr", jadwalH.QRPosyandu) // QR tetap, satu per posyandu
 	sekretaris.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
+	// riwayat pemeriksaan: tanggal posyandu -> anak -> hasil pendataan
+	sekretaris.GET("/riwayat/jadwal", pelayananH.SekretarisRiwayatJadwal)
+	sekretaris.GET("/riwayat/jadwal/:id/anak", pelayananH.SekretarisRiwayatAnak)
+	sekretaris.GET("/riwayat/pendaftaran/:id", pelayananH.SekretarisRiwayatDetail)
 
 	// orang tua (check-in dengan memindai QR tetap posyandu)
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
@@ -82,13 +86,22 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kader.POST("/jadwal/:id/walkin", jadwalH.WalkIn)
 	kader.POST("/pendaftaran/:id/checkin", jadwalH.CheckinManual)
 	kader.GET("/jadwal/:id/antrean", pelayananH.AntreanKader)
+	kader.GET("/pendaftaran/:id/pengukuran", pelayananH.PengukuranKader)
 	kader.PUT("/pendaftaran/:id/pengukuran", pelayananH.CatatPengukuran)
+	// riwayat pemeriksaan: tanggal posyandu -> anak -> hasil pendataan
+	kader.GET("/riwayat/jadwal", pelayananH.KaderRiwayatJadwal)
+	kader.GET("/riwayat/jadwal/:id/anak", pelayananH.KaderRiwayatAnak)
+	kader.GET("/riwayat/pendaftaran/:id", pelayananH.KaderRiwayatDetail)
 
 	// bidan
 	bidan := protected.Group("/bidan", middleware.RoleRequired("bidan"))
 	bidan.GET("/jadwal/:id/pengukuran", pelayananH.AntreanBidan)
 	bidan.GET("/pendaftaran/:id", pelayananH.DetailBidan)
 	bidan.PUT("/pendaftaran/:id/catatan", pelayananH.SimpanCatatan)
+	// riwayat pemeriksaan: tanggal posyandu -> anak -> hasil pendataan
+	bidan.GET("/riwayat/jadwal", pelayananH.BidanRiwayatJadwal)
+	bidan.GET("/riwayat/jadwal/:id/anak", pelayananH.BidanRiwayatAnak)
+	bidan.GET("/riwayat/pendaftaran/:id", pelayananH.BidanRiwayatDetail)
 
 	return r
 }

@@ -5,6 +5,7 @@ import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../../core/posyandu.dart';
 import '../auth/auth_provider.dart';
+import 'riwayat/bidan_riwayat_page.dart';
 
 // Warna tampilan
 const _hijauTua = Color(0xFF0F5A43);
@@ -49,6 +50,13 @@ class BidanHome extends StatefulWidget {
 
 class _BidanHomeState extends State<BidanHome> {
   final int _menunggu = 12;
+
+  void _bukaRiwayat() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const BidanRiwayatPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -272,6 +280,8 @@ class _BidanHomeState extends State<BidanHome> {
       _Menu(Icons.science_outlined, 'Vitamin & PMT', 'Kapsul & Biskuit',
           _unguMuda, _ungu, null, _ungu,
           () => soon(context, 'Pencatatan suplemen')),
+      _Menu(Icons.history, 'Riwayat', 'Hasil per tanggal', _tealMuda, _teal, null,
+          _teal, _bukaRiwayat),
       _Menu(Icons.description_outlined, 'Surat Rujukan', 'Ke Puskesmas',
           _kuningMuda, _kuning, null, _kuning,
           () => soon(context, 'Surat rujukan')),

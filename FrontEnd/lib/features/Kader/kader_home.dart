@@ -8,6 +8,7 @@ import '../../core/qr_checkin_page.dart';
 import '../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 import '../auth/auth_provider.dart';
 import 'pendataan/kader_pendataan_page.dart';
+import 'riwayat/kader_riwayat_page.dart';
 import 'vaksin/kader_vaksin_page.dart';
 
 // Warna tampilan
@@ -94,6 +95,13 @@ class _KaderHomeState extends State<KaderHome> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const KaderVaksinPage()),
+    );
+  }
+
+  void _bukaRiwayat() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const KaderRiwayatPage()),
     );
   }
 
@@ -492,8 +500,8 @@ class _KaderHomeState extends State<KaderHome> {
       (Icons.person_add_alt_1_outlined, 'Daftar\nBalita Baru',
           const Color(0xFFFFF4D9), const Color(0xFFEA580C),
           () => soon(context, 'Pendataan balita baru')),
-      (Icons.science_outlined, 'Jadwal &\nRiwayat', const Color(0xFFE0F7F4),
-          const Color(0xFF0E8F7E), _bukaVaksin),
+      (Icons.history, 'Riwayat\nPemeriksaan', const Color(0xFFE0F7F4),
+          const Color(0xFF0E8F7E), _bukaRiwayat),
     ];
 
     return Padding(
