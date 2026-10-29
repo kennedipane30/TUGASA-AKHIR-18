@@ -59,6 +59,13 @@ dev_dependencies:
 flutter: 
   assets:
     - logo.png
+    - buku_panduan.png
+    - data_keluarga.png
+    - grafik_anak.png
+    - pendaftaran.png
+    - hasil_pemeriksaan.png
+    - vaksin_anak.png
+    
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

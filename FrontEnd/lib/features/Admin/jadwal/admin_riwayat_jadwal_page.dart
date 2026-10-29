@@ -8,7 +8,7 @@ import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 
 const _hijauGelap = Color(0xFF14634A);
-const _hijauHeader = Color(0xFF1B5E3A);
+const _hijauHeader = Color(0xFF14634A);
 const _teksGelap = Color(0xFF1F2937);
 
 String _pesan(Object e) {

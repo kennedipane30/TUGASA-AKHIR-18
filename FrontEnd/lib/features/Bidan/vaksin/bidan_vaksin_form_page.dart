@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
-import 'vaksin_model.dart';
 import '../../../service/vaksin_service.dart';
+import 'vaksin_model.dart';
+
+const _hijauHeader = Color(0xFF0B6043);
 
 /// Form jadwalkan vaksin baru (rencana == null) atau ubah jadwal (rencana != null).
 class BidanVaksinFormPage extends StatefulWidget {
@@ -38,10 +41,15 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
   @override
   void initState() {
     super.initState();
+
     if (_edit) {
       final r = widget.rencana!;
       _tanggal = DateTime.tryParse(r.perkiraanTanggal) ?? DateTime.now();
-      if (_tanggal.isBefore(_hariIni())) _tanggal = _hariIni();
+
+      if (_tanggal.isBefore(_hariIni())) {
+        _tanggal = _hariIni();
+      }
+
       _alasan.text = r.alasan;
       _loading = false;
     } else {
@@ -65,15 +73,18 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
       _loading = true;
       _error = null;
     });
+
     try {
       final data = await _svc.listMaster();
       if (!mounted) return;
+
       setState(() {
         _master = data;
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         _error = e.toString().replaceFirst('Exception: ', '');
         _loading = false;
@@ -88,7 +99,10 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
       firstDate: _hariIni(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
     );
-    if (hasil != null) setState(() => _tanggal = hasil);
+
+    if (hasil != null) {
+      setState(() => _tanggal = hasil);
+    }
   }
 
   void _pesan(String teks) {
@@ -102,15 +116,22 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
       _pesan('Pilih jenis vaksin terlebih dahulu');
       return;
     }
+
     final alasan = _alasan.text.trim();
     if (alasan.isEmpty) {
       _pesan('Dasar hasil pemeriksaan wajib diisi');
       return;
     }
+
     setState(() => _menyimpan = true);
+
     try {
       if (_edit) {
-        await _svc.ubahRencana(id: widget.rencana!.id, tanggal: _tanggal, alasan: alasan);
+        await _svc.ubahRencana(
+          id: widget.rencana!.id,
+          tanggal: _tanggal,
+          alasan: alasan,
+        );
       } else {
         await _svc.buatRencana(
           anakId: widget.anakId,
@@ -119,10 +140,12 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
           alasan: alasan,
         );
       }
+
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
+
       setState(() => _menyimpan = false);
       _pesan(e.toString().replaceFirst('Exception: ', ''));
     }
@@ -143,10 +166,23 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
     return Scaffold(
       backgroundColor: AppColors.latar,
       appBar: AppBar(
-        title: Text(_edit ? 'Ubah Jadwal Vaksin' : 'Jadwalkan Vaksin',
-            style: const TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: Colors.white,
+        title: Text(
+          _edit ? 'Ubah Jadwal Vaksin' : 'Jadwalkan Vaksin',
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: _hijauHeader,
+        surfaceTintColor: _hijauHeader,
+        foregroundColor: Colors.white,
         elevation: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: _hijauHeader,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -157,9 +193,16 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(_error!, textAlign: TextAlign.center),
+                        Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 12),
-                        AppButton('Coba Lagi', icon: Icons.refresh, onPressed: _muatMaster),
+                        AppButton(
+                          'Coba Lagi',
+                          icon: Icons.refresh,
+                          onPressed: _muatMaster,
+                        ),
                       ],
                     ),
                   ),
@@ -173,8 +216,13 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Jenis Vaksin',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                          const Text(
+                            'Jenis Vaksin',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5,
+                            ),
+                          ),
                           const SizedBox(height: 6),
                           if (_edit)
                             Container(
@@ -186,7 +234,9 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
                               ),
                               child: Text(
                                 '${widget.rencana!.vaksin.nama} · Dosis ${widget.rencana!.dosisKe}',
-                                style: const TextStyle(fontWeight: FontWeight.w700),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             )
                           else
@@ -198,14 +248,24 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
                                 for (final m in _master)
                                   DropdownMenuItem(
                                     value: m,
-                                    child: Text(m.label, overflow: TextOverflow.ellipsis),
+                                    child: Text(
+                                      m.label,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                               ],
-                              onChanged: (v) => setState(() => _dipilih = v),
+                              onChanged: (v) {
+                                setState(() => _dipilih = v);
+                              },
                             ),
                           const SizedBox(height: 14),
-                          const Text('Tanggal Vaksin',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                          const Text(
+                            'Tanggal Vaksin',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5,
+                            ),
+                          ),
                           const SizedBox(height: 6),
                           InkWell(
                             onTap: _pilihTanggal,
@@ -219,23 +279,39 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.event, size: 20, color: AppColors.hijau),
+                                  const Icon(
+                                    Icons.event,
+                                    size: 20,
+                                    color: AppColors.hijau,
+                                  ),
                                   const SizedBox(width: 10),
-                                  Text(formatTanggalTampil(formatTanggalApi(_tanggal)),
-                                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                                  Text(
+                                    formatTanggalTampil(
+                                      formatTanggalApi(_tanggal),
+                                    ),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                           ),
                           const SizedBox(height: 14),
-                          const Text('Dasar Hasil Pemeriksaan',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                          const Text(
+                            'Dasar Hasil Pemeriksaan',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5,
+                            ),
+                          ),
                           const SizedBox(height: 6),
                           TextField(
                             controller: _alasan,
                             maxLines: 4,
                             decoration: _dekor(
-                                'Contoh: kondisi anak sehat, BB naik, tidak demam sehingga layak divaksin'),
+                              'Contoh: kondisi anak sehat, BB naik, tidak demam sehingga layak divaksin',
+                            ),
                           ),
                         ],
                       ),
@@ -244,7 +320,11 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
                     SizedBox(
                       width: double.infinity,
                       child: AppButton(
-                        _menyimpan ? 'Menyimpan...' : (_edit ? 'Simpan Perubahan' : 'Simpan Jadwal'),
+                        _menyimpan
+                            ? 'Menyimpan...'
+                            : (_edit
+                                ? 'Simpan Perubahan'
+                                : 'Simpan Jadwal'),
                         icon: Icons.save_outlined,
                         onPressed: _menyimpan ? () {} : _simpan,
                       ),

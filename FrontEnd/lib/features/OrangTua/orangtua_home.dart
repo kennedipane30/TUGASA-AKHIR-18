@@ -21,6 +21,19 @@ const _hijauBawah = Color(0xFF054D3A);
 const _mint = Color(0xFF8CF0CB);
 const _hijauTeks = Color(0xFF065F46);
 
+// Ikon menu: file PNG berada langsung di folder FrontEnd (sejajar pubspec.yaml)
+// dan sudah didaftarkan di pubspec.yaml:
+//   flutter:
+//     assets:
+//       - logo.png
+//       - buku_panduan.png
+//       - data_keluarga.png
+//       - grafik_anak.png
+//       - pendaftaran.png
+//       - hasil_pemeriksaan.png
+//       - vaksin_anak.png
+const _aset = '';
+
 // Usia dari tanggal "dd/mm/yyyy"
 String _usiaAnak(String tgl) {
   final p = tgl.split('/');
@@ -622,29 +635,29 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     );
   }
 
-  // Layanan Posyandu: deretan ikon menu (4 per baris).
+  // Layanan Posyandu: ikon tetap 54, kartu dikecilkan, jarak antar kartu dilebarkan.
   Widget _layananPosyandu() {
-    final menu = <(IconData, String, Color, Color, VoidCallback)>[
-      (Icons.person_add_alt_1_outlined, 'Pendaftaran\nPosyandu',
-          const Color(0xFFE8FBF4), const Color(0xFF0B6B55), _bukaPendaftaran),
-      (Icons.bar_chart_rounded, 'Hasil\nPemeriksaan', const Color(0xFFFFEEE2),
-          const Color(0xFFEA580C), _bukaPemeriksaan),
-      (Icons.show_chart_rounded, 'Grafik\nAnak', const Color(0xFFE3F2FD),
-          const Color(0xFF0369A1), _bukaGrafik),
-      (Icons.science_outlined, 'Vaksin\nAnak', const Color(0xFFFFF6DD),
-          const Color(0xFFB45309), _bukaVaksin),
-      (Icons.menu_book_outlined, 'Buku\nPanduan', const Color(0xFFEBEDFF),
-          const Color(0xFF4F46E5), _bukaBukuPanduan),
-      (Icons.groups_outlined, 'Data\nKeluarga', const Color(0xFFE3F8EE),
-          const Color(0xFF0B6B55), _bukaDataKeluarga),
+    final menu = <(String, IconData, String, Color, VoidCallback)>[
+      ('${_aset}pendaftaran.png', Icons.person_add_alt_1_rounded,
+          'Pendaftaran\nPosyandu', const Color(0xFF0B6B55), _bukaPendaftaran),
+      ('${_aset}hasil_pemeriksaan.png', Icons.assignment_rounded,
+          'Hasil\nPemeriksaan', const Color(0xFF0369A1), _bukaPemeriksaan),
+      ('${_aset}grafik_anak.png', Icons.show_chart_rounded, 'Grafik\nAnak',
+          const Color(0xFF0B6B55), _bukaGrafik),
+      ('${_aset}vaksin_anak.png', Icons.vaccines_rounded, 'Vaksin\nAnak',
+          const Color(0xFF2563EB), _bukaVaksin),
+      ('${_aset}buku_panduan.png', Icons.menu_book_rounded, 'Buku\nPanduan',
+          const Color(0xFF2563EB), _bukaBukuPanduan),
+      ('${_aset}data_keluarga.png', Icons.family_restroom_rounded,
+          'Data\nKeluarga', const Color(0xFF0B6B55), _bukaDataKeluarga),
     ];
 
-    Widget item((IconData, String, Color, Color, VoidCallback) m) => Expanded(
+    Widget item((String, IconData, String, Color, VoidCallback) m) => Expanded(
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
+            margin: const EdgeInsets.symmetric(horizontal: 7),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               boxShadow: const [
                 BoxShadow(
                     color: Color(0x14000000),
@@ -654,31 +667,41 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
             ),
             child: Material(
               color: Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               child: InkWell(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 onTap: m.$5,
                 child: Padding(
                   padding:
-                      const EdgeInsets.symmetric(vertical: 14, horizontal: 2),
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: m.$3,
-                          borderRadius: BorderRadius.circular(16),
+                      SizedBox(
+                        width: 54,
+                        height: 54,
+                        child: Image.asset(
+                          m.$1,
+                          width: 54,
+                          height: 54,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                          errorBuilder: (_, __, ___) => Container(
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFFD9F7EA),
+                            ),
+                            child: Icon(m.$2, color: m.$4, size: 28),
+                          ),
                         ),
-                        child: Icon(m.$1, color: m.$4, size: 26),
                       ),
-                      const SizedBox(height: 10),
-                      Text(m.$2,
+                      const SizedBox(height: 6),
+                      Text(m.$3,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                              fontSize: 11.5,
-                              height: 1.25,
-                              color: Color(0xFF0F172A),
+                              fontSize: 10,
+                              height: 1.2,
+                              color: Color(0xFF0F2547),
                               fontWeight: FontWeight.w800)),
                     ],
                   ),
@@ -692,7 +715,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     for (var i = 0; i < menu.length; i += 4) {
       final potong = menu.sublist(i, math.min(i + 4, menu.length));
       baris.add(Padding(
-        padding: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.only(bottom: 18),
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -736,7 +759,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
             ),
           ),
           const Padding(
-            padding: EdgeInsets.fromLTRB(4, 2, 4, 12),
+            padding: EdgeInsets.fromLTRB(4, 2, 4, 14),
             child: Text('Pilih menu layanan kesehatan balita',
                 style: TextStyle(
                     fontSize: 12,

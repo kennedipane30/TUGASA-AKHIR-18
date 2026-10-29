@@ -9,7 +9,7 @@ import '../../../core/common_widgets.dart';
 const _prefix = '/sekretaris/riwayat';
 
 const _hijauGelap = Color(0xFF14634A);
-const _hijauHeader = Color(0xFF1B5E3A);
+const _hijauHeader = Color(0xFF14634A);
 const _teksGelap = Color(0xFF1F2937);
 
 // ---------------------------------------------------------------------------

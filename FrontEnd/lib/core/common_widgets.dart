@@ -19,17 +19,42 @@ void soon(BuildContext context, String fitur) {
 }
 
 const _namaBulan = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-];
-const _namaBulanSingkat = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
 ];
 
-String formatTanggal(DateTime d) => '${d.day} ${_namaBulan[d.month - 1]} ${d.year}';
+const _namaBulanSingkat = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'Mei',
+  'Jun',
+  'Jul',
+  'Agu',
+  'Sep',
+  'Okt',
+  'Nov',
+  'Des',
+];
+
+String formatTanggal(DateTime d) =>
+    '${d.day} ${_namaBulan[d.month - 1]} ${d.year}';
+
 String formatJam(DateTime d) =>
-    '${d.hour.toString().padLeft(2, '0')}.${d.minute.toString().padLeft(2, '0')}';
+    '${d.hour.toString().padLeft(2, '0')}.'
+    '${d.minute.toString().padLeft(2, '0')}';
+
 String bulanSingkat(DateTime d) => _namaBulanSingkat[d.month - 1];
 
 /// Tingkat status gizi: hijau (baik), kuning (waspada), merah (berisiko).
@@ -48,7 +73,7 @@ Color giziBg(Gizi g) => switch (g) {
     };
 
 // ---------------------------------------------------------------------------
-// Kerangka halaman home (header hijau dekoratif + isi yang bisa di-scroll)
+// Kerangka halaman home
 // ---------------------------------------------------------------------------
 
 const _hijauTua = Color(0xFF0B3D2E);
@@ -72,11 +97,16 @@ class HomeShell extends StatelessWidget {
     this.notif = 0,
   });
 
-  Widget _lingkaran(double ukuran, Color warna) => Container(
-        width: ukuran,
-        height: ukuran,
-        decoration: BoxDecoration(color: warna, shape: BoxShape.circle),
-      );
+  Widget _lingkaran(double ukuran, Color warna) {
+    return Container(
+      width: ukuran,
+      height: ukuran,
+      decoration: BoxDecoration(
+        color: warna,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,10 +126,8 @@ class HomeShell extends StatelessWidget {
         body: Column(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
+              // Header dibuat tanpa sudut melengkung.
+              borderRadius: BorderRadius.zero,
               child: Container(
                 width: double.infinity,
                 decoration: const BoxDecoration(
@@ -115,25 +143,42 @@ class HomeShell extends StatelessWidget {
                     Positioned(
                       right: -40,
                       top: -50,
-                      child: _lingkaran(170, Colors.white.withOpacity(0.07)),
+                      child: _lingkaran(
+                        170,
+                        Colors.white.withOpacity(0.07),
+                      ),
                     ),
                     Positioned(
                       right: 50,
                       bottom: -60,
-                      child: _lingkaran(130, _hijauTerang.withOpacity(0.18)),
+                      child: _lingkaran(
+                        130,
+                        _hijauTerang.withOpacity(0.18),
+                      ),
                     ),
                     Positioned(
                       left: -35,
                       bottom: -45,
-                      child: _lingkaran(110, Colors.white.withOpacity(0.06)),
+                      child: _lingkaran(
+                        110,
+                        Colors.white.withOpacity(0.06),
+                      ),
                     ),
                     Positioned(
                       right: 70,
                       top: topInset + 8,
-                      child: _lingkaran(14, _oranye2.withOpacity(0.55)),
+                      child: _lingkaran(
+                        14,
+                        _oranye2.withOpacity(0.55),
+                      ),
                     ),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(16, topInset + 12, 8, 22),
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        topInset + 12,
+                        8,
+                        22,
+                      ),
                       child: Row(
                         children: [
                           Image.asset(
@@ -142,23 +187,31 @@ class HomeShell extends StatelessWidget {
                             height: 46,
                             fit: BoxFit.contain,
                             errorBuilder: (_, __, ___) => const Icon(
-                                Icons.monitor_heart_outlined,
-                                color: Colors.white,
-                                size: 36),
+                              Icons.monitor_heart_outlined,
+                              color: Colors.white,
+                              size: 36,
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Posyandu Care',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.white)),
-                                Text(lokasi,
-                                    style: const TextStyle(
-                                        fontSize: 11, color: _headerTeksTerang)),
+                                const Text(
+                                  'Posyandu Care',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  lokasi,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: _headerTeksTerang,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -167,9 +220,12 @@ class HomeShell extends StatelessWidget {
                             children: [
                               IconButton(
                                 tooltip: 'Notifikasi',
-                                icon: const Icon(Icons.notifications_none,
-                                    color: Colors.white),
-                                onPressed: () => soon(context, 'Daftar notifikasi'),
+                                icon: const Icon(
+                                  Icons.notifications_none,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () =>
+                                    soon(context, 'Daftar notifikasi'),
                               ),
                               if (notif > 0)
                                 Positioned(
@@ -177,16 +233,21 @@ class HomeShell extends StatelessWidget {
                                   top: 6,
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 1),
+                                      horizontal: 5,
+                                      vertical: 1,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: AppColors.merah,
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Text('$notif',
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w700)),
+                                    child: Text(
+                                      '$notif',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                                   ),
                                 ),
                             ],
@@ -194,25 +255,39 @@ class HomeShell extends StatelessWidget {
                           PopupMenuButton<String>(
                             tooltip: 'Akun',
                             onSelected: (v) {
-                              if (v == 'keluar') context.read<AuthProvider>().logout();
+                              if (v == 'keluar') {
+                                context.read<AuthProvider>().logout();
+                              }
                             },
                             itemBuilder: (_) => [
                               PopupMenuItem(
                                 enabled: false,
-                                child: Text(nama.isEmpty ? 'Pengguna' : nama,
-                                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                                child: Text(
+                                  nama.isEmpty ? 'Pengguna' : nama,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
-                              const PopupMenuItem(value: 'keluar', child: Text('Keluar')),
+                              const PopupMenuItem(
+                                value: 'keluar',
+                                child: Text('Keluar'),
+                              ),
                             ],
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                              ),
                               child: CircleAvatar(
                                 radius: 18,
                                 backgroundColor: Colors.white,
-                                child: Text(inisial,
-                                    style: const TextStyle(
-                                        color: _hijauGelap,
-                                        fontWeight: FontWeight.w800)),
+                                child: Text(
+                                  inisial,
+                                  style: const TextStyle(
+                                    color: _hijauGelap,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -271,9 +346,10 @@ class SectionCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE6ECE8)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4)),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -289,11 +365,14 @@ class SectionCard extends StatelessWidget {
                     const SizedBox(width: 8),
                   ],
                   Expanded(
-                    child: Text(title!,
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: _hijauTua)),
+                    child: Text(
+                      title!,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: _hijauTua,
+                      ),
+                    ),
                   ),
                   if (trailing != null) trailing!,
                 ],
@@ -324,7 +403,10 @@ class Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -333,9 +415,14 @@ class Pill extends StatelessWidget {
             const SizedBox(width: 4),
           ],
           Flexible(
-            child: Text(text,
-                style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w700, color: fg)),
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: fg,
+              ),
+            ),
           ),
         ],
       ),
@@ -362,15 +449,29 @@ class StatBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: Column(
         children: [
-          Text(nilai,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: fg)),
+          Text(
+            nilai,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: fg,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 10.5,
+              color: AppColors.teksRedup,
+            ),
+          ),
         ],
       ),
     );
@@ -395,10 +496,17 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(16));
-    final teks = Text(label,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13));
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    );
+    final teks = Text(
+      label,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        fontWeight: FontWeight.w800,
+        fontSize: 13,
+      ),
+    );
     final ikon = icon == null ? null : Icon(icon, size: 17);
 
     if (filled) {
@@ -406,23 +514,48 @@ class AppButton extends StatelessWidget {
         backgroundColor: color,
         foregroundColor: Colors.white,
         shape: shape,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        padding: const EdgeInsets.symmetric(
+          vertical: 14,
+          horizontal: 12,
+        ),
       );
+
       return ikon == null
-          ? ElevatedButton(style: gaya, onPressed: onPressed, child: teks)
+          ? ElevatedButton(
+              style: gaya,
+              onPressed: onPressed,
+              child: teks,
+            )
           : ElevatedButton.icon(
-              style: gaya, onPressed: onPressed, icon: ikon, label: teks);
+              style: gaya,
+              onPressed: onPressed,
+              icon: ikon,
+              label: teks,
+            );
     }
+
     final gaya = OutlinedButton.styleFrom(
       foregroundColor: color,
       side: BorderSide(color: color),
       shape: shape,
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      padding: const EdgeInsets.symmetric(
+        vertical: 14,
+        horizontal: 12,
+      ),
     );
+
     return ikon == null
-        ? OutlinedButton(style: gaya, onPressed: onPressed, child: teks)
+        ? OutlinedButton(
+            style: gaya,
+            onPressed: onPressed,
+            child: teks,
+          )
         : OutlinedButton.icon(
-            style: gaya, onPressed: onPressed, icon: ikon, label: teks);
+            style: gaya,
+            onPressed: onPressed,
+            icon: ikon,
+            label: teks,
+          );
   }
 }
 
@@ -445,8 +578,10 @@ class SyncStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = online ? const Color(0xFFE3F6EC) : AppColors.kuningMuda;
+    final bg =
+        online ? const Color(0xFFE3F6EC) : AppColors.kuningMuda;
     final fg = online ? _hijauGelap : AppColors.kuning;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -454,20 +589,40 @@ class SyncStrip extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: online ? const Color(0xFFBFE5D0) : const Color(0xFFF3DFA8)),
+          color: online
+              ? const Color(0xFFBFE5D0)
+              : const Color(0xFFF3DFA8),
+        ),
       ),
       child: Row(
         children: [
-          Icon(online ? Icons.cloud_done_outlined : Icons.cloud_off_outlined, color: fg),
+          Icon(
+            online
+                ? Icons.cloud_done_outlined
+                : Icons.cloud_off_outlined,
+            color: fg,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(online ? 'Mode Online Terhubung' : 'Mode Offline',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: fg)),
-                Text('$tertunda data belum terkirim · sinkron terakhir $sinkronTerakhir',
-                    style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                Text(
+                  online ? 'Mode Online Terhubung' : 'Mode Offline',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    color: fg,
+                  ),
+                ),
+                Text(
+                  '$tertunda data belum terkirim · '
+                  'sinkron terakhir $sinkronTerakhir',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.black54,
+                  ),
+                ),
               ],
             ),
           ),
@@ -477,17 +632,28 @@ class SyncStrip extends StatelessWidget {
                 backgroundColor: _hijauGelap,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: sedangSinkron ? null : onSinkron,
               icon: sedangSinkron
                   ? const SizedBox(
                       width: 14,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : const Icon(Icons.sync, size: 16),
-              label: Text(sedangSinkron ? 'Proses' : 'Sinkron',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              label: Text(
+                sedangSinkron ? 'Proses' : 'Sinkron',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
         ],
       ),
@@ -513,6 +679,7 @@ class MiniBars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final maks = nilai.reduce((a, b) => a > b ? a : b);
+
     return SizedBox(
       height: tinggi + 40,
       child: Row(
@@ -523,8 +690,13 @@ class MiniBars extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(nilai[i].toInt().toString(),
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                  Text(
+                    nilai[i].toInt().toString(),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Container(
                     height: tinggi * nilai[i] / maks,
@@ -535,8 +707,13 @@ class MiniBars extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(label[i],
-                      style: const TextStyle(fontSize: 10, color: AppColors.teksRedup)),
+                  Text(
+                    label[i],
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.teksRedup,
+                    ),
+                  ),
                 ],
               ),
             ),

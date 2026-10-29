@@ -1,4 +1,5 @@
 // lib/main.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -69,8 +70,11 @@ class MyApp extends StatelessWidget {
         auth.user!['must_change_password'] == true;
 
     Widget home;
+
     if (!auth.initialized) {
-      home = const Scaffold(body: Center(child: CircularProgressIndicator()));
+      home = const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     } else if (wajibGanti) {
       home = const UbahSandiPage();
     } else {
@@ -118,7 +122,11 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'Posyandu',
-      theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorSchemeSeed: Colors.teal,
+        useMaterial3: true,
+      ),
       home: home,
     );
   }

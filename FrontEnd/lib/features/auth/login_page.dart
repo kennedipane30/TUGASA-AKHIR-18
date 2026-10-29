@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import 'auth_provider.dart';
 import 'register_page.dart';
 
@@ -24,6 +24,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _idf = TextEditingController();
   final _pw = TextEditingController();
+
   bool _hide = true;
   bool _ingat = true;
 
@@ -36,20 +37,21 @@ class _LoginPageState extends State<LoginPage> {
 
   void _snack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
   }
 
   Future<void> _submit() async {
     if (_idf.text.trim().isEmpty || _pw.text.isEmpty) {
-      _snack('No. HP atau NIK dan kata sandi wajib diisi');
+      _snack('No. HP, NIK, username, dan kata sandi wajib diisi');
       return;
     }
-    if (!RegExp(r'^[0-9]+$').hasMatch(_idf.text.trim())) {
-      _snack('No. HP atau NIK harus berupa angka');
-      return;
-    }
+
     try {
-      await context.read<AuthProvider>().login(_idf.text.trim(), _pw.text);
+      await context
+          .read<AuthProvider>()
+          .login(_idf.text.trim(), _pw.text);
     } catch (e) {
       _snack(e.toString().replaceFirst('Exception: ', ''));
     }
@@ -60,33 +62,52 @@ class _LoginPageState extends State<LoginPage> {
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: c, width: w),
         );
+
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Colors.black38, fontSize: 13),
+      hintStyle: const TextStyle(
+        color: Colors.black38,
+        fontSize: 13,
+      ),
       suffixIcon: suffix,
       filled: true,
       fillColor: _isiField,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 18,
+      ),
       border: garis(_teal.withOpacity(0.55), 1.4),
       enabledBorder: garis(_teal.withOpacity(0.55), 1.4),
       focusedBorder: garis(_teal, 1.8),
     );
   }
 
-  Widget _label(String kiri, String kanan, Color warnaKanan) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(kiri,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+  Widget _label(String kiri, String kanan, Color warnaKanan) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              kiri,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 12.5,
+              ),
             ),
-            Text(kanan,
-                style: TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 11.5, color: warnaKanan)),
-          ],
-        ),
-      );
+          ),
+          Text(
+            kanan,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 11.5,
+              color: warnaKanan,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _kepala() {
     return Padding(
@@ -98,18 +119,29 @@ class _LoginPageState extends State<LoginPage> {
             width: 150,
             height: 150,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) =>
-                const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 100),
+            errorBuilder: (_, __, ___) => const Icon(
+              Icons.monitor_heart_outlined,
+              color: Colors.white,
+              size: 100,
+            ),
           ),
           const SizedBox(height: 4),
-          const Text('Posyandu Care',
-              style: TextStyle(
-                  color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
+          const Text(
+            'Posyandu Care',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           const SizedBox(height: 6),
           const Text(
             'Aplikasi Pemantauan Tumbuh Kembang Anak & KIA Digital',
             textAlign: TextAlign.center,
-            style: TextStyle(color: _hijauTerang, fontSize: 12.5),
+            style: TextStyle(
+              color: _hijauTerang,
+              fontSize: 12.5,
+            ),
           ),
         ],
       ),
@@ -124,7 +156,6 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: _latar,
       body: Stack(
         children: [
-          // Latar gradien hijau memenuhi seluruh layar
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -143,8 +174,6 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   _kepala(),
                   const SizedBox(height: 22),
-
-                  // Kartu form login
                   Container(
                     width: double.infinity,
                     margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -154,7 +183,10 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: const [
                         BoxShadow(
-                            color: Colors.black26, blurRadius: 24, offset: Offset(0, 10)),
+                          color: Colors.black26,
+                          blurRadius: 24,
+                          offset: Offset(0, 10),
+                        ),
                       ],
                     ),
                     child: Column(
@@ -163,18 +195,22 @@ class _LoginPageState extends State<LoginPage> {
                         Center(
                           child: Column(
                             children: [
-                              const Text('Masuk ke Akun Anda',
-                                  style: TextStyle(
-                                      color: _judul,
-                                      fontSize: 21,
-                                      fontWeight: FontWeight.w800)),
+                              const Text(
+                                'Masuk ke Akun Anda',
+                                style: TextStyle(
+                                  color: _judul,
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                               const SizedBox(height: 6),
                               Container(
                                 width: 44,
                                 height: 4,
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                      colors: [_teal, _oranye]),
+                                    colors: [_teal, _oranye],
+                                  ),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
@@ -182,25 +218,35 @@ class _LoginPageState extends State<LoginPage> {
                               const Text(
                                 'Pantau kesehatan dan gizi buah hati secara berkala tanpa batas koneksi',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.black54, fontSize: 12.5),
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: 12.5,
+                                ),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 18),
-                        _label('No. HP, NIK, atau Username', 'Wajib', _oranye),
+                        _label(
+                          'No. HP, NIK, atau Username',
+                          'Wajib',
+                          _oranye,
+                        ),
                         TextField(
                           controller: _idf,
-                          keyboardType: TextInputType.number,
+                          keyboardType: TextInputType.text,
+                          textCapitalization: TextCapitalization.none,
+                          autocorrect: false,
+                          enableSuggestions: false,
                           textInputAction: TextInputAction.next,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          decoration: _dekor('0822/1212'),
+                          decoration: _dekor('0822/1212/kennedi'),
                         ),
                         const SizedBox(height: 14),
-                        _label('Kata Sandi / PIN 6 Digit', 'Enkripsi Lokal',
-                            Colors.black45),
+                        _label(
+                          'Kata Sandi / PIN 6 Digit',
+                          'Enkripsi Lokal',
+                          Colors.black45,
+                        ),
                         TextField(
                           controller: _pw,
                           obscureText: _hide,
@@ -210,11 +256,14 @@ class _LoginPageState extends State<LoginPage> {
                             '••••••••',
                             suffix: IconButton(
                               icon: Icon(
-                                  _hide
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                  color: _teal),
-                              onPressed: () => setState(() => _hide = !_hide),
+                                _hide
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: _teal,
+                              ),
+                              onPressed: () {
+                                setState(() => _hide = !_hide);
+                              },
                             ),
                           ),
                         ),
@@ -227,39 +276,52 @@ class _LoginPageState extends State<LoginPage> {
                                 value: _ingat,
                                 activeColor: _hijau,
                                 visualDensity: VisualDensity.compact,
-                                onChanged: (v) => setState(() => _ingat = v ?? false),
+                                onChanged: (v) {
+                                  setState(() => _ingat = v ?? false);
+                                },
                               ),
                             ),
                             const SizedBox(width: 6),
-                            const Text('Ingat akun', style: TextStyle(fontSize: 12.5)),
+                            const Text(
+                              'Ingat akun',
+                              style: TextStyle(fontSize: 12.5),
+                            ),
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.all(3),
                               decoration: const BoxDecoration(
-                                  color: _hijau, shape: BoxShape.circle),
-                              child: const Icon(Icons.shield_outlined,
-                                  color: Colors.white, size: 11),
+                                color: _hijau,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.shield_outlined,
+                                color: Colors.white,
+                                size: 11,
+                              ),
                             ),
                             const Spacer(),
                             TextButton(
                               style: TextButton.styleFrom(
                                 padding: EdgeInsets.zero,
                                 minimumSize: const Size(0, 32),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                tapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
                               ),
                               onPressed: () => _snack(
-                                  'Hubungi sekretaris posyandu desa Anda untuk reset kata sandi'),
-                              child: const Text('Lupa Sandi?',
-                                  style: TextStyle(
-                                      color: _oranye,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 12.5)),
+                                'Hubungi sekretaris posyandu desa Anda untuk reset kata sandi',
+                              ),
+                              child: const Text(
+                                'Lupa Sandi?',
+                                style: TextStyle(
+                                  color: _oranye,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12.5,
+                                ),
+                              ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
-
-                        // Tombol masuk (oranye)
                         Opacity(
                           opacity: loading ? 0.7 : 1,
                           child: Container(
@@ -267,13 +329,15 @@ class _LoginPageState extends State<LoginPage> {
                             height: 52,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                  colors: [_oranye, _oranyeGelap]),
+                                colors: [_oranye, _oranyeGelap],
+                              ),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                    color: _oranye.withOpacity(0.4),
-                                    blurRadius: 14,
-                                    offset: const Offset(0, 6)),
+                                  color: _oranye.withOpacity(0.4),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
+                                ),
                               ],
                             ),
                             child: Material(
@@ -287,18 +351,27 @@ class _LoginPageState extends State<LoginPage> {
                                           height: 20,
                                           width: 20,
                                           child: CircularProgressIndicator(
-                                              strokeWidth: 2, color: Colors.white))
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
                                       : const Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Text('Masuk Sekarang',
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.w800,
-                                                    fontSize: 15)),
+                                            Text(
+                                              'Masuk Sekarang',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 15,
+                                              ),
+                                            ),
                                             SizedBox(width: 8),
-                                            Icon(Icons.arrow_forward,
-                                                color: Colors.white, size: 18),
+                                            Icon(
+                                              Icons.arrow_forward,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
                                           ],
                                         ),
                                 ),
@@ -307,29 +380,38 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Divider(color: Colors.black12, height: 1),
+                        const Divider(
+                          color: Colors.black12,
+                          height: 1,
+                        ),
                         const SizedBox(height: 10),
-
-                        // Daftar akun baru
                         Center(
                           child: Wrap(
                             crossAxisAlignment: WrapCrossAlignment.center,
                             alignment: WrapAlignment.center,
                             children: [
-                              const Text('Belum memiliki akun Posyandu? ',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.black54)),
+                              const Text(
+                                'Belum memiliki akun Posyandu? ',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                ),
+                              ),
                               GestureDetector(
                                 onTap: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (_) => const RegisterPage()),
+                                    builder: (_) => const RegisterPage(),
+                                  ),
                                 ),
-                                child: const Text('Daftar Akun Baru',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.black87)),
+                                child: const Text(
+                                  'Daftar Akun Baru',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.black87,
+                                  ),
+                                ),
                               ),
                             ],
                           ),

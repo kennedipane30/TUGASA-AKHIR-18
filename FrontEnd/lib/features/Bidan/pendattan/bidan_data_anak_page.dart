@@ -1,9 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+
+const _hijauHeader = Color(0xFF0B6043);
 
 String _t(dynamic v) => v?.toString().trim() ?? '';
 
@@ -24,12 +27,14 @@ String _fmt(dynamic v) {
   return d == null ? '-' : formatTanggal(d);
 }
 
-String _usia(int bln) => bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
+String _usia(int bln) =>
+    bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
 
 String _pesanError(Object e) {
   if (e is DioException) {
     final d = e.response?.data;
     if (d is Map && d['error'] != null) return d['error'].toString();
+
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
@@ -41,16 +46,22 @@ String _pesanError(Object e) {
         return 'Terjadi kesalahan (kode ${e.response?.statusCode ?? '-'}).';
     }
   }
+
   return 'Terjadi kesalahan: $e';
 }
 
-/// Bidan: data pencatatan satu anak pada sesi posyandu (identitas, hasil ukur kader,
-/// kunjungan sebelumnya, catatan bidan, dan riwayat imunisasi).
+/// Bidan: data pencatatan satu anak pada sesi posyandu
+/// (identitas, hasil ukur kader, kunjungan sebelumnya, catatan bidan,
+/// dan riwayat imunisasi).
 class BidanDataAnakPage extends StatefulWidget {
   final String pendaftaranId;
   final String nomor;
 
-  const BidanDataAnakPage({super.key, required this.pendaftaranId, required this.nomor});
+  const BidanDataAnakPage({
+    super.key,
+    required this.pendaftaranId,
+    required this.nomor,
+  });
 
   @override
   State<BidanDataAnakPage> createState() => _BidanDataAnakPageState();
@@ -70,25 +81,40 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
 
   Future<void> _muat() async {
     try {
-      final opsi = Options(receiveTimeout: const Duration(seconds: 15));
-      final r = await ApiClient.dio
-          .get('/bidan/pendaftaran/${widget.pendaftaranId}', options: opsi);
+      final opsi = Options(
+        receiveTimeout: const Duration(seconds: 15),
+      );
+
+      final r = await ApiClient.dio.get(
+        '/bidan/pendaftaran/${widget.pendaftaranId}',
+        options: opsi,
+      );
+
       dynamic d = r.data;
       if (d is Map && d.containsKey('data')) d = d['data'];
 
       final peta = <String, String>{};
+
       try {
-        final rv = await ApiClient.dio.get('/vaksin', options: opsi);
+        final rv = await ApiClient.dio.get(
+          '/vaksin',
+          options: opsi,
+        );
+
         dynamic v = rv.data;
         if (v is Map && v.containsKey('data')) v = v['data'];
+
         if (v is List) {
           for (final e in v) {
-            if (e is Map) peta[_t(e['id'])] = _t(e['nama']);
+            if (e is Map) {
+              peta[_t(e['id'])] = _t(e['nama']);
+            }
           }
         }
       } catch (_) {}
 
       if (!mounted) return;
+
       setState(() {
         _d = Map<String, dynamic>.from(d as Map);
         _namaVaksin = peta;
@@ -97,6 +123,7 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
       });
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         _gagal = _pesanError(e);
         _memuat = false;
@@ -114,31 +141,60 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
           children: [
             SizedBox(
               width: 120,
-              child: Text(l,
-                  style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+              child: Text(
+                l,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.teksRedup,
+                ),
+              ),
             ),
             Expanded(
-              child: Text(v.isEmpty ? '-' : v,
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+              child: Text(
+                v.isEmpty ? '-' : v,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),
       );
 
-  Widget _blok(String judul, String isi, {Color bg = AppColors.hijauMuda}) {
+  Widget _blok(
+    String judul,
+    String isi, {
+    Color bg = AppColors.hijauMuda,
+  }) {
     if (isi.isEmpty) return const SizedBox.shrink();
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(judul,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+          Text(
+            judul,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 11.5,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(isi, style: const TextStyle(fontSize: 12.5, height: 1.35)),
+          Text(
+            isi,
+            style: const TextStyle(
+              fontSize: 12.5,
+              height: 1.35,
+            ),
+          ),
         ],
       ),
     );
@@ -150,13 +206,33 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
       children: [
         Row(
           children: [
-            Expanded(child: StatBox(nilai: _num(u['bb_kg']), label: 'BB (kg)')),
+            Expanded(
+              child: StatBox(
+                nilai: _num(u['bb_kg']),
+                label: 'BB (kg)',
+              ),
+            ),
             const SizedBox(width: 6),
-            Expanded(child: StatBox(nilai: _num(u['tb_cm']), label: 'TB (cm)')),
+            Expanded(
+              child: StatBox(
+                nilai: _num(u['tb_cm']),
+                label: 'TB (cm)',
+              ),
+            ),
             const SizedBox(width: 6),
-            Expanded(child: StatBox(nilai: _num(u['lingkar_kepala_cm']), label: 'LK (cm)')),
+            Expanded(
+              child: StatBox(
+                nilai: _num(u['lingkar_kepala_cm']),
+                label: 'LK (cm)',
+              ),
+            ),
             const SizedBox(width: 6),
-            Expanded(child: StatBox(nilai: _num(u['lila_cm']), label: 'LiLA (cm)')),
+            Expanded(
+              child: StatBox(
+                nilai: _num(u['lila_cm']),
+                label: 'LiLA (cm)',
+              ),
+            ),
           ],
         ),
       ],
@@ -168,10 +244,24 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
     return Scaffold(
       backgroundColor: AppColors.latar,
       appBar: AppBar(
-        title: Text('Data Anak · ${widget.nomor}',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-        backgroundColor: Colors.white,
+        title: Text(
+          'Data Anak · ${widget.nomor}',
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 17,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: _hijauHeader,
+        surfaceTintColor: _hijauHeader,
+        foregroundColor: Colors.white,
         elevation: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: _hijauHeader,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
       ),
       body: _memuat
           ? const Center(child: CircularProgressIndicator())
@@ -182,17 +272,27 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(_gagal!, textAlign: TextAlign.center),
+                        Text(
+                          _gagal!,
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 12),
-                        AppButton('Coba Lagi', icon: Icons.refresh, onPressed: () {
-                          setState(() => _memuat = true);
-                          _muat();
-                        }),
+                        AppButton(
+                          'Coba Lagi',
+                          icon: Icons.refresh,
+                          onPressed: () {
+                            setState(() => _memuat = true);
+                            _muat();
+                          },
+                        ),
                       ],
                     ),
                   ),
                 )
-              : RefreshIndicator(onRefresh: _muat, child: _isi()),
+              : RefreshIndicator(
+                  onRefresh: _muat,
+                  child: _isi(),
+                ),
     );
   }
 
@@ -229,8 +329,18 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
               _baris('Tanggal lahir', _fmt(anak['tanggal_lahir'])),
               _baris('Usia', _usia(usia)),
               _baris('NIK anak', _t(anak['nik'])),
-              _baris('Berat lahir', _t(anak['berat_lahir_kg']).isEmpty ? '' : '${_num(anak['berat_lahir_kg'])} kg'),
-              _baris('Panjang lahir', _t(anak['panjang_lahir_cm']).isEmpty ? '' : '${_num(anak['panjang_lahir_cm'])} cm'),
+              _baris(
+                'Berat lahir',
+                _t(anak['berat_lahir_kg']).isEmpty
+                    ? ''
+                    : '${_num(anak['berat_lahir_kg'])} kg',
+              ),
+              _baris(
+                'Panjang lahir',
+                _t(anak['panjang_lahir_cm']).isEmpty
+                    ? ''
+                    : '${_num(anak['panjang_lahir_cm'])} cm',
+              ),
             ],
           ),
         ),
@@ -238,22 +348,52 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
           title: 'Hasil Pengukuran Kader',
           icon: Icons.straighten,
           trailing: ukur == null
-              ? const Pill('Belum diukur', bg: AppColors.kuningMuda, fg: AppColors.kuning)
-              : const Pill('Tercatat', icon: Icons.check),
+              ? const Pill(
+                  'Belum diukur',
+                  bg: AppColors.kuningMuda,
+                  fg: AppColors.kuning,
+                )
+              : const Pill(
+                  'Tercatat',
+                  icon: Icons.check,
+                ),
           child: ukur == null
-              ? const Text('Kader belum mencatat pengukuran anak ini.',
-                  style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+              ? const Text(
+                  'Kader belum mencatat pengukuran anak ini.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.teksRedup,
+                  ),
+                )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _ukuran('Hari ini', ukur),
                     const SizedBox(height: 10),
                     _baris('Cara ukur', _t(ukur['cara_ukur'])),
-                    _baris('ASI eksklusif', ukur['asi_eksklusif'] == true ? 'Ya' : 'Tidak'),
-                    _baris('Sedang sakit', ukur['sedang_sakit'] == true ? 'Ya' : 'Tidak'),
-                    _blok('Keluhan (kader)', _t(ukur['keluhan']), bg: AppColors.latar),
-                    _blok('Catatan kader', _t(ukur['catatan']), bg: AppColors.latar),
-                    _blok('Peringatan validasi', peringatan, bg: AppColors.merahMuda),
+                    _baris(
+                      'ASI eksklusif',
+                      ukur['asi_eksklusif'] == true ? 'Ya' : 'Tidak',
+                    ),
+                    _baris(
+                      'Sedang sakit',
+                      ukur['sedang_sakit'] == true ? 'Ya' : 'Tidak',
+                    ),
+                    _blok(
+                      'Keluhan (kader)',
+                      _t(ukur['keluhan']),
+                      bg: AppColors.latar,
+                    ),
+                    _blok(
+                      'Catatan kader',
+                      _t(ukur['catatan']),
+                      bg: AppColors.latar,
+                    ),
+                    _blok(
+                      'Peringatan validasi',
+                      peringatan,
+                      bg: AppColors.merahMuda,
+                    ),
                   ],
                 ),
         ),
@@ -261,19 +401,36 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
           SectionCard(
             title: 'Kunjungan Sebelumnya',
             icon: Icons.history,
-            trailing: Text(_fmt(prev['tanggal_ukur']),
-                style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+            trailing: Text(
+              _fmt(prev['tanggal_ukur']),
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.teksRedup,
+              ),
+            ),
             child: _ukuran('Sebelumnya', prev),
           ),
         SectionCard(
           title: 'Catatan Bidan',
           icon: Icons.medical_information_outlined,
           trailing: cat == null
-              ? const Pill('Belum ada', bg: AppColors.biruMuda, fg: AppColors.biru)
-              : const Pill('Tersimpan', icon: Icons.check),
+              ? const Pill(
+                  'Belum ada',
+                  bg: AppColors.biruMuda,
+                  fg: AppColors.biru,
+                )
+              : const Pill(
+                  'Tersimpan',
+                  icon: Icons.check,
+                ),
           child: cat == null
-              ? const Text('Catatan bidan belum diisi. Ketuk antrean untuk mengisi.',
-                  style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+              ? const Text(
+                  'Catatan bidan belum diisi. Ketuk antrean untuk mengisi.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.teksRedup,
+                  ),
+                )
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -284,17 +441,27 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
                           spacing: 6,
                           children: [
                             for (final g in gejala)
-                              Pill(g, bg: AppColors.merahMuda, fg: AppColors.merah),
+                              Pill(
+                                g,
+                                bg: AppColors.merahMuda,
+                                fg: AppColors.merah,
+                              ),
                           ],
                         ),
                       ),
-                    _blok('Penyakit penyerta', _t(cat['penyakit_penyerta'])),
+                    _blok(
+                      'Penyakit penyerta',
+                      _t(cat['penyakit_penyerta']),
+                    ),
                     _blok('Keluhan', _t(cat['keluhan'])),
                     _blok('Evaluasi', _t(cat['catatan_evaluasi'])),
                     _blok('Saran gizi', _t(cat['saran_gizi'])),
                     _blok('Saran pola asuh', _t(cat['saran_pola_asuh'])),
                     if (_tgl(cat['tanggal_kunjungan_ulang']) != null)
-                      _baris('Kunjungan ulang', _fmt(cat['tanggal_kunjungan_ulang'])),
+                      _baris(
+                        'Kunjungan ulang',
+                        _fmt(cat['tanggal_kunjungan_ulang']),
+                      ),
                   ],
                 ),
         ),
@@ -308,22 +475,38 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
               children: [
                 for (final e in imunHariIni)
                   if (e is Map)
-                    Pill('${_namaVaksin[_t(e['jenis_vaksin_id'])] ?? 'Vaksin'} dosis ${_t(e['dosis_ke'])}',
-                        bg: AppColors.biruMuda, fg: AppColors.biru, icon: Icons.vaccines),
+                    Pill(
+                      '${_namaVaksin[_t(e['jenis_vaksin_id'])] ?? 'Vaksin'} dosis ${_t(e['dosis_ke'])}',
+                      bg: AppColors.biruMuda,
+                      fg: AppColors.biru,
+                      icon: Icons.vaccines,
+                    ),
                 for (final e in suplemen)
                   if (e is Map)
-                    Pill(_t(e['jenis']).replaceAll('_', ' '),
-                        bg: AppColors.kuningMuda, fg: AppColors.kuning),
+                    Pill(
+                      _t(e['jenis']).replaceAll('_', ' '),
+                      bg: AppColors.kuningMuda,
+                      fg: AppColors.kuning,
+                    ),
               ],
             ),
           ),
         SectionCard(
           title: 'Riwayat Imunisasi',
           icon: Icons.history,
-          trailing: Pill('${riwayat.length}', bg: AppColors.hijauMuda, fg: AppColors.hijau),
+          trailing: Pill(
+            '${riwayat.length}',
+            bg: AppColors.hijauMuda,
+            fg: AppColors.hijau,
+          ),
           child: riwayat.isEmpty
-              ? const Text('Belum ada riwayat imunisasi.',
-                  style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+              ? const Text(
+                  'Belum ada riwayat imunisasi.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.teksRedup,
+                  ),
+                )
               : Column(
                   children: [
                     for (final e in riwayat)
@@ -333,21 +516,31 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                              color: AppColors.latar,
-                              borderRadius: BorderRadius.circular(12)),
+                            color: AppColors.latar,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                  '${_namaVaksin[_t(e['jenis_vaksin_id'])] ?? 'Vaksin'} · Dosis ${_t(e['dosis_ke'])}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w800, fontSize: 13)),
-                              Text(_fmt(e['tanggal_pemberian']),
-                                  style: const TextStyle(
-                                      fontSize: 11.5, color: AppColors.teksRedup)),
+                                '${_namaVaksin[_t(e['jenis_vaksin_id'])] ?? 'Vaksin'} · Dosis ${_t(e['dosis_ke'])}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              Text(
+                                _fmt(e['tanggal_pemberian']),
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppColors.teksRedup,
+                                ),
+                              ),
                               if (_t(e['kondisi_anak']).isNotEmpty)
-                                Text('Kondisi: ${_t(e['kondisi_anak'])}',
-                                    style: const TextStyle(fontSize: 11.5)),
+                                Text(
+                                  'Kondisi: ${_t(e['kondisi_anak'])}',
+                                  style: const TextStyle(fontSize: 11.5),
+                                ),
                             ],
                           ),
                         ),

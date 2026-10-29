@@ -73,7 +73,7 @@ class JadwalItem {
 final Options _opsi = Options(receiveTimeout: const Duration(seconds: 15));
 
 const _hijauGelap = Color(0xFF14634A);
-const _hijauHeader = Color(0xFF1B5E3A);
+const _hijauHeader = Color(0xFF14634A);
 const _teksGelap = Color(0xFF1F2937);
 const _oranye = Color(0xFFEA580C);
 const _biru = Color(0xFF2B7BB9);

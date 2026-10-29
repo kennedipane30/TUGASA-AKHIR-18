@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/api_client.dart';
@@ -10,6 +11,8 @@ import '../../auth/auth_provider.dart';
 import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 import 'bidan_catatan_page.dart';
 import 'bidan_data_anak_page.dart';
+
+const _hijauHeader = Color(0xFF0B6043);
 
 class _ItemBidan {
   final String pendaftaranId;
@@ -46,14 +49,19 @@ class _ItemBidan {
         selesai: j['status_catatan']?.toString() == 'selesai',
       );
 
-  String get kodeNomor => nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
-  String get usia => usiaBulan >= 12 ? '${usiaBulan ~/ 12} th ${usiaBulan % 12} bln' : '$usiaBulan bln';
+  String get kodeNomor =>
+      nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
+
+  String get usia => usiaBulan >= 12
+      ? '${usiaBulan ~/ 12} th ${usiaBulan % 12} bln'
+      : '$usiaBulan bln';
 }
 
 String _pesanError(Object e) {
   if (e is DioException) {
     final d = e.response?.data;
     if (d is Map && d['error'] != null) return d['error'].toString();
+
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
@@ -65,6 +73,7 @@ String _pesanError(Object e) {
         return 'Terjadi kesalahan (kode ${e.response?.statusCode ?? '-'}).';
     }
   }
+
   return 'Terjadi kesalahan: $e';
 }
 
@@ -72,13 +81,14 @@ class BidanHasilPendataanPage extends StatefulWidget {
   const BidanHasilPendataanPage({super.key});
 
   @override
-  State<BidanHasilPendataanPage> createState() => _BidanHasilPendataanPageState();
+  State<BidanHasilPendataanPage> createState() =>
+      _BidanHasilPendataanPageState();
 }
 
 class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
   static const _filter = ['Semua', 'Perlu Catatan', 'Selesai'];
-  String _aktif = 'Semua';
 
+  String _aktif = 'Semua';
   JadwalTerdekatData? _jadwal;
   List<_ItemBidan> _data = [];
   bool _memuat = true;
@@ -94,19 +104,35 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
     try {
       final j = await JadwalTerdekatData.ambil();
       var list = <_ItemBidan>[];
+
       if (j != null) {
-        final r = await ApiClient.dio.get('/bidan/jadwal/${j.id}/pengukuran',
-            options: Options(receiveTimeout: const Duration(seconds: 15)));
+        final r = await ApiClient.dio.get(
+          '/bidan/jadwal/${j.id}/pengukuran',
+          options: Options(
+            receiveTimeout: const Duration(seconds: 15),
+          ),
+        );
+
         dynamic d = r.data;
         if (d is Map && d.containsKey('data')) d = d['data'];
+
         if (d is List) {
           list = d
-              .map((e) => _ItemBidan.fromApi(Map<String, dynamic>.from(e as Map)))
+              .map(
+                (e) => _ItemBidan.fromApi(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
               .toList();
-          list.sort((a, b) => (a.nomor ?? 1 << 30).compareTo(b.nomor ?? 1 << 30));
+
+          list.sort(
+            (a, b) => (a.nomor ?? 1 << 30).compareTo(b.nomor ?? 1 << 30),
+          );
         }
       }
+
       if (!mounted) return;
+
       setState(() {
         _jadwal = j;
         _data = list;
@@ -115,6 +141,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
       });
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         _gagal = _pesanError(e);
         _memuat = false;
@@ -133,6 +160,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
         ),
       ),
     );
+
     if (ok == true) _muat();
   }
 
@@ -151,23 +179,44 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
 
   @override
   Widget build(BuildContext context) {
-    final pos = (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
-    final labelPos = pos.isEmpty ? 'Posyandu belum ditetapkan' : 'Posyandu ${labelPosyandu(pos)}';
+    final pos =
+        (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
+
+    final labelPos = pos.isEmpty
+        ? 'Posyandu belum ditetapkan'
+        : 'Posyandu ${labelPosyandu(pos)}';
+
     final j = _jadwal;
+
     final daftar = switch (_aktif) {
       'Perlu Catatan' => _data.where((d) => !d.selesai).toList(),
       'Selesai' => _data.where((d) => d.selesai).toList(),
       _ => _data,
     };
+
     final perlu = _data.where((d) => !d.selesai).length;
 
     return Scaffold(
       backgroundColor: AppColors.latar,
       appBar: AppBar(
-        title: const Text('Hasil Pendataan', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Hasil Pendataan',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
+        backgroundColor: _hijauHeader,
+        surfaceTintColor: _hijauHeader,
+        foregroundColor: Colors.white,
         elevation: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: _hijauHeader,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: _muat,
@@ -179,8 +228,12 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
               padding: const EdgeInsets.only(bottom: 12),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Pill(labelPos,
-                    bg: AppColors.biruMuda, fg: AppColors.biru, icon: Icons.place_outlined),
+                child: Pill(
+                  labelPos,
+                  bg: AppColors.biruMuda,
+                  fg: AppColors.biru,
+                  icon: Icons.place_outlined,
+                ),
               ),
             ),
             if (_memuat)
@@ -193,11 +246,19 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                 color: AppColors.kuningMuda,
                 child: Row(
                   children: [
-                    const Icon(Icons.cloud_off, color: AppColors.kuning),
+                    const Icon(
+                      Icons.cloud_off,
+                      color: AppColors.kuning,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(_gagal!,
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      child: Text(
+                        _gagal!,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
@@ -215,29 +276,48 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                 icon: Icons.event_busy,
                 child: Text(
                   'Belum ada jadwal aktif untuk $labelPos.',
-                  style: const TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.teksRedup,
+                  ),
                 ),
               )
             else ...[
               SectionCard(
                 title: 'Sesi $labelPos',
                 icon: Icons.event_note,
-                trailing: Pill('$perlu perlu catatan',
-                    bg: AppColors.kuningMuda, fg: AppColors.kuning),
+                trailing: Pill(
+                  '$perlu perlu catatan',
+                  bg: AppColors.kuningMuda,
+                  fg: AppColors.kuning,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${formatTanggal(j.tanggal)} · ${j.jam} WIB',
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                    Text(
+                      '${formatTanggal(j.tanggal)} · ${j.jam} WIB',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
                     if (j.lokasi.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      Text(j.lokasi,
-                          style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                      Text(
+                        j.lokasi,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.teksRedup,
+                        ),
+                      ),
                     ],
                     const SizedBox(height: 6),
                     Text(
                       '${_data.length} anak sudah check-in. Ketuk antrean untuk mengisi catatan, ketuk ikon untuk melihat data pencatatan anak.',
-                      style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup),
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.teksRedup,
+                      ),
                     ),
                   ],
                 ),
@@ -255,9 +335,14 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                           selectedColor: AppColors.hijau,
                           backgroundColor: Colors.white,
                           labelStyle: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: _aktif == f ? Colors.white : Colors.black87),
-                          onSelected: (_) => setState(() => _aktif = f),
+                            fontWeight: FontWeight.w700,
+                            color: _aktif == f
+                                ? Colors.white
+                                : Colors.black87,
+                          ),
+                          onSelected: (_) {
+                            setState(() => _aktif = f);
+                          },
                         ),
                       ),
                   ],
@@ -269,8 +354,12 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                   child: Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text('Belum ada anak yang check-in',
-                          style: TextStyle(color: AppColors.teksRedup)),
+                      child: Text(
+                        'Belum ada anak yang check-in',
+                        style: TextStyle(
+                          color: AppColors.teksRedup,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -303,41 +392,66 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                     color: AppColors.hijauMuda,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(d.kodeNomor,
-                      style: const TextStyle(
-                          color: AppColors.hijau,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13)),
+                  child: Text(
+                    d.kodeNomor,
+                    style: const TextStyle(
+                      color: AppColors.hijau,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(d.nama,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13.5)),
-                      Text('${d.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${d.usia}',
-                          style: const TextStyle(
-                              fontSize: 11, color: AppColors.teksRedup)),
+                      Text(
+                        d.nama,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                      Text(
+                        '${d.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${d.usia}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.teksRedup,
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
                         children: [
                           d.sudahDiukur
-                              ? const Pill('Sudah diukur kader', icon: Icons.straighten)
-                              : const Pill('Belum diukur kader',
-                                  bg: AppColors.kuningMuda, fg: AppColors.kuning),
+                              ? const Pill(
+                                  'Sudah diukur kader',
+                                  icon: Icons.straighten,
+                                )
+                              : const Pill(
+                                  'Belum diukur kader',
+                                  bg: AppColors.kuningMuda,
+                                  fg: AppColors.kuning,
+                                ),
                           d.selesai
-                              ? const Pill('Catatan selesai', icon: Icons.check)
-                              : const Pill('Perlu catatan',
-                                  bg: AppColors.biruMuda, fg: AppColors.biru),
+                              ? const Pill(
+                                  'Catatan selesai',
+                                  icon: Icons.check,
+                                )
+                              : const Pill(
+                                  'Perlu catatan',
+                                  bg: AppColors.biruMuda,
+                                  fg: AppColors.biru,
+                                ),
                           if (d.peringatan.isNotEmpty)
-                            const Pill('Ada peringatan',
-                                bg: AppColors.merahMuda,
-                                fg: AppColors.merah,
-                                icon: Icons.warning_amber_rounded),
+                            const Pill(
+                              'Ada peringatan',
+                              bg: AppColors.merahMuda,
+                              fg: AppColors.merah,
+                              icon: Icons.warning_amber_rounded,
+                            ),
                         ],
                       ),
                     ],
@@ -345,7 +459,10 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                 ),
                 IconButton(
                   tooltip: 'Data pencatatan anak',
-                  icon: const Icon(Icons.assignment_ind_outlined, color: AppColors.hijau),
+                  icon: const Icon(
+                    Icons.assignment_ind_outlined,
+                    color: AppColors.hijau,
+                  ),
                   onPressed: () => _bukaDataAnak(d),
                 ),
               ],

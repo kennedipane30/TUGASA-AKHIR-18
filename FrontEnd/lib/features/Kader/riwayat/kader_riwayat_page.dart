@@ -1,15 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 
 const _prefix = '/kader/riwayat';
+const _hijauHeader = Color(0xFF0B6043);
 
 // ---------------------------------------------------------------------------
 // FUNGSI BANTU
 // ---------------------------------------------------------------------------
+
 String _teks(dynamic v) => v?.toString().trim() ?? '';
 
 String _num(dynamic v) {
@@ -25,14 +28,25 @@ DateTime? _tgl(dynamic v) {
 }
 
 const _bulan = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
 ];
 
 String _fmtTgl(DateTime? t) =>
     t == null ? '-' : '${t.day} ${_bulan[t.month - 1]} ${t.year}';
 
-String _usia(int bln) => bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
+String _usia(int bln) =>
+    bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
 
 String _jam(dynamic v) {
   final s = _teks(v);
@@ -43,6 +57,7 @@ String _pesanError(Object e) {
   if (e is DioException) {
     final d = e.response?.data;
     if (d is Map && d['error'] != null) return d['error'].toString();
+
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
@@ -54,12 +69,18 @@ String _pesanError(Object e) {
         return 'Terjadi kesalahan (kode ${e.response?.statusCode ?? '-'}).';
     }
   }
+
   return 'Terjadi kesalahan: $e';
 }
 
 Future<dynamic> _get(String path) async {
-  final r = await ApiClient.dio.get(path,
-      options: Options(receiveTimeout: const Duration(seconds: 15)));
+  final r = await ApiClient.dio.get(
+    path,
+    options: Options(
+      receiveTimeout: const Duration(seconds: 15),
+    ),
+  );
+
   dynamic d = r.data;
   if (d is Map && d.containsKey('data')) d = d['data'];
   return d;
@@ -67,11 +88,15 @@ Future<dynamic> _get(String path) async {
 
 List<Map<String, dynamic>> _daftarPeta(dynamic d) {
   final list = <Map<String, dynamic>>[];
+
   if (d is List) {
     for (final e in d) {
-      if (e is Map) list.add(Map<String, dynamic>.from(e));
+      if (e is Map) {
+        list.add(Map<String, dynamic>.from(e));
+      }
     }
   }
+
   return list;
 }
 
@@ -82,18 +107,40 @@ Widget _gagalKartu(String pesan, VoidCallback ulang) => SectionCard(
           const Icon(Icons.cloud_off, color: AppColors.kuning),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(pesan,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            child: Text(
+              pesan,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
           ),
-          TextButton(onPressed: ulang, child: const Text('Coba lagi')),
+          TextButton(
+            onPressed: ulang,
+            child: const Text('Coba lagi'),
+          ),
         ],
       ),
     );
 
 AppBar _bar(String judul) => AppBar(
-      title: Text(judul, style: const TextStyle(fontWeight: FontWeight.w800)),
-      backgroundColor: Colors.white,
+      title: Text(
+        judul,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      centerTitle: true,
+      backgroundColor: _hijauHeader,
+      surfaceTintColor: _hijauHeader,
+      foregroundColor: Colors.white,
       elevation: 0,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: _hijauHeader,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
     );
 
 Widget _memuatBox() => const Padding(
@@ -104,6 +151,7 @@ Widget _memuatBox() => const Padding(
 // ---------------------------------------------------------------------------
 // HALAMAN 1: DAFTAR TANGGAL POSYANDU
 // ---------------------------------------------------------------------------
+
 class KaderRiwayatPage extends StatefulWidget {
   const KaderRiwayatPage({super.key});
 
@@ -126,12 +174,15 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
     try {
       final d = await _get('$_prefix/jadwal');
       final list = _daftarPeta(d);
+
       list.sort((a, b) {
         final ta = _tgl(a['tanggal']) ?? DateTime(1970);
         final tb = _tgl(b['tanggal']) ?? DateTime(1970);
         return tb.compareTo(ta);
       });
+
       if (!mounted) return;
+
       setState(() {
         _data = list;
         _gagal = null;
@@ -139,6 +190,7 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
       });
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         _gagal = _pesanError(e);
         _memuat = false;
@@ -168,12 +220,26 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
               SectionCard(
                 title: 'Tanggal Posyandu',
                 icon: Icons.history,
-                trailing: const Text('Ketuk untuk melihat',
-                    style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
+                trailing: const Text(
+                  'Ketuk untuk melihat',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: AppColors.teksRedup,
+                  ),
+                ),
                 child: _data.isEmpty
-                    ? const Text('Belum ada jadwal posyandu.',
-                        style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
-                    : Column(children: [for (final j in _data) _baris(j)]),
+                    ? const Text(
+                        'Belum ada jadwal posyandu.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.teksRedup,
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          for (final j in _data) _baris(j),
+                        ],
+                      ),
               ),
           ],
         ),
@@ -186,6 +252,7 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
     final jam = _jam(j['jam_mulai']);
     final lokasi = _teks(j['lokasi']);
     final checkin = int.tryParse(_teks(j['jumlah_checkin'])) ?? 0;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
@@ -215,16 +282,22 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
                   ),
                   child: Column(
                     children: [
-                      Text(t == null ? '-' : t.day.toString().padLeft(2, '0'),
-                          style: const TextStyle(
-                              color: AppColors.hijau,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 18)),
-                      Text(t == null ? '' : _bulan[t.month - 1].substring(0, 3),
-                          style: const TextStyle(
-                              color: AppColors.hijau,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11)),
+                      Text(
+                        t == null ? '-' : t.day.toString().padLeft(2, '0'),
+                        style: const TextStyle(
+                          color: AppColors.hijau,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Text(
+                        t == null ? '' : _bulan[t.month - 1].substring(0, 3),
+                        style: const TextStyle(
+                          color: AppColors.hijau,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -233,21 +306,36 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_fmtTgl(t),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13.5)),
                       Text(
-                          [if (jam.isNotEmpty) '$jam WIB', if (lokasi.isNotEmpty) lokasi]
-                              .join(' · '),
-                          style: const TextStyle(
-                              fontSize: 11, color: AppColors.teksRedup)),
+                        _fmtTgl(t),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                      Text(
+                        [
+                          if (jam.isNotEmpty) '$jam WIB',
+                          if (lokasi.isNotEmpty) lokasi,
+                        ].join(' · '),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.teksRedup,
+                        ),
+                      ),
                       const SizedBox(height: 4),
-                      Pill('$checkin anak check-in',
-                          bg: AppColors.biruMuda, fg: AppColors.biru),
+                      Pill(
+                        '$checkin anak check-in',
+                        bg: AppColors.biruMuda,
+                        fg: AppColors.biru,
+                      ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: AppColors.teksRedup),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.teksRedup,
+                ),
               ],
             ),
           ),
@@ -260,10 +348,15 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
 // ---------------------------------------------------------------------------
 // HALAMAN 2: DAFTAR ANAK PADA SATU JADWAL
 // ---------------------------------------------------------------------------
+
 class _DaftarAnakPage extends StatefulWidget {
   final String jadwalId;
   final String judul;
-  const _DaftarAnakPage({required this.jadwalId, required this.judul});
+
+  const _DaftarAnakPage({
+    required this.jadwalId,
+    required this.judul,
+  });
 
   @override
   State<_DaftarAnakPage> createState() => _DaftarAnakPageState();
@@ -282,11 +375,21 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
 
   Future<void> _muat() async {
     try {
-      final d = await _get('$_prefix/jadwal/${widget.jadwalId}/anak');
+      final d = await _get(
+        '$_prefix/jadwal/${widget.jadwalId}/anak',
+      );
       final list = _daftarPeta(d);
-      list.sort((a, b) => (int.tryParse(_teks(a['nomor_antrean'])) ?? 1 << 30)
-          .compareTo(int.tryParse(_teks(b['nomor_antrean'])) ?? 1 << 30));
+
+      list.sort((a, b) {
+        final nomorA =
+            int.tryParse(_teks(a['nomor_antrean'])) ?? (1 << 30);
+        final nomorB =
+            int.tryParse(_teks(b['nomor_antrean'])) ?? (1 << 30);
+        return nomorA.compareTo(nomorB);
+      });
+
       if (!mounted) return;
+
       setState(() {
         _data = list;
         _gagal = null;
@@ -294,6 +397,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
       });
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         _gagal = _pesanError(e);
         _memuat = false;
@@ -323,12 +427,24 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
               SectionCard(
                 title: 'Daftar Balita',
                 icon: Icons.child_care,
-                trailing: Pill('${_data.length} anak',
-                    bg: AppColors.hijauMuda, fg: AppColors.hijau),
+                trailing: Pill(
+                  '${_data.length} anak',
+                  bg: AppColors.hijauMuda,
+                  fg: AppColors.hijau,
+                ),
                 child: _data.isEmpty
-                    ? const Text('Belum ada anak yang check-in pada jadwal ini.',
-                        style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
-                    : Column(children: [for (final a in _data) _baris(a)]),
+                    ? const Text(
+                        'Belum ada anak yang check-in pada jadwal ini.',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.teksRedup,
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          for (final a in _data) _baris(a),
+                        ],
+                      ),
               ),
           ],
         ),
@@ -338,10 +454,12 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
 
   Widget _baris(Map<String, dynamic> a) {
     final nomor = int.tryParse(_teks(a['nomor_antrean']));
-    final kode = nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
+    final kode =
+        nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
     final diukur = a['sudah_diukur'] == true;
     final dicatat = a['sudah_dicatat_bidan'] == true;
     final usia = int.tryParse(_teks(a['usia_bulan'])) ?? 0;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
@@ -352,8 +470,9 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) =>
-                  _HasilAnakPage(pendaftaranId: _teks(a['pendaftaran_id'])),
+              builder: (_) => _HasilAnakPage(
+                pendaftaranId: _teks(a['pendaftaran_id']),
+              ),
             ),
           ),
           child: Padding(
@@ -368,44 +487,69 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                     color: AppColors.hijauMuda,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(kode,
-                      style: const TextStyle(
-                          color: AppColors.hijau,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13)),
+                  child: Text(
+                    kode,
+                    style: const TextStyle(
+                      color: AppColors.hijau,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_teks(a['nama']),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13.5)),
                       Text(
-                          '${_teks(a['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(usia)}',
-                          style: const TextStyle(
-                              fontSize: 11, color: AppColors.teksRedup)),
+                        _teks(a['nama']),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                      Text(
+                        '${_teks(a['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(usia)}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.teksRedup,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Wrap(
                         spacing: 6,
                         runSpacing: 4,
                         children: [
                           diukur
-                              ? const Pill('Sudah diukur', icon: Icons.check)
-                              : const Pill('Belum diukur',
-                                  bg: AppColors.kuningMuda, fg: AppColors.kuning),
+                              ? const Pill(
+                                  'Sudah diukur',
+                                  icon: Icons.check,
+                                )
+                              : const Pill(
+                                  'Belum diukur',
+                                  bg: AppColors.kuningMuda,
+                                  fg: AppColors.kuning,
+                                ),
                           dicatat
-                              ? const Pill('Dicatat bidan',
-                                  bg: AppColors.biruMuda, fg: AppColors.biru)
-                              : const Pill('Belum dicatat bidan',
-                                  bg: AppColors.kuningMuda, fg: AppColors.kuning),
+                              ? const Pill(
+                                  'Dicatat bidan',
+                                  bg: AppColors.biruMuda,
+                                  fg: AppColors.biru,
+                                )
+                              : const Pill(
+                                  'Belum dicatat bidan',
+                                  bg: AppColors.kuningMuda,
+                                  fg: AppColors.kuning,
+                                ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: AppColors.teksRedup),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.teksRedup,
+                ),
               ],
             ),
           ),
@@ -418,9 +562,13 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
 // ---------------------------------------------------------------------------
 // HALAMAN 3: HASIL PENDATAAN ANAK
 // ---------------------------------------------------------------------------
+
 class _HasilAnakPage extends StatefulWidget {
   final String pendaftaranId;
-  const _HasilAnakPage({required this.pendaftaranId});
+
+  const _HasilAnakPage({
+    required this.pendaftaranId,
+  });
 
   @override
   State<_HasilAnakPage> createState() => _HasilAnakPageState();
@@ -447,16 +595,24 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
   Future<void> _muat() async {
     try {
       final peta = <String, String>{};
+
       try {
         final v = await _get('/vaksin');
         if (v is List) {
           for (final e in v) {
-            if (e is Map) peta[_teks(e['id'])] = _teks(e['nama']);
+            if (e is Map) {
+              peta[_teks(e['id'])] = _teks(e['nama']);
+            }
           }
         }
       } catch (_) {}
-      final d = await _get('$_prefix/pendaftaran/${widget.pendaftaranId}');
+
+      final d = await _get(
+        '$_prefix/pendaftaran/${widget.pendaftaranId}',
+      );
+
       if (!mounted) return;
+
       setState(() {
         _d = d is Map ? Map<String, dynamic>.from(d) : null;
         _namaVaksin = peta;
@@ -465,6 +621,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
       });
     } catch (e) {
       if (!mounted) return;
+
       setState(() {
         _gagal = _pesanError(e);
         _memuat = false;
@@ -482,31 +639,59 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
           children: [
             SizedBox(
               width: 120,
-              child: Text(label,
-                  style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.teksRedup,
+                ),
+              ),
             ),
             Expanded(
-              child: Text(nilai.isEmpty ? '-' : nilai,
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+              child: Text(
+                nilai.isEmpty ? '-' : nilai,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),
       );
 
-  Widget _kotak(String nilai, String label, Color bg, Color fg) => Expanded(
+  Widget _kotak(
+    String nilai,
+    String label,
+    Color bg,
+    Color fg,
+  ) =>
+      Expanded(
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration:
-              BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Column(
             children: [
-              Text(nilai,
-                  style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w800, color: fg)),
+              Text(
+                nilai,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: fg,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 10, color: AppColors.teksRedup)),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: AppColors.teksRedup,
+                ),
+              ),
             ],
           ),
         ),
@@ -531,7 +716,9 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                 _muat();
               })
             else if (_d == null)
-              const SectionCard(child: Text('Data tidak tersedia.'))
+              const SectionCard(
+                child: Text('Data tidak tersedia.'),
+              )
             else
               ..._isi(_d!),
           ],
@@ -547,14 +734,17 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
     final prev = _peta(d['pengukuran_sebelumnya']);
     final c = _peta(d['catatan']);
     final usia = int.tryParse(_teks(d['usia_bulan'])) ?? 0;
-    final imun = (d['imunisasi'] as List? ?? []).whereType<Map>().toList();
-    final sup = (d['suplemen'] as List? ?? []).whereType<Map>().toList();
+    final imun =
+        (d['imunisasi'] as List? ?? []).whereType<Map>().toList();
+    final sup =
+        (d['suplemen'] as List? ?? []).whereType<Map>().toList();
 
     final gejala = [
       if (c?['demam'] == true) 'Demam',
       if (c?['diare'] == true) 'Diare',
       if (c?['batuk'] == true) 'Batuk',
     ];
+
     final ulang = _tgl(c?['tanggal_kunjungan_ulang']);
     final peringatan = _teks(u?['peringatan_validasi']);
 
@@ -562,16 +752,26 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
       SectionCard(
         title: _teks(anak['nama']).isEmpty ? 'Anak' : _teks(anak['nama']),
         icon: Icons.child_care,
-        trailing: Pill(_fmtTgl(_tgl(jadwal['tanggal'])),
-            bg: AppColors.hijauMuda, fg: AppColors.hijau),
+        trailing: Pill(
+          _fmtTgl(_tgl(jadwal['tanggal'])),
+          bg: AppColors.hijauMuda,
+          fg: AppColors.hijau,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _baris('Jenis kelamin',
-                _teks(anak['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'),
+            _baris(
+              'Jenis kelamin',
+              _teks(anak['jenis_kelamin']) == 'P'
+                  ? 'Perempuan'
+                  : 'Laki-laki',
+            ),
             _baris('Usia', _usia(usia)),
             if (_jam(jadwal['jam_mulai']).isNotEmpty)
-              _baris('Sesi posyandu', '${_jam(jadwal['jam_mulai'])} WIB'),
+              _baris(
+                'Sesi posyandu',
+                '${_jam(jadwal['jam_mulai'])} WIB',
+              ),
           ],
         ),
       ),
@@ -579,44 +779,76 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
         title: 'Hasil Pengukuran (Kader)',
         icon: Icons.straighten,
         child: u == null
-            ? const Text('Kader belum menginput pengukuran.',
-                style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+            ? const Text(
+                'Kader belum menginput pengukuran.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.teksRedup,
+                ),
+              )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      _kotak(_num(u['bb_kg']), 'Berat\n(kg)', AppColors.biruMuda,
-                          AppColors.biru),
+                      _kotak(
+                        _num(u['bb_kg']),
+                        'Berat\n(kg)',
+                        AppColors.biruMuda,
+                        AppColors.biru,
+                      ),
                       const SizedBox(width: 8),
-                      _kotak(_num(u['tb_cm']), 'Tinggi/\nPanjang (cm)',
-                          AppColors.hijauMuda, AppColors.hijau),
+                      _kotak(
+                        _num(u['tb_cm']),
+                        'Tinggi/\nPanjang (cm)',
+                        AppColors.hijauMuda,
+                        AppColors.hijau,
+                      ),
                       const SizedBox(width: 8),
-                      _kotak(_num(u['lingkar_kepala_cm']), 'Lingkar\nKepala (cm)',
-                          AppColors.kuningMuda, AppColors.kuning),
+                      _kotak(
+                        _num(u['lingkar_kepala_cm']),
+                        'Lingkar\nKepala (cm)',
+                        AppColors.kuningMuda,
+                        AppColors.kuning,
+                      ),
                       const SizedBox(width: 8),
-                      _kotak(_num(u['lila_cm']), 'LiLA\n(cm)', AppColors.merahMuda,
-                          AppColors.merah),
+                      _kotak(
+                        _num(u['lila_cm']),
+                        'LiLA\n(cm)',
+                        AppColors.merahMuda,
+                        AppColors.merah,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   _baris('Cara ukur', _teks(u['cara_ukur'])),
-                  _baris('Sedang sakit', u['sedang_sakit'] == true ? 'Ya' : 'Tidak'),
-                  _baris('ASI eksklusif', u['asi_eksklusif'] == true ? 'Ya' : 'Tidak'),
+                  _baris(
+                    'Sedang sakit',
+                    u['sedang_sakit'] == true ? 'Ya' : 'Tidak',
+                  ),
+                  _baris(
+                    'ASI eksklusif',
+                    u['asi_eksklusif'] == true ? 'Ya' : 'Tidak',
+                  ),
                   if (_teks(u['keluhan']).isNotEmpty)
                     _baris('Keluhan', _teks(u['keluhan'])),
                   if (_teks(u['catatan']).isNotEmpty)
                     _baris('Catatan kader', _teks(u['catatan'])),
                   if (prev != null)
-                    _baris('Sebelumnya',
-                        'BB ${_num(prev['bb_kg'])} kg · TB ${_num(prev['tb_cm'])} cm'),
+                    _baris(
+                      'Sebelumnya',
+                      'BB ${_num(prev['bb_kg'])} kg · TB ${_num(prev['tb_cm'])} cm',
+                    ),
                   if (peringatan.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text('Perhatian: $peringatan',
-                        style: const TextStyle(
-                            color: AppColors.merah,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700)),
+                    Text(
+                      'Perhatian: $peringatan',
+                      style: const TextStyle(
+                        color: AppColors.merah,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -625,8 +857,13 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
         title: 'Catatan Bidan',
         icon: Icons.assignment_outlined,
         child: c == null
-            ? const Text('Bidan belum menuliskan catatan.',
-                style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+            ? const Text(
+                'Bidan belum menuliskan catatan.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: AppColors.teksRedup,
+                ),
+              )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -638,16 +875,26 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                         runSpacing: 4,
                         children: [
                           for (final g in gejala)
-                            Pill(g, bg: AppColors.merahMuda, fg: AppColors.merah),
+                            Pill(
+                              g,
+                              bg: AppColors.merahMuda,
+                              fg: AppColors.merah,
+                            ),
                         ],
                       ),
                     ),
-                  _baris('Penyakit penyerta', _teks(c['penyakit_penyerta'])),
+                  _baris(
+                    'Penyakit penyerta',
+                    _teks(c['penyakit_penyerta']),
+                  ),
                   _baris('Keluhan', _teks(c['keluhan'])),
                   _baris('Evaluasi', _teks(c['catatan_evaluasi'])),
                   _baris('Saran gizi', _teks(c['saran_gizi'])),
                   _baris('Saran pola asuh', _teks(c['saran_pola_asuh'])),
-                  _baris('Kunjungan ulang', ulang == null ? '' : _fmtTgl(ulang)),
+                  _baris(
+                    'Kunjungan ulang',
+                    ulang == null ? '' : _fmtTgl(ulang),
+                  ),
                 ],
               ),
       ),
@@ -665,17 +912,28 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                          '${_namaVaksin[_teks(v['jenis_vaksin_id'])] ?? 'Vaksin'} · Dosis ${_teks(v['dosis_ke'])}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13)),
+                        '${_namaVaksin[_teks(v['jenis_vaksin_id'])] ?? 'Vaksin'} · Dosis ${_teks(v['dosis_ke'])}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
                       if (_teks(v['kondisi_anak']).isNotEmpty)
-                        Text('Kondisi: ${_teks(v['kondisi_anak'])}',
-                            style: const TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
+                        Text(
+                          'Kondisi: ${_teks(v['kondisi_anak'])}',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.teksRedup,
+                          ),
+                        ),
                       if (_teks(v['catatan']).isNotEmpty)
-                        Text('Catatan: ${_teks(v['catatan'])}',
-                            style: const TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
+                        Text(
+                          'Catatan: ${_teks(v['catatan'])}',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.teksRedup,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -695,17 +953,30 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_namaSuplemen[_teks(s['jenis'])] ?? _teks(s['jenis']),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13)),
+                      Text(
+                        _namaSuplemen[_teks(s['jenis'])] ??
+                            _teks(s['jenis']),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
                       if (_teks(s['keterangan_dosis']).isNotEmpty)
-                        Text('Dosis: ${_teks(s['keterangan_dosis'])}',
-                            style: const TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
+                        Text(
+                          'Dosis: ${_teks(s['keterangan_dosis'])}',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.teksRedup,
+                          ),
+                        ),
                       if (_teks(s['catatan']).isNotEmpty)
-                        Text('Catatan: ${_teks(s['catatan'])}',
-                            style: const TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
+                        Text(
+                          'Catatan: ${_teks(s['catatan'])}',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.teksRedup,
+                          ),
+                        ),
                     ],
                   ),
                 ),
