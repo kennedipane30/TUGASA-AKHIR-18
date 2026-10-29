@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'auth_provider.dart';
 import 'register_page.dart';
@@ -10,10 +11,8 @@ const _teal = Color(0xFF2BB59A);
 const _judul = Color(0xFF0F6F82);
 const _oranye = Color(0xFFFF7A1A);
 const _oranyeGelap = Color(0xFFE8590C);
-const _latar = Color(0xFFF3F2FB);
+const _latar = Color(0xFF0B6B4D);
 const _isiField = Color(0xFFF3FBF8);
-const _biruMuda = Color(0xFFE6F1FF);
-const _biru = Color(0xFF2F6FD6);
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -42,7 +41,11 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _submit() async {
     if (_idf.text.trim().isEmpty || _pw.text.isEmpty) {
-      _snack('No. HP, NIK, atau username dan kata sandi wajib diisi');
+      _snack('No. HP atau NIK dan kata sandi wajib diisi');
+      return;
+    }
+    if (!RegExp(r'^[0-9]+$').hasMatch(_idf.text.trim())) {
+      _snack('No. HP atau NIK harus berupa angka');
       return;
     }
     try {
@@ -87,23 +90,16 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _kepala() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
       child: Column(
         children: [
-          const SizedBox(height: 28),
-          ClipRect(
-            child: Align(
-              alignment: Alignment.center,
-              heightFactor: 0.82,
-              child: Image.asset(
-                'logo.png',
-                width: 190,
-                height: 190,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 100),
-              ),
-            ),
+          Image.asset(
+            'logo.png',
+            width: 150,
+            height: 150,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 100),
           ),
           const SizedBox(height: 4),
           const Text('Posyandu Care',
@@ -128,14 +124,15 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: _latar,
       body: Stack(
         children: [
-          // Latar gradien hijau di bagian atas
-          Container(
-            height: 370,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [_hijauGelap, _hijau],
+          // Latar gradien hijau memenuhi seluruh layar
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [_hijauGelap, _hijau],
+                ),
               ),
             ),
           ),
@@ -194,10 +191,12 @@ class _LoginPageState extends State<LoginPage> {
                         _label('No. HP, NIK, atau Username', 'Wajib', _oranye),
                         TextField(
                           controller: _idf,
-                          keyboardType: TextInputType.text,
+                          keyboardType: TextInputType.number,
                           textInputAction: TextInputAction.next,
-                          decoration: _dekor(
-                              'Contoh: 0812-3456-7890, 16 digit NIK, atau username'),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: _dekor('0822/1212'),
                         ),
                         const SizedBox(height: 14),
                         _label('Kata Sandi / PIN 6 Digit', 'Enkripsi Lokal',
@@ -305,51 +304,6 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Pembatas
-                        Row(
-                          children: [
-                            const Expanded(child: Divider(color: Colors.black12)),
-                            Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _biruMuda,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Text('ATAU MASUK LEBIH CEPAT',
-                                  style: TextStyle(
-                                      color: _biru,
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w800)),
-                            ),
-                            const Expanded(child: Divider(color: Colors.black12)),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Biometrik
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: _biruMuda,
-                              foregroundColor: _biru,
-                              side: const BorderSide(color: Color(0xFFCFE1FA)),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14)),
-                            ),
-                            onPressed: () => _snack(
-                                'Masuk dengan biometrik akan tersedia pada tahap berikutnya'),
-                            icon: const Icon(Icons.fingerprint, size: 22),
-                            label: const Text('Masuk dengan Sidik Jari / Biometrik',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w700, fontSize: 12.5)),
                           ),
                         ),
                         const SizedBox(height: 16),

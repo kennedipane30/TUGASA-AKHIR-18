@@ -1,11 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 
 const _prefix = '/sekretaris/riwayat';
+
+const _hijauGelap = Color(0xFF14634A);
+const _hijauHeader = Color(0xFF1B5E3A);
+const _teksGelap = Color(0xFF1F2937);
 
 // ---------------------------------------------------------------------------
 // FUNGSI BANTU
@@ -75,8 +80,86 @@ List<Map<String, dynamic>> _daftarPeta(dynamic d) {
   return list;
 }
 
-Widget _gagalKartu(String pesan, VoidCallback ulang) => SectionCard(
-      color: AppColors.kuningMuda,
+// ---------------------------------------------------------------------------
+// KOMPONEN TAMPILAN (SERAGAM DENGAN HALAMAN BUAT AKUN)
+// ---------------------------------------------------------------------------
+PreferredSizeWidget _bar(BuildContext context, String judul) => AppBar(
+      backgroundColor: _hijauHeader,
+      surfaceTintColor: _hijauHeader,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: false,
+      automaticallyImplyLeading: false,
+      titleSpacing: Navigator.canPop(context) ? 0 : 20,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: _hijauHeader,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      leading: Navigator.canPop(context)
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.maybePop(context),
+            )
+          : null,
+      title: Text(judul,
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+    );
+
+Widget _kartu({
+  required String title,
+  required IconData icon,
+  Widget? trailing,
+  required Widget child,
+}) =>
+    Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE6ECE8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.hijauMuda,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFBFE5D0)),
+                ),
+                child: Icon(icon, color: _hijauGelap, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 14.5, fontWeight: FontWeight.w800, color: _teksGelap)),
+              ),
+              if (trailing != null) ...[const SizedBox(width: 8), trailing],
+            ],
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+
+Widget _gagalKartu(String pesan, VoidCallback ulang) => Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.kuningMuda,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE6ECE8)),
+      ),
       child: Row(
         children: [
           const Icon(Icons.cloud_off, color: AppColors.kuning),
@@ -88,12 +171,6 @@ Widget _gagalKartu(String pesan, VoidCallback ulang) => SectionCard(
           TextButton(onPressed: ulang, child: const Text('Coba lagi')),
         ],
       ),
-    );
-
-AppBar _bar(String judul) => AppBar(
-      title: Text(judul, style: const TextStyle(fontWeight: FontWeight.w800)),
-      backgroundColor: Colors.white,
-      elevation: 0,
     );
 
 Widget _memuatBox() => const Padding(
@@ -150,7 +227,7 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: _bar('Riwayat Pemeriksaan'),
+      appBar: _bar(context, 'Riwayat Pemeriksaan'),
       body: RefreshIndicator(
         onRefresh: _muat,
         child: ListView(
@@ -165,7 +242,7 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
                 _muat();
               })
             else
-              SectionCard(
+              _kartu(
                 title: 'Tanggal Posyandu',
                 icon: Icons.history,
                 trailing: const Text('Ketuk untuk melihat',
@@ -190,9 +267,9 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: AppColors.latar,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
@@ -202,8 +279,12 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
               ),
             ),
           ),
-          child: Padding(
+          child: Container(
             padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE6ECE8)),
+            ),
             child: Row(
               children: [
                 Container(
@@ -212,6 +293,7 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
                   decoration: BoxDecoration(
                     color: AppColors.hijauMuda,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFBFE5D0)),
                   ),
                   child: Column(
                     children: [
@@ -235,7 +317,9 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
                     children: [
                       Text(_fmtTgl(t),
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13.5)),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13.5,
+                              color: _teksGelap)),
                       Text(
                           [if (jam.isNotEmpty) '$jam WIB', if (lokasi.isNotEmpty) lokasi]
                               .join(' · '),
@@ -305,7 +389,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: _bar(widget.judul),
+      appBar: _bar(context, widget.judul),
       body: RefreshIndicator(
         onRefresh: _muat,
         child: ListView(
@@ -320,7 +404,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                 _muat();
               })
             else
-              SectionCard(
+              _kartu(
                 title: 'Daftar Balita',
                 icon: Icons.child_care,
                 trailing: Pill('${_data.length} anak',
@@ -346,9 +430,9 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: AppColors.latar,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
@@ -356,8 +440,12 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                   _HasilAnakPage(pendaftaranId: _teks(a['pendaftaran_id'])),
             ),
           ),
-          child: Padding(
+          child: Container(
             padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE6ECE8)),
+            ),
             child: Row(
               children: [
                 Container(
@@ -367,6 +455,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                   decoration: BoxDecoration(
                     color: AppColors.hijauMuda,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFBFE5D0)),
                   ),
                   child: Text(kode,
                       style: const TextStyle(
@@ -381,7 +470,9 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                     children: [
                       Text(_teks(a['nama']),
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13.5)),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13.5,
+                              color: _teksGelap)),
                       Text(
                           '${_teks(a['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(usia)}',
                           style: const TextStyle(
@@ -487,7 +578,8 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
             ),
             Expanded(
               child: Text(nilai.isEmpty ? '-' : nilai,
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                  style: const TextStyle(
+                      fontSize: 12.5, fontWeight: FontWeight.w700, color: _teksGelap)),
             ),
           ],
         ),
@@ -516,7 +608,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: _bar('Hasil Pendataan'),
+      appBar: _bar(context, 'Hasil Pendataan'),
       body: RefreshIndicator(
         onRefresh: _muat,
         child: ListView(
@@ -531,7 +623,12 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                 _muat();
               })
             else if (_d == null)
-              const SectionCard(child: Text('Data tidak tersedia.'))
+              _kartu(
+                title: 'Data Tidak Tersedia',
+                icon: Icons.info_outline,
+                child: const Text('Data tidak tersedia.',
+                    style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup)),
+              )
             else
               ..._isi(_d!),
           ],
@@ -559,7 +656,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
     final peringatan = _teks(u?['peringatan_validasi']);
 
     return [
-      SectionCard(
+      _kartu(
         title: _teks(anak['nama']).isEmpty ? 'Anak' : _teks(anak['nama']),
         icon: Icons.child_care,
         trailing: Pill(_fmtTgl(_tgl(jadwal['tanggal'])),
@@ -575,7 +672,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
           ],
         ),
       ),
-      SectionCard(
+      _kartu(
         title: 'Hasil Pengukuran (Kader)',
         icon: Icons.straighten,
         child: u == null
@@ -621,7 +718,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                 ],
               ),
       ),
-      SectionCard(
+      _kartu(
         title: 'Catatan Bidan',
         icon: Icons.assignment_outlined,
         child: c == null
@@ -652,7 +749,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
               ),
       ),
       if (imun.isNotEmpty)
-        SectionCard(
+        _kartu(
           title: 'Imunisasi',
           icon: Icons.vaccines_outlined,
           child: Column(
@@ -667,7 +764,9 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                       Text(
                           '${_namaVaksin[_teks(v['jenis_vaksin_id'])] ?? 'Vaksin'} · Dosis ${_teks(v['dosis_ke'])}',
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13)),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: _teksGelap)),
                       if (_teks(v['kondisi_anak']).isNotEmpty)
                         Text('Kondisi: ${_teks(v['kondisi_anak'])}',
                             style: const TextStyle(
@@ -683,7 +782,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
           ),
         ),
       if (sup.isNotEmpty)
-        SectionCard(
+        _kartu(
           title: 'Suplemen',
           icon: Icons.medication_outlined,
           child: Column(
@@ -697,7 +796,9 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                     children: [
                       Text(_namaSuplemen[_teks(s['jenis'])] ?? _teks(s['jenis']),
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13)),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: _teksGelap)),
                       if (_teks(s['keterangan_dosis']).isNotEmpty)
                         Text('Dosis: ${_teks(s['keterangan_dosis'])}',
                             style: const TextStyle(

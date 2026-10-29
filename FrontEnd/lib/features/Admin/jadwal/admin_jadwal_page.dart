@@ -1,5 +1,7 @@
+// ===== admin_jadwal_page.dart =====
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
@@ -70,8 +72,9 @@ class JadwalItem {
 // ---------------------------------------------------------------------------
 final Options _opsi = Options(receiveTimeout: const Duration(seconds: 15));
 
-const _hijauTua = Color(0xFF0B3D2E);
 const _hijauGelap = Color(0xFF14634A);
+const _hijauHeader = Color(0xFF1B5E3A);
+const _teksGelap = Color(0xFF1F2937);
 const _oranye = Color(0xFFEA580C);
 const _biru = Color(0xFF2B7BB9);
 
@@ -125,11 +128,10 @@ const _namaBulan = [
 String _tglPanjang(DateTime d) =>
     '${_namaHari[d.weekday - 1]}, ${d.day} ${_namaBulan[d.month - 1]} ${d.year}';
 
-InputDecoration _dekor(String label, {String? hint, IconData? icon}) {
+InputDecoration _dekor(String label, {String? hint}) {
   return InputDecoration(
     labelText: label,
     hintText: hint,
-    prefixIcon: icon == null ? null : Icon(icon, color: Colors.grey.shade600),
     filled: true,
     fillColor: AppColors.isiField,
     border: OutlineInputBorder(
@@ -233,69 +235,53 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
     // Jadwal yang sudah lewat tidak ditampilkan di sini, hanya di Riwayat Jadwal.
     final mendatang = _daftar.where((j) => j.aktif && !j.selesai).toList()
       ..sort((a, b) => a.tanggal.compareTo(b.tanggal));
+    final bisaKembali = Navigator.canPop(context);
 
     return Scaffold(
       backgroundColor: AppColors.latar,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _hijauHeader,
+        surfaceTintColor: _hijauHeader,
+        foregroundColor: Colors.white,
         elevation: 0,
+        centerTitle: false,
+        automaticallyImplyLeading: false,
+        titleSpacing: bisaKembali ? 0 : 20,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: _hijauHeader,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        leading: bisaKembali
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.maybePop(context),
+              )
+            : null,
         title: const Text('Jadwal',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-        actions: [
-          IconButton(
-            tooltip: 'Riwayat Jadwal',
-            icon: const Icon(Icons.history, color: _hijauGelap),
-            onPressed: _bukaRiwayat,
-          ),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.hijauMuda,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: _gagal == null ? AppColors.hijau : AppColors.kuning,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(_gagal == null ? 'Online' : 'Offline',
-                      style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.hijau)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-        ],
+            style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
       ),
       bottomNavigationBar: SafeArea(
         child: Container(
-          color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE6ECE8))),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: SizedBox(
             width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
+            height: 52,
+            child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _hijauTua,
+                backgroundColor: _hijauHeader,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
               onPressed: () => _form(),
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Jadwal Posyandu',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
+              child: const Text('Tambah Jadwal Posyandu',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
             ),
           ),
         ),
@@ -304,7 +290,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
         onRefresh: _muat,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.all(16),
           children: [
             _infoAtas(),
             if (_memuat)
@@ -313,12 +299,15 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                 child: Center(child: CircularProgressIndicator()),
               )
             else if (_gagal != null)
-              SectionCard(
-                color: AppColors.kuningMuda,
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.kuningMuda,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE6ECE8)),
+                ),
                 child: Row(
                   children: [
-                    const Icon(Icons.cloud_off, color: AppColors.kuning),
-                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(_gagal!,
                           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
@@ -334,25 +323,47 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                 ),
               )
             else ...[
-              SectionCard(
-                title: 'Jadwal Mendatang',
-                icon: Icons.event,
-                trailing: Pill('${mendatang.length} jadwal',
-                    bg: AppColors.hijauMuda, fg: AppColors.hijau),
-                child: mendatang.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Text(
-                          'Belum ada jadwal. Tekan "Tambah Jadwal Posyandu" untuk membuat jadwal baru. Jadwal yang sudah lewat ada di Riwayat Jadwal.',
-                          style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+              Container(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE6ECE8)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text('Jadwal Mendatang',
+                              style: TextStyle(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: _teksGelap)),
                         ),
-                      )
-                    : Column(children: [for (final j in mendatang) _kartu(j)]),
+                        Pill('${mendatang.length} jadwal',
+                            bg: AppColors.hijauMuda, fg: AppColors.hijau),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    mendatang.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              'Belum ada jadwal. Tekan "Tambah Jadwal Posyandu" untuk membuat jadwal baru. Jadwal yang sudah lewat ada di Riwayat Jadwal.',
+                              style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+                            ),
+                          )
+                        : Column(children: [for (final j in mendatang) _kartu(j)]),
+                  ],
+                ),
               ),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: AppButton('Lihat Riwayat Jadwal',
-                    icon: Icons.history, filled: false, onPressed: _bukaRiwayat),
+                    filled: false, onPressed: _bukaRiwayat),
               ),
             ],
           ],
@@ -363,25 +374,16 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
 
   Widget _infoAtas() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFE3F6EC),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFBFE5D0)),
       ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, color: _hijauGelap, size: 20),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Jadwal otomatis milik posyandu Anda dan hanya terlihat oleh orang tua, kader, dan bidan posyandu ini. Satu jadwal per tanggal. Check-in dibuka 1 jam sebelum mulai. Jadwal yang sudah lewat pindah ke Riwayat Jadwal dan tidak dapat diubah.',
-              style: TextStyle(fontSize: 12, height: 1.4, color: _hijauTua),
-            ),
-          ),
-        ],
+      child: const Text(
+        'Jadwal otomatis milik posyandu Anda dan hanya terlihat oleh orang tua, kader, dan bidan posyandu ini. Satu jadwal per tanggal. Check-in dibuka 1 jam sebelum mulai. Jadwal yang sudah lewat pindah ke Riwayat Jadwal dan tidak dapat diubah.',
+        style: TextStyle(fontSize: 12, height: 1.4, color: _hijauGelap),
       ),
     );
   }
@@ -401,32 +403,17 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
         children: [
           Row(
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.hijauMuda,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.event_available, color: _hijauGelap, size: 22),
-              ),
-              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_tglPanjang(j.tanggal),
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 14, color: _teksGelap)),
                     const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        const Icon(Icons.schedule, size: 13, color: AppColors.teksRedup),
-                        const SizedBox(width: 4),
-                        Text('$jam WIB',
-                            style: const TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
-                      ],
-                    ),
+                    Text('$jam WIB',
+                        style: const TextStyle(
+                            fontSize: 11.5, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
@@ -448,26 +435,15 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Divider(height: 1, color: Color(0xFFE6ECE8)),
           ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.place_outlined, size: 16, color: AppColors.teksRedup),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(j.lokasi.isEmpty ? 'Lokasi belum diisi' : j.lokasi,
-                    style: const TextStyle(fontSize: 12, height: 1.3)),
-              ),
-            ],
-          ),
+          Text(j.lokasi.isEmpty ? 'Lokasi belum diisi' : j.lokasi,
+              style: const TextStyle(fontSize: 12, height: 1.3, color: _teksGelap)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 6,
             children: [
-              _chip(Icons.groups_outlined, 'Balita Terdaftar', _biru,
-                  const Color(0xFFEAF4FB)),
-              _chip(Icons.circle, 'Imunisasi & Gizi', _oranye, const Color(0xFFFFF1E6),
-                  kecil: true),
+              _chip('Balita Terdaftar', _biru, const Color(0xFFEAF4FB)),
+              _chip('Imunisasi & Gizi', _oranye, const Color(0xFFFFF1E6)),
             ],
           ),
           const SizedBox(height: 12),
@@ -476,15 +452,14 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
               Expanded(
                 child: SizedBox(
                   height: 40,
-                  child: OutlinedButton.icon(
+                  child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _hijauGelap,
                       side: const BorderSide(color: _hijauGelap),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                     onPressed: () => _form(awal: j),
-                    icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: const Text('Ubah',
+                    child: const Text('Ubah',
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                   ),
                 ),
@@ -493,15 +468,14 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
               Expanded(
                 child: SizedBox(
                   height: 40,
-                  child: OutlinedButton.icon(
+                  child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.merah,
                       side: const BorderSide(color: AppColors.merah),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                     onPressed: () => _batalkan(j),
-                    icon: const Icon(Icons.close, size: 16),
-                    label: const Text('Batalkan',
+                    child: const Text('Batalkan',
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                   ),
                 ),
@@ -513,19 +487,12 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
     );
   }
 
-  Widget _chip(IconData ikon, String teks, Color fg, Color bg, {bool kecil = false}) {
+  Widget _chip(String teks, Color fg, Color bg) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(ikon, size: kecil ? 7 : 13, color: fg),
-          const SizedBox(width: 5),
-          Text(teks,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg)),
-        ],
-      ),
+      child: Text(teks,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg)),
     );
   }
 }
@@ -716,14 +683,14 @@ class _FormJadwalState extends State<_FormJadwal> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(ubah ? 'Ubah Jadwal Posyandu' : 'Tambah Jadwal Posyandu',
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w800, color: _teksGelap)),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _tgl,
                 readOnly: true,
                 onTap: _pilihTanggal,
-                decoration: _dekor('Tanggal pelaksanaan',
-                    hint: 'Pilih tanggal', icon: Icons.calendar_today_outlined),
+                decoration: _dekor('Tanggal pelaksanaan', hint: 'Pilih tanggal'),
                 validator: (v) => _tanggal == null ? 'Tanggal wajib dipilih' : null,
               ),
               const SizedBox(height: 12),
@@ -734,7 +701,7 @@ class _FormJadwalState extends State<_FormJadwal> {
                       controller: _mulai,
                       readOnly: true,
                       onTap: () => _pilihJam(_mulai),
-                      decoration: _dekor('Jam mulai', icon: Icons.schedule),
+                      decoration: _dekor('Jam mulai'),
                       validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
                     ),
                   ),
@@ -744,7 +711,7 @@ class _FormJadwalState extends State<_FormJadwal> {
                       controller: _selesai,
                       readOnly: true,
                       onTap: () => _pilihJam(_selesai),
-                      decoration: _dekor('Jam selesai', icon: Icons.schedule),
+                      decoration: _dekor('Jam selesai'),
                       validator: (v) {
                         if (v == null || v.isEmpty) return null;
                         if (v.compareTo(_mulai.text) <= 0) return 'Harus setelah jam mulai';
@@ -758,8 +725,7 @@ class _FormJadwalState extends State<_FormJadwal> {
               TextFormField(
                 controller: _lokasi,
                 textCapitalization: TextCapitalization.words,
-                decoration: _dekor('Lokasi',
-                    hint: 'Contoh: Balai Desa', icon: Icons.place_outlined),
+                decoration: _dekor('Lokasi', hint: 'Contoh: Balai Desa'),
               ),
               const SizedBox(height: 10),
               Container(
@@ -789,7 +755,7 @@ class _FormJadwalState extends State<_FormJadwal> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: AppButton(_menyimpan ? 'Menyimpan...' : 'Simpan',
-                        icon: Icons.check, onPressed: _menyimpan ? () {} : _simpan),
+                        onPressed: _menyimpan ? () {} : _simpan),
                   ),
                 ],
               ),

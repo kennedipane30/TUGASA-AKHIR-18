@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
@@ -12,6 +13,7 @@ const _teksGelap = Color(0xFF1E293B);
 const _teksAbu = Color(0xFF64748B);
 const _hijauTeks = Color(0xFF047857);
 const _hijauPil = Color(0xFFDDF5EA);
+const _hijauHeader = Color(0xFF065F46);
 
 // ---------------------------------------------------------------------------
 // MODEL
@@ -251,16 +253,65 @@ class _KepalaKartu extends StatelessWidget {
   }
 }
 
-AppBar _appBar(String judul, {List<Widget>? actions}) => AppBar(
-      title: Text(judul,
-          style: const TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 20, color: _teksGelap)),
-      backgroundColor: _latarHalaman,
-      foregroundColor: _teksGelap,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      actions: actions,
-    );
+// Header bagian atas (hanya bagian ini yang diubah)
+Widget _header(BuildContext context, String judul,
+    {String? sub, Widget? aksi}) {
+  return AnnotatedRegion<SystemUiOverlayStyle>(
+    value: const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ),
+    child: Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          child: Row(
+            children: [
+              InkWell(
+                onTap: () => Navigator.maybePop(context),
+                child: const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(judul,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white)),
+                    if (sub != null) ...[
+                      const SizedBox(height: 2),
+                      Text(sub,
+                          style: const TextStyle(
+                              fontSize: 10.5,
+                              color: Color(0xE6FFFFFF),
+                              height: 1.3)),
+                    ],
+                  ],
+                ),
+              ),
+              if (aksi != null) ...[
+                const SizedBox(width: 8),
+                aksi,
+              ],
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
 // ---------------------------------------------------------------------------
 // HALAMAN DAFTAR PEMERIKSAAN (BERDASARKAN TANGGAL)
@@ -375,88 +426,102 @@ class _OrangTuaPemeriksaanPageState extends State<OrangTuaPemeriksaanPage> {
 
     return Scaffold(
       backgroundColor: _latarHalaman,
-      appBar: _appBar(
-        _terkunci && _data.isNotEmpty
-            ? 'Riwayat ${_data.first.namaAnak}'
-            : 'Riwayat Pemeriksaan',
-        actions: [
-          IconButton(
-            tooltip: 'Grafik',
-            icon: const Icon(Icons.show_chart_rounded),
-            onPressed: _bukaGrafik,
+      body: Column(
+        children: [
+          _header(
+            context,
+            _terkunci && _data.isNotEmpty
+                ? 'Riwayat ${_data.first.namaAnak}'
+                : 'Riwayat Pemeriksaan',
+            aksi: InkWell(
+              onTap: _bukaGrafik,
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  borderRadius: BorderRadius.zero,
+                  border: Border.all(color: Colors.white54),
+                ),
+                child: const Icon(Icons.show_chart_rounded,
+                    color: Colors.white, size: 18),
+              ),
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _muat,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                children: [
+                  if (_memuat)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 48),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_gagal != null)
+                    _Kartu(
+                      color: AppColors.kuningMuda,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.cloud_off, color: AppColors.kuning),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(_gagal!,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700, fontSize: 13)),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setState(() => _memuat = true);
+                              _muat();
+                            },
+                            child: const Text('Coba lagi'),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (_data.isEmpty)
+                    const _Kartu(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _KepalaKartu(
+                            icon: Icons.monitor_heart_outlined,
+                            bg: _hijauPil,
+                            fg: _hijauTeks,
+                            judul: 'Belum ada hasil pemeriksaan',
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'Hasil pemeriksaan muncul di sini setelah bidan menyimpan catatan pemeriksaan anak Anda di posyandu.',
+                            style: TextStyle(fontSize: 12.5, color: _teksAbu),
+                          ),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    if (!_terkunci && anak.length > 1)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _chip('', 'Semua'),
+                              for (final e in anak.entries) _chip(e.key, e.value),
+                            ],
+                          ),
+                        ),
+                      ),
+                    for (final p in daftar) _kartu(p),
+                  ],
+                ],
+              ),
+            ),
           ),
         ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _muat,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          children: [
-            if (_memuat)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 48),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_gagal != null)
-              _Kartu(
-                color: AppColors.kuningMuda,
-                child: Row(
-                  children: [
-                    const Icon(Icons.cloud_off, color: AppColors.kuning),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(_gagal!,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 13)),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() => _memuat = true);
-                        _muat();
-                      },
-                      child: const Text('Coba lagi'),
-                    ),
-                  ],
-                ),
-              )
-            else if (_data.isEmpty)
-              const _Kartu(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _KepalaKartu(
-                      icon: Icons.monitor_heart_outlined,
-                      bg: _hijauPil,
-                      fg: _hijauTeks,
-                      judul: 'Belum ada hasil pemeriksaan',
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      'Hasil pemeriksaan muncul di sini setelah bidan menyimpan catatan pemeriksaan anak Anda di posyandu.',
-                      style: TextStyle(fontSize: 12.5, color: _teksAbu),
-                    ),
-                  ],
-                ),
-              )
-            else ...[
-              if (!_terkunci && anak.length > 1)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _chip('', 'Semua'),
-                        for (final e in anak.entries) _chip(e.key, e.value),
-                      ],
-                    ),
-                  ),
-                ),
-              for (final p in daftar) _kartu(p),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -695,230 +760,245 @@ class _DetailPemeriksaanPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: _latarHalaman,
-      appBar: _appBar('Detail Pemeriksaan'),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      body: Column(
         children: [
-          // Identitas anak
-          _Kartu(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          _header(context, 'Detail Pemeriksaan'),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(d.namaAnak,
-                          style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: _teksGelap)),
-                    ),
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _hijauPil,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(t == null ? '-' : formatTanggal(t),
-                          style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: _hijauTeks)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                if (d.adaUkur)
-                  Text(
-                    'Usia ${_usia(d.usiaBulan)}${d.caraUkur.isEmpty ? '' : ' · diukur ${d.caraUkur}'}',
-                    style: const TextStyle(fontSize: 12, color: _teksAbu),
-                  ),
-                if (d.jamMulai.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text('Sesi posyandu pukul ${d.jamMulai} WIB',
-                      style: const TextStyle(fontSize: 12, color: _teksAbu)),
-                ],
-              ],
-            ),
-          ),
-
-          // Hasil pengukuran
-          if (d.adaUkur)
-            _Kartu(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _KepalaKartu(
-                    icon: Icons.straighten,
-                    bg: Color(0xFFDDF5EA),
-                    fg: _hijauTeks,
-                    judul: 'Hasil Pengukuran',
-                  ),
-                  const SizedBox(height: 14),
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _kotakUkur(_num(d.bb), 'Berat\n(kg)',
-                            const Color(0xFFE3F2FD), const Color(0xFFBFDFF7),
-                            const Color(0xFF0369A1)),
-                        const SizedBox(width: 8),
-                        _kotakUkur(_num(d.tb), 'Tinggi/\nPanjang\n(cm)',
-                            const Color(0xFFE6F8EF), const Color(0xFFBDEBD3),
-                            const Color(0xFF047857)),
-                        const SizedBox(width: 8),
-                        _kotakUkur(d.lk, 'Lingkar\nKepala\n(cm)',
-                            const Color(0xFFFFF1E3), const Color(0xFFF9D3AE),
-                            const Color(0xFFEA580C)),
-                        const SizedBox(width: 8),
-                        _kotakUkur(d.lila, 'LiLA\n(cm)',
-                            const Color(0xFFFDEAF1), const Color(0xFFF6C9D9),
-                            const Color(0xFFE11D48)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Catatan bidan
-          _Kartu(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _KepalaKartu(
-                  icon: Icons.assignment_outlined,
-                  bg: Color(0xFFE8EAFE),
-                  fg: Color(0xFF4F46E5),
-                  judul: 'Catatan Bidan',
-                ),
-                const SizedBox(height: 12),
-                if (!d.adaCatatan || !adaIsiCatatan)
-                  const Text('Bidan belum menuliskan catatan untuk kunjungan ini.',
-                      style: TextStyle(fontSize: 12, color: _teksAbu))
-                else ...[
-                  if (gejala.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
+                // Identitas anak
+                _Kartu(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          for (final g in gejala)
-                            Pill(g, bg: AppColors.merahMuda, fg: AppColors.merah),
+                          Expanded(
+                            child: Text(d.namaAnak,
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: _teksGelap)),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _hijauPil,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(t == null ? '-' : formatTanggal(t),
+                                style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: _hijauTeks)),
+                          ),
                         ],
                       ),
-                    ),
-                  _blok('Penyakit penyerta', d.penyakit, icon: Icons.healing_outlined),
-                  _blok('Keluhan', d.keluhan, icon: Icons.sick_outlined),
-                  _blok('Evaluasi bidan', d.evaluasi, icon: Icons.fact_check_outlined),
-                  _blok('Saran gizi', d.saranGizi, icon: Icons.restaurant_outlined),
-                  _blok('Saran pola asuh', d.saranAsuh,
-                      icon: Icons.family_restroom_outlined),
-                ],
-              ],
-            ),
-          ),
+                      const SizedBox(height: 14),
+                      if (d.adaUkur)
+                        Text(
+                          'Usia ${_usia(d.usiaBulan)}${d.caraUkur.isEmpty ? '' : ' · diukur ${d.caraUkur}'}',
+                          style: const TextStyle(fontSize: 12, color: _teksAbu),
+                        ),
+                      if (d.jamMulai.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text('Sesi posyandu pukul ${d.jamMulai} WIB',
+                            style: const TextStyle(fontSize: 12, color: _teksAbu)),
+                      ],
+                    ],
+                  ),
+                ),
 
-          // Kunjungan ulang
-          if (d.kunjunganUlang != null)
-            _Kartu(
-              color: AppColors.biruMuda,
-              child: Row(
-                children: [
-                  const Icon(Icons.event_repeat, color: AppColors.biru),
-                  const SizedBox(width: 10),
-                  Expanded(
+                // Hasil pengukuran
+                if (d.adaUkur)
+                  _Kartu(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Kunjungan ulang',
-                            style: TextStyle(fontSize: 11, color: _teksAbu)),
-                        Text(formatTanggal(d.kunjunganUlang!),
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 14,
-                                color: _teksGelap)),
+                        const _KepalaKartu(
+                          icon: Icons.straighten,
+                          bg: Color(0xFFDDF5EA),
+                          fg: _hijauTeks,
+                          judul: 'Hasil Pengukuran',
+                        ),
+                        const SizedBox(height: 14),
+                        IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _kotakUkur(_num(d.bb), 'Berat\n(kg)',
+                                  const Color(0xFFE3F2FD), const Color(0xFFBFDFF7),
+                                  const Color(0xFF0369A1)),
+                              const SizedBox(width: 8),
+                              _kotakUkur(_num(d.tb), 'Tinggi/\nPanjang\n(cm)',
+                                  const Color(0xFFE6F8EF), const Color(0xFFBDEBD3),
+                                  const Color(0xFF047857)),
+                              const SizedBox(width: 8),
+                              _kotakUkur(d.lk, 'Lingkar\nKepala\n(cm)',
+                                  const Color(0xFFFFF1E3), const Color(0xFFF9D3AE),
+                                  const Color(0xFFEA580C)),
+                              const SizedBox(width: 8),
+                              _kotakUkur(d.lila, 'LiLA\n(cm)',
+                                  const Color(0xFFFDEAF1), const Color(0xFFF6C9D9),
+                                  const Color(0xFFE11D48)),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
 
-          // Imunisasi
-          if (d.vaksin.isNotEmpty)
-            _Kartu(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _KepalaKartu(
-                    icon: Icons.vaccines_outlined,
-                    bg: Color(0xFFE3F2FD),
-                    fg: Color(0xFF0369A1),
-                    judul: 'Imunisasi Hari Ini',
+                // Catatan bidan
+                _Kartu(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _KepalaKartu(
+                        icon: Icons.assignment_outlined,
+                        bg: Color(0xFFE8EAFE),
+                        fg: Color(0xFF4F46E5),
+                        judul: 'Catatan Bidan',
+                      ),
+                      const SizedBox(height: 12),
+                      if (!d.adaCatatan || !adaIsiCatatan)
+                        const Text(
+                            'Bidan belum menuliskan catatan untuk kunjungan ini.',
+                            style: TextStyle(fontSize: 12, color: _teksAbu))
+                      else ...[
+                        if (gejala.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                for (final g in gejala)
+                                  Pill(g,
+                                      bg: AppColors.merahMuda,
+                                      fg: AppColors.merah),
+                              ],
+                            ),
+                          ),
+                        _blok('Penyakit penyerta', d.penyakit,
+                            icon: Icons.healing_outlined),
+                        _blok('Keluhan', d.keluhan, icon: Icons.sick_outlined),
+                        _blok('Evaluasi bidan', d.evaluasi,
+                            icon: Icons.fact_check_outlined),
+                        _blok('Saran gizi', d.saranGizi,
+                            icon: Icons.restaurant_outlined),
+                        _blok('Saran pola asuh', d.saranAsuh,
+                            icon: Icons.family_restroom_outlined),
+                      ],
+                    ],
                   ),
-                  for (final v in d.vaksin)
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(top: 12),
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE3F2FD),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFBFDFF7)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('${v.nama} · Dosis ${v.dosis}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                  color: Color(0xFF0369A1))),
-                          if (v.kondisi.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text('Kondisi: ${v.kondisi}',
+                ),
+
+                // Kunjungan ulang
+                if (d.kunjunganUlang != null)
+                  _Kartu(
+                    color: AppColors.biruMuda,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.event_repeat, color: AppColors.biru),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Kunjungan ulang',
+                                  style:
+                                      TextStyle(fontSize: 11, color: _teksAbu)),
+                              Text(formatTanggal(d.kunjunganUlang!),
                                   style: const TextStyle(
-                                      fontSize: 11.5, color: Color(0xFF075985))),
-                            ),
-                          if (v.catatan.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text('Catatan: ${v.catatan}',
-                                  style: const TextStyle(
-                                      fontSize: 11.5, color: Color(0xFF075985))),
-                            ),
-                        ],
-                      ),
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                      color: _teksGelap)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                ],
-              ),
-            ),
-
-          // Suplemen
-          if (d.suplemen.isNotEmpty)
-            _Kartu(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _KepalaKartu(
-                    icon: Icons.medication_outlined,
-                    bg: Color(0xFFFFEBD6),
-                    fg: Color(0xFFEA580C),
-                    judul: 'Suplemen Hari Ini',
                   ),
-                  for (final s in d.suplemen)
-                    _itemSuplemenVaksin(s.nama, [
-                      if (s.dosis.isNotEmpty) 'Dosis: ${s.dosis}',
-                      if (s.catatan.isNotEmpty) 'Catatan: ${s.catatan}',
-                    ]),
-                ],
-              ),
+
+                // Imunisasi
+                if (d.vaksin.isNotEmpty)
+                  _Kartu(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _KepalaKartu(
+                          icon: Icons.vaccines_outlined,
+                          bg: Color(0xFFE3F2FD),
+                          fg: Color(0xFF0369A1),
+                          judul: 'Imunisasi Hari Ini',
+                        ),
+                        for (final v in d.vaksin)
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE3F2FD),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFFBFDFF7)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('${v.nama} · Dosis ${v.dosis}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13,
+                                        color: Color(0xFF0369A1))),
+                                if (v.kondisi.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text('Kondisi: ${v.kondisi}',
+                                        style: const TextStyle(
+                                            fontSize: 11.5,
+                                            color: Color(0xFF075985))),
+                                  ),
+                                if (v.catatan.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text('Catatan: ${v.catatan}',
+                                        style: const TextStyle(
+                                            fontSize: 11.5,
+                                            color: Color(0xFF075985))),
+                                  ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                // Suplemen
+                if (d.suplemen.isNotEmpty)
+                  _Kartu(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _KepalaKartu(
+                          icon: Icons.medication_outlined,
+                          bg: Color(0xFFFFEBD6),
+                          fg: Color(0xFFEA580C),
+                          judul: 'Suplemen Hari Ini',
+                        ),
+                        for (final s in d.suplemen)
+                          _itemSuplemenVaksin(s.nama, [
+                            if (s.dosis.isNotEmpty) 'Dosis: ${s.dosis}',
+                            if (s.catatan.isNotEmpty) 'Catatan: ${s.catatan}',
+                          ]),
+                      ],
+                    ),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );

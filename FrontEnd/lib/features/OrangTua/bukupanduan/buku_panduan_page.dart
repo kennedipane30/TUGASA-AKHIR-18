@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 // ---------------------------------------------------------------------------
 // WARNA
@@ -7,6 +8,7 @@ const _hijauTua = Color(0xFF0F5B45);
 const _hijau = Color(0xFF138A63);
 const _hijauMuda = Color(0xFFE9F6EF);
 const _hijauGaris = Color(0xFFD5EBDF);
+const _hijauHeader = Color(0xFF065F46);
 const _latar = Color(0xFFF7FAF8);
 const _teks = Color(0xFF1F2A37);
 const _teksRedup = Color(0xFF6B7280);
@@ -20,6 +22,69 @@ const _biruMuda = Color(0xFFEAF0FD);
 const _biruGaris = Color(0xFFA9C0F2);
 const _oranyeMuda = Color(0xFFFFE9C7);
 const _oranye = Color(0xFFB45309);
+
+// ---------------------------------------------------------------------------
+// HEADER BERSAMA (bagian atas hijau)
+// ---------------------------------------------------------------------------
+Widget _headerAtas(
+  BuildContext context,
+  String judul, {
+  VoidCallback? onBack,
+  List<Widget> aksi = const [],
+}) {
+  return AnnotatedRegion<SystemUiOverlayStyle>(
+    value: const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ),
+    child: Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          child: Row(
+            children: [
+              InkWell(
+                onTap: onBack ?? () => Navigator.maybePop(context),
+                child: const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(judul,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white)),
+              ),
+              ...aksi,
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _tombolHeader(IconData ikon, VoidCallback onTap, {String? tooltip}) {
+  return InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.all(6),
+      child: Tooltip(
+        message: tooltip ?? '',
+        child: Icon(ikon, color: Colors.white, size: 22),
+      ),
+    ),
+  );
+}
 
 // ---------------------------------------------------------------------------
 // MODEL MATERI (sumber: Buku KIA 2024, disimpan di aplikasi, bisa dibaca offline)
@@ -1171,143 +1236,149 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
 
     return Scaffold(
       backgroundColor: _latar,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _teks),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-        title: const Text('Buku Panduan',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _teks)),
-        actions: [
-          IconButton(
-            tooltip: 'Materi tersimpan',
-            icon: Icon(_hanyaTersimpan ? Icons.bookmark : Icons.bookmark_border,
-                color: _hanyaTersimpan ? _hijau : _teks),
-            onPressed: () => setState(() => _hanyaTersimpan = !_hanyaTersimpan),
-          ),
-          IconButton(
-            tooltip: 'Tersedia offline',
-            icon: const Icon(Icons.file_download_outlined, color: _teks),
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Seluruh materi sudah tersimpan di perangkat dan dapat dibaca offline.')),
-            ),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+      body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: _hijauMuda,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _hijauGaris),
-            ),
-            child: Row(
+          _headerAtas(
+            context,
+            'Buku Panduan',
+            aksi: [
+              _tombolHeader(
+                _hanyaTersimpan ? Icons.bookmark : Icons.bookmark_border,
+                () => setState(() => _hanyaTersimpan = !_hanyaTersimpan),
+                tooltip: 'Materi tersimpan',
+              ),
+              _tombolHeader(
+                Icons.file_download_outlined,
+                () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text(
+                          'Seluruh materi sudah tersimpan di perangkat dan dapat dibaca offline.')),
+                ),
+                tooltip: 'Tersedia offline',
+              ),
+            ],
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
+                    color: _hijauMuda,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: _hijauGaris),
                   ),
-                  child: const Icon(Icons.menu_book_outlined, color: _hijauTua, size: 22),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.menu_book_outlined,
+                            color: _hijauTua, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            style: TextStyle(fontSize: 11.5, height: 1.4, color: _teks),
+                            children: [
+                              TextSpan(text: 'Materi mengacu pada '),
+                              TextSpan(
+                                  text: 'Buku KIA 2024 resmi',
+                                  style: TextStyle(fontWeight: FontWeight.w800)),
+                              TextSpan(
+                                  text:
+                                      ' Kementerian Kesehatan. Dapat dibaca lengkap tanpa koneksi internet.'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      style: TextStyle(fontSize: 11.5, height: 1.4, color: _teks),
-                      children: [
-                        TextSpan(text: 'Materi mengacu pada '),
-                        TextSpan(text: 'Buku KIA 2024 resmi', style: TextStyle(fontWeight: FontWeight.w800)),
-                        TextSpan(text: ' Kementerian Kesehatan. Dapat dibaca lengkap tanpa koneksi internet.'),
-                      ],
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _cari,
+                  onChanged: (v) => setState(() => _kata = v),
+                  style: const TextStyle(fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Cari materi atau keluhan kesehatan...',
+                    hintStyle: const TextStyle(fontSize: 13, color: _teksRedup),
+                    prefixIcon: const Icon(Icons.search, color: _teksRedup),
+                    suffixIcon: _kata.isEmpty
+                        ? const Icon(Icons.tune, color: _teksRedup, size: 20)
+                        : IconButton(
+                            icon: const Icon(Icons.close, color: _teksRedup),
+                            onPressed: () {
+                              _cari.clear();
+                              setState(() => _kata = '');
+                            },
+                          ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: Color(0xFFE6EAE8)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: _hijau),
                     ),
                   ),
                 ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  height: 36,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _kategori.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, k) {
+                      final aktif = _filter == k;
+                      return GestureDetector(
+                        onTap: () => setState(() => _filter = k),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: aktif ? _hijauTua : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: aktif ? _hijauTua : const Color(0xFFE6EAE8)),
+                          ),
+                          child: Text(
+                            _kategori[k],
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: aktif ? Colors.white : _teks,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (hasil.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 32),
+                    child: Center(
+                      child: Text('Materi tidak ditemukan',
+                          style: TextStyle(color: _teksRedup)),
+                    ),
+                  )
+                else
+                  for (final i in hasil) _kartuBab(i),
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _cari,
-            onChanged: (v) => setState(() => _kata = v),
-            style: const TextStyle(fontSize: 13),
-            decoration: InputDecoration(
-              hintText: 'Cari materi atau keluhan kesehatan...',
-              hintStyle: const TextStyle(fontSize: 13, color: _teksRedup),
-              prefixIcon: const Icon(Icons.search, color: _teksRedup),
-              suffixIcon: _kata.isEmpty
-                  ? const Icon(Icons.tune, color: _teksRedup, size: 20)
-                  : IconButton(
-                      icon: const Icon(Icons.close, color: _teksRedup),
-                      onPressed: () {
-                        _cari.clear();
-                        setState(() => _kata = '');
-                      },
-                    ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: Color(0xFFE6EAE8)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: _hijau),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 36,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _kategori.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, k) {
-                final aktif = _filter == k;
-                return GestureDetector(
-                  onTap: () => setState(() => _filter = k),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: aktif ? _hijauTua : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: aktif ? _hijauTua : const Color(0xFFE6EAE8)),
-                    ),
-                    child: Text(
-                      _kategori[k],
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: aktif ? Colors.white : _teks,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (hasil.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: Center(
-                child: Text('Materi tidak ditemukan', style: TextStyle(color: _teksRedup)),
-              ),
-            )
-          else
-            for (final i in hasil) _kartuBab(i),
         ],
       ),
     );
@@ -1367,14 +1438,17 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                           if (darurat) ...[
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 7, vertical: 1.5),
                               decoration: BoxDecoration(
                                 color: _merahMuda,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text('Penting',
                                   style: TextStyle(
-                                      fontSize: 9.5, fontWeight: FontWeight.w700, color: _merah)),
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: _merah)),
                             ),
                           ],
                           if (_tersimpan.contains(i)) ...[
@@ -1386,7 +1460,9 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                       const SizedBox(height: 2),
                       Text(b.judul,
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13.5, color: _teks)),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13.5,
+                              color: _teks)),
                       const SizedBox(height: 2),
                       Text(b.ringkasan,
                           style: const TextStyle(
@@ -1439,53 +1515,6 @@ class _BacaBabPageState extends State<BacaBabPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _teks),
-          onPressed: () => Navigator.pop(context),
-        ),
-        titleSpacing: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(color: _hijau, shape: BoxShape.circle),
-                ),
-                const SizedBox(width: 5),
-                const Text('BUKU KIA ELEKTRONIK',
-                    style: TextStyle(
-                        fontSize: 9.5,
-                        letterSpacing: 0.6,
-                        fontWeight: FontWeight.w800,
-                        color: _hijau)),
-              ],
-            ),
-            const SizedBox(height: 1),
-            Text('Bab ${_i + 1} dari ${_daftarBab.length}',
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: _teks)),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(simpan ? Icons.bookmark : Icons.bookmark_border,
-                color: simpan ? _hijau : _teks),
-            onPressed: () => setState(() {
-              if (simpan) {
-                _tersimpan.remove(_i);
-              } else {
-                _tersimpan.add(_i);
-              }
-            }),
-          ),
-        ],
-      ),
       bottomNavigationBar: SafeArea(
         child: Container(
           decoration: const BoxDecoration(
@@ -1524,7 +1553,8 @@ class _BacaBabPageState extends State<BacaBabPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(lanjut ? 'Berikutnya' : 'Selesai',
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 13)),
                       const SizedBox(width: 4),
                       Icon(lanjut ? Icons.chevron_right : Icons.check, size: 20),
                     ],
@@ -1535,17 +1565,40 @@ class _BacaBabPageState extends State<BacaBabPage> {
           ),
         ),
       ),
-      body: ListView(
-        controller: _scroll,
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      body: Column(
         children: [
-          _header(b),
-          const SizedBox(height: 16),
-          ..._bangun(b.isi, b.darurat),
-          const SizedBox(height: 8),
-          const Text(
-            'Materi ini bersumber dari Buku KIA 2024, bersifat informasi umum, dan tidak menggantikan saran bidan atau dokter.',
-            style: TextStyle(fontSize: 10.5, color: _teksRedup, height: 1.4),
+          _headerAtas(
+            context,
+            'Bab ${_i + 1} dari ${_daftarBab.length}',
+            onBack: () => Navigator.pop(context),
+            aksi: [
+              _tombolHeader(
+                simpan ? Icons.bookmark : Icons.bookmark_border,
+                () => setState(() {
+                  if (simpan) {
+                    _tersimpan.remove(_i);
+                  } else {
+                    _tersimpan.add(_i);
+                  }
+                }),
+              ),
+            ],
+          ),
+          Expanded(
+            child: ListView(
+              controller: _scroll,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              children: [
+                _header(b),
+                const SizedBox(height: 16),
+                ..._bangun(b.isi, b.darurat),
+                const SizedBox(height: 8),
+                const Text(
+                  'Materi ini bersumber dari Buku KIA 2024, bersifat informasi umum, dan tidak menggantikan saran bidan atau dokter.',
+                  style: TextStyle(fontSize: 10.5, color: _teksRedup, height: 1.4),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1586,7 +1639,8 @@ class _BacaBabPageState extends State<BacaBabPage> {
                             height: 1.25)),
                     const SizedBox(height: 4),
                     Text(b.ringkasan,
-                        style: const TextStyle(color: Colors.white70, fontSize: 11.5, height: 1.3)),
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 11.5, height: 1.3)),
                   ],
                 ),
               ),

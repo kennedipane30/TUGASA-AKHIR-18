@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
@@ -258,88 +259,132 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
     );
   }
 
+  // Header bagian atas: hanya judul
+  Widget _header() {
+    return Container(
+      width: double.infinity,
+      color: _hijauTua,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          child: Row(
+            children: [
+              InkWell(
+                onTap: () => Navigator.maybePop(context),
+                child: const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text('Grafik Perkembangan',
+                    style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white)),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: _bukaPanduan,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.zero,
+                    border: Border.all(color: Colors.white54),
+                  ),
+                  child: const Icon(Icons.menu_book_outlined,
+                      color: Colors.white, size: 18),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _latar,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _muat,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            children: [
-              Row(
-                children: [
-                  InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: () => Navigator.maybePop(context),
-                    child: const Padding(
-                      padding: EdgeInsets.all(6),
-                      child: Icon(Icons.arrow_back, color: _teksGelap, size: 26),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text('Grafik Perkembangan',
-                        style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: _teksGelap)),
-                  ),
-                ],
-              ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(46, 2, 0, 14),
-                child: Text('Pemantauan kurva standar WHO untuk tumbuh kembang optimal anak',
-                    style: TextStyle(fontSize: 12, color: _teksAbu, height: 1.3)),
-              ),
-              if (_memuat)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 48),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (_gagal != null)
-                _kartu(
-                  color: AppColors.kuningMuda,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.cloud_off, color: AppColors.kuning),
-                      const SizedBox(width: 10),
-                      Expanded(
-                          child: Text(_gagal!,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 13))),
-                      TextButton(
-                        onPressed: () {
-                          setState(() => _memuat = true);
-                          _muat();
-                        },
-                        child: const Text('Coba lagi'),
-                      ),
-                    ],
-                  ),
-                )
-              else if (_anak.isEmpty)
-                _kartu(
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Belum ada data anak',
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        child: Column(
+          children: [
+            _header(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _muat,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(4, 0, 4, 14),
+                      child: Text(
+                          'Pemantauan kurva standar WHO untuk tumbuh kembang optimal anak',
                           style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: _teksGelap)),
-                      SizedBox(height: 6),
-                      Text('Lengkapi data keluarga terlebih dahulu.',
-                          style: TextStyle(fontSize: 12.5, color: _teksAbu)),
-                    ],
-                  ),
-                )
-              else
-                ..._isi(_anak[_aktif]),
-            ],
-          ),
+                              fontSize: 12, color: _teksAbu, height: 1.3)),
+                    ),
+                    if (_memuat)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 48),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_gagal != null)
+                      _kartu(
+                        color: AppColors.kuningMuda,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.cloud_off, color: AppColors.kuning),
+                            const SizedBox(width: 10),
+                            Expanded(
+                                child: Text(_gagal!,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13))),
+                            TextButton(
+                              onPressed: () {
+                                setState(() => _memuat = true);
+                                _muat();
+                              },
+                              child: const Text('Coba lagi'),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (_anak.isEmpty)
+                      _kartu(
+                        child: const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Belum ada data anak',
+                                style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: _teksGelap)),
+                            SizedBox(height: 6),
+                            Text('Lengkapi data keluarga terlebih dahulu.',
+                                style: TextStyle(
+                                    fontSize: 12.5, color: _teksAbu)),
+                          ],
+                        ),
+                      )
+                    else
+                      ..._isi(_anak[_aktif]),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

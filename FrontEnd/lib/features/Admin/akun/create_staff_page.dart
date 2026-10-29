@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/app_colors.dart';
@@ -10,6 +11,39 @@ const _hijauGelap = Color(0xFF14634A);
 const _hijauGaris = Color(0xFF1FA27F);
 const _biruGaris = Color(0xFF2F6FD6);
 const _oranyeGaris = Color(0xFFEA580C);
+const _hijauHeader = Color(0xFF0B5A40);
+
+PreferredSizeWidget _headerHijau({
+  required String judul,
+  Widget? leading,
+  bool otomatisKembali = false,
+  List<Widget>? actions,
+}) {
+  return AppBar(
+    backgroundColor: _hijauHeader,
+    surfaceTintColor: _hijauHeader,
+    foregroundColor: Colors.white,
+    elevation: 0,
+    centerTitle: false,
+    automaticallyImplyLeading: otomatisKembali,
+    leading: leading,
+    titleSpacing: leading == null && !otomatisKembali ? 16 : 0,
+    systemOverlayStyle: const SystemUiOverlayStyle(
+      statusBarColor: _hijauHeader,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ),
+    title: Text(
+      judul,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w500,
+        fontSize: 16,
+      ),
+    ),
+    actions: actions,
+  );
+}
 
 class CreateStaffPage extends StatefulWidget {
   const CreateStaffPage({super.key});
@@ -127,13 +161,12 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
     final desa = _desa();
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Buat Akun Kader / Bidan',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
+      appBar: _headerHijau(
+        judul: 'Buat Akun Kader / Bidan',
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.maybePop(context),
+        ),
       ),
       bottomNavigationBar: SafeArea(
         child: Container(

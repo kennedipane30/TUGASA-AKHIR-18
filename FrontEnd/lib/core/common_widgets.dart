@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../features/auth/auth_provider.dart';
@@ -47,8 +48,15 @@ Color giziBg(Gizi g) => switch (g) {
     };
 
 // ---------------------------------------------------------------------------
-// Kerangka halaman home (header + isi yang bisa di-scroll)
+// Kerangka halaman home (header hijau dekoratif + isi yang bisa di-scroll)
 // ---------------------------------------------------------------------------
+
+const _hijauTua = Color(0xFF0B3D2E);
+const _hijauGelap = Color(0xFF14634A);
+const _hijauAksen = Color(0xFF1F7A5C);
+const _hijauTerang = Color(0xFF2BB59A);
+const _headerTeksTerang = Color(0xFF7FE3C0);
+const _oranye2 = Color(0xFFF97316);
 
 class HomeShell extends StatelessWidget {
   final String peran;
@@ -64,107 +72,164 @@ class HomeShell extends StatelessWidget {
     this.notif = 0,
   });
 
+  Widget _lingkaran(double ukuran, Color warna) => Container(
+        width: ukuran,
+        height: ukuran,
+        decoration: BoxDecoration(color: warna, shape: BoxShape.circle),
+      );
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
     final nama = (user?['nama'] ?? '').toString();
     final inisial = nama.isNotEmpty ? nama[0].toUpperCase() : '?';
+    final topInset = MediaQuery.of(context).padding.top;
 
-    return Scaffold(
-      backgroundColor: AppColors.latar,
-      body: SafeArea(
-        child: Column(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.latar,
+        body: Column(
           children: [
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.hijau,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.child_care, color: Colors.white, size: 22),
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [_hijauTua, _hijauGelap, _hijauAksen],
+                    stops: [0.0, 0.6, 1.0],
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Posyandu Sehat',
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.hijau)),
-                        Text('Beranda $peran',
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w800)),
-                        Text(lokasi,
-                            style: const TextStyle(
-                                fontSize: 11, color: AppColors.teksRedup)),
-                      ],
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      right: -40,
+                      top: -50,
+                      child: _lingkaran(170, Colors.white.withOpacity(0.07)),
                     ),
-                  ),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      IconButton(
-                        tooltip: 'Notifikasi',
-                        icon: const Icon(Icons.notifications_none),
-                        onPressed: () => soon(context, 'Daftar notifikasi'),
-                      ),
-                      if (notif > 0)
-                        Positioned(
-                          right: 6,
-                          top: 6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: AppColors.merah,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text('$notif',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700)),
+                    Positioned(
+                      right: 50,
+                      bottom: -60,
+                      child: _lingkaran(130, _hijauTerang.withOpacity(0.18)),
+                    ),
+                    Positioned(
+                      left: -35,
+                      bottom: -45,
+                      child: _lingkaran(110, Colors.white.withOpacity(0.06)),
+                    ),
+                    Positioned(
+                      right: 70,
+                      top: topInset + 8,
+                      child: _lingkaran(14, _oranye2.withOpacity(0.55)),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16, topInset + 12, 8, 22),
+                      child: Row(
+                        children: [
+                          Image.asset(
+                            'logo.png',
+                            width: 46,
+                            height: 46,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Icon(
+                                Icons.monitor_heart_outlined,
+                                color: Colors.white,
+                                size: 36),
                           ),
-                        ),
-                    ],
-                  ),
-                  PopupMenuButton<String>(
-                    tooltip: 'Akun',
-                    onSelected: (v) {
-                      if (v == 'keluar') context.read<AuthProvider>().logout();
-                    },
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        enabled: false,
-                        child: Text(nama.isEmpty ? 'Pengguna' : nama,
-                            style: const TextStyle(fontWeight: FontWeight.w700)),
-                      ),
-                      const PopupMenuItem(value: 'keluar', child: Text('Keluar')),
-                    ],
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: AppColors.hijau,
-                        child: Text(inisial,
-                            style: const TextStyle(
-                                color: Colors.white, fontWeight: FontWeight.w800)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Posyandu Care',
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white)),
+                                Text(lokasi,
+                                    style: const TextStyle(
+                                        fontSize: 11, color: _headerTeksTerang)),
+                              ],
+                            ),
+                          ),
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              IconButton(
+                                tooltip: 'Notifikasi',
+                                icon: const Icon(Icons.notifications_none,
+                                    color: Colors.white),
+                                onPressed: () => soon(context, 'Daftar notifikasi'),
+                              ),
+                              if (notif > 0)
+                                Positioned(
+                                  right: 6,
+                                  top: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 5, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.merah,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text('$notif',
+                                        style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700)),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          PopupMenuButton<String>(
+                            tooltip: 'Akun',
+                            onSelected: (v) {
+                              if (v == 'keluar') context.read<AuthProvider>().logout();
+                            },
+                            itemBuilder: (_) => [
+                              PopupMenuItem(
+                                enabled: false,
+                                child: Text(nama.isEmpty ? 'Pengguna' : nama,
+                                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                              ),
+                              const PopupMenuItem(value: 'keluar', child: Text('Keluar')),
+                            ],
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: Colors.white,
+                                child: Text(inisial,
+                                    style: const TextStyle(
+                                        color: _hijauGelap,
+                                        fontWeight: FontWeight.w800)),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                children: children,
+              child: SafeArea(
+                top: false,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  children: children,
+                ),
               ),
             ),
           ],
@@ -202,7 +267,14 @@ class SectionCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE6ECE8)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,13 +285,15 @@ class SectionCard extends StatelessWidget {
               child: Row(
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 20, color: AppColors.hijau),
+                    Icon(icon, size: 20, color: _hijauGelap),
                     const SizedBox(width: 8),
                   ],
                   Expanded(
                     child: Text(title!,
                         style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w800)),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: _hijauTua)),
                   ),
                   if (trailing != null) trailing!,
                 ],
@@ -288,7 +362,7 @@ class StatBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
       child: Column(
         children: [
           Text(nilai,
@@ -321,10 +395,10 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
+    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(16));
     final teks = Text(label,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13));
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13));
     final ikon = icon == null ? null : Icon(icon, size: 17);
 
     if (filled) {
@@ -332,7 +406,7 @@ class AppButton extends StatelessWidget {
         backgroundColor: color,
         foregroundColor: Colors.white,
         shape: shape,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       );
       return ikon == null
           ? ElevatedButton(style: gaya, onPressed: onPressed, child: teks)
@@ -343,7 +417,7 @@ class AppButton extends StatelessWidget {
       foregroundColor: color,
       side: BorderSide(color: color),
       shape: shape,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
     );
     return ikon == null
         ? OutlinedButton(style: gaya, onPressed: onPressed, child: teks)
@@ -371,12 +445,17 @@ class SyncStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = online ? AppColors.hijauMuda : AppColors.kuningMuda;
-    final fg = online ? AppColors.hijau : AppColors.kuning;
+    final bg = online ? const Color(0xFFE3F6EC) : AppColors.kuningMuda;
+    final fg = online ? _hijauGelap : AppColors.kuning;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: online ? const Color(0xFFBFE5D0) : const Color(0xFFF3DFA8)),
+      ),
       child: Row(
         children: [
           Icon(online ? Icons.cloud_done_outlined : Icons.cloud_off_outlined, color: fg),
@@ -395,10 +474,10 @@ class SyncStrip extends StatelessWidget {
           if (onSinkron != null)
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.hijau,
+                backgroundColor: _hijauGelap,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: sedangSinkron ? null : onSinkron,
               icon: sedangSinkron
@@ -428,7 +507,7 @@ class MiniBars extends StatelessWidget {
     required this.nilai,
     required this.label,
     this.tinggi = 90,
-    this.warna = AppColors.hijau,
+    this.warna = _hijauAksen,
   });
 
   @override
@@ -452,7 +531,7 @@ class MiniBars extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
                       color: warna,
-                      borderRadius: BorderRadius.circular(5),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                   ),
                   const SizedBox(height: 4),

@@ -1,8 +1,139 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
+
+// ---------------------------------------------------------------------------
+// HEADER HIJAU DEKORATIF (dipakai bersama oleh halaman keluarga & anak)
+// ---------------------------------------------------------------------------
+const kHijauTua = Color(0xFF0B3D2E);
+const kHijauGelap = Color(0xFF14634A);
+const kHijauAksen = Color(0xFF1F7A5C);
+const kHijauTerang = Color(0xFF2BB59A);
+const kOranye2 = Color(0xFFF97316);
+
+class HeaderKeluarga extends StatelessWidget {
+  final String judul;
+  final bool sinkron;
+
+  const HeaderKeluarga({super.key, required this.judul, this.sinkron = true});
+
+  Widget _lingkaran(double ukuran, Color warna) => Container(
+        width: ukuran,
+        height: ukuran,
+        decoration: BoxDecoration(color: warna, shape: BoxShape.circle),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final topInset = MediaQuery.of(context).padding.top;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+        child: Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [kHijauTua, kHijauGelap, kHijauAksen],
+              stops: [0.0, 0.6, 1.0],
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -40,
+                top: -50,
+                child: _lingkaran(170, Colors.white.withOpacity(0.07)),
+              ),
+              Positioned(
+                right: 50,
+                bottom: -60,
+                child: _lingkaran(130, kHijauTerang.withOpacity(0.18)),
+              ),
+              Positioned(
+                left: -35,
+                bottom: -45,
+                child: _lingkaran(110, Colors.white.withOpacity(0.06)),
+              ),
+              Positioned(
+                right: 24,
+                top: topInset + 14,
+                child: _lingkaran(14, kOranye2.withOpacity(0.55)),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, topInset + 14, 16, 22),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => Navigator.of(context).maybePop(),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.only(right: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.16),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        ),
+                        child: const Icon(Icons.arrow_back, color: Colors.white, size: 21),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        judul,
+                        style: const TextStyle(
+                            fontSize: 25,
+                            height: 1.15,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white),
+                      ),
+                    ),
+                    if (sinkron)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.16),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.circle, size: 8, color: Color(0xFF7FE3C0)),
+                            SizedBox(width: 6),
+                            Text('Tersinkron',
+                                style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 // ---------------------------------------------------------------------------
 // MODEL

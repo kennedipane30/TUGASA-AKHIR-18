@@ -1,9 +1,15 @@
+// ===== admin_riwayat_jadwal_page.dart =====
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+
+const _hijauGelap = Color(0xFF14634A);
+const _hijauHeader = Color(0xFF1B5E3A);
+const _teksGelap = Color(0xFF1F2937);
 
 String _pesan(Object e) {
   if (e is DioException) {
@@ -133,11 +139,24 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
     return Scaffold(
       backgroundColor: AppColors.latar,
       appBar: AppBar(
-        title: const Text('Riwayat Jadwal',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: _hijauHeader,
+        surfaceTintColor: _hijauHeader,
+        foregroundColor: Colors.white,
         elevation: 0,
+        centerTitle: false,
+        titleSpacing: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: _hijauHeader,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: const Text('Riwayat Jadwal',
+            style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
       ),
       body: RefreshIndicator(
         onRefresh: _muat,
@@ -151,8 +170,13 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                 child: Center(child: CircularProgressIndicator()),
               )
             else if (_gagal != null)
-              SectionCard(
-                color: AppColors.kuningMuda,
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.kuningMuda,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE6ECE8)),
+                ),
                 child: Row(children: [
                   const Icon(Icons.cloud_off, color: AppColors.kuning),
                   const SizedBox(width: 10),
@@ -167,8 +191,14 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                 ]),
               )
             else if (_data.isEmpty)
-              const SectionCard(
-                child: Text('Belum ada jadwal yang sudah lewat.',
+              Container(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE6ECE8)),
+                ),
+                child: const Text('Belum ada jadwal yang sudah lewat.',
                     style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup)),
               )
             else
@@ -181,11 +211,11 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
 
   Widget _kartu(_Riwayat j) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE6ECE8)),
       ),
       child: Column(
@@ -193,12 +223,25 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
         children: [
           Row(
             children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.hijauMuda,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFBFE5D0)),
+                ),
+                child: const Icon(Icons.history, color: _hijauGelap, size: 22),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(formatTanggal(j.tanggal),
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 14.5, color: _teksGelap)),
+                    const SizedBox(height: 2),
                     Text('${j.jam} WIB${j.lokasi.isEmpty ? '' : ' • ${j.lokasi}'}',
                         style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
                   ],
@@ -207,7 +250,7 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
               const Pill('Selesai', bg: Color(0xFFE3E8E5), fg: Colors.black87),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -235,18 +278,34 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
             ],
           ),
           const SizedBox(height: 10),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFEDF1EF)),
+          const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerRight,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.merah,
-                side: const BorderSide(color: AppColors.merah),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => _hapus(j),
+              child: Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEFF1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFF7C4CB)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.delete_outline, size: 14, color: AppColors.merah),
+                    SizedBox(width: 5),
+                    Text('Hapus',
+                        style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.merah)),
+                  ],
+                ),
               ),
-              onPressed: () => _hapus(j),
-              icon: const Icon(Icons.delete_outline, size: 16),
-              label: const Text('Hapus',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
             ),
           ),
         ],

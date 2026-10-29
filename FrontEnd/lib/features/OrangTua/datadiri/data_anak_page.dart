@@ -6,26 +6,9 @@ import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 import 'keluarga_common.dart';
 
-const _hijauTua = Color(0xFF0B4D3A);
-const _garis = Color(0xFFD7E6DD);
-
-Widget _pillSinkron() => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE3F4EA),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.circle, size: 8, color: Color(0xFF2EAD6A)),
-          SizedBox(width: 6),
-          Text('Tersinkron',
-              style: TextStyle(
-                  fontSize: 11.5, fontWeight: FontWeight.w700, color: _hijauTua)),
-        ],
-      ),
-    );
+const _hijauTua = Color(0xFF0B3D2E);
+const _garis = Color(0xFFE6ECE8);
+const _garisInput = Color(0xFFD7E6DD);
 
 InputDecoration _dekor(String hint, {IconData? icon, String? suffix}) {
   OutlineInputBorder b(Color c) => OutlineInputBorder(
@@ -42,8 +25,8 @@ InputDecoration _dekor(String hint, {IconData? icon, String? suffix}) {
     fillColor: Colors.white,
     counterText: '',
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    border: b(_garis),
-    enabledBorder: b(_garis),
+    border: b(_garisInput),
+    enabledBorder: b(_garisInput),
     focusedBorder: b(_hijauTua),
     errorBorder: b(AppColors.merah),
     focusedErrorBorder: b(AppColors.merah),
@@ -161,21 +144,28 @@ class _DataAnakPageState extends State<DataAnakPage> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _garis),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0F000000), blurRadius: 10, offset: Offset(0, 3)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: AppColors.hijauMuda,
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD7F0E3),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Icon(a.jk == 'P' ? Icons.female : Icons.male,
-                    color: _hijauTua, size: 26),
+                    color: kHijauGelap, size: 28),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -188,7 +178,9 @@ class _DataAnakPageState extends State<DataAnakPage> {
                           child: Text(a.nama,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 15)),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                  color: _hijauTua)),
                         ),
                         const SizedBox(width: 8),
                         Container(
@@ -196,12 +188,12 @@ class _DataAnakPageState extends State<DataAnakPage> {
                               const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.hijauMuda,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text('Aktif',
                               style: TextStyle(
                                   fontSize: 10.5,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w800,
                                   color: _hijauTua)),
                         ),
                       ],
@@ -232,7 +224,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
           const Divider(height: 22, color: _garis),
           Row(
             children: [
-              const Icon(Icons.event_note_outlined, size: 16, color: AppColors.hijau),
+              const Icon(Icons.event_note_outlined, size: 16, color: kHijauGelap),
               const SizedBox(width: 6),
               const Text('Jadwal Imunisasi: ', style: TextStyle(fontSize: 11.5)),
               const Text('HB-0 Siap',
@@ -245,7 +237,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                     Text('Lihat KMS',
                         style: TextStyle(
                             fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                             color: _hijauTua)),
                     Icon(Icons.chevron_right, size: 16, color: _hijauTua),
                   ],
@@ -258,20 +250,101 @@ class _DataAnakPageState extends State<DataAnakPage> {
     );
   }
 
+  Widget _isi() {
+    if (_memuat) return const Center(child: CircularProgressIndicator());
+
+    if (_gagal != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+              const SizedBox(height: 12),
+              Text(_gagal!, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() => _memuat = true);
+                  _muat();
+                },
+                child: const Text('Coba lagi'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+          child: Row(
+            children: [
+              const Text('DAFTAR TERDAFTAR',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: .5,
+                      color: AppColors.teksRedup)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration:
+                    const BoxDecoration(color: _hijauTua, shape: BoxShape.circle),
+                child: Text('${_anak.length}',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800)),
+              ),
+              const Spacer(),
+              const Icon(Icons.check_circle_outline, size: 14, color: kHijauGelap),
+              const SizedBox(width: 4),
+              const Text('Posyandu Mawar I',
+                  style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: _hijauTua)),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _anak.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Text(
+                      'Belum ada data anak. Tekan tombol hijau di bawah untuk menambah data anak balita.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
+                    ),
+                  ),
+                )
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  children: [for (final a in _anak) _kartuAnak(a)],
+                ),
+        ),
+        if (_anak.isNotEmpty)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(32, 0, 32, 14),
+            child: Text(
+              'Punya lebih dari 1 balita? Tekan tombol hijau di bawah untuk menambah data adik atau kakak.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: AppColors.teksRedup),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Data Anak',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-        actions: [
-          Center(child: _pillSinkron()),
-          const SizedBox(width: 16),
-        ],
-      ),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -282,7 +355,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                 backgroundColor: _hijauTua,
                 foregroundColor: Colors.white,
                 elevation: 3,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
               ),
               onPressed: () => _tambahAtauUbah(),
               icon: const Icon(Icons.add),
@@ -292,95 +365,12 @@ class _DataAnakPageState extends State<DataAnakPage> {
           ),
         ),
       ),
-      body: _memuat
-          ? const Center(child: CircularProgressIndicator())
-          : _gagal != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
-                        const SizedBox(height: 12),
-                        Text(_gagal!, textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() => _memuat = true);
-                            _muat();
-                          },
-                          child: const Text('Coba lagi'),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
-                      child: Row(
-                        children: [
-                          const Text('DAFTAR TERDAFTAR',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: .5,
-                                  color: AppColors.teksRedup)),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 2),
-                            decoration: const BoxDecoration(
-                                color: _hijauTua, shape: BoxShape.circle),
-                            child: Text('${_anak.length}',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w800)),
-                          ),
-                          const Spacer(),
-                          const Icon(Icons.check_circle_outline,
-                              size: 14, color: AppColors.hijau),
-                          const SizedBox(width: 4),
-                          const Text('Posyandu Mawar I',
-                              style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: _hijauTua)),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: _anak.isEmpty
-                          ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(32),
-                                child: Text(
-                                  'Belum ada data anak. Tekan tombol hijau di bawah untuk menambah data anak balita.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontSize: 12, color: AppColors.teksRedup),
-                                ),
-                              ),
-                            )
-                          : ListView(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                              children: [for (final a in _anak) _kartuAnak(a)],
-                            ),
-                    ),
-                    if (_anak.isNotEmpty)
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(32, 0, 32, 14),
-                        child: Text(
-                          'Punya lebih dari 1 balita? Tekan tombol hijau di bawah untuk menambah data adik atau kakak.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 11, color: AppColors.teksRedup),
-                        ),
-                      ),
-                  ],
-                ),
+      body: Column(
+        children: [
+          const HeaderKeluarga(judul: 'Data Anak'),
+          Expanded(child: _isi()),
+        ],
+      ),
     );
   }
 }
@@ -490,7 +480,7 @@ class _FormAnakState extends State<_FormAnak> {
         child: OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
             backgroundColor: aktif ? _hijauTua : Colors.white,
-            side: BorderSide(color: aktif ? _hijauTua : _garis),
+            side: BorderSide(color: aktif ? _hijauTua : _garisInput),
             foregroundColor: aktif ? Colors.white : Colors.black87,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           ),
@@ -526,7 +516,9 @@ class _FormAnakState extends State<_FormAnak> {
                       children: [
                         Text(widget.awal == null ? 'Tambah Data Anak' : 'Ubah Data Anak',
                             style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w800)),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: _hijauTua)),
                         const SizedBox(height: 2),
                         const Text('Lengkapi biodata lengkap balita',
                             style: TextStyle(
@@ -537,7 +529,7 @@ class _FormAnakState extends State<_FormAnak> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE3F4EA),
+                      color: const Color(0xFFD7F0E3),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Row(
@@ -560,7 +552,8 @@ class _FormAnakState extends State<_FormAnak> {
               TextFormField(
                 controller: _nama,
                 textCapitalization: TextCapitalization.words,
-                decoration: _dekor('Contoh: Muhammad Sara', icon: Icons.sentiment_satisfied_alt_outlined),
+                decoration: _dekor('Contoh: Muhammad Sara',
+                    icon: Icons.sentiment_satisfied_alt_outlined),
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
               ),
               const SizedBox(height: 14),
@@ -686,8 +679,9 @@ class _FormAnakState extends State<_FormAnak> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF7F2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xFFE3F6EC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFBFE5D0)),
                 ),
                 child: const Row(
                   children: [

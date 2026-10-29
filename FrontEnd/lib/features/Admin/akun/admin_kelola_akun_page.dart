@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/app_colors.dart';
@@ -12,6 +13,39 @@ const _hijauGaris = Color(0xFF1FA27F);
 const _biruGaris = Color(0xFF2F6FD6);
 const _oranyeGaris = Color(0xFFEA580C);
 const _abuGaris = Color(0xFFD5DBD8);
+const _hijauHeader = Color(0xFF0B5A40);
+
+PreferredSizeWidget _headerHijau({
+  required String judul,
+  Widget? leading,
+  bool otomatisKembali = false,
+  List<Widget>? actions,
+}) {
+  return AppBar(
+    backgroundColor: _hijauHeader,
+    surfaceTintColor: _hijauHeader,
+    foregroundColor: Colors.white,
+    elevation: 0,
+    centerTitle: false,
+    automaticallyImplyLeading: otomatisKembali,
+    leading: leading,
+    titleSpacing: leading == null && !otomatisKembali ? 16 : 0,
+    systemOverlayStyle: const SystemUiOverlayStyle(
+      statusBarColor: _hijauHeader,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ),
+    title: Text(
+      judul,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w500,
+        fontSize: 16,
+      ),
+    ),
+    actions: actions,
+  );
+}
 
 class AdminKelolaAkunPage extends StatefulWidget {
   /// true jika halaman dibuka lewat Navigator.push (menu Aksi Cepat).
@@ -169,27 +203,26 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
 
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Kelola Akun',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-        automaticallyImplyLeading: widget.denganTombolKembali,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
+      appBar: _headerHijau(
+        judul: 'Kelola Akun',
+        leading: widget.denganTombolKembali
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.maybePop(context),
+              )
+            : null,
         actions: [
           IconButton(
             tooltip: 'Muat ulang',
-            icon: const Icon(Icons.sync, size: 20),
+            icon: const Icon(Icons.sync, color: Colors.white, size: 22),
             onPressed: _memuat ? null : () => _muat(),
           ),
-          Container(
-            width: 32,
-            height: 32,
-            margin: const EdgeInsets.only(right: 12),
-            decoration: const BoxDecoration(color: _hijauTua, shape: BoxShape.circle),
-            child: const Icon(Icons.person_outline, color: Colors.white, size: 18),
+          IconButton(
+            tooltip: 'Tambah akun',
+            icon: const Icon(Icons.person_add_alt_1_outlined, color: Colors.white, size: 22),
+            onPressed: _tambah,
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: RefreshIndicator(
@@ -590,13 +623,12 @@ class _AkunFormPageState extends State<_AkunFormPage> {
 
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(_edit ? 'Edit Akun' : 'Buat Akun Kader / Bidan',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
+      appBar: _headerHijau(
+        judul: _edit ? 'Edit Akun' : 'Buat Akun Kader / Bidan',
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.maybePop(context),
+        ),
       ),
       bottomNavigationBar: SafeArea(
         child: Container(

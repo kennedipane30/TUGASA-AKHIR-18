@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 
@@ -10,6 +11,8 @@ import '../../auth/auth_provider.dart';
 
 const _hijauTua = Color(0xFF0B3D2E);
 const _hijauGelap = Color(0xFF14634A);
+const _hijauAksen = Color(0xFF1F7A5C);
+const _hijauTerang = Color(0xFF2BB59A);
 const _oranye1 = Color(0xFFEA580C);
 const _oranye2 = Color(0xFFF97316);
 const _biruTombol = Color(0xFF2B7BB9);
@@ -237,6 +240,94 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
   }
 
   // -------------------------------------------------------------------------
+  // HEADER
+  // -------------------------------------------------------------------------
+  Widget _lingkaran(double ukuran, Color warna) => Container(
+        width: ukuran,
+        height: ukuran,
+        decoration: BoxDecoration(color: warna, shape: BoxShape.circle),
+      );
+
+  Widget _header() {
+    final topInset = MediaQuery.of(context).padding.top;
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(30),
+        bottomRight: Radius.circular(30),
+      ),
+      child: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_hijauTua, _hijauGelap, _hijauAksen],
+            stops: [0.0, 0.6, 1.0],
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -40,
+              top: -50,
+              child: _lingkaran(170, Colors.white.withOpacity(0.07)),
+            ),
+            Positioned(
+              right: 50,
+              bottom: -60,
+              child: _lingkaran(130, _hijauTerang.withOpacity(0.18)),
+            ),
+            Positioned(
+              left: -35,
+              bottom: -45,
+              child: _lingkaran(110, Colors.white.withOpacity(0.06)),
+            ),
+            Positioned(
+              right: 24,
+              top: topInset + 14,
+              child: _lingkaran(14, _oranye2.withOpacity(0.55)),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, topInset + 14, 16, 22),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => Navigator.of(context).maybePop(),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      margin: const EdgeInsets.only(right: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.16),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 21),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Kartu Nomor\nAntrean',
+                      style: TextStyle(
+                          fontSize: 25,
+                          height: 1.15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
   // BUILD
   // -------------------------------------------------------------------------
   @override
@@ -244,71 +335,64 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
     final namaUser = (context.read<AuthProvider>().user?['nama'] ?? '').toString();
     final k = _kartu;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF1F4F2),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black87,
-        centerTitle: true,
-        title: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE3E8E5)),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.confirmation_number_outlined, size: 16, color: _hijauGelap),
-              SizedBox(width: 6),
-              Text('Kartu Nomor Antrean',
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: _hijauTua)),
-            ],
-          ),
-        ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
       ),
-      body: RefreshIndicator(
-        onRefresh: _muat,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
+      child: Scaffold(
+        backgroundColor: AppColors.latar,
+        body: Column(
           children: [
-            if (_memuat)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 60),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_gagal != null)
-              SectionCard(
-                color: AppColors.kuningMuda,
-                child: Row(
+            _header(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _muat,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
                   children: [
-                    const Icon(Icons.cloud_off, color: AppColors.kuning),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(_gagal!,
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() => _memuat = true);
-                        _muat();
-                      },
-                      child: const Text('Coba lagi'),
-                    ),
+                    if (_memuat)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 60),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_gagal != null)
+                      SectionCard(
+                        color: AppColors.kuningMuda,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.cloud_off, color: AppColors.kuning),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(_gagal!,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700, fontSize: 13)),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() => _memuat = true);
+                                _muat();
+                              },
+                              child: const Text('Coba lagi'),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (k != null) ...[
+                      _bannerOffline(),
+                      const SizedBox(height: 12),
+                      _tiket(k, namaUser),
+                      const SizedBox(height: 14),
+                      _aksiUtama(k),
+                      const SizedBox(height: 12),
+                      _aksiTambahan(),
+                    ],
                   ],
                 ),
-              )
-            else if (k != null) ...[
-              _bannerOffline(),
-              const SizedBox(height: 12),
-              _tiket(k, namaUser),
-              const SizedBox(height: 14),
-              _aksiUtama(k),
-              const SizedBox(height: 12),
-              _aksiTambahan(),
-            ],
+              ),
+            ),
           ],
         ),
       ),
@@ -323,8 +407,14 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE3E8E5)),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE6ECE8)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4)),
+        ],
       ),
       child: Row(
         children: [
@@ -579,7 +669,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
   }
 
   Widget _pemisah() {
-    const latar = Color(0xFFF1F4F2);
+    final latar = AppColors.latar;
     return SizedBox(
       height: 22,
       child: Row(
@@ -587,9 +677,9 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
           Container(
             width: 11,
             height: 22,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: latar,
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topRight: Radius.circular(11),
                 bottomRight: Radius.circular(11),
               ),
@@ -612,9 +702,9 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
           Container(
             width: 11,
             height: 22,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: latar,
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(11),
                 bottomLeft: Radius.circular(11),
               ),
@@ -648,13 +738,13 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
         Opacity(
           opacity: aktifCheckin ? 1 : 0.65,
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
             onTap: _checkin,
             child: Container(
               height: 52,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 gradient: const LinearGradient(colors: [_oranye1, _oranye2]),
                 boxShadow: [
                   BoxShadow(
@@ -689,14 +779,14 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
         Opacity(
           opacity: (k.bolehBatal && !_sibuk) ? 1 : 0.6,
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
             onTap: _batal,
             child: Container(
               height: 48,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF4FB),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: _biruTombol.withOpacity(0.5)),
               ),
               child: const Row(
@@ -749,8 +839,14 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE6ECE8)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4)),
+        ],
       ),
       child: Column(
         children: [

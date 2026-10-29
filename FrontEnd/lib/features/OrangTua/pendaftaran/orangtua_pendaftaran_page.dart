@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
@@ -141,6 +142,7 @@ String _pesanError(Object e) {
 const _hijauTua = Color(0xFF0B3D2E);
 const _hijauGelap = Color(0xFF14634A);
 const _hijauAksen = Color(0xFF1F7A5C);
+const _hijauTerang = Color(0xFF2BB59A);
 const _oranye1 = Color(0xFFEA580C);
 const _oranye2 = Color(0xFFF97316);
 
@@ -284,144 +286,176 @@ class _OrangTuaPendaftaranPageState extends State<OrangTuaPendaftaranPage> {
     final j = _jadwal;
     final punyaAnak = !_memuat && _gagal == null && j != null && j.anak.isNotEmpty;
 
-    return Scaffold(
-      backgroundColor: AppColors.latar,
-      body: SafeArea(
-        bottom: false,
-        child: RefreshIndicator(
-          onRefresh: _muat,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-            children: [
-              _header(),
-              const SizedBox(height: 14),
-              if (_memuat)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 48),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (_gagal != null)
-                _kartuPesan(
-                  warna: AppColors.kuningMuda,
-                  ikon: Icons.cloud_off,
-                  ikonWarna: AppColors.kuning,
-                  teks: _gagal!,
-                  aksi: TextButton(
-                    onPressed: () {
-                      setState(() => _memuat = true);
-                      _muat();
-                    },
-                    child: const Text('Coba lagi'),
-                  ),
-                )
-              else if (j == null)
-                _kartuPesan(
-                  warna: Colors.white,
-                  ikon: Icons.event_busy,
-                  ikonWarna: AppColors.teksRedup,
-                  teks:
-                      'Belum ada jadwal posyandu mendatang. Pendaftaran dapat dilakukan setelah admin menerbitkan jadwal.',
-                )
-              else ...[
-                _kartuJadwal(j),
-                const SizedBox(height: 20),
-                if (j.anak.isEmpty)
-                  _kartuPesan(
-                    warna: Colors.white,
-                    ikon: Icons.child_care,
-                    ikonWarna: AppColors.teksRedup,
-                    teks: 'Belum ada data anak. Lengkapi data keluarga di beranda terlebih dahulu.',
-                  )
-                else ...[
-                  _judulProfil(),
-                  const SizedBox(height: 10),
-                  _kartuAnak(j, j.anak[_idx.clamp(0, j.anak.length - 1)]),
-                  const SizedBox(height: 14),
-                  _kartuPetunjuk(),
-                  const SizedBox(height: 12),
-                  _kartuOffline(),
-                ],
-              ],
-            ],
-          ),
-        ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
       ),
-      bottomNavigationBar: punyaAnak
-          ? SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: _barAksi(j, j.anak[_idx.clamp(0, j.anak.length - 1)]),
+      child: Scaffold(
+        backgroundColor: AppColors.latar,
+        body: Column(
+          children: [
+            _header(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _muat,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  children: [
+                    if (_memuat)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 48),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_gagal != null)
+                      _kartuPesan(
+                        warna: AppColors.kuningMuda,
+                        ikon: Icons.cloud_off,
+                        ikonWarna: AppColors.kuning,
+                        teks: _gagal!,
+                        aksi: TextButton(
+                          onPressed: () {
+                            setState(() => _memuat = true);
+                            _muat();
+                          },
+                          child: const Text('Coba lagi'),
+                        ),
+                      )
+                    else if (j == null)
+                      _kartuPesan(
+                        warna: Colors.white,
+                        ikon: Icons.event_busy,
+                        ikonWarna: AppColors.teksRedup,
+                        teks:
+                            'Belum ada jadwal posyandu mendatang. Pendaftaran dapat dilakukan setelah admin menerbitkan jadwal.',
+                      )
+                    else ...[
+                      _kartuJadwal(j),
+                      const SizedBox(height: 20),
+                      if (j.anak.isEmpty)
+                        _kartuPesan(
+                          warna: Colors.white,
+                          ikon: Icons.child_care,
+                          ikonWarna: AppColors.teksRedup,
+                          teks:
+                              'Belum ada data anak. Lengkapi data keluarga di beranda terlebih dahulu.',
+                        )
+                      else ...[
+                        _judulProfil(),
+                        const SizedBox(height: 10),
+                        _kartuAnak(j, j.anak[_idx.clamp(0, j.anak.length - 1)]),
+                        const SizedBox(height: 14),
+                        _kartuPetunjuk(),
+                        const SizedBox(height: 12),
+                        _kartuOffline(),
+                      ],
+                    ],
+                  ],
+                ),
               ),
-            )
-          : null,
+            ),
+          ],
+        ),
+        bottomNavigationBar: punyaAnak
+            ? SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: _barAksi(j, j.anak[_idx.clamp(0, j.anak.length - 1)]),
+                ),
+              )
+            : null,
+      ),
     );
   }
 
   // -------------------------------------------------------------------------
   // HEADER
   // -------------------------------------------------------------------------
-   Widget _header() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => Navigator.of(context).maybePop(),
-          child: Container(
-            width: 40,
-            height: 40,
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE3E8E5)),
+  Widget _lingkaran(double ukuran, Color warna) => Container(
+        width: ukuran,
+        height: ukuran,
+        decoration: BoxDecoration(color: warna, shape: BoxShape.circle),
+      );
+
+  Widget _header() {
+    final topInset = MediaQuery.of(context).padding.top;
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(30),
+        bottomRight: Radius.circular(30),
+      ),
+      child: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_hijauTua, _hijauGelap, _hijauAksen],
+            stops: [0.0, 0.6, 1.0],
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -40,
+              top: -50,
+              child: _lingkaran(170, Colors.white.withOpacity(0.07)),
             ),
-            child: const Icon(Icons.arrow_back, color: _hijauGelap, size: 21),
-          ),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD7F0E3),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.how_to_reg, size: 13, color: _hijauGelap),
-                    SizedBox(width: 5),
-                    Text('Pendaftaran Posyandu',
-                        style: TextStyle(
-                            fontSize: 10.5, fontWeight: FontWeight.w700, color: _hijauGelap)),
-                  ],
-                ),
+            Positioned(
+              right: 50,
+              bottom: -60,
+              child: _lingkaran(130, _hijauTerang.withOpacity(0.18)),
+            ),
+            Positioned(
+              left: -35,
+              bottom: -45,
+              child: _lingkaran(110, Colors.white.withOpacity(0.06)),
+            ),
+            Positioned(
+              right: 24,
+              top: topInset + 14,
+              child: _lingkaran(14, _oranye2.withOpacity(0.55)),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, topInset + 14, 16, 26),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => Navigator.of(context).maybePop(),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      margin: const EdgeInsets.only(right: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.16),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 21),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Sesi Pendaftaran\nPosyandu',
+                      style: TextStyle(
+                          fontSize: 25,
+                          height: 1.15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Sesi Pendaftaran\nPosyandu',
-                style: TextStyle(
-                    fontSize: 25, height: 1.15, fontWeight: FontWeight.w800, color: _hijauTua),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE3E8E5)),
-          ),
-          child: const Icon(Icons.calendar_month, color: _hijauGelap, size: 21),
-        ),
-      ],
+      ),
     );
   }
 
