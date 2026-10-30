@@ -53,30 +53,47 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
   }
 
   // Header bagian atas: hanya judul
+    // Header bagian atas: judul di tengah
   Widget _header() {
     return Container(
       width: double.infinity,
       color: _hijauHeader,
       child: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-          child: Row(
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              InkWell(
-                onTap: () => Navigator.maybePop(context),
-                child: const Padding(
-                  padding: EdgeInsets.all(6),
-                  child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+              // Judul di tengah
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 56),
+                child: Text(
+                  'Vaksin Anak',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-              const SizedBox(width: 6),
-              const Expanded(
-                child: Text('Vaksin Anak',
-                    style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white)),
+              // Tombol kembali di kiri
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(Icons.arrow_back,
+                          color: Colors.white, size: 22),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -84,7 +101,6 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
       ),
     );
   }
-
   Widget _isi() {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());

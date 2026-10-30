@@ -311,6 +311,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                   const Expanded(
                     child: Text(
                       'Kartu Nomor\nAntrean',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                           fontSize: 25,
                           height: 1.15,
@@ -318,6 +319,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                           color: Colors.white),
                     ),
                   ),
+                  const SizedBox(width: 54),
                 ],
               ),
             ),

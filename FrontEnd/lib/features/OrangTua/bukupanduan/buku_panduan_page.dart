@@ -43,28 +43,52 @@ Widget _headerAtas(
       color: _hijauHeader,
       child: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-          child: Row(
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              InkWell(
-                onTap: onBack ?? () => Navigator.maybePop(context),
-                child: const Padding(
-                  padding: EdgeInsets.all(6),
-                  child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 96),
+                child: Text(
+                  judul,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(judul,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white)),
+              // Tombol kembali di kiri
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: onBack ?? () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(Icons.arrow_back,
+                          color: Colors.white, size: 22),
+                    ),
+                  ),
+                ),
               ),
-              ...aksi,
+              // Aksi di kanan
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: aksi,
+                  ),
+                ),
+              ),
             ],
           ),
         ),

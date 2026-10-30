@@ -1,66 +1,98 @@
+// data_anak_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
-import '../../../core/common_widgets.dart';
-import 'keluarga_common.dart';
+import 'data_orang_tua_page.dart';
 
 const _hijauTua = Color(0xFF0B3D2E);
 const _garis = Color(0xFFE6ECE8);
 const _garisInput = Color(0xFFD7E6DD);
 
-InputDecoration _dekor(String hint, {IconData? icon, String? suffix}) {
-  OutlineInputBorder b(Color c) => OutlineInputBorder(
+InputDecoration _dekor(
+  String hint, {
+  IconData? icon,
+  String? suffix,
+}) {
+  OutlineInputBorder border(Color color) => OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: c),
+        borderSide: BorderSide(color: color),
       );
+
   return InputDecoration(
     hintText: hint,
     hintStyle: const TextStyle(fontSize: 13, color: Colors.black38),
-    prefixIcon: icon == null ? null : Icon(icon, size: 20, color: AppColors.hijau),
+    prefixIcon: icon == null
+        ? null
+        : Icon(icon, size: 20, color: AppColors.hijau),
     suffixText: suffix,
-    suffixStyle: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.hijau),
+    suffixStyle: const TextStyle(
+      fontWeight: FontWeight.w800,
+      color: AppColors.hijau,
+    ),
     filled: true,
     fillColor: Colors.white,
     counterText: '',
-    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    border: b(_garisInput),
-    enabledBorder: b(_garisInput),
-    focusedBorder: b(_hijauTua),
-    errorBorder: b(AppColors.merah),
-    focusedErrorBorder: b(AppColors.merah),
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: 14,
+      vertical: 14,
+    ),
+    border: border(_garisInput),
+    enabledBorder: border(_garisInput),
+    focusedBorder: border(_hijauTua),
+    errorBorder: border(AppColors.merah),
+    focusedErrorBorder: border(AppColors.merah),
   );
 }
 
 Widget _label(String teks, {bool wajib = false, String? ket}) => Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text.rich(TextSpan(children: [
+      child: Text.rich(
         TextSpan(
-            text: teks,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
-        if (ket != null)
-          TextSpan(
-              text: ' $ket',
-              style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
-        if (wajib)
-          const TextSpan(
-              text: ' *',
-              style: TextStyle(color: AppColors.merah, fontWeight: FontWeight.w700)),
-      ])),
+          children: [
+            TextSpan(
+              text: teks,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 12.5,
+              ),
+            ),
+            if (ket != null)
+              TextSpan(
+                text: ' $ket',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.teksRedup,
+                ),
+              ),
+            if (wajib)
+              const TextSpan(
+                text: ' *',
+                style: TextStyle(
+                  color: AppColors.merah,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
 
-Future<DataAnak?> tampilFormAnak(BuildContext context, {DataAnak? awal}) {
-  return showModalBottomSheet<DataAnak>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (_) => _FormAnak(awal: awal),
-  );
-}
+Future<DataAnak?> tampilFormAnak(
+  BuildContext context, {
+  DataAnak? awal,
+}) =>
+    showModalBottomSheet<DataAnak>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _FormAnak(awal: awal),
+    );
 
 class DataAnakPage extends StatefulWidget {
   const DataAnakPage({super.key});
@@ -83,17 +115,17 @@ class _DataAnakPageState extends State<DataAnakPage> {
   Future<void> _muat() async {
     try {
       final data = await KeluargaApi.ambil();
-      final m = KeluargaApi.keModel(data);
+      final model = KeluargaApi.keModel(data);
       if (!mounted) return;
       setState(() {
-        _anak = m.anak;
+        _anak = model.anak;
         _gagal = null;
         _memuat = false;
       });
-    } catch (e) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
-        _gagal = pesanError(e);
+        _gagal = pesanError(error);
         _memuat = false;
       });
     }
@@ -102,157 +134,209 @@ class _DataAnakPageState extends State<DataAnakPage> {
   Future<void> _tambahAtauUbah({DataAnak? awal}) async {
     final hasil = await tampilFormAnak(context, awal: awal);
     if (hasil == null || !mounted) return;
-    snackDi(context, awal == null ? 'Data anak ditambahkan' : 'Data anak diperbarui');
+    snackDi(
+      context,
+      awal == null ? 'Data anak ditambahkan' : 'Data anak diperbarui',
+    );
     _muat();
   }
 
-  Future<void> _hapus(DataAnak a) async {
+  Future<void> _hapus(DataAnak anak) async {
     final ya = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Hapus data anak?'),
-        content: Text('Data ${a.nama} akan dihapus dari daftar.'),
+        content: Text('Data ${anak.nama} akan dihapus dari daftar.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.merah, foregroundColor: Colors.white),
+              backgroundColor: AppColors.merah,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Hapus'),
           ),
         ],
       ),
     );
-    if (ya != true) return;
 
+    if (ya != true) return;
     try {
-      if (a.id != null) {
-        await ApiClient.dio.delete('/keluarga/anak/${a.id}', options: opsiApi);
+      if (anak.id != null) {
+        await ApiClient.dio.delete(
+          '/keluarga/anak/${anak.id}',
+          options: opsiApi,
+        );
       }
       if (!mounted) return;
       snackDi(context, 'Data anak dihapus');
       _muat();
-    } catch (e) {
-      if (!mounted) return;
-      snackDi(context, pesanError(e));
+    } catch (error) {
+      if (mounted) snackDi(context, pesanError(error));
     }
   }
 
-  Widget _kartuAnak(DataAnak a) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _garis),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+  Widget _kartuAnak(DataAnak anak) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _garis),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.04),
               blurRadius: 10,
-              offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD7F0E3),
-                  borderRadius: BorderRadius.circular(16),
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD7F0E3),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    anak.jk == 'P' ? Icons.female : Icons.male,
+                    color: kHijauGelap,
+                    size: 28,
+                  ),
                 ),
-                child: Icon(a.jk == 'P' ? Icons.female : Icons.male,
-                    color: kHijauGelap, size: 28),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(a.nama,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              anak.nama,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                  color: _hijauTua)),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.hijauMuda,
-                            borderRadius: BorderRadius.circular(20),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: _hijauTua,
+                              ),
+                            ),
                           ),
-                          child: const Text('Aktif',
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.hijauMuda,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Aktif',
                               style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: _hijauTua)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      '${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} • ${usiaAnak(a.tglLahir)} •',
-                      style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup),
-                    ),
-                    Text('lahir ${a.tglLahir}',
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: _hijauTua,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'} • '
+                        '${usiaAnak(anak.tglLahir)} •',
                         style: const TextStyle(
-                            fontSize: 11.5, color: AppColors.teksRedup)),
-                  ],
+                          fontSize: 11.5,
+                          color: AppColors.teksRedup,
+                        ),
+                      ),
+                      Text(
+                        'lahir ${anak.tglLahir}',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.teksRedup,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              IconButton(
-                tooltip: 'Ubah',
-                icon: const Icon(Icons.edit_outlined, size: 20),
-                onPressed: () => _tambahAtauUbah(awal: a),
-              ),
-              IconButton(
-                tooltip: 'Hapus',
-                icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.merah),
-                onPressed: () => _hapus(a),
-              ),
-            ],
-          ),
-          const Divider(height: 22, color: _garis),
-          Row(
-            children: [
-              const Icon(Icons.event_note_outlined, size: 16, color: kHijauGelap),
-              const SizedBox(width: 6),
-              const Text('Jadwal Imunisasi: ', style: TextStyle(fontSize: 11.5)),
-              const Text('HB-0 Siap',
-                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
-              const Spacer(),
-              InkWell(
-                onTap: () {},
-                child: const Row(
-                  children: [
-                    Text('Lihat KMS',
+                IconButton(
+                  tooltip: 'Ubah',
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  onPressed: () => _tambahAtauUbah(awal: anak),
+                ),
+                IconButton(
+                  tooltip: 'Hapus',
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    size: 20,
+                    color: AppColors.merah,
+                  ),
+                  onPressed: () => _hapus(anak),
+                ),
+              ],
+            ),
+            const Divider(height: 22, color: _garis),
+            Row(
+              children: [
+                const Icon(
+                  Icons.event_note_outlined,
+                  size: 16,
+                  color: kHijauGelap,
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  'Jadwal Imunisasi: ',
+                  style: TextStyle(fontSize: 11.5),
+                ),
+                const Text(
+                  'HB-0 Siap',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Spacer(),
+                InkWell(
+                  onTap: () {},
+                  child: const Row(
+                    children: [
+                      Text(
+                        'Lihat KMS',
                         style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: _hijauTua)),
-                    Icon(Icons.chevron_right, size: 16, color: _hijauTua),
-                  ],
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: _hijauTua,
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: _hijauTua,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+              ],
+            ),
+          ],
+        ),
+      );
 
   Widget _isi() {
-    if (_memuat) return const Center(child: CircularProgressIndicator());
-
+    if (_memuat) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (_gagal != null) {
       return Center(
         child: Padding(
@@ -283,31 +367,49 @@ class _DataAnakPageState extends State<DataAnakPage> {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
           child: Row(
             children: [
-              const Text('DAFTAR TERDAFTAR',
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: .5,
-                      color: AppColors.teksRedup)),
+              const Text(
+                'DAFTAR TERDAFTAR',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: .5,
+                  color: AppColors.teksRedup,
+                ),
+              ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration:
-                    const BoxDecoration(color: _hijauTua, shape: BoxShape.circle),
-                child: Text('${_anak.length}',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 2,
+                ),
+                decoration: const BoxDecoration(
+                  color: _hijauTua,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '${_anak.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
               const Spacer(),
-              const Icon(Icons.check_circle_outline, size: 14, color: kHijauGelap),
+              const Icon(
+                Icons.check_circle_outline,
+                size: 14,
+                color: kHijauGelap,
+              ),
               const SizedBox(width: 4),
-              const Text('Posyandu Mawar I',
-                  style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: _hijauTua)),
+              const Text(
+                'Posyandu Mawar I',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: _hijauTua,
+                ),
+              ),
             ],
           ),
         ),
@@ -317,24 +419,34 @@ class _DataAnakPageState extends State<DataAnakPage> {
                   child: Padding(
                     padding: EdgeInsets.all(32),
                     child: Text(
-                      'Belum ada data anak. Tekan tombol hijau di bawah untuk menambah data anak balita.',
+                      'Belum ada data anak. Tekan tombol hijau di bawah '
+                      'untuk menambah data anak balita.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.teksRedup,
+                      ),
                     ),
                   ),
                 )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  children: [for (final a in _anak) _kartuAnak(a)],
+                  children: [
+                    for (final anak in _anak) _kartuAnak(anak),
+                  ],
                 ),
         ),
         if (_anak.isNotEmpty)
           const Padding(
             padding: EdgeInsets.fromLTRB(32, 0, 32, 14),
             child: Text(
-              'Punya lebih dari 1 balita? Tekan tombol hijau di bawah untuk menambah data adik atau kakak.',
+              'Punya lebih dari 1 balita? Tekan tombol hijau di bawah '
+              'untuk menambah data adik atau kakak.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: AppColors.teksRedup),
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.teksRedup,
+              ),
             ),
           ),
       ],
@@ -342,41 +454,47 @@ class _DataAnakPageState extends State<DataAnakPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.latar,
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: SizedBox(
-            height: 54,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _hijauTua,
-                foregroundColor: Colors.white,
-                elevation: 3,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: AppColors.latar,
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: SizedBox(
+              height: 54,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _hijauTua,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                onPressed: () => _tambahAtauUbah(),
+                icon: const Icon(Icons.add),
+                label: const Text(
+                  'Tambah Anak',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
               ),
-              onPressed: () => _tambahAtauUbah(),
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Anak',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
             ),
           ),
         ),
-      ),
-      body: Column(
-        children: [
-          const HeaderKeluarga(judul: 'Data Anak'),
-          Expanded(child: _isi()),
-        ],
-      ),
-    );
-  }
+        body: Column(
+          children: [
+            const HeaderKeluarga(judul: 'Data Anak'),
+            Expanded(child: _isi()),
+          ],
+        ),
+      );
 }
 
 class _FormAnak extends StatefulWidget {
   final DataAnak? awal;
+
   const _FormAnak({this.awal});
 
   @override
@@ -390,6 +508,7 @@ class _FormAnakState extends State<_FormAnak> {
   late final TextEditingController _tgl;
   late final TextEditingController _berat;
   late final TextEditingController _panjang;
+
   String _jk = '';
   bool _jkError = false;
   bool _menyimpan = false;
@@ -398,13 +517,13 @@ class _FormAnakState extends State<_FormAnak> {
   @override
   void initState() {
     super.initState();
-    final a = widget.awal;
-    _nama = TextEditingController(text: a?.nama ?? '');
-    _nik = TextEditingController(text: a?.nik ?? '');
-    _tgl = TextEditingController(text: a?.tglLahir ?? '');
-    _berat = TextEditingController(text: a?.beratLahir ?? '');
-    _panjang = TextEditingController(text: a?.panjangLahir ?? '');
-    _jk = a?.jk ?? '';
+    final anak = widget.awal;
+    _nama = TextEditingController(text: anak?.nama ?? '');
+    _nik = TextEditingController(text: anak?.nik ?? '');
+    _tgl = TextEditingController(text: anak?.tglLahir ?? '');
+    _berat = TextEditingController(text: anak?.beratLahir ?? '');
+    _panjang = TextEditingController(text: anak?.panjangLahir ?? '');
+    _jk = anak?.jk ?? '';
   }
 
   @override
@@ -419,20 +538,34 @@ class _FormAnakState extends State<_FormAnak> {
 
   Future<void> _pilihTanggal() async {
     final now = DateTime.now();
-    final d = await showDatePicker(
+    final tanggal = await showDatePicker(
       context: context,
       initialDate: parseTgl(_tgl.text) ?? now,
       firstDate: DateTime(now.year - 6),
       lastDate: now,
     );
-    if (d != null) setState(() => _tgl.text = fmtTgl(d));
+    if (tanggal != null) setState(() => _tgl.text = fmtTgl(tanggal));
+  }
+
+  String? _rentang(
+    String? value,
+    double min,
+    double maks,
+    String nama,
+  ) {
+    if (value == null || value.trim().isEmpty) return null;
+    final angka = double.tryParse(value.replaceAll(',', '.'));
+    if (angka == null || angka < min || angka > maks) {
+      return '$nama tidak wajar ($min-$maks)';
+    }
+    return null;
   }
 
   Future<void> _simpan() async {
     if (_menyimpan) return;
-    final ok = _key.currentState!.validate();
+    final valid = _key.currentState!.validate();
     setState(() => _jkError = _jk.isEmpty);
-    if (!ok || _jk.isEmpty) return;
+    if (!valid || _jk.isEmpty) return;
 
     setState(() {
       _menyimpan = true;
@@ -450,26 +583,28 @@ class _FormAnakState extends State<_FormAnak> {
 
     try {
       final id = widget.awal?.id;
-      final r = id == null
-          ? await ApiClient.dio.post('/keluarga/anak', data: body, options: opsiApi)
-          : await ApiClient.dio.put('/keluarga/anak/$id', data: body, options: opsiApi);
-      final hasil = DataAnak.fromApi(Map<String, dynamic>.from(r.data['data'] as Map));
-      if (!mounted) return;
-      Navigator.pop(context, hasil);
-    } catch (e) {
+      final response = id == null
+          ? await ApiClient.dio.post(
+              '/keluarga/anak',
+              data: body,
+              options: opsiApi,
+            )
+          : await ApiClient.dio.put(
+              '/keluarga/anak/$id',
+              data: body,
+              options: opsiApi,
+            );
+      final hasil = DataAnak.fromApi(
+        Map<String, dynamic>.from(response.data['data'] as Map),
+      );
+      if (mounted) Navigator.pop(context, hasil);
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _menyimpan = false;
-        _error = pesanError(e);
+        _error = pesanError(error);
       });
     }
-  }
-
-  String? _rentang(String? v, double min, double maks, String nama) {
-    if (v == null || v.trim().isEmpty) return null;
-    final n = double.tryParse(v.replaceAll(',', '.'));
-    if (n == null || n < min || n > maks) return '$nama tidak wajar ($min-$maks)';
-    return null;
   }
 
   Widget _pilihJk(String kode, String teks, IconData icon) {
@@ -480,226 +615,278 @@ class _FormAnakState extends State<_FormAnak> {
         child: OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
             backgroundColor: aktif ? _hijauTua : Colors.white,
-            side: BorderSide(color: aktif ? _hijauTua : _garisInput),
+            side: BorderSide(
+              color: aktif ? _hijauTua : _garisInput,
+            ),
             foregroundColor: aktif ? Colors.white : Colors.black87,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
           ),
           onPressed: () => setState(() {
             _jk = kode;
             _jkError = false;
           }),
           icon: Icon(icon, size: 18),
-          label: Text(teks, style: const TextStyle(fontWeight: FontWeight.w700)),
+          label: Text(
+            teks,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-          18, 18, 18, 16 + MediaQuery.of(context).viewInsets.bottom),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _key,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(widget.awal == null ? 'Tambah Data Anak' : 'Ubah Data Anak',
-                            style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: _hijauTua)),
-                        const SizedBox(height: 2),
-                        const Text('Lengkapi biodata lengkap balita',
-                            style: TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD7F0E3),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.cloud_done_outlined, size: 14, color: _hijauTua),
-                        SizedBox(width: 5),
-                        Text('Simpan Lokal',
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: _hijauTua)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              _label('Nama Lengkap Anak', wajib: true),
-              TextFormField(
-                controller: _nama,
-                textCapitalization: TextCapitalization.words,
-                decoration: _dekor('Contoh: Muhammad Sara',
-                    icon: Icons.sentiment_satisfied_alt_outlined),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
-              ),
-              const SizedBox(height: 14),
-              _label('Tanggal Lahir', wajib: true),
-              TextFormField(
-                controller: _tgl,
-                readOnly: true,
-                onTap: _pilihTanggal,
-                decoration: _dekor('Pilih tanggal lahir', icon: Icons.calendar_today_outlined),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Tanggal lahir wajib diisi' : null,
-              ),
-              const SizedBox(height: 14),
-              _label('Jenis Kelamin', wajib: true),
-              Row(
-                children: [
-                  _pilihJk('L', 'Laki-laki', Icons.male),
-                  const SizedBox(width: 10),
-                  _pilihJk('P', 'Perempuan', Icons.female),
-                ],
-              ),
-              if (_jkError)
-                const Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: Text('Pilih jenis kelamin',
-                      style: TextStyle(color: AppColors.merah, fontSize: 12)),
-                ),
-              const SizedBox(height: 14),
-              _label('NIK Anak', ket: '(opsional)'),
-              TextFormField(
-                controller: _nik,
-                keyboardType: TextInputType.number,
-                maxLength: 16,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _dekor('16 digit NIK (jika ada)', icon: Icons.badge_outlined),
-                validator: (v) => (v != null && v.isNotEmpty && v.length != 16)
-                    ? 'NIK harus 16 digit'
-                    : null,
-              ),
-              const SizedBox(height: 14),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _label('Berat Lahir'),
-                        TextFormField(
-                          controller: _berat,
-                          keyboardType:
-                              const TextInputType.numberWithOptions(decimal: true),
-                          decoration: _dekor('Berat (kg)', suffix: 'kg'),
-                          validator: (v) => _rentang(v, 0.5, 7, 'Berat'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _label('Panjang Lahir'),
-                        TextFormField(
-                          controller: _panjang,
-                          keyboardType:
-                              const TextInputType.numberWithOptions(decimal: true),
-                          decoration: _dekor('Panjang (cm)', suffix: 'cm'),
-                          validator: (v) => _rentang(v, 30, 65, 'Panjang'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Text(_error!,
-                      style: const TextStyle(color: AppColors.merah, fontSize: 12.5)),
-                ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _hijauTua,
-                          side: const BorderSide(color: _hijauTua, width: 1.4),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24)),
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Batal',
-                            style: TextStyle(fontWeight: FontWeight.w800)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _hijauTua,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24)),
-                        ),
-                        onPressed: _menyimpan ? null : _simpan,
-                        icon: const Icon(Icons.check, size: 18),
-                        label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Data',
-                            style: const TextStyle(fontWeight: FontWeight.w800)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE3F6EC),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFBFE5D0)),
-                ),
-                child: const Row(
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          18,
+          18,
+          18,
+          16 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _key,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Icon(Icons.verified_user_outlined, size: 20, color: _hijauTua),
-                    SizedBox(width: 10),
                     Expanded(
-                      child: Text(
-                        'Data tersimpan dengan aman dan dapat disinkronkan otomatis ke sistem Posyandu.',
-                        style: TextStyle(fontSize: 11),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.awal == null
+                                ? 'Tambah Data Anak'
+                                : 'Ubah Data Anak',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: _hijauTua,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Lengkapi biodata balita',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.teksRedup,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Chip(
+                      avatar: Icon(
+                        Icons.cloud_done_outlined,
+                        size: 14,
+                        color: _hijauTua,
+                      ),
+                      label: Text('Simpan Lokal'),
+                      backgroundColor: Color(0xFFD7F0E3),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                _label('Nama Lengkap Anak', wajib: true),
+                TextFormField(
+                  controller: _nama,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: _dekor(
+                    'Contoh: Muhammad Sara',
+                    icon: Icons.sentiment_satisfied_alt_outlined,
+                  ),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty
+                          ? 'Nama wajib diisi'
+                          : null,
+                ),
+                const SizedBox(height: 14),
+                _label('Tanggal Lahir', wajib: true),
+                TextFormField(
+                  controller: _tgl,
+                  readOnly: true,
+                  onTap: _pilihTanggal,
+                  decoration: _dekor(
+                    'Pilih tanggal lahir',
+                    icon: Icons.calendar_today_outlined,
+                  ),
+                  validator: (value) =>
+                      value == null || value.isEmpty
+                          ? 'Tanggal lahir wajib diisi'
+                          : null,
+                ),
+                const SizedBox(height: 14),
+                _label('Jenis Kelamin', wajib: true),
+                Row(
+                  children: [
+                    _pilihJk('L', 'Laki-laki', Icons.male),
+                    const SizedBox(width: 10),
+                    _pilihJk('P', 'Perempuan', Icons.female),
+                  ],
+                ),
+                if (_jkError)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Pilih jenis kelamin',
+                      style: TextStyle(
+                        color: AppColors.merah,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 14),
+                _label('NIK Anak', ket: '(opsional)'),
+                TextFormField(
+                  controller: _nik,
+                  keyboardType: TextInputType.number,
+                  maxLength: 16,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: _dekor(
+                    '16 digit NIK (jika ada)',
+                    icon: Icons.badge_outlined,
+                  ),
+                  validator: (value) =>
+                      value != null &&
+                              value.isNotEmpty &&
+                              value.length != 16
+                          ? 'NIK harus 16 digit'
+                          : null,
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _label('Berat Lahir'),
+                          TextFormField(
+                            controller: _berat,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: _dekor('Berat (kg)', suffix: 'kg'),
+                            validator: (value) =>
+                                _rentang(value, .5, 7, 'Berat'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _label('Panjang Lahir'),
+                          TextFormField(
+                            controller: _panjang,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: _dekor('Panjang (cm)', suffix: 'cm'),
+                            validator: (value) =>
+                                _rentang(value, 30, 65, 'Panjang'),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(
+                        color: AppColors.merah,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _hijauTua,
+                            side: const BorderSide(
+                              color: _hijauTua,
+                              width: 1.4,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            'Batal',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _hijauTua,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                          ),
+                          onPressed: _menyimpan ? null : _simpan,
+                          icon: const Icon(Icons.check, size: 18),
+                          label: Text(
+                            _menyimpan ? 'Menyimpan...' : 'Simpan Data',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE3F6EC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFBFE5D0)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.verified_user_outlined,
+                        size: 20,
+                        color: _hijauTua,
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Data tersimpan dengan aman dan dapat disinkronkan '
+                          'otomatis ke sistem Posyandu.',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
 }

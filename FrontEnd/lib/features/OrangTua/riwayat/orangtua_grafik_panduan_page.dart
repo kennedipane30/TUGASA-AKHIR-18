@@ -10,7 +10,7 @@ const _hijauHero = Color(0xFF0A5A43);
 class OrangTuaGrafikPanduanPage extends StatelessWidget {
   const OrangTuaGrafikPanduanPage({super.key});
 
-  // Header bagian atas: hanya judul
+  // Header bagian atas: judul di tengah.
   Widget _header(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -25,17 +25,26 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                 onTap: () => Navigator.maybePop(context),
                 child: const Padding(
                   padding: EdgeInsets.all(6),
-                  child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
               ),
               const SizedBox(width: 6),
               const Expanded(
-                child: Text('Panduan Membaca Grafik',
-                    style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white)),
+                child: Text(
+                  'Panduan Membaca Grafik',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
               ),
+              const SizedBox(width: 40),
             ],
           ),
         ),
@@ -52,7 +61,11 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
         boxShadow: const [
-          BoxShadow(color: Color(0x0F1E293B), blurRadius: 12, offset: Offset(0, 3)),
+          BoxShadow(
+            color: Color(0x0F1E293B),
+            blurRadius: 12,
+            offset: Offset(0, 3),
+          ),
         ],
       ),
       child: child,
@@ -62,9 +75,18 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
   Widget _badge(String teks, Color bg, Color fg) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text(teks,
-          style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: fg)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        teks,
+        style: TextStyle(
+          fontSize: 9.5,
+          fontWeight: FontWeight.w800,
+          color: fg,
+        ),
+      ),
     );
   }
 
@@ -95,15 +117,21 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
               Container(
                 width: 12,
                 height: 12,
-                decoration: BoxDecoration(color: titik, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: titik,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(judul,
-                    style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
-                        color: _teksGelap)),
+                child: Text(
+                  judul,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: _teksGelap,
+                  ),
+                ),
               ),
               const SizedBox(width: 6),
               _badge(badge, badgeBg, badgeFg),
@@ -112,9 +140,14 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.only(left: 22),
-            child: Text(isi,
-                style: const TextStyle(
-                    fontSize: 11.5, height: 1.45, color: _teksAbu)),
+            child: Text(
+              isi,
+              style: const TextStyle(
+                fontSize: 11.5,
+                height: 1.45,
+                color: _teksAbu,
+              ),
+            ),
           ),
         ],
       ),
@@ -145,7 +178,10 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
           Container(
             width: 26,
             height: 26,
-            decoration: BoxDecoration(color: warna, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: warna,
+              shape: BoxShape.circle,
+            ),
             child: Icon(ikon, size: 15, color: Colors.white),
           ),
           const SizedBox(width: 10),
@@ -156,22 +192,34 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(judul,
-                          style: const TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800,
-                              color: _teksGelap)),
+                      child: Text(
+                        judul,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: _teksGelap,
+                        ),
+                      ),
                     ),
                     if (badge != null) ...[
                       const SizedBox(width: 6),
-                      _badge(badge, const Color(0xFFFFE4E6), const Color(0xFFDC2626)),
+                      _badge(
+                        badge,
+                        const Color(0xFFFFE4E6),
+                        const Color(0xFFDC2626),
+                      ),
                     ],
                   ],
                 ),
                 const SizedBox(height: 3),
-                Text(isi,
-                    style: const TextStyle(
-                        fontSize: 11, height: 1.45, color: _teksAbu)),
+                Text(
+                  isi,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    height: 1.45,
+                    color: _teksAbu,
+                  ),
+                ),
               ],
             ),
           ),
@@ -191,27 +239,40 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
             height: 24,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
-                color: Color(0xFFE9EEF3), shape: BoxShape.circle),
-            child: Text('$no',
-                style: const TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
-                    color: _teksGelap)),
+              color: Color(0xFFE9EEF3),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              '$no',
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                color: _teksGelap,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(judul,
-                    style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
-                        color: _teksGelap)),
+                Text(
+                  judul,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: _teksGelap,
+                  ),
+                ),
                 const SizedBox(height: 3),
-                Text(isi,
-                    style: const TextStyle(
-                        fontSize: 11.5, height: 1.45, color: _teksAbu)),
+                Text(
+                  isi,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    height: 1.45,
+                    color: _teksAbu,
+                  ),
+                ),
               ],
             ),
           ),
@@ -239,8 +300,10 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                 children: [
                   const Padding(
                     padding: EdgeInsets.fromLTRB(4, 0, 4, 14),
-                    child: Text('Edukasi Tumbuh Kembang Posyandu',
-                        style: TextStyle(fontSize: 12, color: _teksAbu)),
+                    child: Text(
+                      'Edukasi Tumbuh Kembang Posyandu',
+                      style: TextStyle(fontSize: 12, color: _teksAbu),
+                    ),
                   ),
 
                   // Hero
@@ -274,7 +337,9 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.14),
                                     borderRadius: BorderRadius.circular(20),
@@ -286,32 +351,40 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                                         width: 7,
                                         height: 7,
                                         decoration: const BoxDecoration(
-                                            color: Color(0xFF4ADE80),
-                                            shape: BoxShape.circle),
+                                          color: Color(0xFF4ADE80),
+                                          shape: BoxShape.circle,
+                                        ),
                                       ),
                                       const SizedBox(width: 6),
-                                      const Text('Standar WHO & Kemenkes RI',
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10.5,
-                                              fontWeight: FontWeight.w700)),
+                                      const Text(
+                                        'Standar WHO & Kemenkes RI',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
                                 const SizedBox(height: 14),
-                                const Text('Memahami Kurva Pertumbuhan Anak',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 21,
-                                        height: 1.2,
-                                        fontWeight: FontWeight.w800)),
+                                const Text(
+                                  'Memahami Kurva Pertumbuhan Anak',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 21,
+                                    height: 1.2,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
                                 const SizedBox(height: 10),
                                 const Text(
                                   'Grafik kurva pertumbuhan digunakan untuk menilai apakah perkembangan fisik anak sesuai dengan acuan populasi sehat internasional (Z-Score), disesuaikan berdasarkan usia dan jenis kelamin.',
                                   style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      height: 1.55),
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    height: 1.55,
+                                  ),
                                 ),
                               ],
                             ),
@@ -330,29 +403,37 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Expanded(
-                              child: Text('ARTI GARIS PITA STANDAR DEVIASI (SD)',
-                                  style: TextStyle(
-                                      fontSize: 11.5,
-                                      height: 1.3,
-                                      letterSpacing: 0.3,
-                                      fontWeight: FontWeight.w800,
-                                      color: _teksAbu)),
+                              child: Text(
+                                'ARTI GARIS PITA STANDAR DEVIASI (SD)',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  height: 1.3,
+                                  letterSpacing: 0.3,
+                                  fontWeight: FontWeight.w800,
+                                  color: _teksAbu,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFD9F6E8),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text('Z-Score\nAcuan',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontSize: 9.5,
-                                      height: 1.2,
-                                      fontWeight: FontWeight.w800,
-                                      color: _hijauTua)),
+                              child: const Text(
+                                'Z-Score\nAcuan',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  height: 1.2,
+                                  fontWeight: FontWeight.w800,
+                                  color: _hijauTua,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -416,30 +497,42 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 9, vertical: 7),
+                                horizontal: 9,
+                                vertical: 7,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFD9F6E8),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Text('LK',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                      color: _hijauTua)),
+                              child: const Text(
+                                'LK',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: _hijauTua,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 10),
                             const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Panduan Khusus: Lingkar Kepala',
-                                      style: TextStyle(
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w800,
-                                          color: _teksGelap)),
-                                  Text('Pemantauan rutin usia 0 - 24 bulan',
-                                      style: TextStyle(
-                                          fontSize: 11, color: _teksAbu)),
+                                  Text(
+                                    'Panduan Khusus: Lingkar Kepala',
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: _teksGelap,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Pemantauan rutin usia 0 - 24 bulan',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: _teksAbu,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -449,7 +542,10 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                         const Text(
                           'Pengukuran Lingkar Kepala (LK) sangat penting di 2 tahun pertama karena kehidupan kepala mencerminkan perkembangan volume otak dan penutupan ubun-ubun anak secara optimal.',
                           style: TextStyle(
-                              fontSize: 11.5, height: 1.5, color: _teksAbu),
+                            fontSize: 11.5,
+                            height: 1.5,
+                            color: _teksAbu,
+                          ),
                         ),
                         const SizedBox(height: 14),
                         _kondisiLk(
@@ -489,21 +585,33 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('LANGKAH TINDAKAN UNTUK ORANG TUA',
-                            style: TextStyle(
-                                fontSize: 11.5,
-                                letterSpacing: 0.3,
-                                fontWeight: FontWeight.w800,
-                                color: _teksAbu)),
+                        const Text(
+                          'LANGKAH TINDAKAN UNTUK ORANG TUA',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            letterSpacing: 0.3,
+                            fontWeight: FontWeight.w800,
+                            color: _teksAbu,
+                          ),
+                        ),
                         const SizedBox(height: 4),
                         const Divider(color: Color(0xFFE9EEF3)),
                         const SizedBox(height: 8),
-                        _langkah(1, 'Tetap Tenang & Hindari Self-Diagnosis',
-                            'Posisi pita ukur yang miring atau gerakan bayi dapat memengaruhi milimeter hasil. Jangan langsung panik.'),
-                        _langkah(2, 'Pantau Tren, Bukan Sekadar Satu Titik',
-                            'Yang terpenting adalah garis pertumbuhan naik mengikuti pita kurva, bukan mendadak atau tiba-tiba menurun drastis.'),
-                        _langkah(3, 'Konfirmasi Langsung ke Tenaga Kesehatan',
-                            'Bawa buku KIA dan tunjukkan grafik riwayat aplikasi Posyandu Care pada Bidan Desa atau Dokter Puskesmas terdekat.'),
+                        _langkah(
+                          1,
+                          'Tetap Tenang & Hindari Self-Diagnosis',
+                          'Posisi pita ukur yang miring atau gerakan bayi dapat memengaruhi milimeter hasil. Jangan langsung panik.',
+                        ),
+                        _langkah(
+                          2,
+                          'Pantau Tren, Bukan Sekadar Satu Titik',
+                          'Yang terpenting adalah garis pertumbuhan naik mengikuti pita kurva, bukan mendadak atau tiba-tiba menurun drastis.',
+                        ),
+                        _langkah(
+                          3,
+                          'Konfirmasi Langsung ke Tenaga Kesehatan',
+                          'Bawa buku KIA dan tunjukkan grafik riwayat aplikasi Posyandu Care pada Bidan Desa atau Dokter Puskesmas terdekat.',
+                        ),
                       ],
                     ),
                   ),
@@ -518,13 +626,18 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       onPressed: () => Navigator.maybePop(context),
                       icon: const Icon(Icons.chevron_left, size: 22),
-                      label: const Text('Kembali ke Grafik Anak',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 14)),
+                      label: const Text(
+                        'Kembali ke Grafik Anak',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
