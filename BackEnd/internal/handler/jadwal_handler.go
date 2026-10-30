@@ -9,9 +9,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type JadwalHandler struct{ svc *service.JadwalService }
+type JadwalHandler struct {
+	svc   *service.JadwalService
+	notif *service.NotifikasiService
+}
 
-func NewJadwalHandler(s *service.JadwalService) *JadwalHandler { return &JadwalHandler{s} }
+func NewJadwalHandler(s *service.JadwalService, n *service.NotifikasiService) *JadwalHandler {
+	return &JadwalHandler{svc: s, notif: n}
+}
 
 func idParam(c *gin.Context, nama string) (uuid.UUID, bool) {
 	id, err := uuid.Parse(c.Param(nama))
@@ -53,10 +58,14 @@ func (h *JadwalHandler) Buat(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	j, err := h.svc.Buat(c.GetUint("user_id"), pos, in)
+	userID := c.GetUint("user_id")
+	j, err := h.svc.Buat(userID, pos, in)
 	if err != nil {
 		tulisError(c, err)
 		return
+	}
+	if h.notif != nil {
+		go h.notif.JadwalDibuat(j.ID, userID)
 	}
 	c.JSON(http.StatusCreated, gin.H{"data": j})
 }
@@ -80,6 +89,9 @@ func (h *JadwalHandler) Ubah(c *gin.Context) {
 	if err != nil {
 		tulisError(c, err)
 		return
+	}
+	if h.notif != nil {
+		go h.notif.JadwalDiubah(id, c.GetUint("user_id"))
 	}
 	c.JSON(http.StatusOK, gin.H{"data": j})
 }
@@ -105,6 +117,9 @@ func (h *JadwalHandler) Batalkan(c *gin.Context) {
 	if err != nil {
 		tulisError(c, err)
 		return
+	}
+	if h.notif != nil {
+		go h.notif.JadwalDibatalkan(id, c.GetUint("user_id"))
 	}
 	c.JSON(http.StatusOK, gin.H{"data": j})
 }

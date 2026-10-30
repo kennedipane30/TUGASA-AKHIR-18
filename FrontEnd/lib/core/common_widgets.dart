@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../features/auth/auth_provider.dart';
 import 'app_colors.dart';
+import 'notifikasi_page.dart';
+import 'notifikasi_service.dart';
 
 // ---------------------------------------------------------------------------
 // Fungsi bantu
@@ -86,6 +88,8 @@ const _oranye2 = Color(0xFFF97316);
 class HomeShell extends StatelessWidget {
   final String peran;
   final String lokasi;
+
+  /// Tidak dipakai lagi; jumlah notifikasi diambil dari server.
   final int notif;
   final List<Widget> children;
 
@@ -108,6 +112,68 @@ class HomeShell extends StatelessWidget {
     );
   }
 
+  void _bukaNotifikasi(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotifikasiPage()),
+    );
+  }
+
+  Future<void> _keluar(BuildContext context) async {
+    final auth = context.read<AuthProvider>();
+    await NotifikasiService.instance.sebelumLogout();
+    auth.logout();
+  }
+
+  Widget _lonceng(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: NotifikasiService.instance.belumDibaca,
+      builder: (context, jumlah, _) => Stack(
+        clipBehavior: Clip.none,
+        children: [
+          IconButton(
+            tooltip: 'Notifikasi',
+            icon: Icon(
+              jumlah > 0
+                  ? Icons.notifications_active_outlined
+                  : Icons.notifications_none,
+              color: Colors.white,
+            ),
+            onPressed: () => _bukaNotifikasi(context),
+          ),
+          if (jumlah > 0)
+            Positioned(
+              right: 4,
+              top: 4,
+              child: IgnorePointer(
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 18),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.merah,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 1.2),
+                  ),
+                  child: Text(
+                    jumlah > 99 ? '99+' : '$jumlah',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -126,7 +192,6 @@ class HomeShell extends StatelessWidget {
         body: Column(
           children: [
             ClipRRect(
-              // Header dibuat tanpa sudut melengkung.
               borderRadius: BorderRadius.zero,
               child: Container(
                 width: double.infinity,
@@ -215,49 +280,11 @@ class HomeShell extends StatelessWidget {
                               ],
                             ),
                           ),
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              IconButton(
-                                tooltip: 'Notifikasi',
-                                icon: const Icon(
-                                  Icons.notifications_none,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () =>
-                                    soon(context, 'Daftar notifikasi'),
-                              ),
-                              if (notif > 0)
-                                Positioned(
-                                  right: 6,
-                                  top: 6,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 5,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.merah,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      '$notif',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
+                          _lonceng(context),
                           PopupMenuButton<String>(
                             tooltip: 'Akun',
                             onSelected: (v) {
-                              if (v == 'keluar') {
-                                context.read<AuthProvider>().logout();
-                              }
+                              if (v == 'keluar') _keluar(context);
                             },
                             itemBuilder: (_) => [
                               PopupMenuItem(
@@ -301,9 +328,14 @@ class HomeShell extends StatelessWidget {
             Expanded(
               child: SafeArea(
                 top: false,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                  children: children,
+                child: RefreshIndicator(
+                  onRefresh: NotifikasiService.instance.perbaruiJumlah,
+                  notificationPredicate: (n) => n.depth == 0,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                    children: children,
+                  ),
                 ),
               ),
             ),
@@ -578,8 +610,7 @@ class SyncStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg =
-        online ? const Color(0xFFE3F6EC) : AppColors.kuningMuda;
+    final bg = online ? const Color(0xFFE3F6EC) : AppColors.kuningMuda;
     final fg = online ? _hijauGelap : AppColors.kuning;
 
     return Container(
@@ -589,17 +620,13 @@ class SyncStrip extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: online
-              ? const Color(0xFFBFE5D0)
-              : const Color(0xFFF3DFA8),
+          color: online ? const Color(0xFFBFE5D0) : const Color(0xFFF3DFA8),
         ),
       ),
       child: Row(
         children: [
           Icon(
-            online
-                ? Icons.cloud_done_outlined
-                : Icons.cloud_off_outlined,
+            online ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
             color: fg,
           ),
           const SizedBox(width: 10),

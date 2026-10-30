@@ -1,6 +1,8 @@
 package router
 
 import (
+	"context"
+
 	"posyandu-api/internal/handler"
 	"posyandu-api/internal/middleware"
 	"posyandu-api/internal/repository"
@@ -18,16 +20,22 @@ func Setup(db *gorm.DB) *gin.Engine {
 	keluargaRepo := repository.NewKeluargaRepository(db)
 	jadwalRepo := repository.NewJadwalRepository(db)
 	pelayananRepo := repository.NewPelayananRepository(db)
+	notifRepo := repository.NewNotifikasiRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
+	notifSvc := service.NewNotifikasiService(notifRepo, service.NewPushService())
+
+	// pengingat otomatis (24 jam sebelum mulai & check-in dibuka)
+	go notifSvc.JalankanPengingat(context.Background())
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
 	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo))
-	jadwalH := handler.NewJadwalHandler(jadwalSvc)
+	jadwalH := handler.NewJadwalHandler(jadwalSvc, notifSvc)
 	pelayananH := handler.NewPelayananHandler(
 		service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo))
+	notifH := handler.NewNotifikasiHandler(notifSvc)
 
 	api := r.Group("/api/v1")
 	api.GET("/posyandu", authH.ListPosyandu) // publik, untuk registrasi
@@ -40,6 +48,15 @@ func Setup(db *gorm.DB) *gin.Engine {
 	protected.GET("/jadwal", jadwalH.List)
 	protected.GET("/jadwal/terdekat", jadwalH.Terdekat)
 	protected.GET("/vaksin", pelayananH.ListVaksin)
+
+	// notifikasi (semua role)
+	protected.GET("/notifikasi", notifH.List)
+	protected.GET("/notifikasi/jumlah-belum-dibaca", notifH.JumlahBelumDibaca)
+	protected.POST("/notifikasi/baca-semua", notifH.BacaSemua)
+	protected.PATCH("/notifikasi/:id/baca", notifH.Baca)
+	protected.DELETE("/notifikasi/:id", notifH.Hapus)
+	protected.POST("/perangkat/token", notifH.SimpanToken)
+	protected.DELETE("/perangkat/token", notifH.HapusToken)
 
 	// sekretaris (satu akun per desa, hanya mengelola desanya sendiri)
 	sekretaris := protected.Group("/sekretaris", middleware.RoleRequired("sekretaris"))

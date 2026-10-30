@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "314636694443",
+    "project_id": "posyandu-care-aed11",
+    "storage_bucket": "posyandu-care-aed11.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:314636694443:android:fbd2c197f760d2225f98ee",
+        "android_client_info": {
+          "package_name": "com.example.tugas_akhir"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCuIxyAXD_0AlMMSkDriE8H03Q__8REEo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
