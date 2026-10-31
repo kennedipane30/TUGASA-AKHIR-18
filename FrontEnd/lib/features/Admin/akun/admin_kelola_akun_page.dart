@@ -13,39 +13,129 @@ const _hijauGaris = Color(0xFF1FA27F);
 const _biruGaris = Color(0xFF2F6FD6);
 const _oranyeGaris = Color(0xFFEA580C);
 const _abuGaris = Color(0xFFD5DBD8);
-const _hijauHeader = Color(0xFF0B5A40);
+const _hijauHeader = Color(0xFF065F46);
 
-PreferredSizeWidget _headerHijau({
-  required String judul,
-  Widget? leading,
-  bool otomatisKembali = false,
-  List<Widget>? actions,
-}) {
-  return AppBar(
-    backgroundColor: _hijauHeader,
-    surfaceTintColor: _hijauHeader,
-    foregroundColor: Colors.white,
-    elevation: 0,
-    centerTitle: false,
-    automaticallyImplyLeading: otomatisKembali,
-    leading: leading,
-    titleSpacing: leading == null && !otomatisKembali ? 16 : 0,
-    systemOverlayStyle: const SystemUiOverlayStyle(
-      statusBarColor: _hijauHeader,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
-    ),
-    title: Text(
-      judul,
-      style: const TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.w500,
-        fontSize: 16,
+// ---------------------------------------------------------------------------
+// HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+// [kembali] menampilkan tombol panah di kiri, [actions] tombol di kanan.
+// ---------------------------------------------------------------------------
+class _HeaderHijau extends StatelessWidget {
+  final String judul;
+  final bool kembali;
+  final List<Widget>? actions;
+
+  const _HeaderHijau({
+    required this.judul,
+    this.kembali = false,
+    this.actions,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final adaAksi = actions != null && actions!.isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah (jarak kiri-kanan dibuat sama agar tetap di tengah)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: adaAksi ? 104 : 56),
+                child: _judulTebal(judul),
+              ),
+              // Tombol kembali di kiri
+              if (kembali)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: InkWell(
+                      onTap: () => Navigator.maybePop(context),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      ),
+                    ),
+                  ),
+                ),
+              // Tombol aksi di kanan
+              if (adaAksi)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Row(mainAxisSize: MainAxisSize.min, children: actions!),
+                ),
+            ],
+          ),
+        ),
       ),
-    ),
-    actions: actions,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// JUDUL HEADER EKSTRA TEBAL (sama seperti halaman Akun)
+// Teks ditumpuk dua lapis: lapis bawah berupa garis tepi (stroke) putih
+// sehingga huruf terlihat lebih gemuk, lapis atas berupa isi putih biasa.
+// ---------------------------------------------------------------------------
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
   );
 }
+
+/// Status bar transparan dengan ikon putih (header hijau di bawahnya).
+const _gayaStatusBar = SystemUiOverlayStyle(
+  statusBarColor: Colors.transparent,
+  statusBarIconBrightness: Brightness.light,
+  statusBarBrightness: Brightness.dark,
+);
 
 class AdminKelolaAkunPage extends StatefulWidget {
   /// true jika halaman dibuka lewat Navigator.push (menu Aksi Cepat).
@@ -203,129 +293,146 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
 
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: _headerHijau(
-        judul: 'Kelola Akun',
-        leading: widget.denganTombolKembali
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.maybePop(context),
-              )
-            : null,
-        actions: [
-          IconButton(
-            tooltip: 'Muat ulang',
-            icon: const Icon(Icons.sync, color: Colors.white, size: 22),
-            onPressed: _memuat ? null : () => _muat(),
-          ),
-          IconButton(
-            tooltip: 'Tambah akun',
-            icon: const Icon(Icons.person_add_alt_1_outlined, color: Colors.white, size: 22),
-            onPressed: _tambah,
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () => _muat(tampilLoading: false),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: _gayaStatusBar,
+        child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE3F6EC),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFBFE5D0)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.groups_outlined, color: _hijauGelap, size: 22),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _aktif == 'Semua' ? 'Seluruh Akun Staf' : 'Akun $_aktif Bertugas',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 13.5, color: _hijauTua),
-                        ),
-                        Text('${daftar.length} akun • $jumlahAktif aktif • Posyandu $_desa',
-                            style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 50,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _hijauTua,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            _HeaderHijau(
+              judul: 'Kelola Akun',
+              kembali: widget.denganTombolKembali,
+              actions: [
+                IconButton(
+                  tooltip: 'Muat ulang',
+                  icon: const Icon(Icons.sync, color: Colors.white, size: 22),
+                  onPressed: _memuat ? null : () => _muat(),
                 ),
-                onPressed: _tambah,
-                icon: const Icon(Icons.person_add_alt_1, size: 19),
-                label: const Text('Tambah Akun Petugas',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final f in _filter)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text('$f (${hitung[f]})'),
-                        selected: _aktif == f,
-                        selectedColor: _hijauTua,
-                        backgroundColor: Colors.white,
-                        showCheckmark: false,
-                        side: BorderSide(
-                            color: _aktif == f ? _hijauTua : const Color(0xFFE3E8E5)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        labelStyle: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12.5,
-                          color: _aktif == f ? Colors.white : Colors.black87,
-                        ),
-                        onSelected: (_) => setState(() => _aktif = f),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                const Icon(Icons.groups_outlined, size: 18, color: _hijauGelap),
-                const SizedBox(width: 6),
-                const Expanded(
-                  child: Text('Daftar Akun',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                IconButton(
+                  tooltip: 'Tambah akun',
+                  icon: const Icon(Icons.person_add_alt_1_outlined,
+                      color: Colors.white, size: 22),
+                  onPressed: _tambah,
                 ),
-                Pill('${daftar.length} akun terdaftar',
-                    bg: AppColors.hijauMuda, fg: AppColors.hijau),
+                const SizedBox(width: 4),
               ],
             ),
-            const SizedBox(height: 10),
-            _isiDaftar(daftar),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => _muat(tampilLoading: false),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE3F6EC),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFBFE5D0)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.groups_outlined,
+                                color: _hijauGelap, size: 22),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _aktif == 'Semua'
+                                      ? 'Seluruh Akun Staf'
+                                      : 'Akun $_aktif Bertugas',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13.5,
+                                      color: _hijauTua),
+                                ),
+                                Text(
+                                    '${daftar.length} akun • $jumlahAktif aktif • Posyandu $_desa',
+                                    style: const TextStyle(
+                                        fontSize: 11, color: AppColors.teksRedup)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _hijauTua,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: _tambah,
+                        icon: const Icon(Icons.person_add_alt_1, size: 19),
+                        label: const Text('Tambah Akun Petugas',
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final f in _filter)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text('$f (${hitung[f]})'),
+                                selected: _aktif == f,
+                                selectedColor: _hijauTua,
+                                backgroundColor: Colors.white,
+                                showCheckmark: false,
+                                side: BorderSide(
+                                    color: _aktif == f
+                                        ? _hijauTua
+                                        : const Color(0xFFE3E8E5)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20)),
+                                labelStyle: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12.5,
+                                  color: _aktif == f ? Colors.white : Colors.black87,
+                                ),
+                                onSelected: (_) => setState(() => _aktif = f),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        const Icon(Icons.groups_outlined, size: 18, color: _hijauGelap),
+                        const SizedBox(width: 6),
+                        const Expanded(
+                          child: Text('Daftar Akun',
+                              style:
+                                  TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                        ),
+                        Pill('${daftar.length} akun terdaftar',
+                            bg: AppColors.hijauMuda, fg: AppColors.hijau),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _isiDaftar(daftar),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -623,13 +730,6 @@ class _AkunFormPageState extends State<_AkunFormPage> {
 
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: _headerHijau(
-        judul: _edit ? 'Edit Akun' : 'Buat Akun Kader / Bidan',
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-      ),
       bottomNavigationBar: SafeArea(
         child: Container(
           color: Colors.white,
@@ -665,111 +765,136 @@ class _AkunFormPageState extends State<_AkunFormPage> {
           ),
         ),
       ),
-      body: Form(
-        key: _form,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: _gayaStatusBar,
+        child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE6ECE8)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: AppColors.hijauMuda,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.badge_outlined, color: _hijauGelap, size: 22),
+            _HeaderHijau(
+              judul: _edit ? 'Edit Akun' : 'Buat Akun Kader / Bidan',
+              kembali: true,
+            ),
+            Expanded(
+              child: Form(
+                key: _form,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE6ECE8)),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Data Akun Petugas',
-                                style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w800, color: _hijauTua)),
-                            Text(
-                              _edit
-                                  ? 'Perbarui informasi akun petugas Posyandu ${widget.desa}'
-                                  : 'Akun otomatis bertugas di Posyandu ${widget.desa}',
-                              style: const TextStyle(
-                                  fontSize: 10.5, height: 1.3, color: AppColors.teksRedup),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: AppColors.hijauMuda,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.badge_outlined,
+                                    color: _hijauGelap, size: 22),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Data Akun Petugas',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                            color: _hijauTua)),
+                                    Text(
+                                      _edit
+                                          ? 'Perbarui informasi akun petugas Posyandu ${widget.desa}'
+                                          : 'Akun otomatis bertugas di Posyandu ${widget.desa}',
+                                      style: const TextStyle(
+                                          fontSize: 10.5,
+                                          height: 1.3,
+                                          color: AppColors.teksRedup),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          _label('ROLE PETUGAS', 'Wajib Pilih', _hijauGelap,
+                              AppColors.hijauMuda,
+                              wajib: true),
+                          DropdownButtonFormField<String>(
+                            value: nilaiPeran,
+                            icon: const Icon(Icons.keyboard_arrow_down, color: _hijauGelap),
+                            decoration:
+                                _dekor('', Icons.manage_accounts_outlined, _hijauGaris),
+                            items: const [
+                              DropdownMenuItem(value: 'kader', child: Text('Kader Posyandu')),
+                              DropdownMenuItem(value: 'bidan', child: Text('Bidan Desa')),
+                            ],
+                            onChanged: (v) => setState(() => _peran = v ?? _peran),
+                          ),
+                          _label('NAMA LENGKAP', 'Sesuai KTP / SK', _hijauGelap,
+                              AppColors.hijauMuda,
+                              wajib: true),
+                          TextFormField(
+                            controller: _nama,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: _dekor('Contoh: Siti Rahmawati, A.Md.Keb',
+                                Icons.person_outline, _hijauGaris),
+                            validator: (v) =>
+                                (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
+                          ),
+                          _label('USERNAME AKUN', 'Min. 4 karakter', _biruGaris,
+                              const Color(0xFFE6F1FF),
+                              wajib: true),
+                          TextFormField(
+                            controller: _username,
+                            decoration: _dekor('Buat username tanpa spasi',
+                                Icons.alternate_email, _biruGaris),
+                            validator: (v) => (v == null || v.trim().length < 4)
+                                ? 'Minimal 4 karakter'
+                                : null,
+                          ),
+                          _label(
+                              _edit ? 'KATA SANDI BARU' : 'KATA SANDI AWAL',
+                              _edit ? 'Opsional' : 'Min. 6 karakter',
+                              _edit ? AppColors.teksRedup : _oranyeGaris,
+                              _edit ? Colors.transparent : const Color(0xFFFFF1E6),
+                              wajib: !_edit),
+                          TextFormField(
+                            controller: _sandi,
+                            obscureText: !_lihat,
+                            decoration: _dekor(
+                              _edit ? 'Kosongkan jika tidak diubah' : 'Minimal 6 karakter',
+                              Icons.lock_outline,
+                              _edit ? _abuGaris : _oranyeGaris,
+                              suffix: IconButton(
+                                icon: Icon(
+                                    _lihat
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                    size: 19,
+                                    color: Colors.black45),
+                                onPressed: () => setState(() => _lihat = !_lihat),
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  _label('ROLE PETUGAS', 'Wajib Pilih', _hijauGelap, AppColors.hijauMuda,
-                      wajib: true),
-                  DropdownButtonFormField<String>(
-                    value: nilaiPeran,
-                    icon: const Icon(Icons.keyboard_arrow_down, color: _hijauGelap),
-                    decoration: _dekor('', Icons.manage_accounts_outlined, _hijauGaris),
-                    items: const [
-                      DropdownMenuItem(value: 'kader', child: Text('Kader Posyandu')),
-                      DropdownMenuItem(value: 'bidan', child: Text('Bidan Desa')),
-                    ],
-                    onChanged: (v) => setState(() => _peran = v ?? _peran),
-                  ),
-                  _label('NAMA LENGKAP', 'Sesuai KTP / SK', _hijauGelap, AppColors.hijauMuda,
-                      wajib: true),
-                  TextFormField(
-                    controller: _nama,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: _dekor(
-                        'Contoh: Siti Rahmawati, A.Md.Keb', Icons.person_outline, _hijauGaris),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
-                  ),
-                  _label('USERNAME AKUN', 'Min. 4 karakter', _biruGaris,
-                      const Color(0xFFE6F1FF),
-                      wajib: true),
-                  TextFormField(
-                    controller: _username,
-                    decoration: _dekor(
-                        'Buat username tanpa spasi', Icons.alternate_email, _biruGaris),
-                    validator: (v) =>
-                        (v == null || v.trim().length < 4) ? 'Minimal 4 karakter' : null,
-                  ),
-                  _label(_edit ? 'KATA SANDI BARU' : 'KATA SANDI AWAL',
-                      _edit ? 'Opsional' : 'Min. 6 karakter',
-                      _edit ? AppColors.teksRedup : _oranyeGaris,
-                      _edit ? Colors.transparent : const Color(0xFFFFF1E6),
-                      wajib: !_edit),
-                  TextFormField(
-                    controller: _sandi,
-                    obscureText: !_lihat,
-                    decoration: _dekor(
-                      _edit ? 'Kosongkan jika tidak diubah' : 'Minimal 6 karakter',
-                      Icons.lock_outline,
-                      _edit ? _abuGaris : _oranyeGaris,
-                      suffix: IconButton(
-                        icon: Icon(
-                            _lihat ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                            size: 19,
-                            color: Colors.black45),
-                        onPressed: () => setState(() => _lihat = !_lihat),
+                            validator: (v) {
+                              final t = (v ?? '').trim();
+                              if (_edit && t.isEmpty) return null;
+                              return t.length < 6 ? 'Minimal 6 karakter' : null;
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                    validator: (v) {
-                      final t = (v ?? '').trim();
-                      if (_edit && t.isEmpty) return null;
-                      return t.length < 6 ? 'Minimal 6 karakter' : null;
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

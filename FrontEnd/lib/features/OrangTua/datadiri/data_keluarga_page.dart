@@ -84,7 +84,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
     }
     return KartuKeluarga(
       color: AppColors.kuningMuda,
-      title: 'Lengkapi Data Keluarga',
+      title: 'Data Keluarga',
       icon: Icons.assignment_ind_outlined,
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -293,7 +293,7 @@ class DataKeluargaPage extends StatelessWidget {
       backgroundColor: AppColors.latar,
       body: Column(
         children: [
-          const HeaderKeluarga(judul: 'Lengkapi Data Keluarga'),
+          const HeaderKeluarga(judul: 'Data Keluarga'),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),

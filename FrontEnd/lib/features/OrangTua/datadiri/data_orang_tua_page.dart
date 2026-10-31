@@ -20,6 +20,55 @@ const kOranye2 = Color(0xFFF97316);
 const kGarisKartu = Color(0xFFE6ECE8);
 const kGarisInput = Color(0xFFD7E6DD);
 
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
 class HeaderKeluarga extends StatelessWidget {
   final String judul;
   final bool sinkron;
@@ -46,16 +95,7 @@ class HeaderKeluarga extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 56),
-                  child: Text(
-                    judul,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white),
-                  ),
+                  child: _judulTebal(judul),
                 ),
                 Align(
                   alignment: Alignment.centerLeft,

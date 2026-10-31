@@ -9,7 +9,7 @@ import '../../../core/common_widgets.dart';
 const _prefix = '/sekretaris/riwayat';
 
 const _hijauGelap = Color(0xFF14634A);
-const _hijauHeader = Color(0xFF14634A);
+const _hijauHeader = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
 
 // ---------------------------------------------------------------------------
@@ -80,33 +80,130 @@ List<Map<String, dynamic>> _daftarPeta(dynamic d) {
   return list;
 }
 
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
 // ---------------------------------------------------------------------------
-// KOMPONEN TAMPILAN (SERAGAM DENGAN HALAMAN BUAT AKUN)
+// HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+// Dipakai oleh ketiga halaman riwayat. Tombol kembali hanya muncul
+// bila ada halaman sebelumnya.
 // ---------------------------------------------------------------------------
-PreferredSizeWidget _bar(BuildContext context, String judul) => AppBar(
-      backgroundColor: _hijauHeader,
-      surfaceTintColor: _hijauHeader,
-      foregroundColor: Colors.white,
-      elevation: 0,
-      centerTitle: false,
-      automaticallyImplyLeading: false,
-      titleSpacing: Navigator.canPop(context) ? 0 : 20,
-      systemOverlayStyle: const SystemUiOverlayStyle(
-        statusBarColor: _hijauHeader,
+class _Header extends StatelessWidget {
+  final String judul;
+
+  const _Header(this.judul);
+
+  @override
+  Widget build(BuildContext context) {
+    final bisaKembali = Navigator.canPop(context);
+
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal(judul),
+              ),
+              // Tombol kembali di kiri
+              if (bisaKembali)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: InkWell(
+                      onTap: () => Navigator.maybePop(context),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kerangka halaman: header polos di atas, isi di bawahnya.
+Widget _halaman({required String judul, required Widget isi}) {
+  return Scaffold(
+    backgroundColor: AppColors.latar,
+    body: AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
       ),
-      leading: Navigator.canPop(context)
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.maybePop(context),
-            )
-          : null,
-      title: Text(judul,
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-    );
+      child: Column(
+        children: [
+          _Header(judul),
+          Expanded(child: isi),
+        ],
+      ),
+    ),
+  );
+}
 
+// ---------------------------------------------------------------------------
+// KOMPONEN TAMPILAN (SERAGAM DENGAN HALAMAN BUAT AKUN)
+// ---------------------------------------------------------------------------
 Widget _kartu({
   required String title,
   required IconData icon,
@@ -225,10 +322,9 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.latar,
-      appBar: _bar(context, 'Riwayat Pemeriksaan'),
-      body: RefreshIndicator(
+    return _halaman(
+      judul: 'Riwayat Pemeriksaan',
+      isi: RefreshIndicator(
         onRefresh: _muat,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -387,10 +483,9 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.latar,
-      appBar: _bar(context, widget.judul),
-      body: RefreshIndicator(
+    return _halaman(
+      judul: widget.judul,
+      isi: RefreshIndicator(
         onRefresh: _muat,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -606,10 +701,9 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.latar,
-      appBar: _bar(context, 'Hasil Pendataan'),
-      body: RefreshIndicator(
+    return _halaman(
+      judul: 'Hasil Pendataan',
+      isi: RefreshIndicator(
         onRefresh: _muat,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),

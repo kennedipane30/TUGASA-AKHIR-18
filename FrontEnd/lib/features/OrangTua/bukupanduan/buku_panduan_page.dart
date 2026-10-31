@@ -23,6 +23,55 @@ const _biruGaris = Color(0xFFA9C0F2);
 const _oranyeMuda = Color(0xFFFFE9C7);
 const _oranye = Color(0xFFB45309);
 
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.4
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
 // ---------------------------------------------------------------------------
 // HEADER BERSAMA (bagian atas hijau)
 // ---------------------------------------------------------------------------
@@ -51,17 +100,7 @@ Widget _headerAtas(
               // Judul di tengah
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 96),
-                child: Text(
-                  judul,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _judulTebal(judul),
               ),
               // Tombol kembali di kiri
               Align(

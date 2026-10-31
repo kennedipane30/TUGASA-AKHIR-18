@@ -1,11 +1,63 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 import '../../../core/posyandu.dart';
 import 'admin_vaksin_model.dart';
+
+const _hijauHeader = Color(0xFF065F46);
+
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
 /// Admin: jumlah vaksin yang sudah diberikan dan jenis-jenis vaksin, per posyandu.
 class AdminVaksinPage extends StatefulWidget {
@@ -57,6 +109,50 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
     }
   }
 
+  // -------------------------------------------------------------------------
+  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // Tombol kembali hanya muncul bila ada halaman sebelumnya.
+  // -------------------------------------------------------------------------
+  Widget _header() {
+    final bisaKembali = Navigator.canPop(context);
+
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal('Data Vaksin'),
+              ),
+              // Tombol kembali di kiri
+              if (bisaKembali)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: InkWell(
+                      onTap: () => Navigator.maybePop(context),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _chipPosyandu(String kode, String label) {
     final dipilih = _posyandu == kode;
     return Padding(
@@ -85,29 +181,40 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        title: const Text('Data Vaksin', style: TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: RefreshIndicator(
-        onRefresh: _muat,
-        child: _loading
-            ? ListView(children: const [
-                SizedBox(height: 200),
-                Center(child: CircularProgressIndicator()),
-              ])
-            : _error != null
-                ? ListView(
-                    padding: const EdgeInsets.all(24),
-                    children: [
-                      const SizedBox(height: 120),
-                      Text(_error!, textAlign: TextAlign.center),
-                      const SizedBox(height: 12),
-                      Center(child: AppButton('Coba Lagi', icon: Icons.refresh, onPressed: _muat)),
-                    ],
-                  )
-                : _isi(_data!),
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        child: Column(
+          children: [
+            _header(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _muat,
+                child: _loading
+                    ? ListView(children: const [
+                        SizedBox(height: 200),
+                        Center(child: CircularProgressIndicator()),
+                      ])
+                    : _error != null
+                        ? ListView(
+                            padding: const EdgeInsets.all(24),
+                            children: [
+                              const SizedBox(height: 120),
+                              Text(_error!, textAlign: TextAlign.center),
+                              const SizedBox(height: 12),
+                              Center(
+                                  child: AppButton('Coba Lagi',
+                                      icon: Icons.refresh, onPressed: _muat)),
+                            ],
+                          )
+                        : _isi(_data!),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

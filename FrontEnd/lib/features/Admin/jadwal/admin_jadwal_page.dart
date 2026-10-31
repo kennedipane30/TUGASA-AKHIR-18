@@ -1,4 +1,3 @@
-// ===== admin_jadwal_page.dart =====
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -73,7 +72,8 @@ class JadwalItem {
 final Options _opsi = Options(receiveTimeout: const Duration(seconds: 15));
 
 const _hijauGelap = Color(0xFF14634A);
-const _hijauHeader = Color(0xFF14634A);
+const _hijauHeader = Color(0xFF14634A); // dipakai tombol "Tambah Jadwal Posyandu"
+const _warnaHeader = Color(0xFF065F46); // warna header (sama dengan halaman vaksin)
 const _teksGelap = Color(0xFF1F2937);
 const _oranye = Color(0xFFEA580C);
 const _biru = Color(0xFF2B7BB9);
@@ -138,6 +138,55 @@ InputDecoration _dekor(String label, {String? hint}) {
       borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide.none,
     ),
+  );
+}
+
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
   );
 }
 
@@ -230,38 +279,58 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // Tombol kembali hanya muncul bila ada halaman sebelumnya.
+  // -------------------------------------------------------------------------
+  Widget _header() {
+    final bisaKembali = Navigator.canPop(context);
+
+    return Container(
+      width: double.infinity,
+      color: _warnaHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal('Jadwal'),
+              ),
+              // Tombol kembali di kiri
+              if (bisaKembali)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: InkWell(
+                      onTap: () => Navigator.maybePop(context),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Jadwal yang sudah lewat tidak ditampilkan di sini, hanya di Riwayat Jadwal.
     final mendatang = _daftar.where((j) => j.aktif && !j.selesai).toList()
       ..sort((a, b) => a.tanggal.compareTo(b.tanggal));
-    final bisaKembali = Navigator.canPop(context);
 
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        backgroundColor: _hijauHeader,
-        surfaceTintColor: _hijauHeader,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        automaticallyImplyLeading: false,
-        titleSpacing: bisaKembali ? 0 : 20,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: _hijauHeader,
-          statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
-        ),
-        leading: bisaKembali
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.maybePop(context),
-              )
-            : null,
-        title: const Text('Jadwal',
-            style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-      ),
       bottomNavigationBar: SafeArea(
         child: Container(
           decoration: const BoxDecoration(
@@ -286,86 +355,102 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
           ),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: _muat,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        child: Column(
           children: [
-            _infoAtas(),
-            if (_memuat)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 32),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_gagal != null)
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.kuningMuda,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE6ECE8)),
-                ),
-                child: Row(
+            _header(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _muat,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
                   children: [
-                    Expanded(
-                      child: Text(_gagal!,
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() => _memuat = true);
-                        _muat();
-                      },
-                      child: const Text('Coba lagi'),
-                    ),
-                  ],
-                ),
-              )
-            else ...[
-              Container(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE6ECE8)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text('Jadwal Mendatang',
-                              style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: _teksGelap)),
+                    _infoAtas(),
+                    if (_memuat)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_gagal != null)
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.kuningMuda,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFE6ECE8)),
                         ),
-                        Pill('${mendatang.length} jadwal',
-                            bg: AppColors.hijauMuda, fg: AppColors.hijau),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    mendatang.isEmpty
-                        ? const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            child: Text(
-                              'Belum ada jadwal. Tekan "Tambah Jadwal Posyandu" untuk membuat jadwal baru. Jadwal yang sudah lewat ada di Riwayat Jadwal.',
-                              style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(_gagal!,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700, fontSize: 13)),
                             ),
-                          )
-                        : Column(children: [for (final j in mendatang) _kartu(j)]),
+                            TextButton(
+                              onPressed: () {
+                                setState(() => _memuat = true);
+                                _muat();
+                              },
+                              child: const Text('Coba lagi'),
+                            ),
+                          ],
+                        ),
+                      )
+                    else ...[
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFE6ECE8)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Expanded(
+                                  child: Text('Jadwal Mendatang',
+                                      style: TextStyle(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: _teksGelap)),
+                                ),
+                                Pill('${mendatang.length} jadwal',
+                                    bg: AppColors.hijauMuda, fg: AppColors.hijau),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            mendatang.isEmpty
+                                ? const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Text(
+                                      'Belum ada jadwal. Tekan "Tambah Jadwal Posyandu" untuk membuat jadwal baru. Jadwal yang sudah lewat ada di Riwayat Jadwal.',
+                                      style: TextStyle(
+                                          fontSize: 12.5, color: AppColors.teksRedup),
+                                    ),
+                                  )
+                                : Column(children: [for (final j in mendatang) _kartu(j)]),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: AppButton('Lihat Riwayat Jadwal',
+                            filled: false, onPressed: _bukaRiwayat),
+                      ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: AppButton('Lihat Riwayat Jadwal',
-                    filled: false, onPressed: _bukaRiwayat),
-              ),
-            ],
+            ),
           ],
         ),
       ),

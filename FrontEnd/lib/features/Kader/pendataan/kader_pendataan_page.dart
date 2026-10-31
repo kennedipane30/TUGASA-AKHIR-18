@@ -7,7 +7,7 @@ import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 
-const _hijauHeader = Color(0xFF0B6043);
+const _hijauHeader = Color(0xFF065F46);
 
 // ---------------------------------------------------------------------------
 // MODEL
@@ -104,6 +104,55 @@ String _pesanError(Object e) {
 String _usia(int bln) =>
     bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
 
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
 // ---------------------------------------------------------------------------
 // HALAMAN ANTREAN PENDATAAN (KADER)
 // ---------------------------------------------------------------------------
@@ -187,6 +236,50 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
     }
   }
 
+  // -------------------------------------------------------------------------
+  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // -------------------------------------------------------------------------
+  Widget _header() {
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal('Pendataan'),
+              ),
+              // Tombol kembali di kiri
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final j = _jadwal;
@@ -194,164 +287,159 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
 
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        title: const Text(
-          'Pendataan',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: _hijauHeader,
-        surfaceTintColor: _hijauHeader,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: _hijauHeader,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _muat,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
-            if (_memuat)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 32),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_gagal != null)
-              SectionCard(
-                color: AppColors.kuningMuda,
-                child: Row(
+            _header(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _muat,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
                   children: [
-                    const Icon(
-                      Icons.cloud_off,
-                      color: AppColors.kuning,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _gagal!,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() => _memuat = true);
-                        _muat();
-                      },
-                      child: const Text('Coba lagi'),
-                    ),
-                  ],
-                ),
-              )
-            else if (j == null)
-              SectionCard(
-                title: 'Jadwal Posyandu',
-                icon: Icons.event_busy,
-                child: const Text(
-                  'Belum ada jadwal posyandu aktif. Antrean pendataan muncul setelah admin menerbitkan jadwal.',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: AppColors.teksRedup,
-                  ),
-                ),
-              )
-            else ...[
-              SectionCard(
-                title: 'Sesi Posyandu',
-                icon: Icons.event_note,
-                trailing: Pill(
-                  '${_antrean.length} check-in',
-                  bg: AppColors.hijauMuda,
-                  fg: AppColors.hijau,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${formatTanggal(j.tanggal)} · ${j.jam} WIB',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
-                    if (j.lokasi.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        j.lokasi,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.teksRedup,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: StatBox(
-                            nilai: '${_antrean.length}',
-                            label: 'Sudah\ncheck-in',
-                            bg: AppColors.biruMuda,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: StatBox(
-                            nilai: '$diukur',
-                            label: 'Sudah\ndiukur',
-                            bg: AppColors.hijauMuda,
-                            fg: AppColors.hijau,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: StatBox(
-                            nilai: '${_antrean.length - diukur}',
-                            label: 'Menunggu\npengukuran',
-                            bg: AppColors.kuningMuda,
-                            fg: AppColors.kuning,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              SectionCard(
-                title: 'Antrean Pendataan',
-                icon: Icons.format_list_numbered,
-                trailing: const Text(
-                  'Ketuk untuk mendata',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    color: AppColors.teksRedup,
-                  ),
-                ),
-                child: _antrean.isEmpty
-                    ? const Text(
-                        'Belum ada anak. Data anak masuk ke sini setelah orang tua melakukan check-in dengan scan QR.',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: AppColors.teksRedup,
+                    if (_memuat)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_gagal != null)
+                      SectionCard(
+                        color: AppColors.kuningMuda,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.cloud_off,
+                              color: AppColors.kuning,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _gagal!,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() => _memuat = true);
+                                _muat();
+                              },
+                              child: const Text('Coba lagi'),
+                            ),
+                          ],
                         ),
                       )
-                    : Column(
-                        children: [
-                          for (final a in _antrean) _baris(a),
-                        ],
+                    else if (j == null)
+                      SectionCard(
+                        title: 'Jadwal Posyandu',
+                        icon: Icons.event_busy,
+                        child: const Text(
+                          'Belum ada jadwal posyandu aktif. Antrean pendataan muncul setelah admin menerbitkan jadwal.',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.teksRedup,
+                          ),
+                        ),
+                      )
+                    else ...[
+                      SectionCard(
+                        title: 'Sesi Posyandu',
+                        icon: Icons.event_note,
+                        trailing: Pill(
+                          '${_antrean.length} check-in',
+                          bg: AppColors.hijauMuda,
+                          fg: AppColors.hijau,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${formatTanggal(j.tanggal)} · ${j.jam} WIB',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                            if (j.lokasi.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                j.lokasi,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.teksRedup,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: StatBox(
+                                    nilai: '${_antrean.length}',
+                                    label: 'Sudah\ncheck-in',
+                                    bg: AppColors.biruMuda,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: StatBox(
+                                    nilai: '$diukur',
+                                    label: 'Sudah\ndiukur',
+                                    bg: AppColors.hijauMuda,
+                                    fg: AppColors.hijau,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: StatBox(
+                                    nilai: '${_antrean.length - diukur}',
+                                    label: 'Menunggu\npengukuran',
+                                    bg: AppColors.kuningMuda,
+                                    fg: AppColors.kuning,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
+                      SectionCard(
+                        title: 'Antrean Pendataan',
+                        icon: Icons.format_list_numbered,
+                        trailing: const Text(
+                          'Ketuk untuk mendata',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: AppColors.teksRedup,
+                          ),
+                        ),
+                        child: _antrean.isEmpty
+                            ? const Text(
+                                'Belum ada anak. Data anak masuk ke sini setelah orang tua melakukan check-in dengan scan QR.',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: AppColors.teksRedup,
+                                ),
+                              )
+                            : Column(
+                                children: [
+                                  for (final a in _antrean) _baris(a),
+                                ],
+                              ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ],
+            ),
           ],
         ),
       ),

@@ -143,10 +143,10 @@ String _pesanError(Object e) {
 // ---------------------------------------------------------------------------
 // KONSTANTA TAMPILAN
 // ---------------------------------------------------------------------------
+const _hijauHeader = Color(0xFF065F46);
 const _hijauTua = Color(0xFF0B3D2E);
 const _hijauGelap = Color(0xFF14634A);
 const _hijauAksen = Color(0xFF1F7A5C);
-const _hijauTerang = Color(0xFF2BB59A);
 const _oranye1 = Color(0xFFEA580C);
 const _oranye2 = Color(0xFFF97316);
 
@@ -171,6 +171,55 @@ String _tglPanjang(DateTime d) =>
 
 String _jamMenit(DateTime d) =>
     '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
 // ---------------------------------------------------------------------------
 // HALAMAN PENDAFTARAN (ORANG TUA)
@@ -399,97 +448,44 @@ class _OrangTuaPendaftaranPageState
   }
 
   // -------------------------------------------------------------------------
-  // HEADER
+  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
   // -------------------------------------------------------------------------
-  Widget _lingkaran(double ukuran, Color warna) => Container(
-        width: ukuran,
-        height: ukuran,
-        decoration: BoxDecoration(color: warna, shape: BoxShape.circle),
-      );
-
   Widget _header() {
-    final topInset = MediaQuery.of(context).padding.top;
-
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        bottomLeft: Radius.circular(30),
-        bottomRight: Radius.circular(30),
-      ),
-      child: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [_hijauTua, _hijauGelap, _hijauAksen],
-            stops: [0.0, 0.6, 1.0],
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              right: -40,
-              top: -50,
-              child: _lingkaran(170, Colors.white.withOpacity(0.07)),
-            ),
-            Positioned(
-              right: 50,
-              bottom: -60,
-              child: _lingkaran(130, _hijauTerang.withOpacity(0.18)),
-            ),
-            Positioned(
-              left: -35,
-              bottom: -45,
-              child: _lingkaran(110, Colors.white.withOpacity(0.06)),
-            ),
-            Positioned(
-              right: 24,
-              top: topInset + 14,
-              child: _lingkaran(14, _oranye2.withOpacity(0.55)),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, topInset + 14, 16, 26),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () => Navigator.of(context).maybePop(),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      margin: const EdgeInsets.only(right: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.16),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                        ),
-                      ),
-                      child: const Icon(
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal('Pendaftaran Posyandu'),
+              ),
+              // Tombol kembali di kiri
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
                         Icons.arrow_back,
                         color: Colors.white,
-                        size: 21,
+                        size: 22,
                       ),
                     ),
                   ),
-                  const Expanded(
-                    child: Text(
-                      'Sesi Pendaftaran\nPosyandu',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 25,
-                        height: 1.15,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 54),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

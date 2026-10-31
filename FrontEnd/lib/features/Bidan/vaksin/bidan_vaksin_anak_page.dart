@@ -7,7 +7,56 @@ import '../../../service/vaksin_service.dart';
 import 'bidan_vaksin_form_page.dart';
 import 'vaksin_model.dart';
 
-const _hijauHeader = Color(0xFF0B6043);
+const _hijauHeader = Color(0xFF065F46);
+
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
 /// Halaman vaksin per anak untuk bidan: rencana vaksin dan riwayat vaksin.
 class BidanVaksinAnakPage extends StatefulWidget {
@@ -238,29 +287,54 @@ class _BidanVaksinAnakPageState extends State<BidanVaksinAnakPage> {
     }
   }
 
+  // -------------------------------------------------------------------------
+  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // -------------------------------------------------------------------------
+  Widget _header(String judul) {
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal(judul),
+              ),
+              // Tombol kembali di kiri
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        title: Text(
-          'Vaksin · ${widget.namaAnak}',
-          style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: _hijauHeader,
-        surfaceTintColor: _hijauHeader,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: _hijauHeader,
-          statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
-        ),
-      ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.hijau,
         foregroundColor: Colors.white,
@@ -268,128 +342,142 @@ class _BidanVaksinAnakPageState extends State<BidanVaksinAnakPage> {
         icon: const Icon(Icons.add),
         label: const Text('Jadwalkan Vaksin'),
       ),
-      body: RefreshIndicator(
-        onRefresh: _muat,
-        child: _loading
-            ? ListView(
-                children: const [
-                  SizedBox(height: 200),
-                  Center(child: CircularProgressIndicator()),
-                ],
-              )
-            : _error != null
-                ? ListView(
-                    padding: const EdgeInsets.all(24),
-                    children: [
-                      const SizedBox(height: 120),
-                      Text(
-                        _error!,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      Center(
-                        child: AppButton(
-                          'Coba Lagi',
-                          icon: Icons.refresh,
-                          onPressed: _muat,
-                        ),
-                      ),
-                    ],
-                  )
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-                    children: [
-                      SectionCard(
-                        child: Row(
-                          children: [
-                            const CircleAvatar(
-                              backgroundColor: AppColors.hijauMuda,
-                              child: Icon(
-                                Icons.child_care,
-                                color: AppColors.hijau,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        child: Column(
+          children: [
+            _header('Vaksin · ${widget.namaAnak}'),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _muat,
+                child: _loading
+                    ? ListView(
+                        children: const [
+                          SizedBox(height: 200),
+                          Center(child: CircularProgressIndicator()),
+                        ],
+                      )
+                    : _error != null
+                        ? ListView(
+                            padding: const EdgeInsets.all(24),
+                            children: [
+                              const SizedBox(height: 120),
+                              Text(
+                                _error!,
+                                textAlign: TextAlign.center,
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.namaAnak,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Usia ${widget.usia}',
-                                    style: const TextStyle(
-                                      fontSize: 11.5,
-                                      color: AppColors.teksRedup,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SectionCard(
-                        title: 'Rencana Vaksin',
-                        icon: Icons.event_available_outlined,
-                        trailing: Pill(
-                          '${_rencana.length}',
-                          bg: AppColors.biruMuda,
-                          fg: AppColors.biru,
-                        ),
-                        child: _rencana.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                child: Center(
-                                  child: Text(
-                                    'Belum ada rencana vaksin',
-                                    style: TextStyle(
-                                      color: AppColors.teksRedup,
-                                    ),
-                                  ),
+                              const SizedBox(height: 12),
+                              Center(
+                                child: AppButton(
+                                  'Coba Lagi',
+                                  icon: Icons.refresh,
+                                  onPressed: _muat,
                                 ),
-                              )
-                            : Column(
-                                children: [
-                                  for (final r in _rencana)
-                                    _kartuRencana(r),
-                                ],
                               ),
-                      ),
-                      SectionCard(
-                        title: 'Riwayat Vaksin',
-                        icon: Icons.history,
-                        trailing: Pill(
-                          '${_riwayat.length}',
-                          bg: AppColors.hijauMuda,
-                          fg: AppColors.hijau,
-                        ),
-                        child: _riwayat.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 12),
-                                child: Center(
-                                  child: Text(
-                                    'Belum ada riwayat vaksin',
-                                    style: TextStyle(
-                                      color: AppColors.teksRedup,
+                            ],
+                          )
+                        : ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                            children: [
+                              SectionCard(
+                                child: Row(
+                                  children: [
+                                    const CircleAvatar(
+                                      backgroundColor: AppColors.hijauMuda,
+                                      child: Icon(
+                                        Icons.child_care,
+                                        color: AppColors.hijau,
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            widget.namaAnak,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Usia ${widget.usia}',
+                                            style: const TextStyle(
+                                              fontSize: 11.5,
+                                              color: AppColors.teksRedup,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              )
-                            : Column(
-                                children: [
-                                  for (final r in _riwayat)
-                                    _kartuRiwayat(r),
-                                ],
                               ),
-                      ),
-                    ],
-                  ),
+                              SectionCard(
+                                title: 'Rencana Vaksin',
+                                icon: Icons.event_available_outlined,
+                                trailing: Pill(
+                                  '${_rencana.length}',
+                                  bg: AppColors.biruMuda,
+                                  fg: AppColors.biru,
+                                ),
+                                child: _rencana.isEmpty
+                                    ? const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 12),
+                                        child: Center(
+                                          child: Text(
+                                            'Belum ada rencana vaksin',
+                                            style: TextStyle(
+                                              color: AppColors.teksRedup,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : Column(
+                                        children: [
+                                          for (final r in _rencana)
+                                            _kartuRencana(r),
+                                        ],
+                                      ),
+                              ),
+                              SectionCard(
+                                title: 'Riwayat Vaksin',
+                                icon: Icons.history,
+                                trailing: Pill(
+                                  '${_riwayat.length}',
+                                  bg: AppColors.hijauMuda,
+                                  fg: AppColors.hijau,
+                                ),
+                                child: _riwayat.isEmpty
+                                    ? const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 12),
+                                        child: Center(
+                                          child: Text(
+                                            'Belum ada riwayat vaksin',
+                                            style: TextStyle(
+                                              color: AppColors.teksRedup,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : Column(
+                                        children: [
+                                          for (final r in _riwayat)
+                                            _kartuRiwayat(r),
+                                        ],
+                                      ),
+                              ),
+                            ],
+                          ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

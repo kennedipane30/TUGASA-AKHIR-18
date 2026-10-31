@@ -7,7 +7,7 @@ import 'api_client.dart';
 import 'app_colors.dart';
 import 'posyandu.dart';
 
-const Color _hijauHeader = Color(0xFF0B6043);
+const Color _hijauHeader = Color(0xFF065F46);
 const Color _hijau = Color(0xFF176A46);
 const Color _biru = Color(0xFF2582C4);
 
@@ -29,6 +29,55 @@ String _pesanError(Object e) {
   }
 
   return 'Terjadi kesalahan: $e';
+}
+
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
 
 /// Halaman QR check-in tetap (satu per posyandu).
@@ -83,6 +132,50 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
       if (!mounted) return;
       setState(() => _gagal = _pesanError(e));
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // -------------------------------------------------------------------------
+  Widget _header() {
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal('QR Check-in'),
+              ),
+              // Tombol kembali di kiri
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _badge({
@@ -286,87 +379,90 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
     );
   }
 
+  Widget _isi() {
+    if (_gagal != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE5ECE9)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFF4E5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.cloud_off_outlined,
+                    color: Color(0xFFE89B24),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _gagal!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF25313A),
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: _muat,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _hijau,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Coba lagi'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_kode == null) {
+      return const Center(
+        child: CircularProgressIndicator(color: _hijau),
+      );
+    }
+
+    return _konten();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        title: const Text(
-          'QR Check-in Posyandu',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        backgroundColor: _hijauHeader,
-        surfaceTintColor: _hijauHeader,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        titleSpacing: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: _hijauHeader,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
-      ),
-      body: SafeArea(
-        child: _gagal != null
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFE5ECE9)),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFFF4E5),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.cloud_off_outlined,
-                            color: Color(0xFFE89B24),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _gagal!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFF25313A),
-                            fontSize: 13,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        FilledButton(
-                          onPressed: _muat,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: _hijau,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('Coba lagi'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            : _kode == null
-                ? const Center(
-                    child: CircularProgressIndicator(color: _hijau),
-                  )
-                : _konten(),
+        child: Column(
+          children: [
+            _header(),
+            Expanded(
+              child: SafeArea(
+                top: false,
+                child: _isi(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

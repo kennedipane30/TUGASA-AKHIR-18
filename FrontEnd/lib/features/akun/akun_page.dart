@@ -10,7 +10,7 @@ import '../../core/posyandu.dart';
 import '../auth/auth_provider.dart';
 import '../auth/ubah_sandi_page.dart';
 
-const Color _hijauHeader = Color(0xFF0B6043);
+const Color _hijauHeader = Color(0xFF065F46);
 
 class AkunPage extends StatelessWidget {
   const AkunPage({super.key});
@@ -49,6 +49,81 @@ class AkunPage extends StatelessWidget {
     }
   }
 
+  // -------------------------------------------------------------------------
+  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // Tanpa tombol kembali, sama seperti sebelumnya (halaman tab).
+  // -------------------------------------------------------------------------
+  Widget _header() {
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 56),
+              child: _judulTebal('Akun'),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Judul header yang dibuat ekstra tebal.
+  /// Teks ditumpuk dua lapis: lapis bawah berupa garis tepi (stroke) putih
+  /// sehingga huruf terlihat lebih gemuk, lapis atas berupa isi putih biasa.
+  /// Cara ini tetap terlihat tebal walaupun font aplikasi tidak punya
+  /// varian w900.
+  Widget _judulTebal(String teks) {
+    const ukuran = 20.0;
+    const jarak = 1.2; // jarak antar huruf
+
+    return Stack(
+      children: [
+        // Lapis bawah: garis tepi untuk menebalkan huruf
+        Text(
+          teks,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: ukuran,
+            fontWeight: FontWeight.w900,
+            letterSpacing: jarak,
+            foreground: Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.0
+              ..strokeJoin = StrokeJoin.round
+              ..color = Colors.white,
+          ),
+        ),
+        // Lapis atas: isi huruf
+        Text(
+          teks,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: ukuran,
+            fontWeight: FontWeight.w900,
+            letterSpacing: jarak,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                color: Color(0x40000000),
+                offset: Offset(0, 1),
+                blurRadius: 2,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -58,128 +133,122 @@ class AkunPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        title: const Text(
-          'Akun',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        backgroundColor: _hijauHeader,
-        surfaceTintColor: _hijauHeader,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: _hijauHeader,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          SectionCard(
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: AppColors.hijau,
-                  child: Text(
-                    inisial,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        nama,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          Pill(_labelPeran(auth.role)),
-                          if (auth.role != 'admin')
-                            Pill(
-                              pos.isEmpty
-                                  ? 'Posyandu belum dipilih'
-                                  : 'Posyandu ${labelPosyandu(pos)}',
-                              bg: AppColors.biruMuda,
-                              fg: AppColors.biru,
-                              icon: Icons.place_outlined,
+        child: Column(
+          children: [
+            _header(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  SectionCard(
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: AppColors.hijau,
+                          child: Text(
+                            inisial,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
                             ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SectionCard(
-            child: Column(
-              children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(
-                    Icons.person_outline,
-                    color: AppColors.hijau,
-                  ),
-                  title: const Text('Profil Saya'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => soon(context, 'Profil'),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(
-                    Icons.lock_outline,
-                    color: AppColors.hijau,
-                  ),
-                  title: const Text('Ubah Kata Sandi'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const UbahSandiPage(),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nama,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: [
+                                  Pill(_labelPeran(auth.role)),
+                                  if (auth.role != 'admin')
+                                    Pill(
+                                      pos.isEmpty
+                                          ? 'Posyandu belum dipilih'
+                                          : 'Posyandu ${labelPosyandu(pos)}',
+                                      bg: AppColors.biruMuda,
+                                      fg: AppColors.biru,
+                                      icon: Icons.place_outlined,
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(
-                    Icons.notifications_none,
-                    color: AppColors.hijau,
+                  SectionCard(
+                    child: Column(
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(
+                            Icons.person_outline,
+                            color: AppColors.hijau,
+                          ),
+                          title: const Text('Profil Saya'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => soon(context, 'Profil'),
+                        ),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(
+                            Icons.lock_outline,
+                            color: AppColors.hijau,
+                          ),
+                          title: const Text('Ubah Kata Sandi'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const UbahSandiPage(),
+                            ),
+                          ),
+                        ),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(
+                            Icons.notifications_none,
+                            color: AppColors.hijau,
+                          ),
+                          title: const Text('Notifikasi'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => soon(context, 'Pengaturan notifikasi'),
+                        ),
+                      ],
+                    ),
                   ),
-                  title: const Text('Notifikasi'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => soon(context, 'Pengaturan notifikasi'),
-                ),
-              ],
+                  AppButton(
+                    'Keluar',
+                    icon: Icons.logout,
+                    filled: false,
+                    color: AppColors.merah,
+                    onPressed: () => _keluar(context),
+                  ),
+                ],
+              ),
             ),
-          ),
-          AppButton(
-            'Keluar',
-            icon: Icons.logout,
-            filled: false,
-            color: AppColors.merah,
-            onPressed: () => _keluar(context),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

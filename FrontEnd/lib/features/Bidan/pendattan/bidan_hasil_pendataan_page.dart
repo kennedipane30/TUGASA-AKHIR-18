@@ -12,7 +12,7 @@ import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 import 'bidan_catatan_page.dart';
 import 'bidan_data_anak_page.dart';
 
-const _hijauHeader = Color(0xFF0B6043);
+const _hijauHeader = Color(0xFF065F46);
 
 class _ItemBidan {
   final String pendaftaranId;
@@ -75,6 +75,55 @@ String _pesanError(Object e) {
   }
 
   return 'Terjadi kesalahan: $e';
+}
+
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
 
 class BidanHasilPendataanPage extends StatefulWidget {
@@ -177,6 +226,29 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // Tanpa tombol kembali, sama seperti sebelumnya (halaman tab).
+  // -------------------------------------------------------------------------
+  Widget _header() {
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 56),
+              child: _judulTebal('Hasil Pendataan'),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pos =
@@ -198,173 +270,167 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
 
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        title: const Text(
-          'Hasil Pendataan',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        backgroundColor: _hijauHeader,
-        surfaceTintColor: _hijauHeader,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: _hijauHeader,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _muat,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Pill(
-                  labelPos,
-                  bg: AppColors.biruMuda,
-                  fg: AppColors.biru,
-                  icon: Icons.place_outlined,
+            _header(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _muat,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Pill(
+                          labelPos,
+                          bg: AppColors.biruMuda,
+                          fg: AppColors.biru,
+                          icon: Icons.place_outlined,
+                        ),
+                      ),
+                    ),
+                    if (_memuat)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_gagal != null)
+                      SectionCard(
+                        color: AppColors.kuningMuda,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.cloud_off,
+                              color: AppColors.kuning,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _gagal!,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() => _memuat = true);
+                                _muat();
+                              },
+                              child: const Text('Coba lagi'),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (j == null)
+                      SectionCard(
+                        title: 'Jadwal Posyandu',
+                        icon: Icons.event_busy,
+                        child: Text(
+                          'Belum ada jadwal aktif untuk $labelPos.',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.teksRedup,
+                          ),
+                        ),
+                      )
+                    else ...[
+                      SectionCard(
+                        title: 'Sesi $labelPos',
+                        icon: Icons.event_note,
+                        trailing: Pill(
+                          '$perlu perlu catatan',
+                          bg: AppColors.kuningMuda,
+                          fg: AppColors.kuning,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${formatTanggal(j.tanggal)} · ${j.jam} WIB',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                            if (j.lokasi.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                j.lokasi,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.teksRedup,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 6),
+                            Text(
+                              '${_data.length} anak sudah check-in. Ketuk antrean untuk mengisi catatan, ketuk ikon untuk melihat data pencatatan anak.',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: AppColors.teksRedup,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final f in _filter)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  label: Text(f),
+                                  selected: _aktif == f,
+                                  selectedColor: AppColors.hijau,
+                                  backgroundColor: Colors.white,
+                                  labelStyle: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: _aktif == f
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
+                                  onSelected: (_) {
+                                    setState(() => _aktif = f);
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (daftar.isEmpty)
+                        const SectionCard(
+                          child: Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                'Belum ada anak yang check-in',
+                                style: TextStyle(
+                                  color: AppColors.teksRedup,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      for (final d in daftar) _kartu(d),
+                    ],
+                  ],
                 ),
               ),
             ),
-            if (_memuat)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 32),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_gagal != null)
-              SectionCard(
-                color: AppColors.kuningMuda,
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.cloud_off,
-                      color: AppColors.kuning,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _gagal!,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() => _memuat = true);
-                        _muat();
-                      },
-                      child: const Text('Coba lagi'),
-                    ),
-                  ],
-                ),
-              )
-            else if (j == null)
-              SectionCard(
-                title: 'Jadwal Posyandu',
-                icon: Icons.event_busy,
-                child: Text(
-                  'Belum ada jadwal aktif untuk $labelPos.',
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    color: AppColors.teksRedup,
-                  ),
-                ),
-              )
-            else ...[
-              SectionCard(
-                title: 'Sesi $labelPos',
-                icon: Icons.event_note,
-                trailing: Pill(
-                  '$perlu perlu catatan',
-                  bg: AppColors.kuningMuda,
-                  fg: AppColors.kuning,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${formatTanggal(j.tanggal)} · ${j.jam} WIB',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
-                    if (j.lokasi.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        j.lokasi,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.teksRedup,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 6),
-                    Text(
-                      '${_data.length} anak sudah check-in. Ketuk antrean untuk mengisi catatan, ketuk ikon untuk melihat data pencatatan anak.',
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.teksRedup,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final f in _filter)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(f),
-                          selected: _aktif == f,
-                          selectedColor: AppColors.hijau,
-                          backgroundColor: Colors.white,
-                          labelStyle: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: _aktif == f
-                                ? Colors.white
-                                : Colors.black87,
-                          ),
-                          onSelected: (_) {
-                            setState(() => _aktif = f);
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (daftar.isEmpty)
-                const SectionCard(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        'Belum ada anak yang check-in',
-                        style: TextStyle(
-                          color: AppColors.teksRedup,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              for (final d in daftar) _kartu(d),
-            ],
           ],
         ),
       ),

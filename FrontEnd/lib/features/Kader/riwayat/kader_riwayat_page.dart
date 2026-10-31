@@ -7,7 +7,7 @@ import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 
 const _prefix = '/kader/riwayat';
-const _hijauHeader = Color(0xFF0B6043);
+const _hijauHeader = Color(0xFF065F46);
 
 // ---------------------------------------------------------------------------
 // FUNGSI BANTU
@@ -123,25 +123,127 @@ Widget _gagalKartu(String pesan, VoidCallback ulang) => SectionCard(
       ),
     );
 
-AppBar _bar(String judul) => AppBar(
-      title: Text(
-        judul,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
         ),
       ),
-      centerTitle: true,
-      backgroundColor: _hijauHeader,
-      surfaceTintColor: _hijauHeader,
-      foregroundColor: Colors.white,
-      elevation: 0,
-      systemOverlayStyle: const SystemUiOverlayStyle(
-        statusBarColor: _hijauHeader,
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+// ---------------------------------------------------------------------------
+// HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+// Dipakai oleh ketiga halaman riwayat.
+// ---------------------------------------------------------------------------
+
+class _Header extends StatelessWidget {
+  final String judul;
+
+  const _Header(this.judul);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal(judul),
+              ),
+              // Tombol kembali di kiri
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kerangka halaman: header polos di atas, isi di bawahnya.
+Widget _halaman({required String judul, required Widget isi}) {
+  return Scaffold(
+    backgroundColor: AppColors.latar,
+    body: AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
       ),
-    );
+      child: Column(
+        children: [
+          _Header(judul),
+          Expanded(child: isi),
+        ],
+      ),
+    ),
+  );
+}
 
 Widget _memuatBox() => const Padding(
       padding: EdgeInsets.symmetric(vertical: 32),
@@ -200,10 +302,9 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.latar,
-      appBar: _bar('Riwayat Pemeriksaan'),
-      body: RefreshIndicator(
+    return _halaman(
+      judul: 'Riwayat Pemeriksaan',
+      isi: RefreshIndicator(
         onRefresh: _muat,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -407,10 +508,9 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.latar,
-      appBar: _bar(widget.judul),
-      body: RefreshIndicator(
+    return _halaman(
+      judul: widget.judul,
+      isi: RefreshIndicator(
         onRefresh: _muat,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -699,10 +799,9 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.latar,
-      appBar: _bar('Hasil Pendataan'),
-      body: RefreshIndicator(
+    return _halaman(
+      judul: 'Hasil Pendataan',
+      isi: RefreshIndicator(
         onRefresh: _muat,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),

@@ -11,37 +11,57 @@ const _hijauGelap = Color(0xFF14634A);
 const _hijauGaris = Color(0xFF1FA27F);
 const _biruGaris = Color(0xFF2F6FD6);
 const _oranyeGaris = Color(0xFFEA580C);
-const _hijauHeader = Color(0xFF0B5A40);
+const _hijauHeader = Color(0xFF065F46);
 
-PreferredSizeWidget _headerHijau({
-  required String judul,
-  Widget? leading,
-  bool otomatisKembali = false,
-  List<Widget>? actions,
-}) {
-  return AppBar(
-    backgroundColor: _hijauHeader,
-    surfaceTintColor: _hijauHeader,
-    foregroundColor: Colors.white,
-    elevation: 0,
-    centerTitle: false,
-    automaticallyImplyLeading: otomatisKembali,
-    leading: leading,
-    titleSpacing: leading == null && !otomatisKembali ? 16 : 0,
-    systemOverlayStyle: const SystemUiOverlayStyle(
-      statusBarColor: _hijauHeader,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
-    ),
-    title: Text(
-      judul,
-      style: const TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.w500,
-        fontSize: 16,
+// ---------------------------------------------------------------------------
+// JUDUL HEADER EKSTRA TEBAL (sama seperti halaman Akun)
+// Teks ditumpuk dua lapis: lapis bawah berupa garis tepi (stroke) putih
+// sehingga huruf terlihat lebih gemuk, lapis atas berupa isi putih biasa.
+// ---------------------------------------------------------------------------
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
       ),
-    ),
-    actions: actions,
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
   );
 }
 
@@ -98,6 +118,46 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // -------------------------------------------------------------------------
+  Widget _header() {
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal('Buat Akun Kader / Bidan'),
+              ),
+              // Tombol kembali di kiri
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   InputDecoration _dekor(String hint, IconData ikon, Color garis, {Widget? suffix}) {
@@ -161,13 +221,6 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
     final desa = _desa();
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: _headerHijau(
-        judul: 'Buat Akun Kader / Bidan',
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-      ),
       bottomNavigationBar: SafeArea(
         child: Container(
           color: Colors.white,
@@ -208,100 +261,125 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
           ),
         ),
       ),
-      body: Form(
-        key: _key,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE6ECE8)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: AppColors.hijauMuda,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.badge_outlined, color: _hijauGelap, size: 22),
+            _header(),
+            Expanded(
+              child: Form(
+                key: _key,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE6ECE8)),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Data Akun Petugas',
-                                style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w800, color: _hijauTua)),
-                            Text(
-                              'Akun otomatis bertugas di Posyandu $desa',
-                              style: const TextStyle(
-                                  fontSize: 10.5, height: 1.3, color: AppColors.teksRedup),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: AppColors.hijauMuda,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.badge_outlined,
+                                    color: _hijauGelap, size: 22),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Data Akun Petugas',
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                            color: _hijauTua)),
+                                    Text(
+                                      'Akun otomatis bertugas di Posyandu $desa',
+                                      style: const TextStyle(
+                                          fontSize: 10.5,
+                                          height: 1.3,
+                                          color: AppColors.teksRedup),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          _label('ROLE PETUGAS', 'Wajib Pilih', _hijauGelap,
+                              AppColors.hijauMuda),
+                          DropdownButtonFormField<String>(
+                            value: _role,
+                            icon: const Icon(Icons.keyboard_arrow_down, color: _hijauGelap),
+                            decoration:
+                                _dekor('', Icons.manage_accounts_outlined, _hijauGaris),
+                            items: const [
+                              DropdownMenuItem(value: 'kader', child: Text('Kader Posyandu')),
+                              DropdownMenuItem(value: 'bidan', child: Text('Bidan Desa')),
+                            ],
+                            onChanged: (v) => setState(() => _role = v ?? _role),
+                          ),
+                          _label('NAMA LENGKAP', 'Sesuai KTP / SK', _hijauGelap,
+                              AppColors.hijauMuda),
+                          TextFormField(
+                            controller: _nama,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: _dekor('Contoh: Siti Rahmawati, A.Md.Keb',
+                                Icons.person_outline, _hijauGaris),
+                            validator: (v) =>
+                                (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
+                          ),
+                          _label('USERNAME AKUN', 'Min. 4 karakter', _biruGaris,
+                              const Color(0xFFE6F1FF)),
+                          TextFormField(
+                            controller: _username,
+                            decoration: _dekor('Buat username tanpa spasi',
+                                Icons.alternate_email, _biruGaris),
+                            validator: (v) => (v == null || v.trim().length < 4)
+                                ? 'Minimal 4 karakter'
+                                : null,
+                          ),
+                          _label('KATA SANDI AWAL', 'Min. 6 karakter', _oranyeGaris,
+                              const Color(0xFFFFF1E6)),
+                          TextFormField(
+                            controller: _pw,
+                            obscureText: !_lihat,
+                            decoration: _dekor(
+                              'Minimal 6 karakter',
+                              Icons.lock_outline,
+                              _oranyeGaris,
+                              suffix: IconButton(
+                                icon: Icon(
+                                    _lihat
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                    size: 19,
+                                    color: Colors.black45),
+                                onPressed: () => setState(() => _lihat = !_lihat),
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  _label('ROLE PETUGAS', 'Wajib Pilih', _hijauGelap, AppColors.hijauMuda),
-                  DropdownButtonFormField<String>(
-                    value: _role,
-                    icon: const Icon(Icons.keyboard_arrow_down, color: _hijauGelap),
-                    decoration: _dekor('', Icons.manage_accounts_outlined, _hijauGaris),
-                    items: const [
-                      DropdownMenuItem(value: 'kader', child: Text('Kader Posyandu')),
-                      DropdownMenuItem(value: 'bidan', child: Text('Bidan Desa')),
-                    ],
-                    onChanged: (v) => setState(() => _role = v ?? _role),
-                  ),
-                  _label('NAMA LENGKAP', 'Sesuai KTP / SK', _hijauGelap, AppColors.hijauMuda),
-                  TextFormField(
-                    controller: _nama,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: _dekor(
-                        'Contoh: Siti Rahmawati, A.Md.Keb', Icons.person_outline, _hijauGaris),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
-                  ),
-                  _label('USERNAME AKUN', 'Min. 4 karakter', _biruGaris,
-                      const Color(0xFFE6F1FF)),
-                  TextFormField(
-                    controller: _username,
-                    decoration: _dekor(
-                        'Buat username tanpa spasi', Icons.alternate_email, _biruGaris),
-                    validator: (v) =>
-                        (v == null || v.trim().length < 4) ? 'Minimal 4 karakter' : null,
-                  ),
-                  _label('KATA SANDI AWAL', 'Min. 6 karakter', _oranyeGaris,
-                      const Color(0xFFFFF1E6)),
-                  TextFormField(
-                    controller: _pw,
-                    obscureText: !_lihat,
-                    decoration: _dekor(
-                      'Minimal 6 karakter',
-                      Icons.lock_outline,
-                      _oranyeGaris,
-                      suffix: IconButton(
-                        icon: Icon(
-                            _lihat ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                            size: 19,
-                            color: Colors.black45),
-                        onPressed: () => setState(() => _lihat = !_lihat),
+                            validator: (v) =>
+                                (v == null || v.length < 6) ? 'Minimal 6 karakter' : null,
+                          ),
+                        ],
                       ),
                     ),
-                    validator: (v) =>
-                        (v == null || v.length < 6) ? 'Minimal 6 karakter' : null,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

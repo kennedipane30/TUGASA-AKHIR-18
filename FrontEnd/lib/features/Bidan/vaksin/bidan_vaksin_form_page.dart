@@ -6,7 +6,56 @@ import '../../../core/common_widgets.dart';
 import '../../../service/vaksin_service.dart';
 import 'vaksin_model.dart';
 
-const _hijauHeader = Color(0xFF0B6043);
+const _hijauHeader = Color(0xFF065F46);
+
+/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+Widget _judulTebal(String teks) {
+  const ukuran = 20.0;
+  const jarak = 1.2; // jarak antar huruf
+
+  return Stack(
+    children: [
+      // Lapis bawah: garis tepi untuk menebalkan huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.0
+            ..strokeJoin = StrokeJoin.round
+            ..color = Colors.white,
+        ),
+      ),
+      // Lapis atas: isi huruf
+      Text(
+        teks,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: ukuran,
+          fontWeight: FontWeight.w900,
+          letterSpacing: jarak,
+          color: Colors.white,
+          shadows: [
+            Shadow(
+              color: Color(0x40000000),
+              offset: Offset(0, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
 /// Form jadwalkan vaksin baru (rencana == null) atau ubah jadwal (rencana != null).
 class BidanVaksinFormPage extends StatefulWidget {
@@ -161,176 +210,215 @@ class _BidanVaksinFormPageState extends State<BidanVaksinFormPage> {
         ),
       );
 
+  // -------------------------------------------------------------------------
+  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // -------------------------------------------------------------------------
+  Widget _header(String judul) {
+    return Container(
+      width: double.infinity,
+      color: _hijauHeader,
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Judul di tengah
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal(judul),
+              ),
+              // Tombol kembali di kiri
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(
-        title: Text(
-          _edit ? 'Ubah Jadwal Vaksin' : 'Jadwalkan Vaksin',
-          style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: _hijauHeader,
-        surfaceTintColor: _hijauHeader,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: _hijauHeader,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 12),
-                        AppButton(
-                          'Coba Lagi',
-                          icon: Icons.refresh,
-                          onPressed: _muatMaster,
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    SectionCard(
-                      title: widget.namaAnak,
-                      icon: Icons.child_care,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Jenis Vaksin',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          if (_edit)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: AppColors.isiField,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '${widget.rencana!.vaksin.nama} · Dosis ${widget.rencana!.dosisKe}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
+        child: Column(
+          children: [
+            _header(_edit ? 'Ubah Jadwal Vaksin' : 'Jadwalkan Vaksin'),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
                                 ),
-                              ),
-                            )
-                          else
-                            DropdownButtonFormField<VaksinMaster>(
-                              value: _dipilih,
-                              isExpanded: true,
-                              decoration: _dekor('Pilih vaksin dan dosis'),
-                              items: [
-                                for (final m in _master)
-                                  DropdownMenuItem(
-                                    value: m,
-                                    child: Text(
-                                      m.label,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
+                                const SizedBox(height: 12),
+                                AppButton(
+                                  'Coba Lagi',
+                                  icon: Icons.refresh,
+                                  onPressed: _muatMaster,
+                                ),
                               ],
-                              onChanged: (v) {
-                                setState(() => _dipilih = v);
-                              },
-                            ),
-                          const SizedBox(height: 14),
-                          const Text(
-                            'Tanggal Vaksin',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          InkWell(
-                            onTap: _pilihTanggal,
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: AppColors.isiField,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.all(16),
+                          children: [
+                            SectionCard(
+                              title: widget.namaAnak,
+                              icon: Icons.child_care,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(
-                                    Icons.event,
-                                    size: 20,
-                                    color: AppColors.hijau,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    formatTanggalTampil(
-                                      formatTanggalApi(_tanggal),
-                                    ),
-                                    style: const TextStyle(
+                                  const Text(
+                                    'Jenis Vaksin',
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w700,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (_edit)
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.isiField,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '${widget.rencana!.vaksin.nama} · Dosis ${widget.rencana!.dosisKe}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    DropdownButtonFormField<VaksinMaster>(
+                                      value: _dipilih,
+                                      isExpanded: true,
+                                      decoration: _dekor('Pilih vaksin dan dosis'),
+                                      items: [
+                                        for (final m in _master)
+                                          DropdownMenuItem(
+                                            value: m,
+                                            child: Text(
+                                              m.label,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                      ],
+                                      onChanged: (v) {
+                                        setState(() => _dipilih = v);
+                                      },
+                                    ),
+                                  const SizedBox(height: 14),
+                                  const Text(
+                                    'Tanggal Vaksin',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  InkWell(
+                                    onTap: _pilihTanggal,
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.isiField,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.event,
+                                            size: 20,
+                                            color: AppColors.hijau,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            formatTanggalTampil(
+                                              formatTanggalApi(_tanggal),
+                                            ),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  const Text(
+                                    'Dasar Hasil Pemeriksaan',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  TextField(
+                                    controller: _alasan,
+                                    maxLines: 4,
+                                    decoration: _dekor(
+                                      'Contoh: kondisi anak sehat, BB naik, tidak demam sehingga layak divaksin',
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 14),
-                          const Text(
-                            'Dasar Hasil Pemeriksaan',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.5,
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              width: double.infinity,
+                              child: AppButton(
+                                _menyimpan
+                                    ? 'Menyimpan...'
+                                    : (_edit
+                                        ? 'Simpan Perubahan'
+                                        : 'Simpan Jadwal'),
+                                icon: Icons.save_outlined,
+                                onPressed: _menyimpan ? () {} : _simpan,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: _alasan,
-                            maxLines: 4,
-                            decoration: _dekor(
-                              'Contoh: kondisi anak sehat, BB naik, tidak demam sehingga layak divaksin',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: double.infinity,
-                      child: AppButton(
-                        _menyimpan
-                            ? 'Menyimpan...'
-                            : (_edit
-                                ? 'Simpan Perubahan'
-                                : 'Simpan Jadwal'),
-                        icon: Icons.save_outlined,
-                        onPressed: _menyimpan ? () {} : _simpan,
-                      ),
-                    ),
-                  ],
-                ),
+                          ],
+                        ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
