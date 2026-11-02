@@ -36,5 +36,8 @@ flutter:
     - pendaftaran.png
     - hasil_pemeriksaan.png
     - vaksin_anak.png
+    - standar_antropometri.csv
+
+
 
   uses-material-design: true

@@ -1,20 +1,15 @@
-// Mengimpor tabel standar antropometri dari berkas CSV ke tabel standar_antropometri.
+// Mengimpor tabel standar antropometri WHO (data/standar_antropometri.csv) ke database.
 //
-// Pemakaian (dari folder BackEnd):
-//   go run ./cmd/import-standar data/standar_antropometri.csv
+//	go run ./cmd/import-standar
+//	go run ./cmd/import-standar path/lain.csv
 //
-// Format CSV (baris pertama adalah judul kolom):
-//   indikator,jenis_kelamin,acuan,sd_min3,sd_min2,sd_min1,median,sd_plus1,sd_plus2,sd_plus3,sumber
-//   BB_U,L,0,2.1,2.5,2.9,3.3,3.9,4.4,5.0,Permenkes 2/2020
-//
-// Isi nilai dari lampiran Permenkes No. 2 Tahun 2020 (Standar Antropometri Anak).
-// Impor aman diulang: baris dengan indikator, jenis kelamin, dan acuan yang sama diperbarui.
+// Aman dijalankan berulang kali: baris yang sudah ada diperbarui, bukan diduplikasi.
 package main
 
 import (
 	"encoding/csv"
-	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -24,79 +19,120 @@ import (
 	"posyandu-api/internal/models"
 
 	"github.com/joho/godotenv"
-	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
-func angka(s string) (float64, error) {
-	return strconv.ParseFloat(strings.TrimSpace(strings.ReplaceAll(s, ",", ".")), 64)
+var kolomWajib = []string{
+	"indeks", "jenis_kelamin", "acuan", "satuan_acuan", "l", "m", "s",
+	"sd_min3", "sd_min2", "sd_min1", "median", "sd_plus1", "sd_plus2", "sd_plus3", "sumber",
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatal("pemakaian: go run ./cmd/import-standar <berkas.csv>")
-	}
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("gagal membaca .env, jalankan dari folder BackEnd: ", err)
+		log.Println("peringatan: .env tidak terbaca, memakai environment sistem")
 	}
+	path := "data/standar_antropometri.csv"
+	if len(os.Args) > 1 {
+		path = os.Args[1]
+	}
+
+	list, err := bacaCSV(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	db, err := database.Connect()
 	if err != nil {
 		log.Fatal("gagal konek database: ", err)
 	}
 
-	f, err := os.Open(os.Args[1])
+	err = db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{{Name: "indeks"}, {Name: "jenis_kelamin"}, {Name: "acuan"}},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"satuan_acuan", "l", "m", "s", "sd_min3", "sd_min2", "sd_min1", "median",
+			"sd_plus1", "sd_plus2", "sd_plus3", "sumber", "updated_at",
+		}),
+	}).CreateInBatches(list, 200).Error
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("gagal menyimpan standar: ", err)
+	}
+
+	var total int64
+	db.Model(&models.StandarAntropometri{}).Count(&total)
+	log.Printf("selesai: %d baris diimpor dari %s, total di database %d baris", len(list), path, total)
+}
+
+func bacaCSV(path string) ([]models.StandarAntropometri, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("gagal membuka %s: %w", path, err)
 	}
 	defer f.Close()
 
-	baris, err := csv.NewReader(f).ReadAll()
+	r := csv.NewReader(f)
+	r.TrimLeadingSpace = true
+	header, err := r.Read()
 	if err != nil {
-		log.Fatal("CSV tidak valid: ", err)
+		return nil, fmt.Errorf("gagal membaca header: %w", err)
 	}
-	if len(baris) < 2 {
-		log.Fatal("CSV kosong")
+	pos := map[string]int{}
+	for i, h := range header {
+		pos[strings.TrimSpace(strings.TrimPrefix(h, string(rune(0xFEFF))))] = i
+	}
+	for _, k := range kolomWajib {
+		if _, ok := pos[k]; !ok {
+			return nil, fmt.Errorf("kolom %q tidak ada di %s", k, path)
+		}
 	}
 
-	dibuat, diperbarui := 0, 0
-	for i, r := range baris[1:] {
-		if len(r) < 11 {
-			log.Fatalf("baris %d: kolom kurang (harus 11 kolom)", i+2)
+	list := []models.StandarAntropometri{}
+	baris := 1
+	for {
+		rec, err := r.Read()
+		if err == io.EOF {
+			break
 		}
-		var v [8]float64
-		for k := 0; k < 8; k++ {
-			v[k], err = angka(r[2+k])
+		baris++
+		if err != nil {
+			return nil, fmt.Errorf("baris %d: %w", baris, err)
+		}
+		angka := func(k string) (float64, error) {
+			v, err := strconv.ParseFloat(strings.TrimSpace(rec[pos[k]]), 64)
 			if err != nil {
-				log.Fatalf("baris %d kolom %d: angka tidak valid: %q", i+2, 3+k, r[2+k])
+				return 0, fmt.Errorf("baris %d kolom %s: %w", baris, k, err)
+			}
+			return v, nil
+		}
+		var nilai [11]float64
+		for i, k := range []string{"acuan", "l", "m", "s", "sd_min3", "sd_min2", "sd_min1", "median", "sd_plus1", "sd_plus2", "sd_plus3"} {
+			if nilai[i], err = angka(k); err != nil {
+				return nil, err
 			}
 		}
-		row := models.StandarAntropometri{
-			Indikator:    strings.TrimSpace(r[0]),
-			JenisKelamin: strings.TrimSpace(r[1]),
-			Acuan:        v[0],
-			SdMin3:       &v[1], SdMin2: &v[2], SdMin1: &v[3],
-			Median:       &v[4],
-			SdPlus1:      &v[5], SdPlus2: &v[6], SdPlus3: &v[7],
-			Sumber:       strings.TrimSpace(r[10]),
+		jk := strings.ToUpper(strings.TrimSpace(rec[pos["jenis_kelamin"]]))
+		if jk != "L" && jk != "P" {
+			return nil, fmt.Errorf("baris %d: jenis_kelamin harus L atau P", baris)
 		}
-
-		var ada models.StandarAntropometri
-		err = db.Where("indikator = ? AND jenis_kelamin = ? AND acuan = ?",
-			row.Indikator, row.JenisKelamin, row.Acuan).First(&ada).Error
-		switch {
-		case errors.Is(err, gorm.ErrRecordNotFound):
-			if err := db.Create(&row).Error; err != nil {
-				log.Fatal(err)
-			}
-			dibuat++
-		case err != nil:
-			log.Fatal(err)
-		default:
-			row.ID = ada.ID
-			if err := db.Save(&row).Error; err != nil {
-				log.Fatal(err)
-			}
-			diperbarui++
-		}
+		list = append(list, models.StandarAntropometri{
+			Indeks:       strings.TrimSpace(rec[pos["indeks"]]),
+			JenisKelamin: jk,
+			Acuan:        nilai[0],
+			SatuanAcuan:  strings.TrimSpace(rec[pos["satuan_acuan"]]),
+			L:            nilai[1],
+			M:            nilai[2],
+			S:            nilai[3],
+			SdMin3:       nilai[4],
+			SdMin2:       nilai[5],
+			SdMin1:       nilai[6],
+			Median:       nilai[7],
+			SdPlus1:      nilai[8],
+			SdPlus2:      nilai[9],
+			SdPlus3:      nilai[10],
+			Sumber:       strings.TrimSpace(rec[pos["sumber"]]),
+		})
 	}
-	fmt.Printf("selesai: %d baris dibuat, %d diperbarui\n", dibuat, diperbarui)
+	if len(list) == 0 {
+		return nil, fmt.Errorf("%s tidak berisi data", path)
+	}
+	return list, nil
 }

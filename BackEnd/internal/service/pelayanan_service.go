@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 	"time"
@@ -18,11 +19,15 @@ type PelayananService struct {
 	jadwal *repository.JadwalRepository
 	repo   *repository.PelayananRepository
 	kel    *repository.KeluargaRepository
+	gizi   *StatusGiziService
 }
 
 func NewPelayananService(j *repository.JadwalRepository, p *repository.PelayananRepository, k *repository.KeluargaRepository) *PelayananService {
 	return &PelayananService{jadwal: j, repo: p, kel: k}
 }
+
+// SetStatusGizi mengaktifkan perhitungan status gizi otomatis setiap pengukuran disimpan.
+func (s *PelayananService) SetStatusGizi(g *StatusGiziService) { s.gizi = g }
 
 // ---------------------------------------------------------------- input
 
@@ -81,17 +86,18 @@ type AntreanItem struct {
 }
 
 type BidanItem struct {
-	PendaftaranID      uuid.UUID `json:"pendaftaran_id"`
-	AnakID             uuid.UUID `json:"anak_id"`
-	Nama               string    `json:"nama"`
-	JenisKelamin       string    `json:"jenis_kelamin"`
-	UsiaBulan          int       `json:"usia_bulan"`
-	NomorAntrean       *int16    `json:"nomor_antrean"`
-	SudahDiukur        bool      `json:"sudah_diukur"`
-	BbKg               float64   `json:"bb_kg"`
-	TbCm               float64   `json:"tb_cm"`
-	PeringatanValidasi string    `json:"peringatan_validasi"`
-	StatusCatatan      string    `json:"status_catatan"` // perlu_catatan | selesai
+	PendaftaranID      uuid.UUID          `json:"pendaftaran_id"`
+	AnakID             uuid.UUID          `json:"anak_id"`
+	Nama               string             `json:"nama"`
+	JenisKelamin       string             `json:"jenis_kelamin"`
+	UsiaBulan          int                `json:"usia_bulan"`
+	NomorAntrean       *int16             `json:"nomor_antrean"`
+	SudahDiukur        bool               `json:"sudah_diukur"`
+	BbKg               float64            `json:"bb_kg"`
+	TbCm               float64            `json:"tb_cm"`
+	PeringatanValidasi string             `json:"peringatan_validasi"`
+	StatusCatatan      string             `json:"status_catatan"` // perlu_catatan | selesai
+	StatusGizi         *models.StatusGizi `json:"status_gizi"`
 }
 
 type DetailBidan struct {
@@ -100,6 +106,7 @@ type DetailBidan struct {
 	UsiaBulan        int                      `json:"usia_bulan"`
 	Pengukuran       *models.Pengukuran       `json:"pengukuran"`
 	Sebelumnya       *models.Pengukuran       `json:"pengukuran_sebelumnya"`
+	StatusGizi       *models.StatusGizi       `json:"status_gizi"`
 	Catatan          *models.PemeriksaanBidan `json:"catatan"`
 	Imunisasi        []models.ImunisasiAnak   `json:"imunisasi"`
 	Suplemen         []models.SuplemenAnak    `json:"suplemen"`
@@ -123,6 +130,7 @@ type RiwayatItem struct {
 	Tanggal       time.Time                `json:"tanggal"`
 	JamMulai      string                   `json:"jam_mulai"`
 	Pengukuran    *PengukuranRiwayat       `json:"pengukuran"`
+	StatusGizi    *models.StatusGizi       `json:"status_gizi"`
 	Catatan       *models.PemeriksaanBidan `json:"catatan"`
 	Imunisasi     []models.ImunisasiAnak   `json:"imunisasi"`
 	Suplemen      []models.SuplemenAnak    `json:"suplemen"`
@@ -372,6 +380,12 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaran
 	if err != nil {
 		return nil, err
 	}
+	// Hitung z-score dan status gizi (WHO). Kegagalan tidak membatalkan pengukuran.
+	if s.gizi != nil {
+		if _, err := s.gizi.HitungDanSimpan(p.Anak, m); err != nil {
+			log.Printf("status gizi pengukuran %s gagal dihitung: %v", m.ID, err)
+		}
+	}
 	return m, nil
 }
 
@@ -418,6 +432,16 @@ func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID, pos string) ([]Bidan
 	for _, c := range periksa {
 		adaCatatan[c.PendaftaranID] = true
 	}
+	petaGizi := map[uuid.UUID]models.StatusGizi{}
+	if s.gizi != nil {
+		ukurIDs := make([]uuid.UUID, 0, len(ukur))
+		for _, u := range ukur {
+			ukurIDs = append(ukurIDs, u.ID)
+		}
+		if petaGizi, err = s.gizi.PetaPengukuran(ukurIDs); err != nil {
+			return nil, err
+		}
+	}
 
 	now := time.Now()
 	out := make([]BidanItem, 0, len(list))
@@ -435,6 +459,10 @@ func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID, pos string) ([]Bidan
 		}
 		if adaCatatan[p.ID] {
 			it.StatusCatatan = "selesai"
+		}
+		if g, ok := petaGizi[u.ID]; diukur && ok {
+			gg := g
+			it.StatusGizi = &gg
 		}
 		if p.Anak != nil {
 			it.Nama = p.Anak.Nama
@@ -465,6 +493,11 @@ func (s *PelayananService) DetailBidan(pos string, pendaftaranID uuid.UUID) (*De
 		d.Pengukuran = m
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
+	}
+	if d.Pengukuran != nil && s.gizi != nil {
+		if d.StatusGizi, err = s.gizi.UntukPengukuran(d.Pengukuran.ID); err != nil {
+			return nil, err
+		}
 	}
 	if prev, err := s.repo.PengukuranSebelumnya(p.AnakID, p.ID); err == nil {
 		d.Sebelumnya = prev
@@ -668,6 +701,16 @@ func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatIte
 	if err != nil {
 		return nil, err
 	}
+	petaGizi := map[uuid.UUID]models.StatusGizi{}
+	if s.gizi != nil {
+		ukurIDs := make([]uuid.UUID, 0, len(ukur))
+		for _, u := range ukur {
+			ukurIDs = append(ukurIDs, u.ID)
+		}
+		if petaGizi, err = s.gizi.PetaPengukuran(ukurIDs); err != nil {
+			return nil, err
+		}
+	}
 
 	petaUkur := map[uuid.UUID]models.Pengukuran{}
 	for _, u := range ukur {
@@ -713,6 +756,10 @@ func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatIte
 			it.Pengukuran = &PengukuranRiwayat{
 				TanggalUkur: u.TanggalUkur, UsiaBulan: u.UsiaBulan, BbKg: u.BbKg, TbCm: u.TbCm,
 				CaraUkur: u.CaraUkur, LingkarKepalaCm: u.LingkarKepalaCm, LilaCm: u.LilaCm,
+			}
+			if g, ok := petaGizi[u.ID]; ok {
+				gg := g
+				it.StatusGizi = &gg
 			}
 		}
 		if c, ok := petaCatatan[p.ID]; ok {

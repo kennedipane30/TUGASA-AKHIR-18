@@ -21,20 +21,25 @@ func Setup(db *gorm.DB) *gin.Engine {
 	jadwalRepo := repository.NewJadwalRepository(db)
 	pelayananRepo := repository.NewPelayananRepository(db)
 	notifRepo := repository.NewNotifikasiRepository(db)
+	giziRepo := repository.NewStatusGiziRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
 	notifSvc := service.NewNotifikasiService(notifRepo, service.NewPushService())
+	giziSvc := service.NewStatusGiziService(giziRepo)
+	pelayananSvc := service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo)
+	pelayananSvc.SetStatusGizi(giziSvc)
 
 	// pengingat otomatis (24 jam sebelum mulai & check-in dibuka)
 	go notifSvc.JalankanPengingat(context.Background())
+	// hitung status gizi untuk pengukuran lama yang belum punya status
+	go giziSvc.HitungDataLama()
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
 	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo))
 	jadwalH := handler.NewJadwalHandler(jadwalSvc, notifSvc)
-	pelayananH := handler.NewPelayananHandler(
-		service.NewPelayananService(jadwalRepo, pelayananRepo, keluargaRepo))
+	pelayananH := handler.NewPelayananHandler(pelayananSvc)
 	notifH := handler.NewNotifikasiHandler(notifSvc)
 
 	api := r.Group("/api/v1")
