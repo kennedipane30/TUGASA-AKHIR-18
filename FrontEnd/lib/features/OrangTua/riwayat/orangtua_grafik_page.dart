@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../core/standar_who.dart';
 import '../datadiri/data_orang_tua_page.dart' show KeluargaApi, parseTgl;
 import 'orangtua_grafik_panduan_page.dart';
 
@@ -16,145 +19,128 @@ const _hijauTua = Color(0xFF065F46);
 const _hijauMuda = Color(0xFFE6F8EF);
 
 // ---------------------------------------------------------------------------
-// STANDAR PERTUMBUHAN (0-24 bulan), nilai pendekatan tabel WHO.
+// METRIK GRAFIK (kurva dari tabel WHO di assets/standar_antropometri.csv)
 // ---------------------------------------------------------------------------
-const _lkLaki = <double>[
-  34.5, 37.3, 39.1, 40.5, 41.6, 42.6, 43.3, 44.0, 44.5, 45.0, 45.4, 45.8, 46.1,
-  46.3, 46.6, 46.8, 47.0, 47.2, 47.4, 47.5, 47.7, 47.8, 48.0, 48.1, 48.3,
-];
-const _lkPerempuan = <double>[
-  33.9, 36.5, 38.3, 39.5, 40.6, 41.5, 42.2, 42.8, 43.4, 43.8, 44.2, 44.6, 44.9,
-  45.2, 45.4, 45.7, 45.9, 46.1, 46.2, 46.4, 46.6, 46.7, 46.9, 47.0, 47.2,
-];
-const _bbLaki = <double>[
-  3.3, 4.5, 5.6, 6.4, 7.0, 7.5, 7.9, 8.3, 8.6, 8.9, 9.2, 9.4, 9.6,
-  9.9, 10.1, 10.3, 10.5, 10.7, 10.9, 11.1, 11.3, 11.5, 11.8, 12.0, 12.2,
-];
-const _bbPerempuan = <double>[
-  3.2, 4.2, 5.1, 5.8, 6.4, 6.9, 7.3, 7.6, 7.9, 8.2, 8.5, 8.7, 8.9,
-  9.2, 9.4, 9.6, 9.8, 10.0, 10.2, 10.4, 10.6, 10.9, 11.1, 11.3, 11.5,
-];
-const _tbLaki = <double>[
-  49.9, 54.7, 58.4, 61.4, 63.9, 65.9, 67.6, 69.2, 70.6, 72.0, 73.3, 74.5, 75.7,
-  76.9, 78.0, 79.1, 80.2, 81.2, 82.3, 83.2, 84.2, 85.1, 86.0, 86.9, 87.8,
-];
-const _tbPerempuan = <double>[
-  49.1, 53.7, 57.1, 59.8, 62.1, 64.0, 65.7, 67.3, 68.7, 70.1, 71.5, 72.8, 74.0,
-  75.2, 76.4, 77.5, 78.6, 79.7, 80.7, 81.7, 82.7, 83.7, 84.6, 85.5, 86.4,
-];
-
-const double _bulanMaks = 24;
-
-double _interp(List<double> t, double bulan) {
-  final b = bulan.clamp(0, _bulanMaks).toDouble();
-  final i = b.floor();
-  if (i >= t.length - 1) return t.last;
-  return t[i] + (t[i + 1] - t[i]) * (b - i);
-}
-
-enum _Jenis { lk, bb, tb }
+enum _Jenis { bb, tb, bbtb, lk }
 
 class _Metrik {
   final _Jenis jenis;
   final String tab;
   final String judul;
   final String satuan;
-  final double grid;
-  final double labelStep;
   final IconData ikon;
 
-  const _Metrik(
-    this.jenis,
-    this.tab,
-    this.judul,
-    this.satuan,
-    this.grid,
-    this.labelStep,
-    this.ikon,
-  );
+  const _Metrik(this.jenis, this.tab, this.judul, this.satuan, this.ikon);
 
-  double median(bool laki, double bulan) {
+  bool get berbasisUmur => jenis != _Jenis.bbtb;
+
+  IndeksGizi get indeksGizi => switch (jenis) {
+        _Jenis.bb => IndeksGizi.bbu,
+        _Jenis.tb => IndeksGizi.tbu,
+        _Jenis.bbtb => IndeksGizi.bbtb,
+        _Jenis.lk => IndeksGizi.lku,
+      };
+
+  /// Kunci hasil perhitungan server di objek status_gizi.
+  String get kunci => switch (jenis) {
+        _Jenis.bb => 'bbu',
+        _Jenis.tb => 'tbu',
+        _Jenis.bbtb => 'bbtb',
+        _Jenis.lk => 'lku',
+      };
+
+  double? y(_Titik t) => switch (jenis) {
+        _Jenis.bb || _Jenis.bbtb => t.bb,
+        _Jenis.tb => t.tbKoreksi,
+        _Jenis.lk => t.lk,
+      };
+
+  double? x(_Titik t) => berbasisUmur ? t.bulan : t.tbKoreksi;
+
+  /// Potongan kurva: (indeks standar, x awal, x akhir).
+  /// PB/U dipakai sampai 24 bulan, lalu TB/U; BB/PB untuk < 24 bulan, BB/TB untuk >= 24 bulan.
+  List<(String, double, double)> segmen(bool dibawah24) => switch (jenis) {
+        _Jenis.bb => [('bbu', 0, 60)],
+        _Jenis.tb => [('pbu', 0, 24), ('tbu', 24, 60)],
+        _Jenis.bbtb => dibawah24 ? [('bbpb', 45, 110)] : [('bbtb', 65, 120)],
+        _Jenis.lk => [('lku', 0, 60)],
+      };
+
+  /// Z-score dihitung di aplikasi (cadangan bila server belum mengirim status_gizi).
+  double? zLokal(_Titik t, bool laki) {
+    final w = StandarWho.instance;
+    final umur = t.bulanPenuh.toDouble();
+    if (t.bulanPenuh > 60) return null;
     switch (jenis) {
-      case _Jenis.lk:
-        return _interp(laki ? _lkLaki : _lkPerempuan, bulan);
       case _Jenis.bb:
-        return _interp(laki ? _bbLaki : _bbPerempuan, bulan);
+        final v = t.bb;
+        return v == null ? null : w.cari('bbu', laki, umur)?.zScore(v, sesuaikan: true);
       case _Jenis.tb:
-        return _interp(laki ? _tbLaki : _tbPerempuan, bulan);
+        final v = t.tbKoreksi;
+        final idx = t.bulanPenuh < 24 ? 'pbu' : 'tbu';
+        return v == null ? null : w.cari(idx, laki, umur)?.zScore(v);
+      case _Jenis.bbtb:
+        final v = t.bb, p = t.tbKoreksi;
+        if (v == null || p == null) return null;
+        final idx = t.bulanPenuh < 24 ? 'bbpb' : 'bbtb';
+        return w.cari(idx, laki, (p * 2).roundToDouble() / 2)?.zScore(v, sesuaikan: true);
+      case _Jenis.lk:
+        final v = t.lk;
+        return v == null ? null : w.cari('lku', laki, umur)?.zScore(v);
     }
   }
 
-  double sd(bool laki, double bulan) {
-    final b = bulan.clamp(0, _bulanMaks).toDouble();
+  String peringatan(String kategori, double z) {
+    final bawah = z < 0;
     switch (jenis) {
-      case _Jenis.lk:
-        return (laki ? 1.27 : 1.22) + 0.006 * b;
       case _Jenis.bb:
-        return median(laki, b) * 0.115;
+        return bawah
+            ? 'Berat badan di bawah garis -2 SD ($kategori). Dianjurkan konsultasi gizi dengan bidan Posyandu atau dokter.'
+            : 'Berat badan di atas garis +1 SD ($kategori). Perhatikan pola makan dan konsultasikan dengan bidan Posyandu.';
       case _Jenis.tb:
-        return (laki ? 1.9 : 1.85) + 0.05 * b;
-    }
-  }
-
-  double kurva(bool laki, double bulan, int s) =>
-      median(laki, bulan) + s * sd(laki, bulan);
-
-  double z(bool laki, double bulan, double nilai) =>
-      (nilai - median(laki, bulan)) / sd(laki, bulan);
-
-  double? ambil(_Titik t) {
-    switch (jenis) {
+        return bawah
+            ? 'Panjang/tinggi badan di bawah garis -2 SD ($kategori). Dianjurkan konsultasi segera dengan bidan Posyandu untuk evaluasi stunting.'
+            : 'Tinggi badan di atas garis +3 SD. Dianjurkan konsultasi dengan bidan Posyandu.';
+      case _Jenis.bbtb:
+        return bawah
+            ? 'Berat badan tidak sebanding dengan panjang/tinggi badan ($kategori). Dianjurkan konsultasi gizi dengan bidan Posyandu.'
+            : 'Berat badan melebihi standar untuk panjang/tinggi badannya ($kategori). Dianjurkan konsultasi gizi dengan bidan Posyandu.';
       case _Jenis.lk:
-        return t.lk;
-      case _Jenis.bb:
-        return t.bb;
-      case _Jenis.tb:
-        return t.tb;
+        return bawah
+            ? 'Lingkar kepala di bawah garis -2 SD ($kategori). Dianjurkan konsultasi dengan dokter spesialis anak / bidan Posyandu.'
+            : 'Lingkar kepala di atas garis +2 SD ($kategori). Dianjurkan konsultasi dengan dokter spesialis anak / bidan Posyandu.';
     }
   }
 }
 
 const _daftarMetrik = <_Metrik>[
-  _Metrik(
-    _Jenis.lk,
-    'Lingkar Kepala',
-    'Lingkar Kepala menurut Umur',
-    'cm',
-    1,
-    2,
-    Icons.show_chart,
-  ),
-  _Metrik(
-    _Jenis.bb,
-    'Berat Badan',
-    'Berat Badan menurut Umur',
-    'kg',
-    1,
-    2,
-    Icons.monitor_weight_outlined,
-  ),
-  _Metrik(
-    _Jenis.tb,
-    'Tinggi Badan',
-    'Tinggi Badan menurut Umur',
-    'cm',
-    5,
-    10,
-    Icons.height,
-  ),
+  _Metrik(_Jenis.bb, 'Berat Badan', 'Berat Badan menurut Umur (BB/U)', 'kg',
+      Icons.monitor_weight_outlined),
+  _Metrik(_Jenis.tb, 'Tinggi Badan', 'Panjang/Tinggi Badan menurut Umur (PB/U, TB/U)',
+      'cm', Icons.height),
+  _Metrik(_Jenis.bbtb, 'BB/TB', 'Berat Badan menurut Panjang/Tinggi Badan', 'kg',
+      Icons.accessibility_new),
+  _Metrik(_Jenis.lk, 'Lingkar Kepala', 'Lingkar Kepala menurut Umur (LK/U)', 'cm',
+      Icons.show_chart),
 ];
 
 // ---------------------------------------------------------------------------
 // MODEL
 // ---------------------------------------------------------------------------
 class _Titik {
-  final double bulan;
+  final double bulan; // umur pecahan, untuk posisi titik di grafik
+  final int bulanPenuh; // umur bulan penuh, untuk mencari baris standar
   final DateTime? tanggal;
   final double? lk;
   final double? bb;
-  final double? tb;
+  final double? tb; // hasil ukur
+  final double? tbKoreksi; // setelah koreksi 0,7 cm
+  final String caraUkur;
+  final String usiaTeks;
+  final Map<String, dynamic>? gizi; // status_gizi dari server
 
-  _Titik(this.bulan, this.tanggal, this.lk, this.bb, this.tb);
+  _Titik(this.bulan, this.bulanPenuh, this.tanggal, this.lk, this.bb, this.tb,
+      this.tbKoreksi, this.caraUkur, this.usiaTeks, this.gizi);
 }
 
 class _AnakGrafik {
@@ -165,6 +151,15 @@ class _AnakGrafik {
   final List<_Titik> titik;
 
   _AnakGrafik(this.id, this.nama, this.laki, this.lahir, this.titik);
+
+  int get usiaSekarang {
+    final l = lahir;
+    if (l == null) return titik.isEmpty ? 0 : titik.last.bulanPenuh;
+    final n = DateTime.now();
+    var b = (n.year - l.year) * 12 + n.month - l.month;
+    if (n.day < l.day) b--;
+    return math.max(0, b);
+  }
 }
 
 String _pesan(Object e) {
@@ -181,18 +176,43 @@ double? _d(dynamic v) => double.tryParse(v?.toString() ?? '');
 String _fmt(double v) =>
     v == v.roundToDouble() ? v.toStringAsFixed(1) : v.toString();
 
+/// Umur dalam bulan penuh pada tanggal [pada] (sama dengan perhitungan server).
+int _usiaBulanPenuh(DateTime lahir, DateTime pada) {
+  var b = (pada.year - lahir.year) * 12 + pada.month - lahir.month;
+  if (pada.day < lahir.day) b--;
+  return b < 0 ? 0 : b;
+}
+
+/// Teks usia: "12 hari", "5 bln", atau "1 th 3 bln".
+String _teksUsia(DateTime lahir, DateTime pada) {
+  final b = _usiaBulanPenuh(lahir, pada);
+  if (b == 0) {
+    final hari = DateTime(pada.year, pada.month, pada.day)
+        .difference(DateTime(lahir.year, lahir.month, lahir.day))
+        .inDays;
+    return '${hari < 0 ? 0 : hari} hari';
+  }
+  return b >= 12 ? '${b ~/ 12} th ${b % 12} bln' : '$b bln';
+}
+
+String _fmtZ(double z) => '${z >= 0 ? '+' : ''}${z.toStringAsFixed(2)}';
+
+(Color, Color) _warnaTingkat(String tingkat) => switch (tingkat) {
+      'risiko' => (const Color(0xFFFFE4E6), const Color(0xFFDC2626)),
+      'waspada' => (AppColors.kuningMuda, const Color(0xFFB45309)),
+      _ => (_hijauMuda, _hijauTua),
+    };
+
 // ---------------------------------------------------------------------------
 // HALAMAN
 // ---------------------------------------------------------------------------
 /// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
 Widget _judulTebal(String teks) {
   const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
+  const jarak = 1.2;
 
   return Stack(
     children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
       Text(
         teks,
         maxLines: 1,
@@ -209,7 +229,6 @@ Widget _judulTebal(String teks) {
             ..color = Colors.white,
         ),
       ),
-      // Lapis atas: isi huruf
       Text(
         teks,
         maxLines: 1,
@@ -258,6 +277,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
 
   Future<void> _muat() async {
     try {
+      await StandarWho.instance.muat();
       final data = await KeluargaApi.ambil();
       final model = KeluargaApi.keModel(data);
       final r = await ApiClient.dio.get(
@@ -286,7 +306,10 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
 
         for (final e in perAnak[a.id] ?? const <Map<String, dynamic>>[]) {
           final u = Map<String, dynamic>.from(e['pengukuran'] as Map);
-          final ts = e['tanggal']?.toString() ?? '';
+          var gizi = e['status_gizi'] is Map
+              ? Map<String, dynamic>.from(e['status_gizi'] as Map)
+              : null;
+          final ts = (u['tanggal_ukur'] ?? e['tanggal'])?.toString() ?? '';
           final tgl =
               ts.length >= 10 ? DateTime.tryParse(ts.substring(0, 10)) : null;
 
@@ -294,16 +317,22 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
           if (lahir != null && tgl != null) {
             bulan = tgl.difference(lahir).inDays / 30.4375;
           }
+          // Usia selalu dihitung dari tanggal lahir anak dan tanggal ukur.
+          final penuh = (lahir != null && tgl != null)
+              ? _usiaBulanPenuh(lahir, tgl)
+              : (_d(u['usia_bulan'])?.toInt() ?? bulan.floor());
+          final usiaTeks = (lahir != null && tgl != null)
+              ? _teksUsia(lahir, tgl)
+              : (penuh >= 12 ? '${penuh ~/ 12} th ${penuh % 12} bln' : '$penuh bln');
+          // Status dari server dihitung dengan usia lama: abaikan, hitung ulang di aplikasi.
+          if (gizi != null && _d(gizi['usia_bulan'])?.toInt() != penuh) gizi = null;
+          final cara = (u['cara_ukur'] ?? '').toString();
+          final tb = _d(u['tb_cm']);
+          final tbKoreksi = _d(gizi?['tb_koreksi_cm']) ??
+              (tb == null ? null : koreksiPanjang(tb, penuh, cara));
 
-          titik.add(
-            _Titik(
-              bulan,
-              tgl,
-              _d(u['lingkar_kepala_cm']),
-              _d(u['bb_kg']),
-              _d(u['tb_cm']),
-            ),
-          );
+          titik.add(_Titik(bulan, penuh, tgl, _d(u['lingkar_kepala_cm']),
+              _d(u['bb_kg']), tb, tbKoreksi, cara, usiaTeks, gizi));
         }
 
         titik.sort((x, y) => x.bulan.compareTo(y.bulan));
@@ -359,7 +388,6 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
     );
   }
 
-  // Header bagian atas: judul berada di tengah.
   Widget _header() {
     return Container(
       width: double.infinity,
@@ -379,17 +407,11 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                     onTap: () => Navigator.maybePop(context),
                     child: const Padding(
                       padding: EdgeInsets.all(6),
-                      child: Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 22,
-                      ),
+                      child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
                     ),
                   ),
                 ),
-                Center(
-                  child: _judulTebal('Grafik Perkembangan'),
-                ),
+                Center(child: _judulTebal('Grafik Perkembangan')),
                 Align(
                   alignment: Alignment.centerRight,
                   child: InkWell(
@@ -441,12 +463,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                     const Padding(
                       padding: EdgeInsets.fromLTRB(4, 0, 4, 14),
                       child: Text(
-                        'Pemantauan kurva standar WHO untuk tumbuh kembang optimal anak',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _teksAbu,
-                          height: 1.3,
-                        ),
+                        'Pemantauan kurva standar WHO (Permenkes No. 2 Tahun 2020) untuk tumbuh kembang optimal anak',
+                        style: TextStyle(fontSize: 12, color: _teksAbu, height: 1.3),
                       ),
                     ),
                     if (_memuat)
@@ -459,18 +477,13 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                         color: AppColors.kuningMuda,
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.cloud_off,
-                              color: AppColors.kuning,
-                            ),
+                            const Icon(Icons.cloud_off, color: AppColors.kuning),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 _gagal!,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
+                                    fontWeight: FontWeight.w700, fontSize: 13),
                               ),
                             ),
                             TextButton(
@@ -499,10 +512,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                             SizedBox(height: 6),
                             Text(
                               'Lengkapi data keluarga terlebih dahulu.',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                color: _teksAbu,
-                              ),
+                              style: TextStyle(fontSize: 12.5, color: _teksAbu),
                             ),
                           ],
                         ),
@@ -565,75 +575,76 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
     );
   }
 
+  /// Rentang sumbu X grafik: (xMin, xMax, potongan kurva).
+  (double, double, List<(String, double, double)>) _jendela(_Metrik m, _AnakGrafik a) {
+    final usia = a.usiaSekarang;
+    final seg = m.segmen(usia < 24);
+
+    if (m.berbasisUmur) {
+      final adaDiAtas24 = a.titik.any((t) => t.bulan > 24);
+      final xMax = (usia <= 24 && !adaDiAtas24) ? 24.0 : 60.0;
+      final potong = [
+        for (final s in seg)
+          if (s.$2 < xMax) (s.$1, s.$2, math.min(s.$3, xMax)),
+      ];
+      return (0, xMax, potong);
+    }
+
+    // BB/PB-BB/TB: sumbu X dalam cm, diperbesar di sekitar titik anak.
+    final (idx, a0, a1) = seg.first;
+    final xs = [
+      for (final t in a.titik)
+        if (t.tbKoreksi != null && t.bb != null) t.tbKoreksi!,
+    ];
+    var lo = a0, hi = a1;
+    if (xs.isNotEmpty) {
+      lo = math.max(a0, (xs.reduce(math.min) - 10).floorToDouble());
+      hi = math.min(a1, (xs.reduce(math.max) + 10).ceilToDouble());
+      while (hi - lo < 30) {
+        if (lo > a0) lo = math.max(a0, lo - 5);
+        if (hi < a1) hi = math.min(a1, hi + 5);
+        if (lo <= a0 && hi >= a1) break;
+      }
+    }
+    return (lo, hi, [(idx, lo, hi)]);
+  }
+
   List<Widget> _isi(_AnakGrafik a) {
     final m = _daftarMetrik[_tab];
     final warna = a.laki ? const Color(0xFFDCEEFB) : const Color(0xFFF8DDEE);
     final aksen = a.laki ? const Color(0xFF1593D6) : const Color(0xFFC9379D);
-    final titikData = a.titik
-        .where((t) => m.ambil(t) != null && t.bulan <= _bulanMaks)
-        .toList();
+    final (xMin, xMax, segmen) = _jendela(m, a);
+
+    final titikData = [
+      for (final t in a.titik)
+        if (m.y(t) != null &&
+            m.x(t) != null &&
+            m.x(t)! >= xMin - 1e-6 &&
+            m.x(t)! <= xMax + 1e-6)
+          t,
+    ];
     final tanpaData = a.titik.length - titikData.length;
 
+    // Status terakhir: utamakan hasil server (status_gizi), cadangan hitung lokal.
     String status = '-';
-    Color sBg = AppColors.isiField;
-    Color sFg = AppColors.teksRedup;
-    bool abnormal = false;
+    String tingkat = '';
+    double? zAkhir;
     String peringatan = '';
-
     if (titikData.isNotEmpty) {
       final t = titikData.last;
-      final z = m.z(a.laki, t.bulan, m.ambil(t)!);
-
-      if (z < -2) {
-        abnormal = true;
-        sBg = const Color(0xFFFFE4E6);
-        sFg = const Color(0xFFDC2626);
-
-        switch (m.jenis) {
-          case _Jenis.lk:
-            status = 'Mikrosefali (< -2 SD)';
-            peringatan =
-                'Ukuran lingkar kepala di bawah garis -2 SD. Dianjurkan konsultasi segera dengan dokter spesialis anak / bidan Posyandu.';
-            break;
-          case _Jenis.bb:
-            status = 'BB Kurang (< -2 SD)';
-            peringatan =
-                'Berat badan di bawah garis -2 SD. Dianjurkan konsultasi gizi dengan bidan Posyandu atau dokter.';
-            break;
-          case _Jenis.tb:
-            status = 'Pendek (< -2 SD)';
-            peringatan =
-                'Tinggi badan di bawah garis -2 SD. Dianjurkan konsultasi segera dengan bidan Posyandu untuk evaluasi stunting.';
-            break;
-        }
-      } else if (z > 2) {
-        abnormal = true;
-        sBg = const Color(0xFFFFE4E6);
-        sFg = const Color(0xFFDC2626);
-
-        switch (m.jenis) {
-          case _Jenis.lk:
-            status = 'Makrosefali (> +2 SD)';
-            peringatan =
-                'Ukuran lingkar kepala di atas garis +2 SD. Dianjurkan konsultasi dengan dokter spesialis anak / bidan Posyandu.';
-            break;
-          case _Jenis.bb:
-            status = 'BB Lebih (> +2 SD)';
-            peringatan =
-                'Berat badan di atas garis +2 SD. Dianjurkan konsultasi gizi dengan bidan Posyandu.';
-            break;
-          case _Jenis.tb:
-            status = 'Tinggi (> +2 SD)';
-            peringatan =
-                'Tinggi badan di atas garis +2 SD. Dianjurkan konsultasi dengan bidan Posyandu.';
-            break;
-        }
-      } else {
-        status = 'Normal (-2 SD s.d. +2 SD)';
-        sBg = _hijauMuda;
-        sFg = _hijauTua;
+      zAkhir = _d(t.gizi?['z_${m.kunci}']) ?? m.zLokal(t, a.laki);
+      if (zAkhir != null) {
+        final (kat, tk) = kategoriGizi(m.indeksGizi, zAkhir);
+        status = (t.gizi?['kategori_${m.kunci}'] ?? '').toString();
+        if (status.isEmpty) status = kat;
+        tingkat = tk;
+        if (tk != 'baik') peringatan = m.peringatan(status, zAkhir);
       }
     }
+    final (sBg, sFg) = tingkat.isEmpty
+        ? (AppColors.isiField, AppColors.teksRedup)
+        : _warnaTingkat(tingkat);
+    final abnormal = tingkat.isNotEmpty && tingkat != 'baik';
 
     final riwayat = a.titik.reversed.toList();
     final tampil = _semuaRiwayat ? riwayat : riwayat.take(1).toList();
@@ -714,10 +725,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: warna,
                     borderRadius: BorderRadius.circular(20),
@@ -745,10 +753,13 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 width: double.infinity,
                 child: CustomPaint(
                   painter: _KurvaPainter(
-                    metrik: m,
+                    berbasisUmur: m.berbasisUmur,
+                    segmen: segmen,
                     laki: a.laki,
+                    xMin: xMin,
+                    xMax: xMax,
                     titik: [
-                      for (final t in titikData) Offset(t.bulan, m.ambil(t)!),
+                      for (final t in titikData) Offset(m.x(t)!, m.y(t)!),
                     ],
                     aksen: aksen,
                   ),
@@ -766,45 +777,54 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 _Leg(Color(0xFF2E9E4F), 'Median (0 Normal)'),
               ],
             ),
+            if (m.jenis == _Jenis.tb)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'Garis kurva bergeser di usia 24 bulan karena cara ukur berubah dari berbaring (PB) menjadi berdiri (TB).',
+                  style: TextStyle(fontSize: 10.5, color: _teksAbu, height: 1.4),
+                ),
+              ),
             const SizedBox(height: 12),
             const Divider(height: 1, color: Color(0xFFE9EEF3)),
             const SizedBox(height: 12),
             Row(
               children: [
-                const Text(
-                  'Status terakhir:',
-                  style: TextStyle(fontSize: 12, color: _teksAbu),
+                Text(
+                  zAkhir == null ? 'Status terakhir:' : 'Status terakhir (Z ${_fmtZ(zAkhir)}):',
+                  style: const TextStyle(fontSize: 12, color: _teksAbu),
                 ),
                 const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: sBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (titikData.isNotEmpty) ...[
-                        Icon(
-                          abnormal ? Icons.error : Icons.check_circle,
-                          size: 15,
-                          color: sFg,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: sBg,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (zAkhir != null) ...[
+                          Icon(
+                            abnormal ? Icons.error : Icons.check_circle,
+                            size: 15,
+                            color: sFg,
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        Flexible(
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: sFg,
+                            ),
+                          ),
                         ),
-                        const SizedBox(width: 6),
                       ],
-                      Text(
-                        status,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: sFg,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],
@@ -822,11 +842,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.info_outline,
-                      size: 18,
-                      color: Color(0xFFD97706),
-                    ),
+                    const Icon(Icons.info_outline, size: 18, color: Color(0xFFD97706)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -846,18 +862,14 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
                   'Belum ada data ${m.tab.toLowerCase()} yang tersimpan untuk anak ini. Titik grafik muncul setelah kader mengukur dan bidan menyimpan catatan.',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: _teksAbu,
-                    height: 1.4,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: _teksAbu, height: 1.4),
                 ),
               ),
             if (tanpaData > 0 && titikData.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: Text(
-                  '$tanpaData kunjungan tidak ditampilkan (data kosong atau usia di atas 24 bulan).',
+                  '$tanpaData kunjungan tidak ditampilkan (data kosong atau di luar rentang grafik).',
                   style: const TextStyle(fontSize: 11, color: _teksAbu),
                 ),
               ),
@@ -879,11 +891,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                     color: _hijauMuda,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.history,
-                    size: 18,
-                    color: _hijauTua,
-                  ),
+                  child: const Icon(Icons.history, size: 18, color: _hijauTua),
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
@@ -898,8 +906,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 ),
                 if (riwayat.length > 1)
                   InkWell(
-                    onTap: () =>
-                        setState(() => _semuaRiwayat = !_semuaRiwayat),
+                    onTap: () => setState(() => _semuaRiwayat = !_semuaRiwayat),
                     child: Padding(
                       padding: const EdgeInsets.all(4),
                       child: Text(
@@ -921,49 +928,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 style: TextStyle(fontSize: 12.5, color: _teksAbu),
               )
             else
-              for (final t in tampil)
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF6F8FB),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE9EEF3)),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t.tanggal == null
-                                  ? '-'
-                                  : formatTanggal(t.tanggal!),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 12.5,
-                                color: _teksGelap,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Usia ${_fmt(double.parse(t.bulan.toStringAsFixed(1)))} bln',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: _teksAbu,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      _kecil('LK', t.lk, 'cm', _hijauTua),
-                      _kecil('BB', t.bb, 'kg', _teksAbu),
-                      _kecil('TB', t.tb, 'cm', _teksAbu),
-                    ],
-                  ),
-                ),
+              for (final t in tampil) _barisRiwayat(t, a.laki),
           ],
         ),
       ),
@@ -980,11 +945,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.menu_book_outlined,
-              color: _hijauTua,
-              size: 24,
-            ),
+            const Icon(Icons.menu_book_outlined, color: _hijauTua, size: 24),
             const SizedBox(width: 12),
             const Expanded(
               child: Column(
@@ -1011,10 +972,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 backgroundColor: _hijauTua,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -1022,10 +980,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
               onPressed: _bukaPanduan,
               child: const Text(
                 'Baca',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
               ),
             ),
           ],
@@ -1033,6 +988,100 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
       ),
     ];
   }
+
+  Widget _barisRiwayat(_Titik t, bool laki) {
+    final g = t.gizi;
+    var kategoriTb = (g?['kategori_tbu'] ?? '').toString();
+    var kategoriBb = (g?['kategori_bbtb'] ?? '').toString();
+    var tingkat = (g?['tingkat'] ?? '').toString();
+    if (g == null) {
+      // Hitung di aplikasi bila status server tidak ada / tidak sesuai usia.
+      final zTb = _daftarMetrik[1].zLokal(t, laki);
+      final zBb = _daftarMetrik[2].zLokal(t, laki);
+      final tk = <String>[];
+      if (zTb != null) {
+        final (k, x) = kategoriGizi(IndeksGizi.tbu, zTb);
+        kategoriTb = k;
+        tk.add(x);
+      }
+      if (zBb != null) {
+        final (k, x) = kategoriGizi(IndeksGizi.bbtb, zBb);
+        kategoriBb = k;
+        tk.add(x);
+      }
+      tingkat = tk.contains('risiko')
+          ? 'risiko'
+          : (tk.contains('waspada') ? 'waspada' : (tk.isEmpty ? '' : 'baik'));
+    }
+    final (bg, fg) = _warnaTingkat(tingkat);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F8FB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE9EEF3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.tanggal == null ? '-' : formatTanggal(t.tanggal!),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12.5,
+                        color: _teksGelap,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Usia ${t.usiaTeks}'
+                      '${t.caraUkur.isEmpty ? '' : ' · diukur ${t.caraUkur}'}',
+                      style: const TextStyle(fontSize: 11, color: _teksAbu),
+                    ),
+                  ],
+                ),
+              ),
+              _kecil('LK', t.lk, 'cm', _hijauTua),
+              _kecil('BB', t.bb, 'kg', _teksAbu),
+              _kecil('TB', t.tb, 'cm', _teksAbu),
+            ],
+          ),
+          if (kategoriTb.isNotEmpty || kategoriBb.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                if (kategoriTb.isNotEmpty) _chip('TB/U: $kategoriTb', bg, fg),
+                if (kategoriBb.isNotEmpty) _chip('BB/TB: $kategoriBb', bg, fg),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String teks, Color bg, Color fg) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          teks,
+          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: fg),
+        ),
+      );
 
   Widget _kecil(String l, double? v, String satuan, Color warna) => Padding(
         padding: const EdgeInsets.only(left: 14),
@@ -1062,10 +1111,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   if (v != null)
                     TextSpan(
                       text: ' $satuan',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: _teksAbu,
-                      ),
+                      style: const TextStyle(fontSize: 10, color: _teksAbu),
                     ),
                 ],
               ),
@@ -1110,14 +1156,20 @@ class _Leg extends StatelessWidget {
 // PELUKIS GRAFIK
 // ---------------------------------------------------------------------------
 class _KurvaPainter extends CustomPainter {
-  final _Metrik metrik;
+  final bool berbasisUmur;
+  final List<(String, double, double)> segmen; // indeks standar, x awal, x akhir
   final bool laki;
-  final List<Offset> titik; // dx = bulan, dy = nilai
+  final double xMin;
+  final double xMax;
+  final List<Offset> titik; // dx = umur (bulan) atau panjang (cm), dy = nilai
   final Color aksen;
 
   _KurvaPainter({
-    required this.metrik,
+    required this.berbasisUmur,
+    required this.segmen,
     required this.laki,
+    required this.xMin,
+    required this.xMax,
     required this.titik,
     required this.aksen,
   });
@@ -1129,6 +1181,8 @@ class _KurvaPainter extends CustomPainter {
     0: Color(0xFF2E9E4F),
   };
 
+  static const _sampel = 60;
+
   void _teks(
     Canvas c,
     String s,
@@ -1138,44 +1192,59 @@ class _KurvaPainter extends CustomPainter {
     bool tengah = true,
   }) {
     final tp = TextPainter(
-      text: TextSpan(
-        text: s,
-        style: TextStyle(fontSize: fs, color: col),
-      ),
+      text: TextSpan(text: s, style: TextStyle(fontSize: fs, color: col)),
       textDirection: TextDirection.ltr,
     )..layout();
 
     c.save();
-    c.translate(
-      tengah ? o.dx - tp.width / 2 : o.dx,
-      o.dy - tp.height / 2,
-    );
+    c.translate(tengah ? o.dx - tp.width / 2 : o.dx, o.dy - tp.height / 2);
     tp.paint(c, Offset.zero);
     c.restore();
   }
 
+  double? _kurva(String indeks, double x, int sd) =>
+      StandarWho.instance.nilaiPada(indeks, laki, x, sd.toDouble());
+
+  static double _langkahRapi(double rentang, int target) {
+    final kasar = rentang / target;
+    for (final l in [0.5, 1.0, 2.0, 5.0, 10.0, 20.0]) {
+      if (l >= kasar) return l;
+    }
+    return 50;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
-    const kiri = 28.0;
+    const kiri = 30.0;
     const kanan = 26.0;
     const bawah = 24.0;
     const atas = 8.0;
 
     final w = size.width - kiri - kanan;
     final h = size.height - bawah - atas;
-    final g = metrik.grid;
+    if (w <= 0 || h <= 0 || xMax <= xMin) return;
 
-    double minY =
-        (metrik.kurva(laki, 0, -3) / g).floorToDouble() * g - g;
-    double maxY =
-        (metrik.kurva(laki, _bulanMaks, 3) / g).ceilToDouble() * g + g;
-
-    for (final t in titik) {
-      if (t.dy < minY) minY = (t.dy / g).floorToDouble() * g - g;
-      if (t.dy > maxY) maxY = (t.dy / g).ceilToDouble() * g + g;
+    // Rentang Y dari kurva -3 SD / +3 SD dan titik anak.
+    double minY = double.infinity, maxY = -double.infinity;
+    for (final (idx, a, b) in segmen) {
+      for (var i = 0; i <= _sampel; i++) {
+        final x = a + (b - a) * i / _sampel;
+        final lo = _kurva(idx, x, -3), hi = _kurva(idx, x, 3);
+        if (lo != null) minY = math.min(minY, lo);
+        if (hi != null) maxY = math.max(maxY, hi);
+      }
     }
+    for (final t in titik) {
+      minY = math.min(minY, t.dy);
+      maxY = math.max(maxY, t.dy);
+    }
+    if (!minY.isFinite || !maxY.isFinite) return;
 
-    double px(double b) => kiri + b / _bulanMaks * w;
+    final langkahY = _langkahRapi(maxY - minY, 8);
+    minY = (minY / langkahY).floorToDouble() * langkahY;
+    maxY = (maxY / langkahY).ceilToDouble() * langkahY;
+
+    double px(double x) => kiri + (x - xMin) / (xMax - xMin) * w;
     double py(double v) => atas + h - (v - minY) / (maxY - minY) * h;
 
     canvas.drawRect(
@@ -1190,67 +1259,81 @@ class _KurvaPainter extends CustomPainter {
       ..color = Colors.black26
       ..strokeWidth = 1;
 
-    for (var b = 0; b <= _bulanMaks; b++) {
+    // Garis vertikal
+    final double langkahX, labelX;
+    if (berbasisUmur) {
+      langkahX = xMax <= 24 ? 1 : 3;
+      labelX = xMax <= 24 ? 6 : 12;
+    } else {
+      langkahX = 5;
+      labelX = 10;
+    }
+    for (var x = (xMin / langkahX).ceilToDouble() * langkahX;
+        x <= xMax + 1e-6;
+        x += langkahX) {
+      final berlabel = (x / labelX - (x / labelX).roundToDouble()).abs() < 1e-6;
       canvas.drawLine(
-        Offset(px(b.toDouble()), atas),
-        Offset(px(b.toDouble()), atas + h),
-        b % 6 == 0 ? tebal : tipis,
+        Offset(px(x), atas),
+        Offset(px(x), atas + h),
+        berlabel ? tebal : tipis,
       );
-
-      if (b % 6 == 0 || b == 0) {
-        _teks(canvas, '$b', Offset(px(b.toDouble()), atas + h + 9));
+      if (berlabel) {
+        _teks(canvas, x.toStringAsFixed(0), Offset(px(x), atas + h + 9));
       }
     }
 
-    final k0 = (minY / g).ceil();
-    final k1 = (maxY / g).floor();
-
-    for (var k = k0; k <= k1; k++) {
-      final v = k * g;
-      final tebalGaris =
-          (v / metrik.labelStep) == (v / metrik.labelStep).roundToDouble();
-
-      canvas.drawLine(
-        Offset(kiri, py(v)),
-        Offset(kiri + w, py(v)),
-        tebalGaris ? tebal : tipis,
-      );
-
-      if (tebalGaris) {
-        final label =
-            v == v.roundToDouble() ? v.toInt().toString() : v.toString();
-        _teks(canvas, label, Offset(kiri - 12, py(v)), fs: 8.5);
-      }
+    // Garis horizontal
+    for (var v = minY; v <= maxY + 1e-6; v += langkahY) {
+      canvas.drawLine(Offset(kiri, py(v)), Offset(kiri + w, py(v)), tebal);
+      final label = v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
+      _teks(canvas, label, Offset(kiri - 13, py(v)), fs: 8.5);
     }
 
-    _teks(canvas, 'Bulan', Offset(kiri + w - 8, atas + h + 18), fs: 8);
+    _teks(
+      canvas,
+      berbasisUmur ? 'Bulan' : 'cm',
+      Offset(kiri + w - 10, atas + h + 18),
+      fs: 8,
+    );
 
+    // Kurva standar WHO per potongan (PB/U dan TB/U terpisah di 24 bulan)
     for (var sd = -3; sd <= 3; sd++) {
-      final p = Path();
+      final col = _warnaSd[sd.abs()]!;
+      final cat = Paint()
+        ..color = col
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = sd == 0 ? 2.2 : 1.6;
 
-      for (var i = 0; i <= 48; i++) {
-        final b = i / 48 * _bulanMaks;
-        final o = Offset(px(b), py(metrik.kurva(laki, b, sd)));
-        i == 0 ? p.moveTo(o.dx, o.dy) : p.lineTo(o.dx, o.dy);
+      for (final (idx, a, b) in segmen) {
+        final p = Path();
+        var mulai = true;
+        for (var i = 0; i <= _sampel; i++) {
+          final x = a + (b - a) * i / _sampel;
+          final v = _kurva(idx, x, sd);
+          if (v == null) continue;
+          final o = Offset(px(x), py(v));
+          if (mulai) {
+            p.moveTo(o.dx, o.dy);
+            mulai = false;
+          } else {
+            p.lineTo(o.dx, o.dy);
+          }
+        }
+        canvas.drawPath(p, cat);
       }
 
-      final col = _warnaSd[sd.abs()]!;
-      canvas.drawPath(
-        p,
-        Paint()
-          ..color = col
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = sd == 0 ? 2.2 : 1.6,
-      );
-
-      _teks(
-        canvas,
-        sd > 0 ? '+$sd' : '$sd',
-        Offset(kiri + w + 3, py(metrik.kurva(laki, _bulanMaks, sd))),
-        fs: 8.5,
-        col: col,
-        tengah: false,
-      );
+      final (idxAkhir, _, xAkhir) = segmen.last;
+      final vAkhir = _kurva(idxAkhir, xAkhir, sd);
+      if (vAkhir != null) {
+        _teks(
+          canvas,
+          sd > 0 ? '+$sd' : '$sd',
+          Offset(kiri + w + 3, py(vAkhir)),
+          fs: 8.5,
+          col: col,
+          tengah: false,
+        );
+      }
     }
 
     if (titik.isEmpty) return;
@@ -1261,30 +1344,29 @@ class _KurvaPainter extends CustomPainter {
       ..strokeWidth = 2.6
       ..strokeCap = StrokeCap.round;
 
+    final urut = [...titik]..sort((p, q) => p.dx.compareTo(q.dx));
     final jalur = Path();
-    for (var i = 0; i < titik.length; i++) {
-      final o = Offset(px(titik[i].dx), py(titik[i].dy));
+    for (var i = 0; i < urut.length; i++) {
+      final o = Offset(px(urut[i].dx), py(urut[i].dy));
       i == 0 ? jalur.moveTo(o.dx, o.dy) : jalur.lineTo(o.dx, o.dy);
     }
-
     canvas.drawPath(jalur, garis);
 
-    for (final t in titik) {
+    for (final t in urut) {
       final o = Offset(px(t.dx), py(t.dy));
       canvas.drawCircle(o, 7, Paint()..color = aksen.withOpacity(0.2));
       canvas.drawCircle(o, 5.5, Paint()..color = Colors.white);
       canvas.drawCircle(o, 4, Paint()..color = aksen);
-      _teks(
-        canvas,
-        _fmt(t.dy),
-        Offset(o.dx + 14, o.dy - 10),
-        fs: 9,
-        col: aksen,
-      );
+      _teks(canvas, _fmt(t.dy), Offset(o.dx + 14, o.dy - 10), fs: 9, col: aksen);
     }
   }
 
   @override
   bool shouldRepaint(covariant _KurvaPainter old) =>
-      old.titik != titik || old.laki != laki || old.metrik != metrik;
+      old.titik != titik ||
+      old.laki != laki ||
+      old.xMin != xMin ||
+      old.xMax != xMax ||
+      old.berbasisUmur != berbasisUmur ||
+      old.segmen != segmen;
 }

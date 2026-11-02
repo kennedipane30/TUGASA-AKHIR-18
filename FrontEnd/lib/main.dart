@@ -30,32 +30,27 @@ Future<void> main() async {
   );
 }
 
+// Ikon navigasi (gaya: garis saat tidak aktif, terisi dengan latar pil saat aktif).
+final _navBeranda = NavItemData.ikon(
+  label: 'Beranda',
+  ikon: Icons.add_home_outlined,
+  ikonAktif: Icons.add_home,
+);
+
+final _navAkun = NavItemData.ikon(
+  label: 'Akun',
+  ikon: Icons.person_outline_rounded,
+  ikonAktif: Icons.person_rounded,
+);
+
 Widget _nav({
   required Widget beranda,
   required Widget tengah,
-  required String labelTengah,
-  required IconData ikonTengah,
-  required IconData ikonTengahAktif,
+  required NavItemData navTengah,
 }) {
   return RoleNavScaffold(
     pages: [beranda, tengah, const AkunPage()],
-    navItems: [
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.home_outlined),
-        activeIcon: Icon(Icons.home),
-        label: 'Beranda',
-      ),
-      BottomNavigationBarItem(
-        icon: Icon(ikonTengah),
-        activeIcon: Icon(ikonTengahAktif),
-        label: labelTengah,
-      ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.person_outline),
-        activeIcon: Icon(Icons.person),
-        label: 'Akun',
-      ),
-    ],
+    navItems: [_navBeranda, navTengah, _navAkun],
   );
 }
 
@@ -88,36 +83,44 @@ class MyApp extends StatelessWidget {
           home = _nav(
             beranda: const AdminHome(),
             tengah: const AdminKelolaAkunPage(),
-            labelTengah: 'Kelola Akun',
-            ikonTengah: Icons.manage_accounts_outlined,
-            ikonTengahAktif: Icons.manage_accounts,
+            navTengah: NavItemData.ikon(
+              label: 'Kelola Akun',
+              ikon: Icons.manage_accounts_outlined,
+              ikonAktif: Icons.manage_accounts,
+            ),
           );
           break;
         case 'bidan':
           home = _nav(
             beranda: const BidanHome(),
             tengah: const BidanHasilPendataanPage(),
-            labelTengah: 'Hasil Pendataan',
-            ikonTengah: Icons.fact_check_outlined,
-            ikonTengahAktif: Icons.fact_check,
+            navTengah: NavItemData.ikon(
+              label: 'Hasil Pendataan',
+              ikon: Icons.assignment_turned_in_outlined,
+              ikonAktif: Icons.assignment_turned_in,
+            ),
           );
           break;
         case 'kader':
           home = _nav(
             beranda: const KaderHome(),
             tengah: const KaderPendataanPage(),
-            labelTengah: 'Pendataan',
-            ikonTengah: Icons.edit_note_outlined,
-            ikonTengahAktif: Icons.edit_note,
+            navTengah: NavItemData.ikon(
+              label: 'Pendataan',
+              ikon: Icons.assignment_turned_in_outlined,
+              ikonAktif: Icons.assignment_turned_in,
+            ),
           );
           break;
         case 'orang_tua':
           home = _nav(
             beranda: const OrangTuaHome(),
             tengah: const OrangTuaGrafikPage(),
-            labelTengah: 'Grafik Perkembangan',
-            ikonTengah: Icons.show_chart,
-            ikonTengahAktif: Icons.stacked_line_chart,
+            navTengah: const NavItemData(
+              label: 'Grafik Perkembangan',
+              ikon: Icons.show_chart_rounded,
+              ikonAktif: IkonGrafikAktif(),
+            ),
           );
           break;
         default:

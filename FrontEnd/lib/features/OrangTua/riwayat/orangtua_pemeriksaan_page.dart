@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../datadiri/data_orang_tua_page.dart' show KeluargaApi, parseTgl;
 import 'orangtua_grafik_page.dart';
 
 // Warna tampilan
@@ -34,6 +35,26 @@ DateTime? _tgl(dynamic v) {
 
 String _usia(int bln) =>
     bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
+
+/// Umur dalam bulan penuh pada tanggal [pada] (sama dengan perhitungan server).
+int _usiaBulanPenuh(DateTime lahir, DateTime pada) {
+  var b = (pada.year - lahir.year) * 12 + pada.month - lahir.month;
+  if (pada.day < lahir.day) b--;
+  return b < 0 ? 0 : b;
+}
+
+/// Teks usia: "12 hari", "5 bln", atau "1 th 3 bln".
+String _teksUsia(DateTime lahir, DateTime pada) {
+  final b = _usiaBulanPenuh(lahir, pada);
+  if (b == 0) {
+    final hari = DateTime(pada.year, pada.month, pada.day)
+        .difference(DateTime(lahir.year, lahir.month, lahir.day))
+        .inDays;
+    return '${hari < 0 ? 0 : hari} hari';
+  }
+  return b >= 12 ? '${b ~/ 12} th ${b % 12} bln' : '$b bln';
+}
+
 
 String _pesanError(Object e) {
   if (e is DioException) {
@@ -83,6 +104,7 @@ class _Pemeriksaan {
   final String lk;
   final String lila;
   final int usiaBulan;
+  final String usiaTeks;
   final String caraUkur;
 
   final bool adaCatatan;
@@ -111,6 +133,7 @@ class _Pemeriksaan {
     required this.lk,
     required this.lila,
     required this.usiaBulan,
+    required this.usiaTeks,
     required this.caraUkur,
     required this.adaCatatan,
     required this.demam,
@@ -135,6 +158,7 @@ class _Pemeriksaan {
   factory _Pemeriksaan.fromApi(
     Map<String, dynamic> j,
     Map<String, String> namaVaksin,
+    Map<String, DateTime> lahirAnak,
   ) {
     final u = j['pengukuran'] is Map
         ? Map<String, dynamic>.from(j['pengukuran'] as Map)
@@ -170,6 +194,17 @@ class _Pemeriksaan {
       );
     }
 
+    // Usia dihitung dari tanggal lahir anak dan tanggal ukur (bukan angka tersimpan).
+    final lahir = lahirAnak[_teks(j['anak_id'])];
+    final tglUkur = _tgl(u?['tanggal_ukur']) ?? _tgl(j['tanggal']);
+    final usiaTersimpan = int.tryParse(_teks(u?['usia_bulan'])) ?? 0;
+    final usiaBulan = (lahir != null && tglUkur != null)
+        ? _usiaBulanPenuh(lahir, tglUkur)
+        : usiaTersimpan;
+    final usiaTeks = (lahir != null && tglUkur != null)
+        ? _teksUsia(lahir, tglUkur)
+        : _usia(usiaTersimpan);
+
     return _Pemeriksaan(
       pendaftaranId: _teks(j['pendaftaran_id']),
       anakId: _teks(j['anak_id']),
@@ -184,7 +219,8 @@ class _Pemeriksaan {
       tb: double.tryParse(_teks(u?['tb_cm'])),
       lk: _num(u?['lingkar_kepala_cm']),
       lila: _num(u?['lila_cm']),
-      usiaBulan: int.tryParse(_teks(u?['usia_bulan'])) ?? 0,
+      usiaBulan: usiaBulan,
+      usiaTeks: usiaTeks,
       caraUkur: _teks(u?['cara_ukur']),
       adaCatatan: c != null,
       demam: c?['demam'] == true,
@@ -442,9 +478,24 @@ class _OrangTuaPemeriksaanPageState
     }
   }
 
+  Future<Map<String, DateTime>> _muatTanggalLahir() async {
+    try {
+      final model = KeluargaApi.keModel(await KeluargaApi.ambil());
+      final peta = <String, DateTime>{};
+      for (final a in model.anak) {
+        final lahir = parseTgl(a.tglLahir);
+        if (a.id != null && lahir != null) peta[a.id.toString()] = lahir;
+      }
+      return peta;
+    } catch (_) {
+      return {};
+    }
+  }
+
   Future<void> _muat() async {
     try {
       final namaVaksin = await _muatNamaVaksin();
+      final lahirAnak = await _muatTanggalLahir();
       final r = await ApiClient.dio.get(
         '/riwayat',
         options: Options(receiveTimeout: const Duration(seconds: 15)),
@@ -461,6 +512,7 @@ class _OrangTuaPemeriksaanPageState
               _Pemeriksaan.fromApi(
                 Map<String, dynamic>.from(e),
                 namaVaksin,
+                lahirAnak,
               ),
             );
           }
@@ -731,7 +783,7 @@ class _OrangTuaPemeriksaanPageState
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${p.namaAnak}${p.adaUkur ? ' · ${_usia(p.usiaBulan)}' : ''}',
+                        '${p.namaAnak}${p.adaUkur ? ' · ${p.usiaTeks}' : ''}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: _teksAbu,
@@ -982,7 +1034,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                       const SizedBox(height: 14),
                       if (d.adaUkur)
                         Text(
-                          'Usia ${_usia(d.usiaBulan)}${d.caraUkur.isEmpty ? '' : ' · diukur ${d.caraUkur}'}',
+                          'Usia ${d.usiaTeks}${d.caraUkur.isEmpty ? '' : ' · diukur ${d.caraUkur}'}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: _teksAbu,
