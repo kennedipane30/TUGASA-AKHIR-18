@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../service/vaksin_service.dart';
 
 const _hijauHeader = Color(0xFF065F46);
 
@@ -571,9 +572,13 @@ class _BidanDataAnakPageState extends State<BidanDataAnakPage> {
                 for (final e in suplemen)
                   if (e is Map)
                     Pill(
-                      _t(e['jenis']).replaceAll('_', ' '),
+                      [
+                        namaSuplemen(_t(e['jenis'])),
+                        if (_t(e['keterangan_dosis']).isNotEmpty) _t(e['keterangan_dosis']),
+                      ].join(' · '),
                       bg: AppColors.kuningMuda,
                       fg: AppColors.kuning,
+                      icon: Icons.medication,
                     ),
               ],
             ),

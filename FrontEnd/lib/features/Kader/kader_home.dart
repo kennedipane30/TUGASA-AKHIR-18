@@ -718,7 +718,7 @@ class _KaderHomeState extends State<KaderHome> {
                             color: _teksGelap)),
                     const SizedBox(height: 6),
                     const Text(
-                      'Cari anak di posyandu Anda untuk melihat rencana vaksin yang ditetapkan bidan dan riwayat vaksin yang sudah diterima.',
+                      'Cari anak di posyandu Anda untuk melihat jadwal imunisasi, status vaksin, riwayat vaksin, dan suplemen yang sudah diterima.',
                       style: TextStyle(
                           fontSize: 12.5, height: 1.5, color: _teksBiru),
                     ),
@@ -741,7 +741,7 @@ class _KaderHomeState extends State<KaderHome> {
               ),
               onPressed: _bukaVaksin,
               icon: const Icon(Icons.event_available_outlined, size: 20),
-              label: const Text('Lihat Rencana & Riwayat Vaksin',
+              label: const Text('Lihat Jadwal & Riwayat Vaksin',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
             ),
           ),

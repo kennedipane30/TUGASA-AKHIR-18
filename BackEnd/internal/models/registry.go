@@ -25,7 +25,6 @@ func AllModels() []any {
 		&JenisVaksin{},
 		&JadwalImunisasi{},
 		&ImunisasiAnak{},
-		&RencanaImunisasi{},
 		&SuplemenAnak{},
 		&PeringatanRisiko{},
 		&Rujukan{},

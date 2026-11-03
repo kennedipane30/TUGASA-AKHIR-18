@@ -57,7 +57,7 @@ Widget _judulTebal(String teks) {
   );
 }
 
-/// Orang tua: lihat rencana dan riwayat vaksin anak sendiri.
+/// Orang tua: lihat jadwal imunisasi, riwayat vaksin, dan suplemen anak sendiri.
 class OrangTuaVaksinPage extends StatefulWidget {
   const OrangTuaVaksinPage({super.key});
 
@@ -101,8 +101,7 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
     }
   }
 
-  // Header bagian atas: hanya judul
-    // Header bagian atas: judul di tengah
+  // Header bagian atas: judul di tengah
   Widget _header() {
     return Container(
       width: double.infinity,

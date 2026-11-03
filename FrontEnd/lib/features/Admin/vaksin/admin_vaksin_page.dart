@@ -1,12 +1,10 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 import '../../../core/posyandu.dart';
-import 'admin_vaksin_model.dart';
+import '../../../service/vaksin_service.dart';
 
 const _hijauHeader = Color(0xFF065F46);
 
@@ -59,7 +57,8 @@ Widget _judulTebal(String teks) {
   );
 }
 
-/// Admin: jumlah vaksin yang sudah diberikan dan jenis-jenis vaksin, per posyandu.
+/// Sekretaris: rekap imunisasi posyandu (cakupan, anak terlambat, jumlah dosis per jenis)
+/// dan jadwal imunisasi rutin yang berlaku.
 class AdminVaksinPage extends StatefulWidget {
   const AdminVaksinPage({super.key});
 
@@ -68,10 +67,11 @@ class AdminVaksinPage extends StatefulWidget {
 }
 
 class _AdminVaksinPageState extends State<AdminVaksinPage> {
-  VaksinStatistik? _data;
+  final _svc = VaksinService();
+  StatistikVaksin? _data;
+  List<JadwalImunisasi> _jadwal = [];
   bool _loading = true;
   String? _error;
-  String _posyandu = ''; // kosong = semua posyandu
 
   @override
   void initState() {
@@ -81,29 +81,21 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
 
   Future<void> _muat() async {
     setState(() {
-      _loading = true;
+      _loading = _data == null;
       _error = null;
     });
     try {
-      final res = await ApiClient.dio.get('/admin/vaksin/statistik',
-          queryParameters: {if (_posyandu.isNotEmpty) 'posyandu': _posyandu});
-      final data = VaksinStatistik.fromJson(Map<String, dynamic>.from(res.data['data']));
+      final hasil = await Future.wait([_svc.statistik(), _svc.jadwalMaster()]);
       if (!mounted) return;
       setState(() {
-        _data = data;
+        _data = hasil[0] as StatistikVaksin;
+        _jadwal = hasil[1] as List<JadwalImunisasi>;
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
-      String pesan = e.toString().replaceFirst('Exception: ', '');
-      if (e is DioException) {
-        final d = e.response?.data;
-        pesan = (d is Map && d['error'] != null)
-            ? d['error'].toString()
-            : 'Tidak dapat terhubung ke server';
-      }
       setState(() {
-        _error = pesan;
+        _error = e.toString().replaceFirst('Exception: ', '');
         _loading = false;
       });
     }
@@ -129,7 +121,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
               // Judul di tengah
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
-                child: _judulTebal('Data Vaksin'),
+                child: _judulTebal('Data Imunisasi'),
               ),
               // Tombol kembali di kiri
               if (bisaKembali)
@@ -149,30 +141,6 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _chipPosyandu(String kode, String label) {
-    final dipilih = _posyandu == kode;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: dipilih,
-        selectedColor: AppColors.hijau,
-        backgroundColor: Colors.white,
-        showCheckmark: false,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        labelStyle: TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
-          color: dipilih ? Colors.white : Colors.black87,
-        ),
-        onSelected: (_) {
-          setState(() => _posyandu = kode);
-          _muat();
-        },
       ),
     );
   }
@@ -198,7 +166,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                         SizedBox(height: 200),
                         Center(child: CircularProgressIndicator()),
                       ])
-                    : _error != null
+                    : (_error != null && _data == null)
                         ? ListView(
                             padding: const EdgeInsets.all(24),
                             children: [
@@ -219,33 +187,51 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
     );
   }
 
-  Widget _isi(VaksinStatistik d) {
-    final maks = d.jenis.fold<int>(0, (m, e) => e.jumlahDiberikan > m ? e.jumlahDiberikan : m);
+  Widget _isi(StatistikVaksin d) {
+    final maks = d.jenis.fold<int>(0, (m, e) => e.jumlahDosis > m ? e.jumlahDosis : m);
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _chipPosyandu('', 'Semua'),
-              for (final p in daftarPosyandu) _chipPosyandu(p.kode, p.nama),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
         SectionCard(
-          title: 'Ringkasan Vaksin • ${labelPosyandu(_posyandu)}',
-          icon: Icons.vaccines_outlined,
+          title: 'Cakupan Imunisasi',
+          icon: Icons.verified_user_outlined,
+          trailing: Pill(labelPosyandu(d.posyandu), bg: AppColors.hijauMuda, fg: AppColors.hijau),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  Text('${d.persenIdl}%',
+                      style: const TextStyle(
+                          fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.hijau)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Imunisasi Dasar Lengkap: ${d.anakDasarLengkap} dari ${d.anakUsia12Bulan} '
+                      'anak usia 12 bulan ke atas',
+                      style: const TextStyle(fontSize: 12, color: AppColors.teksRedup),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: d.anakUsia12Bulan == 0 ? 0 : d.anakDasarLengkap / d.anakUsia12Bulan,
+                  minHeight: 9,
+                  backgroundColor: AppColors.latar,
+                  color: AppColors.hijau,
+                ),
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: StatBox(
                         nilai: '${d.totalDiberikan}',
-                        label: 'Vaksin\nDiberikan',
+                        label: 'Dosis\nDiberikan',
                         bg: AppColors.hijauMuda,
                         fg: AppColors.hijau),
                   ),
@@ -257,6 +243,14 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                         bg: AppColors.biruMuda,
                         fg: AppColors.biru),
                   ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: StatBox(
+                        nilai: '${d.jumlahBalita}',
+                        label: 'Balita\nAktif',
+                        bg: AppColors.isiField,
+                        fg: Colors.black87),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -264,18 +258,18 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                 children: [
                   Expanded(
                     child: StatBox(
-                        nilai: '${d.jumlahJenis}',
-                        label: 'Jenis\nVaksin',
-                        bg: AppColors.isiField,
-                        fg: Colors.black87),
+                        nilai: '${d.anakJatuhTempo}',
+                        label: 'Anak Saatnya\nDivaksin',
+                        bg: AppColors.kuningMuda,
+                        fg: AppColors.kuning),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: StatBox(
-                        nilai: '${d.rencanaAktif}',
-                        label: 'Rencana\nAktif',
-                        bg: AppColors.kuningMuda,
-                        fg: AppColors.kuning),
+                        nilai: '${d.anakTerlambat}',
+                        label: 'Anak\nTerlambat',
+                        bg: AppColors.merahMuda,
+                        fg: AppColors.merah),
                   ),
                 ],
               ),
@@ -283,7 +277,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
           ),
         ),
         SectionCard(
-          title: 'Jenis & Jumlah Pemberian',
+          title: 'Jumlah Pemberian per Vaksin',
           icon: Icons.list_alt_outlined,
           trailing: Pill('${d.jenis.length} jenis', bg: AppColors.biruMuda, fg: AppColors.biru),
           child: d.jenis.isEmpty
@@ -296,12 +290,18 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                 )
               : Column(children: [for (final e in d.jenis) _barisJenis(e, maks)]),
         ),
+        SectionCard(
+          title: 'Jadwal Imunisasi Rutin',
+          icon: Icons.event_note_outlined,
+          trailing: const Pill('Kemenkes RI', bg: AppColors.hijauMuda, fg: AppColors.hijau),
+          child: _jadwalMaster(),
+        ),
       ],
     );
   }
 
-  Widget _barisJenis(VaksinStatistikItem e, int maks) {
-    final nilai = maks == 0 ? 0.0 : e.jumlahDiberikan / maks;
+  Widget _barisJenis(StatistikJenisVaksin e, int maks) {
+    final nilai = maks == 0 ? 0.0 : e.jumlahDosis / maks;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -312,11 +312,21 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
           Row(
             children: [
               Expanded(
-                child: Text(e.vaksin.nama,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(e.jenis.nama,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                    if (e.jenis.penyakit.isNotEmpty)
+                      Text(e.jenis.penyakit,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                  ],
+                ),
               ),
-              Pill('${e.jumlahDiberikan} dosis',
-                  bg: AppColors.hijauMuda, fg: AppColors.hijau),
+              const SizedBox(width: 8),
+              Pill('${e.jumlahDosis} dosis', bg: AppColors.hijauMuda, fg: AppColors.hijau),
             ],
           ),
           const SizedBox(height: 8),
@@ -330,10 +340,62 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
             ),
           ),
           const SizedBox(height: 6),
-          Text('${e.jumlahAnak} anak sudah menerima',
-              style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+          Text(
+            '${e.jumlahAnak} anak sudah menerima · ${e.dosisPerAnak} dosis per anak'
+            '${e.jenis.khususDaerah ? ' · khusus daerah endemis' : ''}',
+            style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _jadwalMaster() {
+    if (_jadwal.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: Text('Jadwal imunisasi belum tersedia',
+              style: TextStyle(color: AppColors.teksRedup)),
+        ),
+      );
+    }
+    final grup = <String, List<JadwalImunisasi>>{};
+    for (final j in _jadwal) {
+      grup.putIfAbsent(j.labelUsia, () => []).add(j);
+    }
+    return Column(
+      children: [
+        for (final g in grup.entries)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 92,
+                  child: Text(g.key,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+                ),
+                Expanded(
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final j in g.value)
+                        Pill(j.namaDosis,
+                            bg: j.lanjutan ? AppColors.biruMuda : Colors.white,
+                            fg: j.lanjutan ? AppColors.biru : Colors.black87),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

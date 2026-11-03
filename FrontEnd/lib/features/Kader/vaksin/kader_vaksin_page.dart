@@ -61,7 +61,7 @@ Widget _judulTebal(String teks) {
 }
 
 /// Kader: cari anak (hanya posyandu kader sendiri)
-/// lalu lihat rencana dan riwayat vaksinnya.
+/// lalu lihat jadwal imunisasi, riwayat vaksin, dan suplemennya.
 class KaderVaksinPage extends StatefulWidget {
   const KaderVaksinPage({super.key});
 

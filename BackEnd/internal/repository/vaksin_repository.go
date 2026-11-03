@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"posyandu-api/internal/models"
 
 	"github.com/google/uuid"
@@ -15,7 +17,91 @@ func (r *VaksinRepository) Tx(fn func(tx *VaksinRepository) error) error {
 	return r.db.Transaction(func(tx *gorm.DB) error { return fn(&VaksinRepository{tx}) })
 }
 
-// ---------------------------------------------------------------- anak & keluarga
+// ---------------------------------------------------------------- master
+
+// SimpanJenis: buat atau perbarui jenis vaksin berdasarkan kode.
+func (r *VaksinRepository) SimpanJenis(j *models.JenisVaksin) error {
+	var lama models.JenisVaksin
+	err := r.db.Where("UPPER(kode) = UPPER(?)", j.Kode).First(&lama).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return r.db.Create(j).Error
+	}
+	if err != nil {
+		return err
+	}
+	j.ID = lama.ID
+	return r.db.Model(&lama).Updates(map[string]any{
+		"kode":           j.Kode,
+		"nama":           j.Nama,
+		"penyakit":       j.Penyakit,
+		"cara_pemberian": j.CaraPemberian,
+		"keterangan":     j.Keterangan,
+		"jumlah_dosis":   j.JumlahDosis,
+		"urutan":         j.Urutan,
+		"khusus_daerah":  j.KhususDaerah,
+		"is_active":      true,
+	}).Error
+}
+
+// SimpanJadwal: buat atau perbarui jadwal berdasarkan (jenis vaksin, dosis).
+func (r *VaksinRepository) SimpanJadwal(j *models.JadwalImunisasi) error {
+	var lama models.JadwalImunisasi
+	err := r.db.Where("jenis_vaksin_id = ? AND dosis_ke = ?", j.JenisVaksinID, j.DosisKe).First(&lama).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return r.db.Create(j).Error
+	}
+	if err != nil {
+		return err
+	}
+	j.ID = lama.ID
+	return r.db.Model(&lama).Updates(map[string]any{
+		"kelompok":           j.Kelompok,
+		"usia_min_bulan":     j.UsiaMinBulan,
+		"usia_ideal_bulan":   j.UsiaIdealBulan,
+		"usia_maks_bulan":    j.UsiaMaksBulan,
+		"jarak_minimal_hari": j.JarakMinimalHari,
+		"keterangan":         j.Keterangan,
+	}).Error
+}
+
+// HapusJadwalLebih: hapus jadwal dosis di atas jumlah dosis yang berlaku.
+func (r *VaksinRepository) HapusJadwalLebih(jenisID uuid.UUID, maksDosis int16) error {
+	return r.db.Where("jenis_vaksin_id = ? AND dosis_ke > ?", jenisID, maksDosis).
+		Delete(&models.JadwalImunisasi{}).Error
+}
+
+// NonaktifkanSelain: jenis vaksin lama di luar daftar master dinonaktifkan (tidak dihapus
+// karena mungkin sudah dipakai di riwayat).
+func (r *VaksinRepository) NonaktifkanSelain(kode []string) error {
+	return r.db.Model(&models.JenisVaksin{}).
+		Where("UPPER(kode) NOT IN ?", kode).
+		Update("is_active", false).Error
+}
+
+func (r *VaksinRepository) ListJenisAktif() ([]models.JenisVaksin, error) {
+	list := []models.JenisVaksin{}
+	err := r.db.Where("is_active = ?", true).Order("urutan ASC, nama ASC").Find(&list).Error
+	return list, err
+}
+
+func (r *VaksinRepository) ListJenisSemua() ([]models.JenisVaksin, error) {
+	list := []models.JenisVaksin{}
+	err := r.db.Order("urutan ASC, nama ASC").Find(&list).Error
+	return list, err
+}
+
+// ListJadwalMaster: jadwal semua dosis vaksin aktif, urut usia.
+func (r *VaksinRepository) ListJadwalMaster() ([]models.JadwalImunisasi, error) {
+	list := []models.JadwalImunisasi{}
+	err := r.db.Preload("JenisVaksin").
+		Joins("JOIN jenis_vaksin jv ON jv.id = jadwal_imunisasi.jenis_vaksin_id").
+		Where("jv.is_active = ?", true).
+		Order("jadwal_imunisasi.usia_ideal_bulan ASC, jv.urutan ASC, jadwal_imunisasi.dosis_ke ASC").
+		Find(&list).Error
+	return list, err
+}
+
+// ---------------------------------------------------------------- anak & akses
 
 func (r *VaksinRepository) GetAnak(id uuid.UUID) (*models.Anak, error) {
 	var a models.Anak
@@ -39,83 +125,18 @@ func (r *VaksinRepository) KeluargaIDByUser(uid uint) (uuid.UUID, error) {
 	return o.KeluargaID, err
 }
 
-// ---------------------------------------------------------------- master jadwal imunisasi
-
-func (r *VaksinRepository) ListJadwalMaster() ([]models.JadwalImunisasi, error) {
-	list := []models.JadwalImunisasi{}
-	err := r.db.Preload("JenisVaksin").
-		Order("usia_ideal_bulan ASC, dosis_ke ASC").Find(&list).Error
-	return list, err
-}
-
-func (r *VaksinRepository) GetJadwalMaster(id uuid.UUID) (*models.JadwalImunisasi, error) {
-	var j models.JadwalImunisasi
-	err := r.db.Preload("JenisVaksin").First(&j, "id = ?", id).Error
-	return &j, err
-}
-
-func (r *VaksinRepository) GetJadwalMasterByVaksinDosis(jenisVaksinID uuid.UUID, dosisKe int16) (*models.JadwalImunisasi, error) {
-	var j models.JadwalImunisasi
-	err := r.db.Preload("JenisVaksin").
-		Where("jenis_vaksin_id = ? AND dosis_ke = ?", jenisVaksinID, dosisKe).First(&j).Error
-	return &j, err
-}
-
-// ---------------------------------------------------------------- rencana
-
-func (r *VaksinRepository) CreateRencana(m *models.RencanaImunisasi) error {
-	return r.db.Create(m).Error
-}
-
-func (r *VaksinRepository) SaveRencana(m *models.RencanaImunisasi) error {
-	return r.db.Model(m).
-		Select("perkiraan_tanggal", "status", "disesuaikan_oleh", "alasan_penyesuaian", "version", "updated_at").
-		Updates(m).Error
-}
-
-func (r *VaksinRepository) GetRencana(id uuid.UUID) (*models.RencanaImunisasi, error) {
-	var m models.RencanaImunisasi
-	err := r.db.Preload("JadwalImunisasi.JenisVaksin").First(&m, "id = ?", id).Error
-	return &m, err
-}
-
-func (r *VaksinRepository) ListRencanaAnak(anakID uuid.UUID, status ...string) ([]models.RencanaImunisasi, error) {
-	list := []models.RencanaImunisasi{}
-	q := r.db.Preload("JadwalImunisasi.JenisVaksin").Where("anak_id = ?", anakID)
-	if len(status) > 0 {
-		q = q.Where("status IN ?", status)
-	}
-	err := q.Order("perkiraan_tanggal ASC").Find(&list).Error
-	return list, err
-}
-
-func (r *VaksinRepository) RencanaAktifAda(anakID, jadwalID, kecuali uuid.UUID) bool {
-	var n int64
-	q := r.db.Model(&models.RencanaImunisasi{}).
-		Where("anak_id = ? AND jadwal_imunisasi_id = ? AND status IN ?",
-			anakID, jadwalID, []string{"direncanakan", "terlewat"})
-	if kecuali != uuid.Nil {
-		q = q.Where("id <> ?", kecuali)
-	}
-	q.Count(&n)
-	return n > 0
-}
-
-func (r *VaksinRepository) RencanaAktifByVaksinDosis(anakID, jenisVaksinID uuid.UUID, dosisKe int16) ([]models.RencanaImunisasi, error) {
-	list := []models.RencanaImunisasi{}
-	err := r.db.
-		Joins("JOIN jadwal_imunisasi ji ON ji.id = rencana_imunisasi.jadwal_imunisasi_id").
-		Where("rencana_imunisasi.anak_id = ? AND ji.jenis_vaksin_id = ? AND ji.dosis_ke = ? AND rencana_imunisasi.status IN ?",
-			anakID, jenisVaksinID, dosisKe, []string{"direncanakan", "terlewat"}).
+// AnakAktifPosyandu: semua anak aktif di satu posyandu (untuk statistik).
+func (r *VaksinRepository) AnakAktifPosyandu(pos string) ([]models.Anak, error) {
+	list := []models.Anak{}
+	err := r.db.Where("status = ?", "aktif").
+		Where("keluarga_id IN (?)", subKeluargaPosyandu(r.db, pos)).
 		Find(&list).Error
 	return list, err
 }
 
-// ---------------------------------------------------------------- riwayat
+// ---------------------------------------------------------------- riwayat vaksin
 
-func (r *VaksinRepository) CreateRiwayat(m *models.ImunisasiAnak) error {
-	return r.db.Create(m).Error
-}
+func (r *VaksinRepository) CreateRiwayat(m *models.ImunisasiAnak) error { return r.db.Create(m).Error }
 
 func (r *VaksinRepository) GetRiwayat(id uuid.UUID) (*models.ImunisasiAnak, error) {
 	var m models.ImunisasiAnak
@@ -123,18 +144,45 @@ func (r *VaksinRepository) GetRiwayat(id uuid.UUID) (*models.ImunisasiAnak, erro
 	return &m, err
 }
 
+func (r *VaksinRepository) DeleteRiwayat(id uuid.UUID) error {
+	return r.db.Delete(&models.ImunisasiAnak{}, "id = ?", id).Error
+}
+
 func (r *VaksinRepository) ListRiwayatAnak(anakID uuid.UUID) ([]models.ImunisasiAnak, error) {
 	list := []models.ImunisasiAnak{}
 	err := r.db.Preload("JenisVaksin").Preload("DiberikanOlehUser").
 		Where("anak_id = ?", anakID).
-		Order("tanggal_pemberian DESC, dosis_ke DESC").Find(&list).Error
+		Order("tanggal_pemberian ASC, dosis_ke ASC").Find(&list).Error
 	return list, err
 }
 
-func (r *VaksinRepository) RiwayatAda(anakID, jenisVaksinID uuid.UUID, dosisKe int16) bool {
+// ListRiwayatBanyakAnak: riwayat vaksin untuk banyak anak sekaligus (statistik).
+func (r *VaksinRepository) ListRiwayatBanyakAnak(anakIDs []uuid.UUID) ([]models.ImunisasiAnak, error) {
+	list := []models.ImunisasiAnak{}
+	if len(anakIDs) == 0 {
+		return list, nil
+	}
+	err := r.db.Where("anak_id IN ?", anakIDs).Find(&list).Error
+	return list, err
+}
+
+func (r *VaksinRepository) RiwayatAda(anakID, jenisVaksinID uuid.UUID, dosisKe int16, kecualiPendaftaran *uuid.UUID) bool {
 	var n int64
-	r.db.Model(&models.ImunisasiAnak{}).
-		Where("anak_id = ? AND jenis_vaksin_id = ? AND dosis_ke = ?", anakID, jenisVaksinID, dosisKe).
-		Count(&n)
+	q := r.db.Model(&models.ImunisasiAnak{}).
+		Where("anak_id = ? AND jenis_vaksin_id = ? AND dosis_ke = ?", anakID, jenisVaksinID, dosisKe)
+	if kecualiPendaftaran != nil {
+		q = q.Where("pendaftaran_id IS NULL OR pendaftaran_id <> ?", *kecualiPendaftaran)
+	}
+	q.Count(&n)
 	return n > 0
+}
+
+// ---------------------------------------------------------------- suplemen
+
+func (r *VaksinRepository) ListSuplemenAnak(anakID uuid.UUID) ([]models.SuplemenAnak, error) {
+	list := []models.SuplemenAnak{}
+	err := r.db.Preload("DiberikanOlehUser").
+		Where("anak_id = ?", anakID).
+		Order("tanggal DESC, created_at DESC").Find(&list).Error
+	return list, err
 }

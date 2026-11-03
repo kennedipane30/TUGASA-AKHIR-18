@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../service/vaksin_service.dart';
 import '../vaksin/bidan_vaksin_anak_page.dart';
 
 const _hijauHeader = Color(0xFF065F46);
@@ -29,34 +30,83 @@ String _pesanError(Object e) {
   return 'Terjadi kesalahan: $e';
 }
 
-class _JenisVaksin {
-  final String id;
-  final String nama;
-  final int jumlahDosis;
+/// Satu baris suplemen yang diinput manual oleh bidan.
+class _BarisSuplemen {
+  final TextEditingController nama;
+  final TextEditingController dosis;
+  final TextEditingController catatan;
+  int jumlah;
+  String satuan;
 
-  _JenisVaksin(this.id, this.nama, this.jumlahDosis);
+  _BarisSuplemen({
+    String nama = '',
+    String dosis = '',
+    String catatan = '',
+    this.jumlah = 1,
+    this.satuan = 'kapsul',
+  })  : nama = TextEditingController(text: nama),
+        dosis = TextEditingController(text: dosis),
+        catatan = TextEditingController(text: catatan);
 
-  factory _JenisVaksin.fromApi(Map<String, dynamic> j) => _JenisVaksin(
-        j['id']?.toString() ?? '',
-        (j['nama'] ?? j['nama_vaksin'] ?? '-').toString(),
-        int.tryParse(j['jumlah_dosis']?.toString() ?? '') ?? 1,
-      );
+  void dispose() {
+    nama.dispose();
+    dosis.dispose();
+    catatan.dispose();
+  }
 }
 
-class _BarisVaksin {
-  String? jenisId;
-  int dosis;
+const _satuanSuplemen = <String>[
+  'kapsul',
+  'tablet',
+  'sachet',
+  'bungkus',
+  'porsi',
+  'botol',
+  'ml',
+  'tetes',
+];
 
-  _BarisVaksin({
-    this.jenisId,
-    this.dosis = 1,
-  });
+/// Pilihan cepat suplemen yang umum di posyandu (dosis mengikuti usia anak,
+/// tetap dapat diubah oleh bidan).
+class _PresetSuplemen {
+  final String label;
+  final IconData ikon;
+  final _BarisSuplemen Function(int usiaBulan) buat;
+  const _PresetSuplemen(this.label, this.ikon, this.buat);
 }
 
-const _jenisSuplemen = <(String, String)>[
-  ('vitamin_a', 'Vitamin A'),
-  ('obat_cacing', 'Obat cacing'),
-  ('pmt', 'PMT'),
+final _presetSuplemen = <_PresetSuplemen>[
+  _PresetSuplemen(
+    'Vitamin A',
+    Icons.circle,
+    (u) => u >= 12
+        ? _BarisSuplemen(nama: 'Vitamin A (kapsul merah)', dosis: '200.000 IU', satuan: 'kapsul')
+        : _BarisSuplemen(nama: 'Vitamin A (kapsul biru)', dosis: '100.000 IU', satuan: 'kapsul'),
+  ),
+  _PresetSuplemen(
+    'Obat Cacing',
+    Icons.medication_outlined,
+    (u) => _BarisSuplemen(
+      nama: 'Obat Cacing (Albendazol)',
+      dosis: u < 24 ? '200 mg' : '400 mg',
+      satuan: 'tablet',
+    ),
+  ),
+  _PresetSuplemen(
+    'PMT',
+    Icons.restaurant_outlined,
+    (u) => _BarisSuplemen(nama: 'PMT (Pemberian Makanan Tambahan)', satuan: 'porsi'),
+  ),
+  _PresetSuplemen(
+    'Zinc',
+    Icons.science_outlined,
+    (u) => _BarisSuplemen(nama: 'Zinc', dosis: u < 6 ? '10 mg' : '20 mg', satuan: 'tablet'),
+  ),
+  _PresetSuplemen(
+    'Lainnya',
+    Icons.add,
+    (u) => _BarisSuplemen(),
+  ),
 ];
 
 /// Judul header ekstra tebal (sama seperti halaman Akun).
@@ -123,8 +173,11 @@ class BidanCatatanPage extends StatefulWidget {
 }
 
 class _BidanCatatanPageState extends State<BidanCatatanPage> {
+  final _svcVaksin = VaksinService();
+
   Map<String, dynamic>? _detail;
-  List<_JenisVaksin> _jenis = [];
+  KartuVaksin? _kartu;
+  String? _gagalKartu;
   bool _memuat = true;
   bool _kirim = false;
   String? _gagal;
@@ -140,8 +193,14 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
   final _saranAsuh = TextEditingController();
 
   DateTime? _ulang;
-  final List<_BarisVaksin> _vaksin = [];
-  final Set<String> _suplemen = {};
+
+  /// Vaksin yang dipilih hari ini, kunci "jenisVaksinId|dosisKe".
+  final Set<String> _vaksinDipilih = {};
+
+  /// Vaksin yang sudah tersimpan pada kunjungan ini (saat catatan diubah).
+  final Set<String> _vaksinSesiIni = {};
+
+  final List<_BarisSuplemen> _suplemen = [];
 
   @override
   void initState() {
@@ -159,6 +218,9 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
       _saranAsuh,
     ]) {
       c.dispose();
+    }
+    for (final s in _suplemen) {
+      s.dispose();
     }
     super.dispose();
   }
@@ -184,28 +246,10 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
         options: opsi,
       );
 
-      final rv = await ApiClient.dio.get(
-        '/vaksin',
-        options: opsi,
-      );
-
       dynamic d = r.data;
       if (d is Map && d.containsKey('data')) d = d['data'];
 
-      dynamic v = rv.data;
-      if (v is Map && v.containsKey('data')) v = v['data'];
-
       final detail = Map<String, dynamic>.from(d as Map);
-
-      final jenis = v is List
-          ? v
-              .map(
-                (e) => _JenisVaksin.fromApi(
-                  Map<String, dynamic>.from(e as Map),
-                ),
-              )
-              .toList()
-          : <_JenisVaksin>[];
 
       // Isi awal dari catatan yang sudah ada.
       final c = detail['catatan'];
@@ -228,26 +272,53 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
         }
       }
 
+      _vaksinDipilih.clear();
+      _vaksinSesiIni.clear();
       final imun = detail['imunisasi'];
       if (imun is List) {
         for (final e in imun) {
-          if (e is Map) {
-            _vaksin.add(
-              _BarisVaksin(
-                jenisId: e['jenis_vaksin_id']?.toString(),
-                dosis: int.tryParse(e['dosis_ke']?.toString() ?? '') ?? 1,
-              ),
-            );
+          if (e is Map && e['jenis_vaksin_id'] != null) {
+            final k = '${e['jenis_vaksin_id']}|${e['dosis_ke']}';
+            _vaksinDipilih.add(k);
+            _vaksinSesiIni.add(k);
           }
         }
       }
 
+      for (final s in _suplemen) {
+        s.dispose();
+      }
+      _suplemen.clear();
       final sup = detail['suplemen'];
       if (sup is List) {
         for (final e in sup) {
-          if (e is Map && e['jenis'] != null) {
-            _suplemen.add(e['jenis'].toString());
-          }
+          if (e is! Map) continue;
+          final jenis = e['jenis']?.toString() ?? '';
+          if (jenis.isEmpty) continue;
+          final dosis = e['dosis']?.toString() ?? '';
+          final satuan = e['satuan']?.toString() ?? '';
+          final jumlah = int.tryParse(e['jumlah']?.toString() ?? '') ?? 0;
+          // data lama: belum ada kolom jumlah, dosis tersimpan di keterangan_dosis
+          final dataLama = jumlah < 1;
+          _suplemen.add(_BarisSuplemen(
+            nama: namaSuplemen(jenis),
+            dosis: dataLama ? (e['keterangan_dosis']?.toString() ?? '') : dosis,
+            catatan: e['catatan']?.toString() ?? '',
+            jumlah: dataLama ? 1 : jumlah,
+            satuan: satuan.isEmpty ? 'kapsul' : satuan,
+          ));
+        }
+      }
+
+      // Kartu vaksin anak: jadwal imunisasi + status (untuk rekomendasi hari ini).
+      KartuVaksin? kartu;
+      String? gagalKartu;
+      final anakId = (detail['anak'] is Map) ? (detail['anak']['id']?.toString() ?? '') : '';
+      if (anakId.isNotEmpty) {
+        try {
+          kartu = await _svcVaksin.kartuAnak(anakId);
+        } catch (e) {
+          gagalKartu = e.toString().replaceFirst('Exception: ', '');
         }
       }
 
@@ -255,7 +326,8 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
 
       setState(() {
         _detail = detail;
-        _jenis = jenis;
+        _kartu = kartu;
+        _gagalKartu = gagalKartu;
         _gagal = null;
         _memuat = false;
       });
@@ -290,21 +362,12 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
     }
   }
 
-  _JenisVaksin? _cariJenis(String? id) {
-    for (final j in _jenis) {
-      if (j.id == id) return j;
-    }
-    return null;
-  }
-
   Future<void> _simpan() async {
     if (_kirim) return;
 
-    for (final b in _vaksin) {
-      if (b.jenisId == null) {
-        _snack(
-          'Pilih jenis vaksin pada setiap baris vaksin atau hapus baris yang kosong',
-        );
+    for (final s in _suplemen) {
+      if (s.nama.text.trim().isEmpty) {
+        _snack('Isi nama suplemen pada setiap baris atau hapus baris yang kosong');
         return;
       }
     }
@@ -326,14 +389,21 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
           'tanggal_kunjungan_ulang':
               _ulang == null ? '' : _tglApi(_ulang!),
           'vaksin': [
-            for (final b in _vaksin)
+            for (final k in _vaksinDipilih)
               {
-                'jenis_vaksin_id': b.jenisId,
-                'dosis_ke': b.dosis,
+                'jenis_vaksin_id': k.split('|').first,
+                'dosis_ke': int.tryParse(k.split('|').last) ?? 1,
               }
           ],
           'suplemen': [
-            for (final s in _suplemen) {'jenis': s}
+            for (final s in _suplemen)
+              {
+                'nama': s.nama.text.trim(),
+                'dosis': s.dosis.text.trim(),
+                'jumlah': s.jumlah,
+                'satuan': s.satuan,
+                'catatan': s.catatan.text.trim(),
+              }
           ],
         },
         options: Options(
@@ -508,9 +578,13 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
         : null;
 
     final usia = int.tryParse(d['usia_bulan']?.toString() ?? '') ?? 0;
-    final usiaTeks = usia >= 12
-        ? '${usia ~/ 12} th ${usia % 12} bln'
-        : '$usia bln';
+    final lahirAnak = DateTime.tryParse(
+        (anak['tanggal_lahir']?.toString() ?? '').length >= 10
+            ? anak['tanggal_lahir'].toString().substring(0, 10)
+            : '');
+    final usiaTeks = lahirAnak != null
+        ? usiaDariLahir(lahirAnak, DateTime.now())
+        : (usia >= 12 ? '${usia ~/ 12} th ${usia % 12} bln' : '$usia bln');
 
     final jk = anak['jenis_kelamin']?.toString() == 'P'
         ? 'Perempuan'
@@ -638,16 +712,19 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                     'Jadwal & Riwayat Vaksin',
                     icon: Icons.vaccines_outlined,
                     filled: false,
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => BidanVaksinAnakPage(
-                          anakId: anakId,
-                          namaAnak: nama,
-                          usia: usiaTeks,
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BidanVaksinAnakPage(
+                            anakId: anakId,
+                            namaAnak: nama,
+                            usia: usiaTeks,
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                      _muatKartu(anakId);
+                    },
                   ),
                 ),
               ],
@@ -737,116 +814,286 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
             ],
           ),
         ),
-        SectionCard(
-          title: 'Imunisasi Hari Ini',
-          icon: Icons.vaccines_outlined,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var i = 0; i < _vaksin.length; i++) _barisVaksin(i),
-              SizedBox(
-                width: double.infinity,
-                child: AppButton(
-                  'Tambah Vaksin',
-                  icon: Icons.add,
-                  filled: false,
-                  onPressed: () {
-                    setState(() => _vaksin.add(_BarisVaksin()));
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-        SectionCard(
-          title: 'Suplemen Hari Ini',
-          icon: Icons.medication_outlined,
-          child: Wrap(
-            spacing: 8,
-            children: [
-              for (final s in _jenisSuplemen)
-                FilterChip(
-                  label: Text(s.$2),
-                  selected: _suplemen.contains(s.$1),
-                  onSelected: (v) {
-                    setState(() {
-                      if (v) {
-                        _suplemen.add(s.$1);
-                      } else {
-                        _suplemen.remove(s.$1);
-                      }
-                    });
-                  },
-                ),
-            ],
-          ),
-        ),
+        _kartuImunisasi(),
+        _kartuSuplemen(usia),
         const SizedBox(height: 8),
       ],
     );
   }
 
-  Widget _barisVaksin(int i) {
-    final b = _vaksin[i];
-    final jenis = _cariJenis(b.jenisId);
-    final maks = jenis?.jumlahDosis ?? 1;
+  Future<void> _muatKartu(String anakId) async {
+    try {
+      final k = await _svcVaksin.kartuAnak(anakId);
+      if (!mounted) return;
+      setState(() {
+        _kartu = k;
+        _gagalKartu = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _gagalKartu = e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
 
-    if (b.dosis > maks) b.dosis = maks;
+  // -------------------------------------------------------------------------
+  // IMUNISASI HARI INI: dosis yang jatuh tempo / terlambat sesuai jadwal Kemenkes
+  // -------------------------------------------------------------------------
+  Widget _kartuImunisasi() {
+    final k = _kartu;
+    if (k == null) {
+      return SectionCard(
+        title: 'Imunisasi Hari Ini',
+        icon: Icons.vaccines_outlined,
+        child: Column(
+          children: [
+            Text(
+              _gagalKartu ?? 'Jadwal imunisasi anak tidak dapat dimuat',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: AppColors.teksRedup),
+            ),
+            const SizedBox(height: 10),
+            AppButton('Muat Ulang', icon: Icons.refresh, filled: false, onPressed: () {
+              final id = (_detail?['anak'] is Map) ? (_detail!['anak']['id']?.toString() ?? '') : '';
+              if (id.isNotEmpty) _muatKartu(id);
+            }),
+          ],
+        ),
+      );
+    }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
+    final calon = k.jadwal
+        .where((e) => e.bisaDiberikan || _vaksinSesiIni.contains(e.jadwal.kunci))
+        .toList();
+    final berikutnya = k.jadwal
+        .where((e) =>
+            !e.sudah &&
+            !e.opsional &&
+            (e.status == StatusVaksin.belumWaktunya || e.status == StatusVaksin.menunggu))
+        .take(3)
+        .toList();
+
+    return SectionCard(
+      title: 'Imunisasi Hari Ini',
+      icon: Icons.vaccines_outlined,
+      trailing: Pill('${_vaksinDipilih.length} dipilih', bg: AppColors.hijauMuda, fg: AppColors.hijau),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 3,
-            child: DropdownButtonFormField<String>(
-              value: jenis?.id,
-              isExpanded: true,
-              decoration: _dekor('Vaksin'),
-              items: [
-                for (final j in _jenis)
-                  DropdownMenuItem(
-                    value: j.id,
-                    child: Text(
-                      j.nama,
-                      overflow: TextOverflow.ellipsis,
+          Text(
+            calon.isEmpty
+                ? 'Tidak ada vaksin yang dijadwalkan untuk usia anak saat ini.'
+                : 'Vaksin sesuai jadwal imunisasi untuk usia ${k.anak.usiaTeks}. Centang yang diberikan hari ini.',
+            style: const TextStyle(fontSize: 12, color: AppColors.teksRedup),
+          ),
+          const SizedBox(height: 10),
+          for (final e in calon) _barisCalon(e),
+          if (berikutnya.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            const Text('Jadwal berikutnya',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+            const SizedBox(height: 6),
+            for (final e in berikutnya)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.schedule, size: 16, color: AppColors.teksRedup),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${e.jadwal.namaDosis} · '
+                        '${e.tanggalJadwal == null ? e.jadwal.labelUsia : formatTanggal(e.tanggalJadwal!)}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
                     ),
-                  ),
-              ],
-              onChanged: (v) {
-                setState(() {
-                  b.jenisId = v;
-                  b.dosis = 1;
-                });
-              },
-            ),
+                  ],
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _barisCalon(JadwalVaksinAnak e) {
+    final kunci = e.jadwal.kunci;
+    final dipilih = _vaksinDipilih.contains(kunci);
+    final terlambat = e.status == StatusVaksin.terlambat;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: dipilih ? AppColors.hijauMuda : AppColors.latar,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: dipilih ? AppColors.hijau : Colors.transparent, width: 1.2),
+      ),
+      child: CheckboxListTile(
+        value: dipilih,
+        activeColor: AppColors.hijau,
+        controlAffinity: ListTileControlAffinity.leading,
+        contentPadding: const EdgeInsets.only(left: 4, right: 10),
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onChanged: (v) => setState(() {
+          if (v == true) {
+            _vaksinDipilih.add(kunci);
+          } else {
+            _vaksinDipilih.remove(kunci);
+          }
+        }),
+        title: Text(e.jadwal.namaDosis,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+        subtitle: Text(
+          [
+            if (e.jadwal.jenis.penyakit.isNotEmpty) 'Mencegah ${e.jadwal.jenis.penyakit}',
+            if (e.jadwal.jenis.caraPemberian.isNotEmpty) e.jadwal.jenis.caraPemberian,
+          ].join(' · '),
+          style: const TextStyle(fontSize: 11),
+        ),
+        secondary: _vaksinSesiIni.contains(kunci)
+            ? const Pill('Tersimpan', bg: AppColors.hijauMuda, fg: AppColors.hijau)
+            : terlambat
+                ? const Pill('Terlambat', bg: AppColors.merahMuda, fg: AppColors.merah)
+                : Pill('Usia ${e.jadwal.labelUsia}', bg: AppColors.biruMuda, fg: AppColors.biru),
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // SUPLEMEN HARI INI: input manual (nama, dosis, jumlah, satuan)
+  // -------------------------------------------------------------------------
+  Widget _kartuSuplemen(int usia) {
+    return SectionCard(
+      title: 'Suplemen Hari Ini',
+      icon: Icons.medication_outlined,
+      trailing: _suplemen.isEmpty
+          ? null
+          : Pill('${_suplemen.length} item', bg: AppColors.kuningMuda, fg: AppColors.kuning),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Tambah cepat',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final p in _presetSuplemen)
+                ActionChip(
+                  avatar: Icon(p.ikon, size: 16, color: AppColors.hijau),
+                  label: Text(p.label),
+                  backgroundColor: AppColors.latar,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  onPressed: () => setState(() => _suplemen.add(p.buat(usia))),
+                ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 2,
-            child: DropdownButtonFormField<int>(
-              value: b.dosis,
-              decoration: _dekor('Dosis'),
-              items: [
-                for (var d = 1; d <= maks; d++)
-                  DropdownMenuItem(
-                    value: d,
-                    child: Text('Ke-$d'),
-                  ),
-              ],
-              onChanged: (v) {
-                setState(() => b.dosis = v ?? 1);
-              },
+          const SizedBox(height: 12),
+          if (_suplemen.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 6),
+              child: Text('Belum ada suplemen yang diberikan hari ini.',
+                  style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
             ),
+          for (var i = 0; i < _suplemen.length; i++) _barisSuplemen(i),
+        ],
+      ),
+    );
+  }
+
+  Widget _barisSuplemen(int i) {
+    final s = _suplemen[i];
+    final satuan = {..._satuanSuplemen, s.satuan}.toList();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 10, 6, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.latar, width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Text('Suplemen ${i + 1}',
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+              const Spacer(),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Hapus',
+                onPressed: () => setState(() => _suplemen.removeAt(i).dispose()),
+                icon: const Icon(Icons.delete_outline, color: AppColors.merah),
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: () {
-              setState(() => _vaksin.removeAt(i));
-            },
-            icon: const Icon(
-              Icons.delete_outline,
-              color: AppColors.merah,
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: Column(
+              children: [
+                TextField(
+                  controller: s.nama,
+                  textCapitalization: TextCapitalization.sentences,
+                  maxLength: 100,
+                  decoration: _dekor('Nama suplemen').copyWith(counterText: ''),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: s.dosis,
+                  maxLength: 60,
+                  decoration: _dekor('Dosis (mis. 200.000 IU, 400 mg)').copyWith(counterText: ''),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.latar,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            onPressed: s.jumlah > 1 ? () => setState(() => s.jumlah--) : null,
+                            icon: const Icon(Icons.remove),
+                          ),
+                          SizedBox(
+                            width: 34,
+                            child: Text('${s.jumlah}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                          ),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            onPressed: s.jumlah < 999 ? () => setState(() => s.jumlah++) : null,
+                            icon: const Icon(Icons.add),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: s.satuan,
+                        isExpanded: true,
+                        decoration: _dekor('Satuan'),
+                        items: [
+                          for (final x in satuan) DropdownMenuItem(value: x, child: Text(x)),
+                        ],
+                        onChanged: (v) => setState(() => s.satuan = v ?? s.satuan),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: s.catatan,
+                  decoration: _dekor('Catatan (opsional)'),
+                ),
+              ],
             ),
           ),
         ],

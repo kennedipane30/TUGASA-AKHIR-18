@@ -20,6 +20,7 @@ type PelayananService struct {
 	repo   *repository.PelayananRepository
 	kel    *repository.KeluargaRepository
 	gizi   *StatusGiziService
+	vaksin *VaksinService
 }
 
 func NewPelayananService(j *repository.JadwalRepository, p *repository.PelayananRepository, k *repository.KeluargaRepository) *PelayananService {
@@ -28,6 +29,9 @@ func NewPelayananService(j *repository.JadwalRepository, p *repository.Pelayanan
 
 // SetStatusGizi mengaktifkan perhitungan status gizi otomatis setiap pengukuran disimpan.
 func (s *PelayananService) SetStatusGizi(g *StatusGiziService) { s.gizi = g }
+
+// SetVaksin mengaktifkan validasi vaksin berdasarkan jadwal imunisasi Kemenkes.
+func (s *PelayananService) SetVaksin(v *VaksinService) { s.vaksin = v }
 
 // ---------------------------------------------------------------- input
 
@@ -50,10 +54,13 @@ type VaksinInput struct {
 	Catatan       string `json:"catatan"`
 }
 
+// SuplemenInput: suplemen diinput manual oleh bidan (nama, dosis, jumlah, satuan).
 type SuplemenInput struct {
-	Jenis           string `json:"jenis" binding:"required,oneof=vitamin_a obat_cacing pmt"`
-	KeteranganDosis string `json:"keterangan_dosis"`
-	Catatan         string `json:"catatan"`
+	Nama    string `json:"nama" binding:"required"`
+	Dosis   string `json:"dosis"`
+	Jumlah  int16  `json:"jumlah"`
+	Satuan  string `json:"satuan"`
+	Catatan string `json:"catatan"`
 }
 
 type CatatanBidanInput struct {
@@ -523,7 +530,14 @@ func (s *PelayananService) DetailBidan(pos string, pendaftaranID uuid.UUID) (*De
 	return d, nil
 }
 
-func (s *PelayananService) ListVaksin() ([]models.JenisVaksin, error) { return s.repo.ListVaksin() }
+func (s *PelayananService) ListVaksin() ([]models.JenisVaksin, error) {
+	list, err := s.repo.ListVaksin()
+	if err != nil {
+		return nil, err
+	}
+	sort.SliceStable(list, func(i, j int) bool { return list[i].Urutan < list[j].Urutan })
+	return list, nil
+}
 
 func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID uuid.UUID, in CatatanBidanInput) (*DetailBidan, error) {
 	p, err := s.pendaftaranPos(pendaftaranID, pos)
@@ -548,7 +562,7 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 		return nil, err
 	}
 
-	// validasi vaksin
+	// validasi vaksin (jadwal imunisasi Kemenkes: usia, urutan dosis, jarak minimal)
 	daftarVaksin, err := s.repo.ListVaksin()
 	if err != nil {
 		return nil, err
@@ -560,6 +574,7 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 	pid := p.ID
 	tanggal := hariIni()
 	vaksin := make([]models.ImunisasiAnak, 0, len(in.Vaksin))
+	items := make([]ItemVaksin, 0, len(in.Vaksin))
 	for _, v := range in.Vaksin {
 		id, err := uuid.Parse(strings.TrimSpace(v.JenisVaksinID))
 		if err != nil {
@@ -567,7 +582,7 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 		}
 		jv, ok := petaVaksin[id]
 		if !ok {
-			return nil, validasi("jenis vaksin tidak ditemukan")
+			return nil, validasi("jenis vaksin tidak ditemukan atau tidak aktif")
 		}
 		if v.DosisKe < 1 || v.DosisKe > jv.JumlahDosis {
 			return nil, validasi("dosis ke-%d tidak sesuai untuk %s (1-%d)", v.DosisKe, jv.Nama, jv.JumlahDosis)
@@ -575,11 +590,13 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 		if s.repo.ImunisasiSudahAda(p.AnakID, id, v.DosisKe, p.ID) {
 			return nil, konflik("%s dosis ke-%d sudah pernah dicatat untuk anak ini", jv.Nama, v.DosisKe)
 		}
+		items = append(items, ItemVaksin{JenisVaksinID: id, DosisKe: v.DosisKe})
 		vaksin = append(vaksin, models.ImunisasiAnak{
 			AnakID:           p.AnakID,
 			JenisVaksinID:    id,
 			DosisKe:          v.DosisKe,
 			TanggalPemberian: tanggal,
+			Tempat:           "Posyandu",
 			KondisiAnak:      strings.TrimSpace(v.KondisiAnak),
 			PendaftaranID:    &pid,
 			DiberikanOleh:    bidanID,
@@ -587,13 +604,41 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 			Version:          1,
 		})
 	}
+	if s.vaksin != nil && p.Anak != nil {
+		if err := s.vaksin.ValidasiPemberian(p.Anak, tanggal, items, &pid); err != nil {
+			return nil, err
+		}
+	}
+
+	// suplemen (input manual)
 	suplemen := make([]models.SuplemenAnak, 0, len(in.Suplemen))
 	for _, x := range in.Suplemen {
+		nama := strings.TrimSpace(x.Nama)
+		if nama == "" {
+			return nil, validasi("nama suplemen wajib diisi")
+		}
+		if len([]rune(nama)) > 100 {
+			return nil, validasi("nama suplemen maksimal 100 karakter")
+		}
+		dosis := strings.TrimSpace(x.Dosis)
+		if len([]rune(dosis)) > 60 {
+			return nil, validasi("dosis %s maksimal 60 karakter", nama)
+		}
+		satuan := strings.TrimSpace(x.Satuan)
+		if len([]rune(satuan)) > 30 {
+			return nil, validasi("satuan %s maksimal 30 karakter", nama)
+		}
+		if x.Jumlah < 1 || x.Jumlah > 999 {
+			return nil, validasi("jumlah %s harus antara 1-999", nama)
+		}
 		suplemen = append(suplemen, models.SuplemenAnak{
 			AnakID:          p.AnakID,
-			Jenis:           x.Jenis,
+			Jenis:           nama,
+			Dosis:           dosis,
+			Jumlah:          x.Jumlah,
+			Satuan:          satuan,
 			Tanggal:         tanggal,
-			KeteranganDosis: strings.TrimSpace(x.KeteranganDosis),
+			KeteranganDosis: KeteranganSuplemen(dosis, x.Jumlah, satuan),
 			PendaftaranID:   &pid,
 			DiberikanOleh:   bidanID,
 			Catatan:         strings.TrimSpace(x.Catatan),
