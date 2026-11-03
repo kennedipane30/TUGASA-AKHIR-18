@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -171,6 +173,38 @@ func parseTanggalMendatang(s string) (*time.Time, error) {
 	return &t, nil
 }
 
+// ---------------------------------------------------------------- waktu sesi
+
+var polaJamSesi = regexp.MustCompile(`(\d{1,2})[:.](\d{2})`)
+
+// mulaiSesiPendataan: waktu mulai sesi posyandu (tanggal jadwal + jam mulai, zona waktu server).
+func mulaiSesiPendataan(j *models.JadwalPosyandu) (time.Time, bool) {
+	if j == nil {
+		return time.Time{}, false
+	}
+	m := polaJamSesi.FindStringSubmatch(j.JamMulai)
+	if m == nil {
+		return time.Time{}, false
+	}
+	jam, _ := strconv.Atoi(m[1])
+	menit, _ := strconv.Atoi(m[2])
+	t := j.Tanggal
+	return time.Date(t.Year(), t.Month(), t.Day(), jam, menit, 0, 0, time.Local), true
+}
+
+// cekSesiSudahMulai: pendataan kader dan bidan hanya boleh setelah sesi posyandu dimulai.
+func cekSesiSudahMulai(j *models.JadwalPosyandu) error {
+	mulai, ok := mulaiSesiPendataan(j)
+	if !ok {
+		return nil
+	}
+	if time.Now().Before(mulai) {
+		return konflik("sesi posyandu belum dimulai, pendataan dapat dilakukan mulai %s pukul %s WIB",
+			mulai.Format("02-01-2006"), mulai.Format("15:04"))
+	}
+	return nil
+}
+
 func rentang(v float64, min, maks float64, nama string) error {
 	if v < min || v > maks {
 		return validasi("%s tidak wajar (%.0f-%.0f)", nama, min, maks)
@@ -289,6 +323,9 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaran
 	}
 	if p.StatusKehadiran != "sudah_checkin" {
 		return nil, konflik("anak belum check-in, pengukuran belum dapat dicatat")
+	}
+	if err := cekSesiSudahMulai(p.Jadwal); err != nil {
+		return nil, err
 	}
 	if p.Anak == nil {
 		return nil, ErrAnakTidakAda
@@ -542,6 +579,9 @@ func (s *PelayananService) ListVaksin() ([]models.JenisVaksin, error) {
 func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID uuid.UUID, in CatatanBidanInput) (*DetailBidan, error) {
 	p, err := s.pendaftaranPos(pendaftaranID, pos)
 	if err != nil {
+		return nil, err
+	}
+	if err := cekSesiSudahMulai(p.Jadwal); err != nil {
 		return nil, err
 	}
 	ukur, err := s.repo.GetPengukuran(p.ID)

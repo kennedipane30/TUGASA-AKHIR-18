@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -101,6 +103,56 @@ String _pesanError(Object e) {
   return 'Terjadi kesalahan: $e';
 }
 
+/// Waktu mulai sesi posyandu dari tanggal jadwal dan teks jam ("08:00" / "08:00 - 12:00").
+DateTime? _waktuMulaiSesi(DateTime? tanggal, String jam) {
+  if (tanggal == null) return null;
+  final m = RegExp(r'(\d{1,2})[:.](\d{2})').firstMatch(jam);
+  if (m == null) return null;
+  return DateTime(tanggal.year, tanggal.month, tanggal.day,
+      int.parse(m.group(1)!), int.parse(m.group(2)!));
+}
+
+String _jamMenit(DateTime t) =>
+    '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+/// Pesan di bagian atas halaman bila sesi posyandu belum dimulai.
+Widget _bannerBelumMulai(DateTime mulai) {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.kuningMuda,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.kuning.withValues(alpha: 0.35)),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.schedule, color: AppColors.kuning),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Sesi posyandu belum dimulai',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Pendataan dapat dilakukan mulai ${formatTanggal(mulai)} '
+                'pukul ${_jamMenit(mulai)} WIB.',
+                style: const TextStyle(fontSize: 12.5, height: 1.35),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 String _usia(int bln) =>
     bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
 
@@ -169,11 +221,31 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
   List<AntreanKader> _antrean = [];
   bool _memuat = true;
   String? _gagal;
+  Timer? _jam;
 
   @override
   void initState() {
     super.initState();
     _muat();
+    // Cek ulang setiap 30 detik agar pendataan terbuka otomatis saat sesi dimulai.
+    _jam = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _jam?.cancel();
+    super.dispose();
+  }
+
+  /// Waktu mulai sesi bila sesi BELUM dimulai; null bila pendataan sudah boleh.
+  DateTime? get _mulaiNanti {
+    final j = _jadwal;
+    if (j == null) return null;
+    final mulai = _waktuMulaiSesi(j.tanggal, j.jam);
+    if (mulai == null || !DateTime.now().isBefore(mulai)) return null;
+    return mulai;
   }
 
   Future<void> _muat() async {
@@ -209,6 +281,11 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
   }
 
   Future<void> _ukur(AntreanKader a) async {
+    final mulai = _mulaiNanti;
+    if (mulai != null) {
+      _snack('Sesi belum dimulai. Pendataan dapat dilakukan mulai pukul ${_jamMenit(mulai)} WIB');
+      return;
+    }
     if (a.sudahDicatatBidan) {
       _snack('Data ${a.nama} sudah dicatat bidan dan tidak dapat diubah');
       return;
@@ -284,6 +361,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
   Widget build(BuildContext context) {
     final j = _jadwal;
     final diukur = _antrean.where((a) => a.sudahDiukur).length;
+    final mulaiNanti = _mulaiNanti;
 
     return Scaffold(
       backgroundColor: AppColors.latar,
@@ -303,6 +381,8 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   children: [
+                    if (!_memuat && _gagal == null && mulaiNanti != null)
+                      _bannerBelumMulai(mulaiNanti),
                     if (_memuat)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 32),
@@ -528,7 +608,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                   ),
                 ),
                 Icon(
-                  a.sudahDicatatBidan
+                  a.sudahDicatatBidan || _mulaiNanti != null
                       ? Icons.lock_outline
                       : Icons.chevron_right,
                   color: AppColors.teksRedup,

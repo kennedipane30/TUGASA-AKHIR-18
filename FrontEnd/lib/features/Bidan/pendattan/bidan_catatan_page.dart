@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,6 +30,56 @@ String _pesanError(Object e) {
   }
 
   return 'Terjadi kesalahan: $e';
+}
+
+/// Waktu mulai sesi posyandu dari tanggal jadwal dan teks jam ("08:00" / "08:00 - 12:00").
+DateTime? _waktuMulaiSesi(DateTime? tanggal, String jam) {
+  if (tanggal == null) return null;
+  final m = RegExp(r'(\d{1,2})[:.](\d{2})').firstMatch(jam);
+  if (m == null) return null;
+  return DateTime(tanggal.year, tanggal.month, tanggal.day,
+      int.parse(m.group(1)!), int.parse(m.group(2)!));
+}
+
+String _jamMenit(DateTime t) =>
+    '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+/// Pesan di bagian atas halaman bila sesi posyandu belum dimulai.
+Widget _bannerBelumMulai(DateTime mulai) {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.kuningMuda,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.kuning.withValues(alpha: 0.35)),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.schedule, color: AppColors.kuning),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Sesi posyandu belum dimulai',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Pendataan dapat dilakukan mulai ${formatTanggal(mulai)} '
+                'pukul ${_jamMenit(mulai)} WIB.',
+                style: const TextStyle(fontSize: 12.5, height: 1.35),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Satu baris suplemen yang diinput manual oleh bidan.
@@ -202,14 +254,30 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
 
   final List<_BarisSuplemen> _suplemen = [];
 
+  /// Waktu mulai sesi posyandu kunjungan ini.
+  DateTime? _mulaiSesi;
+  Timer? _jam;
+
   @override
   void initState() {
     super.initState();
     _muat();
+    // Cek ulang setiap 30 detik agar tombol simpan terbuka otomatis saat sesi dimulai.
+    _jam = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted && _mulaiSesi != null) setState(() {});
+    });
+  }
+
+  /// Waktu mulai sesi bila sesi BELUM dimulai; null bila pendataan sudah boleh.
+  DateTime? get _mulaiNanti {
+    final m = _mulaiSesi;
+    if (m == null || !DateTime.now().isBefore(m)) return null;
+    return m;
   }
 
   @override
   void dispose() {
+    _jam?.cancel();
     for (final c in [
       _penyakit,
       _keluhan,
@@ -250,6 +318,17 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
       if (d is Map && d.containsKey('data')) d = d['data'];
 
       final detail = Map<String, dynamic>.from(d as Map);
+
+      // Waktu mulai sesi posyandu (tanggal + jam mulai jadwal).
+      final jd = detail['jadwal'];
+      DateTime? mulaiSesi;
+      if (jd is Map) {
+        final t = jd['tanggal']?.toString() ?? '';
+        mulaiSesi = _waktuMulaiSesi(
+          t.length >= 10 ? DateTime.tryParse(t.substring(0, 10)) : null,
+          jd['jam_mulai']?.toString() ?? '',
+        );
+      }
 
       // Isi awal dari catatan yang sudah ada.
       final c = detail['catatan'];
@@ -326,6 +405,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
 
       setState(() {
         _detail = detail;
+        _mulaiSesi = mulaiSesi;
         _kartu = kartu;
         _gagalKartu = gagalKartu;
         _gagal = null;
@@ -364,6 +444,12 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
 
   Future<void> _simpan() async {
     if (_kirim) return;
+
+    final mulai = _mulaiNanti;
+    if (mulai != null) {
+      _snack('Sesi belum dimulai. Pendataan dapat dilakukan mulai pukul ${_jamMenit(mulai)} WIB');
+      return;
+    }
 
     for (final s in _suplemen) {
       if (s.nama.text.trim().isEmpty) {
@@ -552,8 +638,10 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                 child: SizedBox(
                   width: double.infinity,
                   child: AppButton(
-                    _kirim ? 'Menyimpan...' : 'Simpan Catatan',
-                    icon: Icons.save_outlined,
+                    _mulaiNanti != null
+                        ? 'Sesi Belum Dimulai'
+                        : (_kirim ? 'Menyimpan...' : 'Simpan Catatan'),
+                    icon: _mulaiNanti != null ? Icons.lock_clock : Icons.save_outlined,
                     onPressed: _kirim ? () {} : _simpan,
                   ),
                 ),
@@ -595,9 +683,12 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
     final anakId = anak['id']?.toString() ?? '';
     final nama = anak['nama']?.toString() ?? '-';
 
+    final mulaiNanti = _mulaiNanti;
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        if (mulaiNanti != null) _bannerBelumMulai(mulaiNanti),
         SectionCard(
           title: nama,
           icon: Icons.child_care,
