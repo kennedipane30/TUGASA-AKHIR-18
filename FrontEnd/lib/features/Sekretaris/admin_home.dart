@@ -7,6 +7,7 @@ import '../../core/common_widgets.dart';
 import '../../core/qr_checkin_page.dart';
 import '../auth/auth_provider.dart';
 import 'akun/admin_kelola_akun_page.dart';
+import 'rekap/admin_rekap_page.dart';
 import 'vaksin/admin_vaksin_page.dart';
 
 class AdminHome extends StatefulWidget {
@@ -52,6 +53,13 @@ class _AdminHomeState extends State<AdminHome> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AdminVaksinPage()),
+    );
+  }
+
+  void _bukaRekap([int tab = 0]) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AdminRekapPage(tabAwal: tab)),
     );
   }
 
@@ -153,8 +161,8 @@ class _AdminHomeState extends State<AdminHome> {
                   () => soon(context, 'Data orang tua dan balita')),
               _menu(Icons.dataset_outlined, 'Data Master', 'Standar gizi, wilayah',
                   () => soon(context, 'Data master')),
-              _menu(Icons.summarize_outlined, 'Laporan', 'Rekap dan ekspor',
-                  () => soon(context, 'Laporan')),
+              _menu(Icons.summarize_outlined, 'Rekap Posyandu', 'Gizi, Vitamin A, tidak hadir',
+                  () => _bukaRekap(0)),
             ],
           ),
         ),
@@ -240,8 +248,8 @@ class _AdminHomeState extends State<AdminHome> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () => soon(context, 'Daftar prioritas intervensi'),
-                  child: const Text('Lihat 12 Balita Prioritas Intervensi'),
+                  onPressed: () => _bukaRekap(0),
+                  child: const Text('Lihat Rekap Status Gizi'),
                 ),
               ),
             ],

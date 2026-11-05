@@ -9,6 +9,7 @@ import '../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 import '../auth/auth_provider.dart';
 import 'pendataan/kader_pendataan_page.dart';
 import 'riwayat/kader_riwayat_page.dart';
+import 'rekap/kader_tidak_hadir_page.dart';
 import 'vaksin/kader_vaksin_page.dart';
 
 // Warna tampilan
@@ -95,6 +96,13 @@ class _KaderHomeState extends State<KaderHome> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const KaderVaksinPage()),
+    );
+  }
+
+  void _bukaTidakHadir() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const KaderTidakHadirPage()),
     );
   }
 
@@ -228,6 +236,9 @@ class _KaderHomeState extends State<KaderHome> {
 
         // Menunggu pengukuran
         if (!_memuat && _gagal == null && j != null) _menungguPengukuran(belumDiukur),
+
+        // Balita tidak hadir
+        _balitaTidakHadir(),
 
         // Vaksin anak
         _vaksinAnak(),
@@ -677,6 +688,72 @@ class _KaderHomeState extends State<KaderHome> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontWeight: FontWeight.w800, fontSize: 12, height: 1.2)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // Balita tidak hadir
+  // -------------------------------------------------------------------------
+  Widget _balitaTidakHadir() {
+    return _kartuPutih(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEFDD),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.person_search_outlined,
+                    color: Color(0xFFB45309), size: 24),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Balita Tidak Hadir',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: _teksGelap)),
+                    SizedBox(height: 6),
+                    Text(
+                      'Daftar balita sasaran yang belum ditimbang bulan ini untuk diingatkan atau dikunjungi.',
+                      style: TextStyle(
+                          fontSize: 12.5, height: 1.5, color: _teksBiru),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _oranye,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: _bukaTidakHadir,
+              icon: const Icon(Icons.list_alt_outlined, size: 20),
+              label: const Text('Lihat Balita Tidak Hadir',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
             ),
           ),
         ],

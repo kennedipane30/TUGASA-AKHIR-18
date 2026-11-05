@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 
 import 'core/notifikasi_service.dart';
 import 'core/role_home_scaffold.dart';
-import 'features/Admin/admin_home.dart';
-import 'features/Admin/akun/admin_kelola_akun_page.dart';
+import 'features/Sekretaris/admin_home.dart';
+import 'features/Sekretaris/akun/admin_kelola_akun_page.dart';
 import 'features/Bidan/pendattan/bidan_hasil_pendataan_page.dart';
 import 'features/Bidan/bidan_home.dart';
 import 'features/Kader/kader_home.dart';

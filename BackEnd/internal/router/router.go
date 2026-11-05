@@ -23,6 +23,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	notifRepo := repository.NewNotifikasiRepository(db)
 	giziRepo := repository.NewStatusGiziRepository(db)
 	vaksinRepo := repository.NewVaksinRepository(db)
+	rekapRepo := repository.NewRekapRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
@@ -48,6 +49,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	pelayananH := handler.NewPelayananHandler(pelayananSvc)
 	notifH := handler.NewNotifikasiHandler(notifSvc)
 	vaksinH := handler.NewVaksinHandler(vaksinSvc)
+	rekapH := handler.NewRekapHandler(service.NewRekapService(rekapRepo))
 
 	api := r.Group("/api/v1")
 	api.GET("/posyandu", authH.ListPosyandu) // publik, untuk registrasi
@@ -91,6 +93,10 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.GET("/riwayat/jadwal/:id/anak", pelayananH.SekretarisRiwayatAnak)
 	sekretaris.GET("/riwayat/pendaftaran/:id", pelayananH.SekretarisRiwayatDetail)
 	sekretaris.GET("/vaksin/statistik", vaksinH.Statistik)
+	// rekap posyandu: status gizi, Vitamin A & obat cacing, balita tidak hadir
+	sekretaris.GET("/rekap/gizi", rekapH.Gizi)
+	sekretaris.GET("/rekap/suplemen", rekapH.Suplemen)
+	sekretaris.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
 
 	// orang tua (check-in dengan memindai QR tetap posyandu)
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
@@ -124,6 +130,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kader.GET("/riwayat/jadwal", pelayananH.KaderRiwayatJadwal)
 	kader.GET("/riwayat/jadwal/:id/anak", pelayananH.KaderRiwayatAnak)
 	kader.GET("/riwayat/pendaftaran/:id", pelayananH.KaderRiwayatDetail)
+	kader.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
 
 	// bidan
 	bidan := protected.Group("/bidan", middleware.RoleRequired("bidan"))
