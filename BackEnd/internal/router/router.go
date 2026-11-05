@@ -24,6 +24,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	giziRepo := repository.NewStatusGiziRepository(db)
 	vaksinRepo := repository.NewVaksinRepository(db)
 	rekapRepo := repository.NewRekapRepository(db)
+	kbmRepo := repository.NewKbmRepository(db)
+	balitaRepo := repository.NewBalitaRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
@@ -33,14 +35,20 @@ func Setup(db *gorm.DB) *gin.Engine {
 	pelayananSvc.SetStatusGizi(giziSvc)
 	vaksinSvc := service.NewVaksinService(vaksinRepo)
 	pelayananSvc.SetVaksin(vaksinSvc)
+	kbmSvc := service.NewKbmService(kbmRepo)
+	kbmSvc.SetNotifikasi(notifSvc)
+	pelayananSvc.SetKbm(kbmSvc)
 
 	// master jenis vaksin & jadwal imunisasi rutin Kemenkes (dibuat/diperbarui otomatis)
 	vaksinSvc.SiapkanMaster()
 
 	// pengingat otomatis (24 jam sebelum mulai & check-in dibuka)
 	go notifSvc.JalankanPengingat(context.Background())
-	// hitung status gizi untuk pengukuran lama yang belum punya status
-	go giziSvc.HitungDataLama()
+	// hitung status gizi, lalu penilaian N/T (KBM), 2T, BGM untuk pengukuran lama
+	go func() {
+		giziSvc.HitungDataLama()
+		kbmSvc.HitungDataLama()
+	}()
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
@@ -50,6 +58,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	notifH := handler.NewNotifikasiHandler(notifSvc)
 	vaksinH := handler.NewVaksinHandler(vaksinSvc)
 	rekapH := handler.NewRekapHandler(service.NewRekapService(rekapRepo))
+	balitaH := handler.NewBalitaHandler(service.NewBalitaService(balitaRepo, vaksinRepo))
 
 	api := r.Group("/api/v1")
 	api.GET("/posyandu", authH.ListPosyandu) // publik, untuk registrasi
@@ -97,6 +106,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.GET("/rekap/gizi", rekapH.Gizi)
 	sekretaris.GET("/rekap/suplemen", rekapH.Suplemen)
 	sekretaris.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
+	// semua balita posyandu
+	sekretaris.GET("/balita", balitaH.Daftar)
+	sekretaris.GET("/balita/:anak_id", balitaH.Detail)
 
 	// orang tua (check-in dengan memindai QR tetap posyandu)
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
@@ -131,6 +143,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kader.GET("/riwayat/jadwal/:id/anak", pelayananH.KaderRiwayatAnak)
 	kader.GET("/riwayat/pendaftaran/:id", pelayananH.KaderRiwayatDetail)
 	kader.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
+	kader.GET("/balita", balitaH.Daftar)
+	kader.GET("/balita/:anak_id", balitaH.Detail)
 
 	// bidan
 	bidan := protected.Group("/bidan", middleware.RoleRequired("bidan"))
@@ -144,6 +158,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// vaksin susulan (diberikan di luar sesi posyandu)
 	bidan.POST("/vaksin/riwayat", vaksinH.CatatRiwayat)
 	bidan.DELETE("/vaksin/riwayat/:id", vaksinH.HapusRiwayat)
+	bidan.GET("/balita", balitaH.Daftar)
+	bidan.GET("/balita/:anak_id", balitaH.Detail)
 
 	return r
 }

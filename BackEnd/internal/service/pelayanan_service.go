@@ -23,6 +23,7 @@ type PelayananService struct {
 	kel    *repository.KeluargaRepository
 	gizi   *StatusGiziService
 	vaksin *VaksinService
+	kbm    *KbmService
 }
 
 func NewPelayananService(j *repository.JadwalRepository, p *repository.PelayananRepository, k *repository.KeluargaRepository) *PelayananService {
@@ -31,6 +32,9 @@ func NewPelayananService(j *repository.JadwalRepository, p *repository.Pelayanan
 
 // SetStatusGizi mengaktifkan perhitungan status gizi otomatis setiap pengukuran disimpan.
 func (s *PelayananService) SetStatusGizi(g *StatusGiziService) { s.gizi = g }
+
+// SetKbm mengaktifkan penilaian N/T (KBM), 2T, dan BGM setiap pengukuran disimpan.
+func (s *PelayananService) SetKbm(k *KbmService) { s.kbm = k }
 
 // SetVaksin mengaktifkan validasi vaksin berdasarkan jadwal imunisasi Kemenkes.
 func (s *PelayananService) SetVaksin(v *VaksinService) { s.vaksin = v }
@@ -82,31 +86,33 @@ type CatatanBidanInput struct {
 // ---------------------------------------------------------------- keluaran
 
 type AntreanItem struct {
-	PendaftaranID     uuid.UUID `json:"pendaftaran_id"`
-	AnakID            uuid.UUID `json:"anak_id"`
-	Nama              string    `json:"nama"`
-	JenisKelamin      string    `json:"jenis_kelamin"`
-	UsiaBulan         int       `json:"usia_bulan"`
-	NomorAntrean      *int16    `json:"nomor_antrean"`
-	StatusKehadiran   string    `json:"status_kehadiran"`
-	Sumber            string    `json:"sumber"`
-	SudahDiukur       bool      `json:"sudah_diukur"`
-	SudahDicatatBidan bool      `json:"sudah_dicatat_bidan"`
+	PendaftaranID     uuid.UUID                `json:"pendaftaran_id"`
+	AnakID            uuid.UUID                `json:"anak_id"`
+	Nama              string                   `json:"nama"`
+	JenisKelamin      string                   `json:"jenis_kelamin"`
+	UsiaBulan         int                      `json:"usia_bulan"`
+	NomorAntrean      *int16                   `json:"nomor_antrean"`
+	StatusKehadiran   string                   `json:"status_kehadiran"`
+	Sumber            string                   `json:"sumber"`
+	SudahDiukur       bool                     `json:"sudah_diukur"`
+	SudahDicatatBidan bool                     `json:"sudah_dicatat_bidan"`
+	Penilaian         *models.PenilaianTimbang `json:"penilaian"`
 }
 
 type BidanItem struct {
-	PendaftaranID      uuid.UUID          `json:"pendaftaran_id"`
-	AnakID             uuid.UUID          `json:"anak_id"`
-	Nama               string             `json:"nama"`
-	JenisKelamin       string             `json:"jenis_kelamin"`
-	UsiaBulan          int                `json:"usia_bulan"`
-	NomorAntrean       *int16             `json:"nomor_antrean"`
-	SudahDiukur        bool               `json:"sudah_diukur"`
-	BbKg               float64            `json:"bb_kg"`
-	TbCm               float64            `json:"tb_cm"`
-	PeringatanValidasi string             `json:"peringatan_validasi"`
-	StatusCatatan      string             `json:"status_catatan"` // perlu_catatan | selesai
-	StatusGizi         *models.StatusGizi `json:"status_gizi"`
+	PendaftaranID      uuid.UUID                `json:"pendaftaran_id"`
+	AnakID             uuid.UUID                `json:"anak_id"`
+	Nama               string                   `json:"nama"`
+	JenisKelamin       string                   `json:"jenis_kelamin"`
+	UsiaBulan          int                      `json:"usia_bulan"`
+	NomorAntrean       *int16                   `json:"nomor_antrean"`
+	SudahDiukur        bool                     `json:"sudah_diukur"`
+	BbKg               float64                  `json:"bb_kg"`
+	TbCm               float64                  `json:"tb_cm"`
+	PeringatanValidasi string                   `json:"peringatan_validasi"`
+	StatusCatatan      string                   `json:"status_catatan"` // perlu_catatan | selesai
+	StatusGizi         *models.StatusGizi       `json:"status_gizi"`
+	Penilaian          *models.PenilaianTimbang `json:"penilaian"`
 }
 
 type DetailBidan struct {
@@ -116,6 +122,7 @@ type DetailBidan struct {
 	Pengukuran       *models.Pengukuran       `json:"pengukuran"`
 	Sebelumnya       *models.Pengukuran       `json:"pengukuran_sebelumnya"`
 	StatusGizi       *models.StatusGizi       `json:"status_gizi"`
+	Penilaian        *models.PenilaianTimbang `json:"penilaian"`
 	Catatan          *models.PemeriksaanBidan `json:"catatan"`
 	Imunisasi        []models.ImunisasiAnak   `json:"imunisasi"`
 	Suplemen         []models.SuplemenAnak    `json:"suplemen"`
@@ -140,6 +147,7 @@ type RiwayatItem struct {
 	JamMulai      string                   `json:"jam_mulai"`
 	Pengukuran    *PengukuranRiwayat       `json:"pengukuran"`
 	StatusGizi    *models.StatusGizi       `json:"status_gizi"`
+	Penilaian     *models.PenilaianTimbang `json:"penilaian"`
 	Catatan       *models.PemeriksaanBidan `json:"catatan"`
 	Imunisasi     []models.ImunisasiAnak   `json:"imunisasi"`
 	Suplemen      []models.SuplemenAnak    `json:"suplemen"`
@@ -250,6 +258,18 @@ func (s *PelayananService) jadwalPos(jadwalID uuid.UUID, pos string) (*models.Ja
 	return j, nil
 }
 
+// petaPenilaian: penilaian N/T per pengukuran_id (kosong bila KBM tidak aktif).
+func (s *PelayananService) petaPenilaian(ukur []models.Pengukuran) (map[uuid.UUID]models.PenilaianTimbang, error) {
+	if s.kbm == nil {
+		return map[uuid.UUID]models.PenilaianTimbang{}, nil
+	}
+	ids := make([]uuid.UUID, 0, len(ukur))
+	for _, u := range ukur {
+		ids = append(ids, u.ID)
+	}
+	return s.kbm.PetaPengukuran(ids)
+}
+
 func idPendaftaran(list []models.Pendaftaran) []uuid.UUID {
 	ids := make([]uuid.UUID, 0, len(list))
 	for _, p := range list {
@@ -286,8 +306,14 @@ func (s *PelayananService) AntreanKader(jadwalID uuid.UUID, pos string) ([]Antre
 		return nil, err
 	}
 	adaUkur := map[uuid.UUID]bool{}
+	ukurPer := map[uuid.UUID]uuid.UUID{}
 	for _, u := range ukur {
 		adaUkur[u.PendaftaranID] = true
+		ukurPer[u.PendaftaranID] = u.ID
+	}
+	nilai, err := s.petaPenilaian(ukur)
+	if err != nil {
+		return nil, err
 	}
 	adaCatatan := map[uuid.UUID]bool{}
 	for _, c := range periksa {
@@ -305,6 +331,10 @@ func (s *PelayananService) AntreanKader(jadwalID uuid.UUID, pos string) ([]Antre
 			Sumber:            p.Sumber,
 			SudahDiukur:       adaUkur[p.ID],
 			SudahDicatatBidan: adaCatatan[p.ID],
+		}
+		if n, ok := nilai[ukurPer[p.ID]]; ok && adaUkur[p.ID] {
+			nn := n
+			it.Penilaian = &nn
 		}
 		if p.Anak != nil {
 			it.Nama = p.Anak.Nama
@@ -430,6 +460,13 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaran
 			log.Printf("status gizi pengukuran %s gagal dihitung: %v", m.ID, err)
 		}
 	}
+	// Penilaian N/T (KBM), 2T, dan BGM. Kegagalan tidak membatalkan pengukuran.
+	if s.kbm != nil {
+		pengirim := kaderID
+		if _, err := s.kbm.NilaiDanKabari(p.Anak, m, &pengirim); err != nil {
+			log.Printf("penilaian KBM pengukuran %s gagal: %v", m.ID, err)
+		}
+	}
 	return m, nil
 }
 
@@ -486,6 +523,10 @@ func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID, pos string) ([]Bidan
 			return nil, err
 		}
 	}
+	nilai, err := s.petaPenilaian(ukur)
+	if err != nil {
+		return nil, err
+	}
 
 	now := time.Now()
 	out := make([]BidanItem, 0, len(list))
@@ -507,6 +548,10 @@ func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID, pos string) ([]Bidan
 		if g, ok := petaGizi[u.ID]; diukur && ok {
 			gg := g
 			it.StatusGizi = &gg
+		}
+		if n, ok := nilai[u.ID]; diukur && ok {
+			nn := n
+			it.Penilaian = &nn
 		}
 		if p.Anak != nil {
 			it.Nama = p.Anak.Nama
@@ -540,6 +585,11 @@ func (s *PelayananService) DetailBidan(pos string, pendaftaranID uuid.UUID) (*De
 	}
 	if d.Pengukuran != nil && s.gizi != nil {
 		if d.StatusGizi, err = s.gizi.UntukPengukuran(d.Pengukuran.ID); err != nil {
+			return nil, err
+		}
+	}
+	if d.Pengukuran != nil && s.kbm != nil {
+		if d.Penilaian, err = s.kbm.UntukPengukuran(d.Pengukuran.ID); err != nil {
 			return nil, err
 		}
 	}
@@ -797,6 +847,10 @@ func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatIte
 		}
 	}
 
+	nilai, err := s.petaPenilaian(ukur)
+	if err != nil {
+		return nil, err
+	}
 	petaUkur := map[uuid.UUID]models.Pengukuran{}
 	for _, u := range ukur {
 		petaUkur[u.PendaftaranID] = u
@@ -845,6 +899,10 @@ func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatIte
 			if g, ok := petaGizi[u.ID]; ok {
 				gg := g
 				it.StatusGizi = &gg
+			}
+			if n, ok := nilai[u.ID]; ok {
+				nn := n
+				it.Penilaian = &nn
 			}
 		}
 		if c, ok := petaCatatan[p.ID]; ok {

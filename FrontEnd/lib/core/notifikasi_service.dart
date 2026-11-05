@@ -25,6 +25,7 @@ class NotifikasiItem {
   final String judul;
   final String isi;
   final String? objekId;
+  final String objekTabel;
   final DateTime dibuat;
   bool sudahDibaca;
 
@@ -34,6 +35,7 @@ class NotifikasiItem {
     required this.judul,
     required this.isi,
     required this.objekId,
+    this.objekTabel = '',
     required this.dibuat,
     required this.sudahDibaca,
   });
@@ -46,6 +48,7 @@ class NotifikasiItem {
       judul: j['judul']?.toString() ?? '',
       isi: j['isi']?.toString() ?? '',
       objekId: j['objek_id']?.toString(),
+      objekTabel: j['objek_tabel']?.toString() ?? '',
       dibuat: (t ?? DateTime.now()).toLocal(),
       sudahDibaca: j['sudah_dibaca'] == true,
     );
@@ -76,6 +79,8 @@ class NotifikasiService {
   bool _masuk = false;
   bool _bukaTertunda = false;
   String? _idTertunda;
+  String? _jenisTertunda;
+  String? _objekTertunda;
   String? _token;
   Timer? _timer;
   StreamSubscription<String>? _subToken;
@@ -106,8 +111,7 @@ class NotifikasiService {
       );
       await _lokal.initialize(
         const InitializationSettings(android: android, iOS: ios),
-        onDidReceiveNotificationResponse: (r) =>
-            bukaHalaman(notifikasiId: r.payload),
+        onDidReceiveNotificationResponse: (r) => _bukaDariPayload(r.payload),
       );
       await _lokal
           .resolvePlatformSpecificImplementation<
@@ -116,8 +120,11 @@ class NotifikasiService {
 
       final awalLokal = await _lokal.getNotificationAppLaunchDetails();
       if (awalLokal?.didNotificationLaunchApp == true) {
+        final (id, jenis, objek) = _bacaPayload(awalLokal?.notificationResponse?.payload);
         _bukaTertunda = true;
-        _idTertunda = awalLokal?.notificationResponse?.payload;
+        _idTertunda = id;
+        _jenisTertunda = jenis;
+        _objekTertunda = objek;
       }
     } catch (e) {
       debugPrint('notifikasi: notifikasi lokal gagal diinisialisasi: $e');
@@ -135,7 +142,11 @@ class NotifikasiService {
 
       _subPesan = FirebaseMessaging.onMessage.listen(_pesanDepan);
       _subBuka = FirebaseMessaging.onMessageOpenedApp.listen(
-        (m) => bukaHalaman(notifikasiId: m.data['notifikasi_id']?.toString()),
+        (m) => bukaHalaman(
+          notifikasiId: m.data['notifikasi_id']?.toString(),
+          jenis: m.data['jenis']?.toString(),
+          objekId: (m.data['anak_id'] ?? m.data['objek_id'])?.toString(),
+        ),
       );
       _subToken = fm.onTokenRefresh.listen((t) {
         _token = t;
@@ -146,6 +157,8 @@ class NotifikasiService {
       if (awal != null) {
         _bukaTertunda = true;
         _idTertunda = awal.data['notifikasi_id']?.toString();
+        _jenisTertunda = awal.data['jenis']?.toString();
+        _objekTertunda = (awal.data['anak_id'] ?? awal.data['objek_id'])?.toString();
       }
     } catch (e) {
       debugPrint('notifikasi: FCM gagal diinisialisasi: $e');
@@ -190,9 +203,13 @@ class NotifikasiService {
     if (_bukaTertunda) {
       _bukaTertunda = false;
       final id = _idTertunda;
+      final jenis = _jenisTertunda;
+      final objek = _objekTertunda;
       _idTertunda = null;
+      _jenisTertunda = null;
+      _objekTertunda = null;
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => bukaHalaman(notifikasiId: id),
+        (_) => bukaHalaman(notifikasiId: id, jenis: jenis, objekId: objek),
       );
     }
   }
@@ -268,7 +285,11 @@ class NotifikasiService {
               styleInformation: BigTextStyleInformation(isi),
             ),
           ),
-          payload: m.data['notifikasi_id']?.toString(),
+          payload: [
+            m.data['notifikasi_id']?.toString() ?? '',
+            m.data['jenis']?.toString() ?? '',
+            (m.data['anak_id'] ?? m.data['objek_id'])?.toString() ?? '',
+          ].join('|'),
         );
       } catch (e) {
         debugPrint('notifikasi: gagal menampilkan notifikasi: $e');
@@ -279,17 +300,34 @@ class NotifikasiService {
     await perbaruiJumlah();
   }
 
-  void bukaHalaman({String? notifikasiId}) {
+  /// Payload notifikasi lokal: "notifikasi_id|jenis|objek_id".
+  (String?, String?, String?) _bacaPayload(String? p) {
+    if (p == null || p.isEmpty) return (null, null, null);
+    final b = p.split('|');
+    String? ambil(int i) => (i < b.length && b[i].isNotEmpty) ? b[i] : null;
+    return (ambil(0), ambil(1), ambil(2));
+  }
+
+  void _bukaDariPayload(String? p) {
+    final (id, jenis, objek) = _bacaPayload(p);
+    bukaHalaman(notifikasiId: id, jenis: jenis, objekId: objek);
+  }
+
+  /// Membuka tujuan notifikasi. Peringatan 2T/BGM langsung ke detail balita
+  /// (petugas) atau grafik anak (orang tua); selain itu ke daftar notifikasi.
+  void bukaHalaman({String? notifikasiId, String? jenis, String? objekId}) {
     final nav = navigatorKey.currentState;
     if (!_masuk || nav == null) {
       _bukaTertunda = true;
       _idTertunda = notifikasiId;
+      _jenisTertunda = jenis;
+      _objekTertunda = objekId;
       return;
     }
     if (notifikasiId != null && notifikasiId.isNotEmpty) {
       tandaiDibaca(notifikasiId);
     }
-    nav.push(MaterialPageRoute(builder: (_) => const NotifikasiPage()));
+    bukaObjekNotifikasi(nav, jenis ?? '', objekId);
   }
 
   // -------------------------------------------------------------------------

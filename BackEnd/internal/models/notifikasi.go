@@ -13,6 +13,10 @@ const (
 	NotifJadwalDibatalkan = "jadwal_dibatalkan"
 	NotifPengingatJadwal  = "pengingat_jadwal"
 	NotifCheckinDibuka    = "checkin_dibuka"
+
+	// NotifPeringatanTimbang: anak 2T (tidak naik 2 bulan berturut-turut) atau BGM
+	// (bawah garis merah); dikirim ke bidan posyandu anak dan orang tuanya.
+	NotifPeringatanTimbang = "peringatan_timbang"
 )
 
 // Notifikasi: Notifikasi dan pengingat per pengguna beserta status baca.

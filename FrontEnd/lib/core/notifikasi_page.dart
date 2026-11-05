@@ -1,8 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../features/OrangTua/riwayat/orangtua_grafik_page.dart';
+import '../features/auth/auth_provider.dart';
 import 'app_colors.dart';
+import 'balita_detail_page.dart';
 import 'common_widgets.dart';
 import 'notifikasi_service.dart';
 
@@ -48,9 +52,32 @@ String waktuNotifikasi(DateTime t) {
       return (Icons.edit_calendar, AppColors.biru, AppColors.biruMuda);
     case 'jadwal_dibatalkan':
       return (Icons.event_busy, AppColors.merah, AppColors.merahMuda);
+    case 'peringatan_timbang':
+      return (Icons.warning_amber_rounded, AppColors.merah, AppColors.merahMuda);
     default:
       return (Icons.notifications, AppColors.hijau, AppColors.hijauMuda);
   }
+}
+
+/// Membuka halaman tujuan sebuah notifikasi.
+/// Peringatan 2T/BGM: orang tua ke Grafik anak, petugas ke detail balita.
+void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
+  if (jenis != 'peringatan_timbang' || objekId == null || objekId.isEmpty) {
+    nav.push(MaterialPageRoute(builder: (_) => const NotifikasiPage()));
+    return;
+  }
+  var role = '';
+  try {
+    role = (Provider.of<AuthProvider>(nav.context, listen: false).user?['role'] ?? '').toString();
+  } catch (_) {}
+  final Widget halaman = switch (role) {
+    'orang_tua' => OrangTuaGrafikPage(anakId: objekId),
+    'bidan' => BalitaDetailPage(prefix: '/bidan', anakId: objekId, nama: 'Detail Balita', bisaKelolaVaksin: true),
+    'kader' => BalitaDetailPage(prefix: '/kader', anakId: objekId, nama: 'Detail Balita'),
+    'sekretaris' => BalitaDetailPage(prefix: '/sekretaris', anakId: objekId, nama: 'Detail Balita'),
+    _ => const NotifikasiPage(),
+  };
+  nav.push(MaterialPageRoute(builder: (_) => halaman));
 }
 
 class NotifikasiPage extends StatefulWidget {
@@ -236,9 +263,19 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                 ),
               ),
               const SizedBox(height: 16),
+              if (n.jenis == 'peringatan_timbang' && (n.objekId ?? '').isNotEmpty) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: AppButton('Lihat Data Anak', icon: Icons.child_care, onPressed: () {
+                    Navigator.pop(ctx);
+                    bukaObjekNotifikasi(Navigator.of(context), n.jenis, n.objekId);
+                  }),
+                ),
+                const SizedBox(height: 8),
+              ],
               SizedBox(
                 width: double.infinity,
-                child: AppButton('Tutup', onPressed: () => Navigator.pop(ctx)),
+                child: AppButton('Tutup', filled: false, onPressed: () => Navigator.pop(ctx)),
               ),
             ],
           ),
@@ -444,7 +481,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Pengingat jadwal posyandu dan pemberitahuan check-in akan muncul di sini.',
+            'Pengingat jadwal posyandu, pemberitahuan check-in, dan peringatan pertumbuhan anak akan muncul di sini.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
           ),

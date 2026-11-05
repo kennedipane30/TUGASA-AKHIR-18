@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../service/kbm_model.dart';
 import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 
 const _hijauHeader = Color(0xFF065F46);
@@ -25,6 +26,7 @@ class AntreanKader {
   final String sumber;
   final bool sudahDiukur;
   final bool sudahDicatatBidan;
+  final PenilaianTimbang? penilaian;
 
   AntreanKader({
     required this.pendaftaranId,
@@ -36,6 +38,7 @@ class AntreanKader {
     required this.sumber,
     required this.sudahDiukur,
     required this.sudahDicatatBidan,
+    this.penilaian,
   });
 
   factory AntreanKader.fromApi(Map<String, dynamic> j) => AntreanKader(
@@ -48,6 +51,7 @@ class AntreanKader {
         sumber: j['sumber']?.toString() ?? '',
         sudahDiukur: j['sudah_diukur'] == true,
         sudahDicatatBidan: j['sudah_dicatat_bidan'] == true,
+        penilaian: PenilaianTimbang.dari(j['penilaian']),
       );
 
   String get kodeNomor =>
@@ -304,12 +308,46 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
     );
 
     if (hasil != null) {
-      _snack(
-        hasil.isEmpty
-            ? 'Data pengukuran tersimpan dan diteruskan ke bidan'
-            : 'Data tersimpan dan diteruskan ke bidan. Perhatian: $hasil',
+      await _muat();
+      if (!mounted) return;
+      AntreanKader? baru;
+      for (final x in _antrean) {
+        if (x.pendaftaranId == a.pendaftaranId) baru = x;
+      }
+      final p = baru?.penilaian;
+      if (p == null) {
+        _snack(
+          hasil.isEmpty
+              ? 'Data pengukuran tersimpan dan diteruskan ke bidan'
+              : 'Data tersimpan dan diteruskan ke bidan. Perhatian: $hasil',
+        );
+        return;
+      }
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Hasil penimbangan ${a.nama}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                KotakPenilaian(p: p),
+                if (hasil.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text('Perhatian: $hasil', style: const TextStyle(fontSize: 12, color: AppColors.kuning)),
+                ],
+                const SizedBox(height: 10),
+                const Text('Data tersimpan dan diteruskan ke bidan.',
+                    style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup')),
+          ],
+        ),
       );
-      _muat();
     }
   }
 
@@ -590,6 +628,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                                   bg: AppColors.kuningMuda,
                                   fg: AppColors.kuning,
                                 ),
+                          ...pillPenilaian(a.penilaian, ringkas: true),
                           if (a.sudahDicatatBidan)
                             const Pill(
                               'Dicatat bidan',

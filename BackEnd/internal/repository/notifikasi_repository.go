@@ -44,6 +44,25 @@ func (r *NotifikasiRepository) Penerima(posyandu string, roles []string) ([]mode
 	return list, err
 }
 
+// PosyanduAnak: kode posyandu anak (melalui keluarga).
+func (r *NotifikasiRepository) PosyanduAnak(anakID uuid.UUID) (string, error) {
+	var pos string
+	err := r.db.Model(&models.Keluarga{}).Select("posyandu").
+		Where("id IN (?)", r.db.Model(&models.Anak{}).Select("keluarga_id").Where("id = ?", anakID)).
+		Scan(&pos).Error
+	return pos, err
+}
+
+// OrangTuaAnak: akun orang tua aktif dari keluarga seorang anak.
+func (r *NotifikasiRepository) OrangTuaAnak(anakID uuid.UUID) ([]models.User, error) {
+	list := []models.User{}
+	err := r.db.Where("is_active = ? AND role = ?", true, models.RoleOrangTua).
+		Where("id IN (?)", r.db.Model(&models.OrangTua{}).Select("user_id").
+			Where("keluarga_id IN (?)", r.db.Model(&models.Anak{}).Select("keluarga_id").Where("id = ?", anakID))).
+		Find(&list).Error
+	return list, err
+}
+
 // ---------------------------------------------------------------- notifikasi
 
 // KunciSudahAda: notifikasi dengan kunci ini sudah pernah dibuat untuk minimal satu pengguna.

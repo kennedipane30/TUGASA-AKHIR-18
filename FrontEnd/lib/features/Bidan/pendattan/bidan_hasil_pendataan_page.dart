@@ -9,6 +9,7 @@ import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 import '../../../core/posyandu.dart';
+import '../../../service/kbm_model.dart';
 import '../../auth/auth_provider.dart';
 import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 import 'bidan_catatan_page.dart';
@@ -26,6 +27,7 @@ class _ItemBidan {
   final bool sudahDiukur;
   final String peringatan;
   final bool selesai;
+  final PenilaianTimbang? penilaian;
 
   _ItemBidan({
     required this.pendaftaranId,
@@ -37,6 +39,7 @@ class _ItemBidan {
     required this.sudahDiukur,
     required this.peringatan,
     required this.selesai,
+    this.penilaian,
   });
 
   factory _ItemBidan.fromApi(Map<String, dynamic> j) => _ItemBidan(
@@ -49,7 +52,10 @@ class _ItemBidan {
         sudahDiukur: j['sudah_diukur'] == true,
         peringatan: j['peringatan_validasi']?.toString() ?? '',
         selesai: j['status_catatan']?.toString() == 'selesai',
+        penilaian: PenilaianTimbang.dari(j['penilaian']),
       );
+
+  bool get perluPerhatian => penilaian?.perluRujuk == true;
 
   String get kodeNomor =>
       nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
@@ -187,7 +193,7 @@ class BidanHasilPendataanPage extends StatefulWidget {
 }
 
 class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
-  static const _filter = ['Semua', 'Perlu Catatan', 'Selesai'];
+  static const _filter = ['Semua', 'Perlu Catatan', '2T / BGM', 'Selesai'];
 
   String _aktif = 'Semua';
   JadwalTerdekatData? _jadwal;
@@ -347,11 +353,13 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
 
     final daftar = switch (_aktif) {
       'Perlu Catatan' => _data.where((d) => !d.selesai).toList(),
+      '2T / BGM' => _data.where((d) => d.perluPerhatian).toList(),
       'Selesai' => _data.where((d) => d.selesai).toList(),
       _ => _data,
     };
 
     final perlu = _data.where((d) => !d.selesai).length;
+    final rujuk = _data.where((d) => d.perluPerhatian).length;
 
     return Scaffold(
       backgroundColor: AppColors.latar,
@@ -458,6 +466,15 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                                   fontSize: 12,
                                   color: AppColors.teksRedup,
                                 ),
+                              ),
+                            ],
+                            if (rujuk > 0) ...[
+                              const SizedBox(height: 8),
+                              Pill(
+                                '$rujuk anak 2T / BGM perlu diperiksa',
+                                bg: AppColors.merahMuda,
+                                fg: AppColors.merah,
+                                icon: Icons.warning_amber_rounded,
                               ),
                             ],
                             const SizedBox(height: 6),
@@ -598,6 +615,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                                   bg: AppColors.biruMuda,
                                   fg: AppColors.biru,
                                 ),
+                          ...pillPenilaian(d.penilaian, ringkas: true),
                           if (d.peringatan.isNotEmpty)
                             const Pill(
                               'Ada peringatan',

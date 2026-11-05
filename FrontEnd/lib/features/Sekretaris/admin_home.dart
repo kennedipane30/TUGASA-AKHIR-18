@@ -7,6 +7,7 @@ import '../../core/common_widgets.dart';
 import '../../core/qr_checkin_page.dart';
 import '../auth/auth_provider.dart';
 import 'akun/admin_kelola_akun_page.dart';
+import '../../core/semua_balita_page.dart';
 import 'rekap/admin_rekap_page.dart';
 import 'vaksin/admin_vaksin_page.dart';
 
@@ -60,6 +61,13 @@ class _AdminHomeState extends State<AdminHome> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => AdminRekapPage(tabAwal: tab)),
+    );
+  }
+
+  void _bukaBalita() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SemuaBalitaPage(prefix: '/sekretaris')),
     );
   }
 
@@ -157,8 +165,8 @@ class _AdminHomeState extends State<AdminHome> {
                   _bukaVaksin),
               _menu(Icons.campaign_outlined, 'Pengumuman', 'Siaran ke pengguna',
                   () => soon(context, 'Pengumuman')),
-              _menu(Icons.family_restroom, 'Data Keluarga', 'Orang tua & balita',
-                  () => soon(context, 'Data orang tua dan balita')),
+              _menu(Icons.child_care, 'Semua Balita', 'Data, gizi & vaksin balita',
+                  _bukaBalita),
               _menu(Icons.dataset_outlined, 'Data Master', 'Standar gizi, wilayah',
                   () => soon(context, 'Data master')),
               _menu(Icons.summarize_outlined, 'Rekap Posyandu', 'Gizi, Vitamin A, tidak hadir',

@@ -6,6 +6,7 @@ import '../../core/common_widgets.dart';
 import '../../core/posyandu.dart';
 import '../../core/qr_checkin_page.dart';
 import '../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
+import '../../core/semua_balita_page.dart';
 import '../auth/auth_provider.dart';
 import 'pendataan/kader_pendataan_page.dart';
 import 'riwayat/kader_riwayat_page.dart';
@@ -96,6 +97,13 @@ class _KaderHomeState extends State<KaderHome> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const KaderVaksinPage()),
+    );
+  }
+
+  void _bukaBalita() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SemuaBalitaPage(prefix: '/kader')),
     );
   }
 
@@ -508,9 +516,8 @@ class _KaderHomeState extends State<KaderHome> {
           const Color(0xFF1D6FD6), _bukaQr),
       (Icons.calendar_view_week_rounded, 'Ukur Data\nBB TB LiLA',
           const Color(0xFFE3F8EE), const Color(0xFF0B6B55), _bukaAntrean),
-      (Icons.person_add_alt_1_outlined, 'Daftar\nBalita Baru',
-          const Color(0xFFFFF4D9), const Color(0xFFEA580C),
-          () => soon(context, 'Pendataan balita baru')),
+      (Icons.child_care, 'Semua\nBalita',
+          const Color(0xFFFFF4D9), const Color(0xFFEA580C), _bukaBalita),
       (Icons.history, 'Riwayat\nPemeriksaan', const Color(0xFFE0F7F4),
           const Color(0xFF0E8F7E), _bukaRiwayat),
     ];

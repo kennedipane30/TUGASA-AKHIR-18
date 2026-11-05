@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../service/kbm_model.dart';
 import '../../../service/vaksin_service.dart';
 import '../vaksin/bidan_vaksin_anak_page.dart';
 
@@ -680,6 +681,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
 
     final peringatan =
         ukur['peringatan_validasi']?.toString() ?? '';
+    final penilaian = PenilaianTimbang.dari(d['penilaian']);
     final anakId = anak['id']?.toString() ?? '';
     final nama = anak['nama']?.toString() ?? '-';
 
@@ -735,6 +737,10 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                   ),
                 ],
               ),
+              if (penilaian != null) ...[
+                const SizedBox(height: 10),
+                KotakPenilaian(p: penilaian),
+              ],
               if (prev != null) ...[
                 const SizedBox(height: 8),
                 Text(

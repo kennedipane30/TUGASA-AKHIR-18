@@ -20,6 +20,7 @@ func AllModels() []any {
 		&KoreksiPengukuran{},
 		&VerifikasiPengukuran{},
 		&StatusGizi{},
+		&PenilaianTimbang{},
 		&PemeriksaanBidan{},
 		&StandarAntropometri{},
 		&JenisVaksin{},

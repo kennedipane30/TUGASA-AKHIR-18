@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../../core/posyandu.dart';
+import '../../core/semua_balita_page.dart';
 import '../auth/auth_provider.dart';
 import 'riwayat/bidan_riwayat_page.dart';
 
@@ -50,6 +51,15 @@ class BidanHome extends StatefulWidget {
 
 class _BidanHomeState extends State<BidanHome> {
   final int _menunggu = 12;
+
+  void _bukaBalita() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const SemuaBalitaPage(prefix: '/bidan', bisaKelolaVaksin: true),
+      ),
+    );
+  }
 
   void _bukaRiwayat() {
     Navigator.push(
@@ -273,6 +283,8 @@ class _BidanHomeState extends State<BidanHome> {
       _Menu(Icons.warning_amber_rounded, 'Deteksi Dini', 'Stunting & Gizi',
           _merahMuda, _merah, 10, _merah,
           () => soon(context, 'Daftar prioritas anak berisiko')),
+      _Menu(Icons.child_care, 'Semua Balita', 'Data, gizi & vaksin', _hijauMuda,
+          _hijauTeks, null, _hijauTeks, _bukaBalita),
       _Menu(Icons.balance_outlined, 'Antropometri', 'Validasi BB/TB', _biruMuda,
           _biru, 12, _biru, () => soon(context, 'Daftar verifikasi per sesi')),
       _Menu(Icons.science_outlined, 'Imunisasi', '8 Terjadwal', _hijauMuda,

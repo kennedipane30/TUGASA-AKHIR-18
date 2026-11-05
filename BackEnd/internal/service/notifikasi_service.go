@@ -171,6 +171,18 @@ func (s *NotifikasiService) kirimKeRole(
 		log.Printf("notifikasi: gagal mengambil penerima: %v", err)
 		return
 	}
+	jid := j.ID
+	s.kirimKeUser(users, jenis, kunci, "jadwal_posyandu", &jid, pengirim, pesan)
+}
+
+// kirimKeUser: simpan notifikasi untuk setiap pengguna (sekali per kunci) lalu kirim push.
+func (s *NotifikasiService) kirimKeUser(
+	users []models.User,
+	jenis, kunci, objekTabel string,
+	objekID *uuid.UUID,
+	pengirim *uint,
+	pesan func(role models.Role) (string, string),
+) {
 	now := time.Now()
 	baru := make([]models.Notifikasi, 0, len(users))
 	for _, u := range users {
@@ -178,15 +190,14 @@ func (s *NotifikasiService) kirimKeRole(
 		if judul == "" {
 			continue
 		}
-		jid := j.ID
 		n := models.Notifikasi{
 			UserID:      u.ID,
 			Kunci:       kunci,
 			Jenis:       jenis,
 			Judul:       notifPotong(judul, 150),
 			Isi:         isi,
-			ObjekTabel:  "jadwal_posyandu",
-			ObjekID:     &jid,
+			ObjekTabel:  objekTabel,
+			ObjekID:     objekID,
 			DikirimOleh: pengirim,
 			DikirimPada: &now,
 			Version:     1,
@@ -231,7 +242,12 @@ func (s *NotifikasiService) kirimPush(list []models.Notifikasi) {
 		}
 		if n.ObjekID != nil {
 			data["objek_id"] = n.ObjekID.String()
-			data["jadwal_id"] = n.ObjekID.String()
+			switch n.ObjekTabel {
+			case "jadwal_posyandu":
+				data["jadwal_id"] = n.ObjekID.String()
+			case "anak":
+				data["anak_id"] = n.ObjekID.String()
+			}
 		}
 		err := s.push.Kirim(p.TokenFCM, n.Judul, n.Isi, data)
 		switch {
@@ -328,6 +344,74 @@ func (s *NotifikasiService) JadwalDibatalkan(jadwalID uuid.UUID, pengirim uint) 
 		}
 		return "Jadwal Posyandu Dibatalkan", isi
 	})
+}
+
+// ---------------------------------------------------------------- peringatan penimbangan
+
+// PeringatanTimbang: dipanggil setelah pengukuran dinilai 2T atau BGM.
+// Dikirim sekali per pengukuran ke bidan posyandu anak tersebut dan orang tuanya.
+func (s *NotifikasiService) PeringatanTimbang(anak *models.Anak, p *models.PenilaianTimbang, pengirim *uint) {
+	defer s.pulih("peringatan timbang")
+	if anak == nil || p == nil || !(p.DuaT || p.Bgm) {
+		return
+	}
+	pos, err := s.repo.PosyanduAnak(anak.ID)
+	if err != nil {
+		log.Printf("notifikasi: posyandu anak %s tidak ditemukan: %v", anak.ID, err)
+		return
+	}
+	// hanya bidan di posyandu anak tersebut (kader tidak menerima)
+	bidan, err := s.repo.Penerima(pos, []string{string(models.RoleBidan)})
+	if err != nil {
+		log.Printf("notifikasi: gagal mengambil bidan: %v", err)
+		return
+	}
+	ortu, err := s.repo.OrangTuaAnak(anak.ID)
+	if err != nil {
+		log.Printf("notifikasi: gagal mengambil orang tua: %v", err)
+	}
+	penerima := append(bidan, ortu...)
+	if len(penerima) == 0 {
+		return
+	}
+
+	nama := strings.TrimSpace(anak.Nama)
+	usia := usiaTeks(anak.TanggalLahir, p.TanggalUkur)
+	bb := fmt.Sprintf("%.1f kg", p.BbKg)
+	rincianNaik := ""
+	if p.KenaikanGram != nil && p.KbmGram != nil {
+		rincianNaik = fmt.Sprintf(" Perubahan BB %+d g, minimal kenaikan %d g.", *p.KenaikanGram, *p.KbmGram)
+	}
+
+	var masalahPetugas, masalahOrtu []string
+	if p.DuaT {
+		masalahPetugas = append(masalahPetugas, "tidak naik berat badan 2 bulan berturut-turut (2T)")
+		masalahOrtu = append(masalahOrtu, "belum naik sesuai standar selama 2 bulan berturut-turut")
+	}
+	if p.Bgm {
+		masalahPetugas = append(masalahPetugas, "berada di bawah garis merah (BGM)")
+		masalahOrtu = append(masalahOrtu, "masih di bawah batas yang dianjurkan untuk usianya")
+	}
+	label := "2T"
+	if p.DuaT && p.Bgm {
+		label = "2T dan BGM"
+	} else if p.Bgm {
+		label = "BGM"
+	}
+
+	aid := anak.ID
+	kunci := fmt.Sprintf("%s:%s", models.NotifPeringatanTimbang, p.PengukuranID)
+	s.kirimKeUser(penerima, models.NotifPeringatanTimbang, kunci, "anak", &aid, pengirim,
+		func(role models.Role) (string, string) {
+			if role == models.RoleOrangTua {
+				return fmt.Sprintf("Perhatian Pertumbuhan %s", nama), fmt.Sprintf(
+					"Berat badan %s %s. Silakan konsultasikan dengan bidan di posyandu atau puskesmas agar mendapat saran gizi yang tepat.",
+					nama, strings.Join(masalahOrtu, " dan "))
+			}
+			return fmt.Sprintf("Peringatan %s: %s", label, nama), fmt.Sprintf(
+				"%s (%s) %s. BB %s.%s Perlu pemeriksaan bidan dan pertimbangan rujukan ke puskesmas.",
+				nama, usia, strings.Join(masalahPetugas, " dan "), bb, rincianNaik)
+		})
 }
 
 // ---------------------------------------------------------------- pengingat otomatis

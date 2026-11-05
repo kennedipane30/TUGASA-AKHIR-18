@@ -138,10 +138,24 @@ class _Titik {
   final String caraUkur;
   final String usiaTeks;
   final Map<String, dynamic>? gizi; // status_gizi dari server
+  final Map<String, dynamic>? nilai; // penilaian N/T (KBM) dari server
 
   _Titik(this.bulan, this.bulanPenuh, this.tanggal, this.lk, this.bb, this.tb,
-      this.tbKoreksi, this.caraUkur, this.usiaTeks, this.gizi);
+      this.tbKoreksi, this.caraUkur, this.usiaTeks, this.gizi, [this.nilai]);
+
+  String get statusNT => (nilai?['status'] ?? '').toString();
+  bool get duaT => nilai?['dua_t'] == true;
+  bool get bgm => nilai?['bgm'] == true;
 }
+
+/// Teks dan warna status penimbangan untuk orang tua.
+(String, Color, Color) _gayaNT(String s) => switch (s) {
+      'N' => ('Naik sesuai standar', _hijauTua, _hijauMuda),
+      'T' => ('Belum naik sesuai standar', const Color(0xFFDC2626), const Color(0xFFFFE4E6)),
+      'O' => ('Bulan lalu tidak ditimbang', const Color(0xFF1D4ED8), const Color(0xFFE0EAFF)),
+      'B' => ('Penimbangan pertama', const Color(0xFF1D4ED8), const Color(0xFFE0EAFF)),
+      _ => ('', _teksAbu, AppColors.isiField),
+    };
 
 class _AnakGrafik {
   final String id;
@@ -331,8 +345,11 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
           final tbKoreksi = _d(gizi?['tb_koreksi_cm']) ??
               (tb == null ? null : koreksiPanjang(tb, penuh, cara));
 
+          final nilai = e['penilaian'] is Map
+              ? Map<String, dynamic>.from(e['penilaian'] as Map)
+              : null;
           titik.add(_Titik(bulan, penuh, tgl, _d(u['lingkar_kepala_cm']),
-              _d(u['bb_kg']), tb, tbKoreksi, cara, usiaTeks, gizi));
+              _d(u['bb_kg']), tb, tbKoreksi, cara, usiaTeks, gizi, nilai));
         }
 
         titik.sort((x, y) => x.bulan.compareTo(y.bulan));
@@ -761,6 +778,9 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                     titik: [
                       for (final t in titikData) Offset(m.x(t)!, m.y(t)!),
                     ],
+                    label: [
+                      for (final t in titikData) m.jenis == _Jenis.bb ? t.statusNT : '',
+                    ],
                     aksen: aksen,
                   ),
                 ),
@@ -857,6 +877,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   ],
                 ),
               ),
+            if (m.jenis == _Jenis.bb && titikData.isNotEmpty && titikData.last.statusNT.isNotEmpty)
+              _kotakNT(titikData.last, a.nama),
             if (titikData.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
@@ -989,6 +1011,87 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
     ];
   }
 
+  /// Kenaikan berat badan terakhir (N/T) dan saran bila 2T atau BGM.
+  Widget _kotakNT(_Titik t, String nama) {
+    final (teks, fg, bg) = _gayaNT(t.statusNT);
+    final naik = int.tryParse(t.nilai?['kenaikan_gram']?.toString() ?? '');
+    final kbm = int.tryParse(t.nilai?['kbm_gram']?.toString() ?? '');
+    final rincian = (naik != null && kbm != null)
+        ? 'Berat badan ${naik >= 0 ? 'naik' : 'turun'} ${naik.abs()} gram dari bulan lalu. '
+            'Kenaikan minimal untuk usia ini $kbm gram.'
+        : (t.statusNT == 'O'
+            ? 'Kenaikan berat badan dinilai bila anak ditimbang setiap bulan.'
+            : (t.statusNT == 'B' ? 'Kenaikan berat badan dinilai mulai penimbangan berikutnya.' : ''));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
+                child: Text(
+                  t.statusNT,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Kenaikan berat badan: $teks',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: fg)),
+                    if (rincian.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(rincian, style: const TextStyle(fontSize: 11.5, height: 1.4, color: _teksGelap)),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (t.duaT || t.bgm)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFE4E6),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFFECACA)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.warning_amber_rounded, size: 18, color: Color(0xFFDC2626)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    [
+                      if (t.duaT) 'Berat badan $nama belum naik sesuai standar selama 2 bulan berturut-turut.',
+                      if (t.bgm) 'Berat badan $nama masih di bawah batas yang dianjurkan untuk usianya.',
+                      'Silakan konsultasikan dengan bidan di posyandu atau puskesmas agar mendapat saran gizi yang tepat.',
+                    ].join(' '),
+                    style: const TextStyle(fontSize: 11.5, height: 1.45, color: Color(0xFF991B1B)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _barisRiwayat(_Titik t, bool laki) {
     final g = t.gizi;
     var kategoriTb = (g?['kategori_tbu'] ?? '').toString();
@@ -1055,12 +1158,16 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
               _kecil('TB', t.tb, 'cm', _teksAbu),
             ],
           ),
-          if (kategoriTb.isNotEmpty || kategoriBb.isNotEmpty) ...[
+          if (kategoriTb.isNotEmpty || kategoriBb.isNotEmpty || t.statusNT.isNotEmpty) ...[
             const SizedBox(height: 10),
             Wrap(
               spacing: 6,
               runSpacing: 6,
               children: [
+                if (t.statusNT.isNotEmpty)
+                  _chip('${t.statusNT} · ${_gayaNT(t.statusNT).$1}', _gayaNT(t.statusNT).$3, _gayaNT(t.statusNT).$2),
+                if (t.duaT) _chip('2T', const Color(0xFFFFE4E6), const Color(0xFFDC2626)),
+                if (t.bgm) _chip('BGM', const Color(0xFFFFE4E6), const Color(0xFFDC2626)),
                 if (kategoriTb.isNotEmpty) _chip('TB/U: $kategoriTb', bg, fg),
                 if (kategoriBb.isNotEmpty) _chip('BB/TB: $kategoriBb', bg, fg),
               ],
@@ -1162,6 +1269,7 @@ class _KurvaPainter extends CustomPainter {
   final double xMin;
   final double xMax;
   final List<Offset> titik; // dx = umur (bulan) atau panjang (cm), dy = nilai
+  final List<String> label; // status N/T/O/B per titik (kosong = tanpa label)
   final Color aksen;
 
   _KurvaPainter({
@@ -1171,6 +1279,7 @@ class _KurvaPainter extends CustomPainter {
     required this.xMin,
     required this.xMax,
     required this.titik,
+    this.label = const [],
     required this.aksen,
   });
 
@@ -1344,26 +1453,40 @@ class _KurvaPainter extends CustomPainter {
       ..strokeWidth = 2.6
       ..strokeCap = StrokeCap.round;
 
-    final urut = [...titik]..sort((p, q) => p.dx.compareTo(q.dx));
+    final indeks = List<int>.generate(titik.length, (i) => i)
+      ..sort((p, q) => titik[p].dx.compareTo(titik[q].dx));
     final jalur = Path();
-    for (var i = 0; i < urut.length; i++) {
-      final o = Offset(px(urut[i].dx), py(urut[i].dy));
+    for (var i = 0; i < indeks.length; i++) {
+      final t = titik[indeks[i]];
+      final o = Offset(px(t.dx), py(t.dy));
       i == 0 ? jalur.moveTo(o.dx, o.dy) : jalur.lineTo(o.dx, o.dy);
     }
     canvas.drawPath(jalur, garis);
 
-    for (final t in urut) {
+    for (final i in indeks) {
+      final t = titik[i];
       final o = Offset(px(t.dx), py(t.dy));
       canvas.drawCircle(o, 7, Paint()..color = aksen.withOpacity(0.2));
       canvas.drawCircle(o, 5.5, Paint()..color = Colors.white);
       canvas.drawCircle(o, 4, Paint()..color = aksen);
       _teks(canvas, _fmt(t.dy), Offset(o.dx + 14, o.dy - 10), fs: 9, col: aksen);
+      final s = i < label.length ? label[i] : '';
+      if (s.isNotEmpty) {
+        final warna = switch (s) {
+          'N' => const Color(0xFF15803D),
+          'T' => const Color(0xFFDC2626),
+          _ => const Color(0xFF1D4ED8),
+        };
+        canvas.drawCircle(Offset(o.dx, o.dy + 15), 7, Paint()..color = warna);
+        _teks(canvas, s, Offset(o.dx, o.dy + 15), fs: 8.5, col: Colors.white);
+      }
     }
   }
 
   @override
   bool shouldRepaint(covariant _KurvaPainter old) =>
       old.titik != titik ||
+      old.label != label ||
       old.laki != laki ||
       old.xMin != xMin ||
       old.xMax != xMax ||
