@@ -319,3 +319,134 @@ func (s *BalitaService) Detail(pos string, anakID uuid.UUID) (*DetailBalitaResp,
 	}
 	return out, nil
 }
+
+// ============================================================================
+// DAFTAR ANAK BERISIKO (deteksi dini, untuk bidan)
+//
+// Berdasarkan penimbangan terakhir setiap balita aktif:
+//   Risiko tinggi : gizi buruk (BB/TB < -3 SD), BGM (BB/U < -3 SD), 2T,
+//                   sangat pendek (TB/U < -3 SD)
+//   Risiko sedang : gizi kurang (BB/TB < -2 SD), pendek (TB/U < -2 SD),
+//                   BB kurang (BB/U < -2 SD), tidak naik (T) bulan ini,
+//                   gizi lebih / obesitas (BB/TB > +2 SD)
+// Diurutkan dari skor risiko tertinggi.
+// ============================================================================
+
+type AnakBerisiko struct {
+	BalitaItem
+	Alasan  []string `json:"alasan"`
+	Skor    int      `json:"skor"`
+	Tingkat string   `json:"tingkat"` // tinggi | sedang
+}
+
+type RingkasBerisiko struct {
+	Total     int `json:"total"`
+	Tinggi    int `json:"tinggi"`
+	Sedang    int `json:"sedang"`
+	DuaT      int `json:"dua_t"`
+	Bgm       int `json:"bgm"`
+	GiziBuruk int `json:"gizi_buruk"`
+	Wasting   int `json:"wasting"`
+	Stunting  int `json:"stunting"`
+}
+
+type DaftarBerisikoResp struct {
+	Posyandu string          `json:"posyandu"`
+	Ringkas  RingkasBerisiko `json:"ringkas"`
+	Anak     []AnakBerisiko  `json:"anak"`
+}
+
+// nilaiRisiko: alasan dan skor risiko dari penimbangan terakhir.
+func nilaiRisiko(t *TimbangRingkas) ([]string, int, bool) {
+	alasan := []string{}
+	skor := 0
+	tinggi := false
+	tambah := func(a string, s int, t bool) {
+		alasan = append(alasan, a)
+		skor += s
+		if t {
+			tinggi = true
+		}
+	}
+	if t.DuaT {
+		tambah("2T (tidak naik 2 bulan berturut-turut)", 8, true)
+	} else if t.StatusTimbang == models.StatusTimbangTidakNaik {
+		tambah("Tidak naik (T) bulan ini", 2, false)
+	}
+	if t.Bgm {
+		tambah("BGM (di bawah garis merah)", 8, true)
+	}
+	for _, m := range t.Masalah {
+		switch m {
+		case "Gizi buruk":
+			tambah("Gizi buruk", 10, true)
+		case "Gizi kurang":
+			tambah("Gizi kurang (wasting)", 5, false)
+		case "Sangat pendek":
+			tambah("Sangat pendek (stunting berat)", 6, true)
+		case "Pendek":
+			tambah("Pendek (stunting)", 4, false)
+		case "BB sangat kurang":
+			if !t.Bgm {
+				tambah("BB sangat kurang", 6, true)
+			}
+		case "BB kurang":
+			tambah("BB kurang", 2, false)
+		case "Obesitas", "Gizi lebih":
+			tambah(m, 3, false)
+		}
+	}
+	return alasan, skor, tinggi
+}
+
+// Berisiko: balita aktif di posyandu [pos] dengan risiko gizi/pertumbuhan.
+func (s *BalitaService) Berisiko(pos string) (*DaftarBerisikoResp, error) {
+	daftar, err := s.Daftar(pos, "", false)
+	if err != nil {
+		return nil, err
+	}
+	out := &DaftarBerisikoResp{Posyandu: pos, Anak: []AnakBerisiko{}}
+	r := &out.Ringkas
+	for _, b := range daftar.Balita {
+		if b.Terakhir == nil {
+			continue
+		}
+		alasan, skor, tinggi := nilaiRisiko(b.Terakhir)
+		if skor == 0 {
+			continue
+		}
+		it := AnakBerisiko{BalitaItem: b, Alasan: alasan, Skor: skor, Tingkat: "sedang"}
+		if tinggi {
+			it.Tingkat = "tinggi"
+			r.Tinggi++
+		} else {
+			r.Sedang++
+		}
+		r.Total++
+		if b.Terakhir.DuaT {
+			r.DuaT++
+		}
+		if b.Terakhir.Bgm {
+			r.Bgm++
+		}
+		for _, m := range b.Terakhir.Masalah {
+			switch m {
+			case "Gizi buruk":
+				r.GiziBuruk++
+				r.Wasting++
+			case "Gizi kurang":
+				r.Wasting++
+			case "Pendek", "Sangat pendek":
+				r.Stunting++
+			}
+		}
+		out.Anak = append(out.Anak, it)
+	}
+	sort.SliceStable(out.Anak, func(i, j int) bool {
+		if out.Anak[i].Skor != out.Anak[j].Skor {
+			return out.Anak[i].Skor > out.Anak[j].Skor
+		}
+		return out.Anak[i].Nama < out.Anak[j].Nama
+	})
+	return out, nil
+}

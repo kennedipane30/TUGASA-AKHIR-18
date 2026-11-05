@@ -159,6 +159,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	bidan.POST("/vaksin/riwayat", vaksinH.CatatRiwayat)
 	bidan.DELETE("/vaksin/riwayat/:id", vaksinH.HapusRiwayat)
 	bidan.GET("/balita", balitaH.Daftar)
+	bidan.GET("/balita-berisiko", balitaH.Berisiko)
 	bidan.GET("/balita/:anak_id", balitaH.Detail)
 
 	return r

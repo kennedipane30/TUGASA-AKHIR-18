@@ -246,6 +246,69 @@ class DetailBalita {
       );
 }
 
+class AnakBerisiko {
+  final BalitaItem balita;
+  final List<String> alasan;
+  final int skor;
+  final String tingkat; // tinggi | sedang
+
+  const AnakBerisiko({required this.balita, required this.alasan, required this.skor, required this.tingkat});
+
+  factory AnakBerisiko.fromJson(Map<String, dynamic> j) => AnakBerisiko(
+        balita: BalitaItem.fromJson(j),
+        alasan: _ls(j['alasan']),
+        skor: _i(j['skor']),
+        tingkat: _s(j['tingkat']),
+      );
+
+  bool get tinggi => tingkat == 'tinggi';
+}
+
+class RingkasBerisiko {
+  final int total;
+  final int tinggi;
+  final int sedang;
+  final int duaT;
+  final int bgm;
+  final int giziBuruk;
+  final int wasting;
+  final int stunting;
+
+  const RingkasBerisiko({
+    required this.total,
+    required this.tinggi,
+    required this.sedang,
+    required this.duaT,
+    required this.bgm,
+    required this.giziBuruk,
+    required this.wasting,
+    required this.stunting,
+  });
+
+  factory RingkasBerisiko.fromJson(Map<String, dynamic> j) => RingkasBerisiko(
+        total: _i(j['total']),
+        tinggi: _i(j['tinggi']),
+        sedang: _i(j['sedang']),
+        duaT: _i(j['dua_t']),
+        bgm: _i(j['bgm']),
+        giziBuruk: _i(j['gizi_buruk']),
+        wasting: _i(j['wasting']),
+        stunting: _i(j['stunting']),
+      );
+}
+
+class DaftarBerisiko {
+  final RingkasBerisiko ringkas;
+  final List<AnakBerisiko> anak;
+
+  const DaftarBerisiko({required this.ringkas, required this.anak});
+
+  factory DaftarBerisiko.fromJson(Map<String, dynamic> j) => DaftarBerisiko(
+        ringkas: RingkasBerisiko.fromJson(_m(j['ringkas'])),
+        anak: _l(j['anak']).map(AnakBerisiko.fromJson).toList(),
+      );
+}
+
 // ============================================================================
 // SERVICE
 // ============================================================================
@@ -279,6 +342,19 @@ class BalitaService {
         options: Options(receiveTimeout: const Duration(seconds: 20)),
       );
       return DaftarBalita.fromJson(_data(res.data));
+    } on DioException catch (e) {
+      throw Exception(_pesanError(e));
+    }
+  }
+
+  /// Bidan: daftar anak berisiko (deteksi dini), urut dari risiko tertinggi.
+  Future<DaftarBerisiko> berisiko() async {
+    try {
+      final res = await ApiClient.dio.get(
+        '$prefix/balita-berisiko',
+        options: Options(receiveTimeout: const Duration(seconds: 20)),
+      );
+      return DaftarBerisiko.fromJson(_data(res.data));
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }

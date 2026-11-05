@@ -48,3 +48,17 @@ func (h *BalitaHandler) Detail(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
+
+// GET /bidan/balita-berisiko : daftar anak berisiko (deteksi dini) di posyandu bidan.
+func (h *BalitaHandler) Berisiko(c *gin.Context) {
+	pos, ok := posyanduCtx(c)
+	if !ok {
+		return
+	}
+	data, err := h.svc.Berisiko(pos)
+	if err != nil {
+		tulisError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": data})
+}

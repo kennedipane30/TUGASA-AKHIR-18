@@ -5,7 +5,9 @@ import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../../core/posyandu.dart';
 import '../../core/semua_balita_page.dart';
+import '../../service/balita_service.dart';
 import '../auth/auth_provider.dart';
+import 'balita/balita_berisiko_page.dart';
 import 'riwayat/bidan_riwayat_page.dart';
 
 // Warna tampilan
@@ -51,6 +53,29 @@ class BidanHome extends StatefulWidget {
 
 class _BidanHomeState extends State<BidanHome> {
   final int _menunggu = 12;
+  int? _berisiko;
+
+  @override
+  void initState() {
+    super.initState();
+    _muatBerisiko();
+  }
+
+  Future<void> _muatBerisiko() async {
+    try {
+      final d = await const BalitaService('/bidan').berisiko();
+      if (!mounted) return;
+      setState(() => _berisiko = d.ringkas.total);
+    } catch (_) {}
+  }
+
+  Future<void> _bukaBerisiko() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const BalitaBerisikoPage()),
+    );
+    _muatBerisiko();
+  }
 
   void _bukaBalita() {
     Navigator.push(
@@ -280,9 +305,9 @@ class _BidanHomeState extends State<BidanHome> {
 
   Widget _menuGrid() {
     final menu = <_Menu>[
-      _Menu(Icons.warning_amber_rounded, 'Deteksi Dini', 'Stunting & Gizi',
-          _merahMuda, _merah, 10, _merah,
-          () => soon(context, 'Daftar prioritas anak berisiko')),
+      _Menu(Icons.warning_amber_rounded, 'Deteksi Dini', 'Anak berisiko',
+          _merahMuda, _merah, (_berisiko ?? 0) > 0 ? _berisiko : null, _merah,
+          _bukaBerisiko),
       _Menu(Icons.child_care, 'Semua Balita', 'Data, gizi & vaksin', _hijauMuda,
           _hijauTeks, null, _hijauTeks, _bukaBalita),
       _Menu(Icons.balance_outlined, 'Antropometri', 'Validasi BB/TB', _biruMuda,
