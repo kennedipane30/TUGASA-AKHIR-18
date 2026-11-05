@@ -414,6 +414,107 @@ func (s *NotifikasiService) PeringatanTimbang(anak *models.Anak, p *models.Penil
 		})
 }
 
+// ---------------------------------------------------------------- hasil penimbangan
+
+func notifTeksKg(v float64) string {
+	return strings.Replace(fmt.Sprintf("%.1f", v), ".", ",", 1) + " kg"
+}
+
+// notifLabelBbu: kategori BB/U sesuai Permenkes No. 2 Tahun 2020.
+func notifLabelBbu(z *float64) string {
+	if z == nil {
+		return ""
+	}
+	switch {
+	case *z < -3:
+		return "berat badan sangat kurang"
+	case *z < -2:
+		return "berat badan kurang"
+	case *z <= 1:
+		return "berat badan normal"
+	default:
+		return "berisiko berat badan lebih"
+	}
+}
+
+// HasilTimbang: dipanggil setiap kader menyimpan pengukuran yang BUKAN 2T/BGM.
+// Dikirim ke orang tua anak, sekali per versi pengukuran (koreksi kader = notifikasi baru).
+func (s *NotifikasiService) HasilTimbang(anak *models.Anak, p *models.PenilaianTimbang, versi int, pengirim *uint) {
+	defer s.pulih("hasil timbang")
+	if anak == nil || p == nil {
+		return
+	}
+	ortu, err := s.repo.OrangTuaAnak(anak.ID)
+	if err != nil {
+		log.Printf("notifikasi: gagal mengambil orang tua anak %s: %v", anak.ID, err)
+		return
+	}
+	if len(ortu) == 0 {
+		log.Printf("notifikasi: anak %s belum terhubung ke akun orang tua", anak.ID)
+		return
+	}
+
+	nama := strings.TrimSpace(anak.Nama)
+	bb := notifTeksKg(p.BbKg)
+	status := ""
+	if l := notifLabelBbu(p.ZBbu); l != "" {
+		status = fmt.Sprintf(" Status: %s untuk usianya.", l)
+	}
+
+	var judul, isi string
+	switch p.Status {
+	case models.StatusTimbangBaru:
+		judul = fmt.Sprintf("Hasil Penimbangan %s", nama)
+		isi = fmt.Sprintf(
+			"Berat badan %s hari ini %s.%s Ini penimbangan pertama, kenaikan berat badan akan dinilai pada penimbangan bulan depan.",
+			nama, bb, status)
+
+	case models.StatusTimbangNaik:
+		naik := 0
+		if p.KenaikanGram != nil {
+			naik = *p.KenaikanGram
+		}
+		judul = fmt.Sprintf("Berat Badan %s Naik", nama)
+		isi = fmt.Sprintf(
+			"Berat badan %s hari ini %s, naik %d gram dari bulan lalu.%s Pertahankan ASI dan pola makannya, ya!",
+			nama, bb, naik, status)
+
+	case models.StatusTimbangTidakNaik:
+		perubahan := "tidak berubah"
+		if p.KenaikanGram != nil {
+			switch g := *p.KenaikanGram; {
+			case g < 0:
+				perubahan = fmt.Sprintf("turun %d gram", -g)
+			case g > 0:
+				perubahan = fmt.Sprintf("hanya naik %d gram", g)
+			}
+		}
+		minimal := ""
+		if p.KbmGram != nil {
+			minimal = fmt.Sprintf(" (seharusnya naik minimal %d gram)", *p.KbmGram)
+		}
+		judul = fmt.Sprintf("Berat Badan %s Belum Naik", nama)
+		isi = fmt.Sprintf(
+			"Berat badan %s hari ini %s, %s dari bulan lalu%s.%s Silakan konsultasikan dengan bidan atau kader posyandu.",
+			nama, bb, perubahan, minimal, status)
+
+	default:
+		judul = fmt.Sprintf("Hasil Penimbangan %s", nama)
+		isi = fmt.Sprintf("Berat badan %s hari ini %s.%s", nama, bb, status)
+		if p.SelisihBulan != nil && *p.SelisihBulan > 1 {
+			isi += " Kenaikan berat badan belum dapat dinilai karena bulan lalu tidak ditimbang. Usahakan datang ke posyandu setiap bulan, ya."
+		}
+	}
+	if versi > 1 {
+		judul = "Diperbarui: " + judul
+	}
+
+	aid := anak.ID
+	kunci := fmt.Sprintf("%s:%s:v%d", models.NotifHasilTimbang, p.PengukuranID, versi)
+	s.kirimKeUser(ortu, models.NotifHasilTimbang, kunci, "anak", &aid, pengirim,
+		func(role models.Role) (string, string) { return judul, isi })
+}
+
 // ---------------------------------------------------------------- pengingat otomatis
 
 // JalankanPengingat: diperiksa setiap menit selama server berjalan.

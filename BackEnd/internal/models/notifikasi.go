@@ -17,6 +17,9 @@ const (
 	// NotifPeringatanTimbang: anak 2T (tidak naik 2 bulan berturut-turut) atau BGM
 	// (bawah garis merah); dikirim ke bidan posyandu anak dan orang tuanya.
 	NotifPeringatanTimbang = "peringatan_timbang"
+
+	// NotifHasilTimbang: hasil setiap penimbangan untuk orang tua (selain kasus 2T/BGM).
+	NotifHasilTimbang = "hasil_timbang"
 )
 
 // Notifikasi: Notifikasi dan pengingat per pengguna beserta status baca.

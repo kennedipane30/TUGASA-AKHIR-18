@@ -877,8 +877,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   ],
                 ),
               ),
-            if (m.jenis == _Jenis.bb && titikData.isNotEmpty && titikData.last.statusNT.isNotEmpty)
-              _kotakNT(titikData.last, a.nama),
+            if (m.jenis == _Jenis.bb && titikData.isNotEmpty)
+              _kotakNT(titikData.last, _sebelum(a, titikData.last), a.nama),
             if (titikData.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
@@ -1011,17 +1011,97 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
     ];
   }
 
-  /// Kenaikan berat badan terakhir (N/T) dan saran bila 2T atau BGM.
-  Widget _kotakNT(_Titik t, String nama) {
-    final (teks, fg, bg) = _gayaNT(t.statusNT);
-    final naik = int.tryParse(t.nilai?['kenaikan_gram']?.toString() ?? '');
-    final kbm = int.tryParse(t.nilai?['kbm_gram']?.toString() ?? '');
-    final rincian = (naik != null && kbm != null)
-        ? 'Berat badan ${naik >= 0 ? 'naik' : 'turun'} ${naik.abs()} gram dari bulan lalu. '
-            'Kenaikan minimal untuk usia ini $kbm gram.'
-        : (t.statusNT == 'O'
-            ? 'Kenaikan berat badan dinilai bila anak ditimbang setiap bulan.'
-            : (t.statusNT == 'B' ? 'Kenaikan berat badan dinilai mulai penimbangan berikutnya.' : ''));
+  /// Pengukuran tepat sebelum [t] (cadangan bila server belum mengirim data sebelumnya).
+  _Titik? _sebelum(_AnakGrafik a, _Titik t) {
+    final i = a.titik.indexOf(t);
+    for (var j = i - 1; j >= 0; j--) {
+      if (a.titik[j].bb != null) return a.titik[j];
+    }
+    return null;
+  }
+
+  /// Berat dalam kg dengan koma desimal: 2,6 / 3,05.
+  String _kg(double v) {
+    var s = v.toStringAsFixed(2);
+    if (s.endsWith('0')) s = s.substring(0, s.length - 1);
+    return s.replaceAll('.', ',');
+  }
+
+  /// Kenaikan berat badan dibanding pengukuran SEBELUMNYA (bukan pengukuran pertama),
+  /// beserta penilaian N/T dan saran bila 2T atau BGM.
+  Widget _kotakNT(_Titik t, _Titik? prev, String nama) {
+    final n = t.nilai;
+    final status = t.statusNT.isNotEmpty ? t.statusNT : (prev == null ? 'B' : 'O');
+
+    // Data pengukuran sebelumnya: utamakan hasil server, cadangan dari riwayat di aplikasi.
+    final bbSebelum = _d(n?['bb_sebelumnya']) ?? prev?.bb;
+    final tsSebelum = (n?['tanggal_sebelumnya'] ?? '').toString();
+    final tglSebelum = (tsSebelum.length >= 10 ? DateTime.tryParse(tsSebelum.substring(0, 10)) : null) ??
+        prev?.tanggal;
+    final bbSekarang = t.bb;
+    int? naik = int.tryParse(n?['kenaikan_gram']?.toString() ?? '');
+    if (naik == null && bbSebelum != null && bbSekarang != null) {
+      naik = ((bbSekarang - bbSebelum) * 1000).round();
+    }
+    final kbm = int.tryParse(n?['kbm_gram']?.toString() ?? '');
+    final selisihBulan = int.tryParse(n?['selisih_bulan']?.toString() ?? '');
+    final adaSebelum = bbSebelum != null && naik != null && status != 'B';
+    final g = naik ?? 0;
+    final bbLalu = bbSebelum ?? 0;
+
+    // Judul dan warna kotak
+    String judul;
+    Color fg, bg;
+    if (!adaSebelum) {
+      judul = 'Penimbangan pertama';
+      fg = const Color(0xFF1D4ED8);
+      bg = const Color(0xFFE0EAFF);
+    } else if (g > 0) {
+      judul = 'Naik $g gram';
+      if (status == 'T') {
+        fg = const Color(0xFFB45309);
+        bg = AppColors.kuningMuda;
+      } else if (status == 'N') {
+        fg = _hijauTua;
+        bg = _hijauMuda;
+      } else {
+        fg = const Color(0xFF1D4ED8);
+        bg = const Color(0xFFE0EAFF);
+      }
+    } else if (g == 0) {
+      judul = 'Berat badan tetap';
+      fg = const Color(0xFFB45309);
+      bg = AppColors.kuningMuda;
+    } else {
+      judul = 'Turun ${g.abs()} gram';
+      fg = const Color(0xFFDC2626);
+      bg = const Color(0xFFFFE4E6);
+    }
+
+    // Rincian
+    final rincian = <String>[];
+    if (!adaSebelum) {
+      if (bbSekarang != null) rincian.add('Berat badan saat ini ${_kg(bbSekarang)} kg.');
+      rincian.add('Kenaikan berat badan akan dihitung dari penimbangan ini pada kunjungan berikutnya.');
+    } else {
+      final kapan = tglSebelum == null ? '' : ' (${formatTanggal(tglSebelum)})';
+      rincian.add('Dibanding penimbangan sebelumnya$kapan: '
+          '${_kg(bbLalu)} kg → ${bbSekarang == null ? '-' : '${_kg(bbSekarang)} kg'}.');
+      switch (status) {
+        case 'N':
+          if (kbm != null) rincian.add('Sudah memenuhi kenaikan minimal $kbm gram untuk usianya.');
+        case 'T':
+          if (kbm != null) rincian.add('Kenaikan minimal untuk usianya $kbm gram.');
+        case 'O':
+          if (selisihBulan != null && selisihBulan <= 0) {
+            rincian.add('Sudah ditimbang pada bulan yang sama.');
+          } else {
+            rincian.add('Bulan lalu tidak ditimbang, jadi naik/tidak naik sesuai standar belum dapat dinilai. '
+                'Usahakan datang ke posyandu setiap bulan.');
+          }
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1038,22 +1118,30 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 height: 30,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
-                child: Text(
-                  t.statusNT,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
-                ),
+                child: !adaSebelum
+                    ? const Icon(Icons.flag_rounded, color: Colors.white, size: 16)
+                    : Icon(
+                        g > 0
+                            ? Icons.arrow_upward_rounded
+                            : (g == 0 ? Icons.remove_rounded : Icons.arrow_downward_rounded),
+                        color: Colors.white,
+                        size: 18,
+                      ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Kenaikan berat badan: $teks',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: fg)),
-                    if (rincian.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Text(rincian, style: const TextStyle(fontSize: 11.5, height: 1.4, color: _teksGelap)),
+                    Text(judul, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: fg)),
+                    if (adaSebelum && status.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(_gayaNT(status).$1,
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg)),
                     ],
+                    const SizedBox(height: 4),
+                    Text(rincian.join(' '),
+                        style: const TextStyle(fontSize: 11.5, height: 1.45, color: _teksGelap)),
                   ],
                 ),
               ),
