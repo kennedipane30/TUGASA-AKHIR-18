@@ -81,9 +81,13 @@ Color giziBg(Gizi g) => switch (g) {
 const _hijauTua = Color(0xFF0B3D2E);
 const _hijauGelap = Color(0xFF14634A);
 const _hijauAksen = Color(0xFF1F7A5C);
-const _hijauTerang = Color(0xFF2BB59A);
-const _headerTeksTerang = Color(0xFF7FE3C0);
+const _headerTeksTerang = Color(0xFFBFF3DE);
 const _oranye2 = Color(0xFFF97316);
+const _headerAwal = Color(0xFF0E7A55);
+const _headerTengah = Color(0xFF13705F);
+const _headerAkhir = Color(0xFF0F5F5C);
+const _cincinAvatar = Color(0xFF7DD3FC);
+const _isiAvatar = Color(0xFFE6FBF4);
 
 class HomeShell extends StatelessWidget {
   final String peran;
@@ -101,17 +105,6 @@ class HomeShell extends StatelessWidget {
     this.notif = 0,
   });
 
-  Widget _lingkaran(double ukuran, Color warna) {
-    return Container(
-      width: ukuran,
-      height: ukuran,
-      decoration: BoxDecoration(
-        color: warna,
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-
   void _bukaNotifikasi(BuildContext context) {
     Navigator.push(
       context,
@@ -125,51 +118,252 @@ class HomeShell extends StatelessWidget {
     auth.logout();
   }
 
+  /// Inisial dua huruf dari nama, mis. "Sara Rumapea" -> "SR".
+  String _inisial(String nama) {
+    final kata = nama.trim().split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+    if (kata.isEmpty) return '?';
+    if (kata.length == 1) {
+      return kata.first.length >= 2
+          ? kata.first.substring(0, 2).toUpperCase()
+          : kata.first.toUpperCase();
+    }
+    return (kata[0][0] + kata[1][0]).toUpperCase();
+  }
+
+  Widget _tombolBulat({required Widget child}) {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withOpacity(0.14),
+        border: Border.all(color: Colors.white.withOpacity(0.22)),
+      ),
+      alignment: Alignment.center,
+      child: child,
+    );
+  }
+
   Widget _lonceng(BuildContext context) {
     return ValueListenableBuilder<int>(
       valueListenable: NotifikasiService.instance.belumDibaca,
-      builder: (context, jumlah, _) => Stack(
-        clipBehavior: Clip.none,
-        children: [
-          IconButton(
-            tooltip: 'Notifikasi',
-            icon: Icon(
-              jumlah > 0
-                  ? Icons.notifications_active_outlined
-                  : Icons.notifications_none,
-              color: Colors.white,
-            ),
-            onPressed: () => _bukaNotifikasi(context),
-          ),
-          if (jumlah > 0)
-            Positioned(
-              right: 4,
-              top: 4,
-              child: IgnorePointer(
-                child: Container(
-                  constraints: const BoxConstraints(minWidth: 18),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.merah,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white, width: 1.2),
-                  ),
-                  child: Text(
-                    jumlah > 99 ? '99+' : '$jumlah',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+      builder: (context, jumlah, _) => Tooltip(
+        message: jumlah > 0 ? '$jumlah notifikasi belum dibaca' : 'Notifikasi',
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () => _bukaNotifikasi(context),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _tombolBulat(
+                child: const Icon(
+                  Icons.notifications_none_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              if (jumlah > 0)
+                Positioned(
+                  right: 7,
+                  top: 6,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: _oranye2,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.6),
+                      ),
                     ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _avatar(BuildContext context, String nama) {
+    return PopupMenuButton<String>(
+      tooltip: 'Akun',
+      onSelected: (v) {
+        if (v == 'keluar') _keluar(context);
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          enabled: false,
+          child: Text(
+            nama.isEmpty ? 'Pengguna' : nama,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'keluar',
+          child: Text('Keluar'),
+        ),
+      ],
+      child: Container(
+        width: 50,
+        height: 50,
+        padding: const EdgeInsets.all(2.5),
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: _cincinAvatar,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: _isiAvatar,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            _inisial(nama),
+            style: const TextStyle(
+              color: _hijauTua,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _logo() {
+    return Container(
+      width: 54,
+      height: 54,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.22)),
+      ),
+      child: Image.asset(
+        'logo.png',
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => const Icon(
+          Icons.monitor_heart_outlined,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
+    );
+  }
+
+  Widget _header(BuildContext context, String nama) {
+    final topInset = MediaQuery.of(context).padding.top;
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [_headerAwal, _headerTengah, _headerAkhir],
+          stops: [0.0, 0.55, 1.0],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x33064E3B),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
+        child: Stack(
+          children: [
+            // Kilau lembut di kiri atas dan kanan bawah
+            Positioned(
+              left: -60,
+              top: -70,
+              child: Container(
+                width: 220,
+                height: 220,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [Color(0x40A7F3D0), Color(0x00A7F3D0)],
                   ),
                 ),
               ),
             ),
-        ],
+            Positioned(
+              right: -50,
+              bottom: -80,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [Color(0x3367E8F9), Color(0x0067E8F9)],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(18, topInset + 14, 16, 26),
+              child: Row(
+                children: [
+                  _logo(),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Posyandu Care',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 15,
+                              color: _headerTeksTerang,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                lokasi,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: _headerTeksTerang,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  _lonceng(context),
+                  const SizedBox(width: 10),
+                  _avatar(context, nama),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -178,8 +372,6 @@ class HomeShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
     final nama = (user?['nama'] ?? '').toString();
-    final inisial = nama.isNotEmpty ? nama[0].toUpperCase() : '?';
-    final topInset = MediaQuery.of(context).padding.top;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -191,140 +383,7 @@ class HomeShell extends StatelessWidget {
         backgroundColor: AppColors.latar,
         body: Column(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.zero,
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [_hijauTua, _hijauGelap, _hijauAksen],
-                    stops: [0.0, 0.6, 1.0],
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      right: -40,
-                      top: -50,
-                      child: _lingkaran(
-                        170,
-                        Colors.white.withOpacity(0.07),
-                      ),
-                    ),
-                    Positioned(
-                      right: 50,
-                      bottom: -60,
-                      child: _lingkaran(
-                        130,
-                        _hijauTerang.withOpacity(0.18),
-                      ),
-                    ),
-                    Positioned(
-                      left: -35,
-                      bottom: -45,
-                      child: _lingkaran(
-                        110,
-                        Colors.white.withOpacity(0.06),
-                      ),
-                    ),
-                    Positioned(
-                      right: 70,
-                      top: topInset + 8,
-                      child: _lingkaran(
-                        14,
-                        _oranye2.withOpacity(0.55),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        16,
-                        topInset + 12,
-                        8,
-                        22,
-                      ),
-                      child: Row(
-                        children: [
-                          Image.asset(
-                            'logo.png',
-                            width: 46,
-                            height: 46,
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.monitor_heart_outlined,
-                              color: Colors.white,
-                              size: 36,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Posyandu Care',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Text(
-                                  lokasi,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: _headerTeksTerang,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _lonceng(context),
-                          PopupMenuButton<String>(
-                            tooltip: 'Akun',
-                            onSelected: (v) {
-                              if (v == 'keluar') _keluar(context);
-                            },
-                            itemBuilder: (_) => [
-                              PopupMenuItem(
-                                enabled: false,
-                                child: Text(
-                                  nama.isEmpty ? 'Pengguna' : nama,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: 'keluar',
-                                child: Text('Keluar'),
-                              ),
-                            ],
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                              ),
-                              child: CircleAvatar(
-                                radius: 18,
-                                backgroundColor: Colors.white,
-                                child: Text(
-                                  inisial,
-                                  style: const TextStyle(
-                                    color: _hijauGelap,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _header(context, nama),
             Expanded(
               child: SafeArea(
                 top: false,
@@ -333,7 +392,7 @@ class HomeShell extends StatelessWidget {
                   notificationPredicate: (n) => n.depth == 0,
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
                     children: children,
                   ),
                 ),

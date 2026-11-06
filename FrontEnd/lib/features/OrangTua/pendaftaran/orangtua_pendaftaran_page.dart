@@ -144,9 +144,8 @@ String _pesanError(Object e) {
 // KONSTANTA TAMPILAN
 // ---------------------------------------------------------------------------
 const _hijauHeader = Color(0xFF065F46);
-const _hijauTua = Color(0xFF0B3D2E);
-const _hijauGelap = Color(0xFF14634A);
-const _hijauAksen = Color(0xFF1F7A5C);
+const _kartuAwal = Color(0xFF0A6B51); // sedikit lebih terang dari heading
+const _mintLabel = Color(0xFF8CF0CB);
 const _oranye1 = Color(0xFFEA580C);
 const _oranye2 = Color(0xFFF97316);
 
@@ -164,7 +163,6 @@ const _namaBulan = [
   'November',
   'Desember'
 ];
-const _singkatHari = ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'];
 
 String _tglPanjang(DateTime d) =>
     '${d.day} ${_namaBulan[d.month - 1]} ${d.year}';
@@ -372,7 +370,7 @@ class _OrangTuaPendaftaranPageState
                 onRefresh: _muat,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 26, 16, 24),
                   children: [
                     if (_memuat)
                       const Padding(
@@ -403,7 +401,7 @@ class _OrangTuaPendaftaranPageState
                       )
                     else ...[
                       _kartuJadwal(j),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 22),
                       if (j.anak.isEmpty)
                         _kartuPesan(
                           warna: Colors.white,
@@ -492,7 +490,7 @@ class _OrangTuaPendaftaranPageState
   }
 
   // -------------------------------------------------------------------------
-  // KARTU JADWAL (HERO)
+  // KARTU JADWAL (HERO) - warna hijau senada dengan heading
   // -------------------------------------------------------------------------
   Widget _kartuJadwal(JadwalTerdekatData j) {
     final infoTeks = [
@@ -502,17 +500,18 @@ class _OrangTuaPendaftaranPageState
     ].join(' ');
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_hijauTua, _hijauGelap],
+          colors: [_kartuAwal, _hijauHeader],
         ),
         boxShadow: [
           BoxShadow(
-            color: _hijauTua.withOpacity(0.25),
+            color: _hijauHeader.withOpacity(0.25),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -521,120 +520,85 @@ class _OrangTuaPendaftaranPageState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(20),
+          const Text(
+            'TANGGAL & SESI PELAKSANAAN',
+            style: TextStyle(
+              color: _mintLabel,
+              fontSize: 13.5,
+              letterSpacing: 0.6,
+              fontWeight: FontWeight.w800,
             ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _tglPanjang(j.tanggal),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+          IntrinsicHeight(
             child: Row(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+                Expanded(
+                  child: _tileInfo(
+                    Icons.schedule,
+                    'Waktu',
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(text: j.jam),
+                          const TextSpan(
+                            text: ' WIB',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xCCFFFFFF),
+                            ),
+                          ),
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  'Sesi Terdekat • ${_namaBulan[j.tanggal.month - 1]} ${j.tanggal.year}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _tileInfo(
+                    Icons.location_on_outlined,
+                    'Lokasi',
+                    Text(
+                      j.lokasi.isEmpty ? '-' : j.lokasi,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'TANGGAL & SESI PELAKSANAAN',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.65),
-                        fontSize: 9.5,
-                        letterSpacing: 0.6,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _tglPanjang(j.tanggal),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 25,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                width: 48,
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.14),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      _singkatHari[j.tanggal.weekday - 1],
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.75),
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      j.tanggal.day.toString().padLeft(2, '0'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _tileInfo(
-                  Icons.schedule,
-                  'Waktu',
-                  '${j.jam} WIB',
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _tileInfo(
-                  Icons.place_outlined,
-                  'Lokasi',
-                  j.lokasi.isEmpty ? '-' : j.lokasi,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: const LinearGradient(colors: [_oranye1, _oranye2]),
+              color: Colors.white.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withOpacity(0.14)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -643,12 +607,12 @@ class _OrangTuaPendaftaranPageState
                   width: 30,
                   height: 30,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
-                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.14),
+                    borderRadius: BorderRadius.circular(9),
                   ),
                   child: const Icon(
-                    Icons.campaign,
-                    color: Colors.white,
+                    Icons.volume_up_outlined,
+                    color: _mintLabel,
                     size: 17,
                   ),
                 ),
@@ -660,19 +624,19 @@ class _OrangTuaPendaftaranPageState
                       const Text(
                         'INFORMASI PENTING',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
+                          color: _mintLabel,
+                          fontSize: 13.5,
                           letterSpacing: 0.5,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 4),
                       Text(
                         infoTeks,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 11.5,
-                          height: 1.35,
+                          fontSize: 14.5,
+                          height: 1.45,
                         ),
                       ),
                     ],
@@ -686,48 +650,41 @@ class _OrangTuaPendaftaranPageState
     );
   }
 
-  Widget _tileInfo(IconData ikon, String label, String nilai) {
+  Widget _tileInfo(IconData ikon, String label, Widget nilai) {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withOpacity(0.10),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withOpacity(0.14)),
       ),
       child: Row(
         children: [
           Container(
-            width: 30,
-            height: 30,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(9),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(ikon, color: Colors.white, size: 16),
+            child: Icon(ikon, color: _mintLabel, size: 18),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.65),
-                    fontSize: 9.5,
+                  style: const TextStyle(
+                    color: _mintLabel,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Text(
-                  nilai,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+                const SizedBox(height: 1),
+                nilai,
               ],
             ),
           ),
@@ -743,81 +700,65 @@ class _OrangTuaPendaftaranPageState
     return Row(
       children: [
         Container(
-          width: 7,
-          height: 7,
+          width: 8,
+          height: 8,
           decoration: const BoxDecoration(
-            color: _hijauGelap,
+            color: _hijauHeader,
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         const Expanded(
           child: Text(
             'Profil Balita Terpilih',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 17.5,
               fontWeight: FontWeight.w800,
-              color: _hijauTua,
+              color: Color(0xFF111827),
             ),
           ),
         ),
         InkWell(
+          borderRadius: BorderRadius.circular(8),
           onTap: () =>
               _snack('Tambah anak baru dilakukan melalui data keluarga di beranda'),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.add_circle_outline, size: 13, color: _oranye1),
-              SizedBox(width: 3),
-              Text(
-                'Anak Baru',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: _oranye1,
-                ),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Text(
+              '+ Anak Baru',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: _oranye2,
               ),
-            ],
+            ),
           ),
         ),
       ],
     );
   }
 
+  BoxDecoration get _dekorPutih => BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      );
+
   Widget _kartuAnak(JadwalTerdekatData j, AnakStatusJadwal a) {
     final (label, bg, fg) = labelStatusHadir(a.status);
     final banyak = j.anak.length > 1;
 
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6ECE8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+      decoration: _dekorPutih,
       child: Row(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD7F0E3),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.child_care,
-              color: _hijauGelap,
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,27 +768,24 @@ class _OrangTuaPendaftaranPageState
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 15.5,
+                    fontSize: 19,
                     fontWeight: FontWeight.w800,
-                    color: _hijauTua,
+                    color: Color(0xFF111827),
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 3,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: bg,
+                    color: a.status == 'belum_daftar' ? const Color(0xFFEFF2F5) : bg,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                      color: fg,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: a.status == 'belum_daftar' ? const Color(0xFF374151) : fg,
                     ),
                   ),
                 ),
@@ -857,13 +795,15 @@ class _OrangTuaPendaftaranPageState
                     'Nomor antrean #${a.nomorAntrean}',
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 12,
+                      fontSize: 14.5,
+                      color: _hijauHeader,
                     ),
                   ),
                 ],
               ],
             ),
           ),
+          const SizedBox(width: 10),
           InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: _sibuk != null
@@ -876,25 +816,19 @@ class _OrangTuaPendaftaranPageState
                     }
                   },
             child: Container(
-              width: 48,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.isiField,
+                color: const Color(0xFFF5F7FA),
                 borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: const Column(
-                children: [
-                  Icon(Icons.swap_horiz, size: 19, color: _hijauGelap),
-                  SizedBox(height: 2),
-                  Text(
-                    'Ganti',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w700,
-                      color: _hijauGelap,
-                    ),
-                  ),
-                ],
+              child: const Text(
+                'Ganti',
+                style: TextStyle(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1F2937),
+                ),
               ),
             ),
           ),
@@ -908,64 +842,27 @@ class _OrangTuaPendaftaranPageState
   // -------------------------------------------------------------------------
   Widget _kartuPetunjuk() {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF2F0),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: _dekorPutih,
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFDDEEF9),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: const Icon(
-              Icons.qr_code_scanner,
-              color: AppColors.biru,
-              size: 23,
+          Text(
+            'Petunjuk Check-in Mandiri',
+            style: TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
             ),
           ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Petunjuk Check-in Mandiri',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: _hijauTua,
-                  ),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  'Kartu antrean muncul setelah pendaftaran. Scan QR di posyandu untuk check-in, lalu data anak masuk ke antrean pendataan kader.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    height: 1.35,
-                    color: AppColors.teksRedup,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 38,
-            height: 26,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: const Color(0xFFD5DBD8)),
-            ),
-            child: const Icon(
-              Icons.confirmation_number_outlined,
-              size: 15,
-              color: _hijauGelap,
+          SizedBox(height: 6),
+          Text(
+            'Kartu antrean muncul setelah pendaftaran. Scan QR di posyandu untuk check-in, lalu data anak masuk ke antrean pendataan kader.',
+            style: TextStyle(
+              fontSize: 14.5,
+              height: 1.5,
+              color: Color(0xFF374151),
             ),
           ),
         ],
@@ -975,40 +872,27 @@ class _OrangTuaPendaftaranPageState
 
   Widget _kartuOffline() {
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE3F6EC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFBFE5D0)),
-      ),
-      child: const Row(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: _dekorPutih,
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 15,
-            backgroundColor: Colors.white,
-            child: Icon(Icons.sync, size: 16, color: _hijauAksen),
+          Text(
+            'Bisa Dibuka Tanpa Sinyal',
+            style: TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
           ),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'Offline-Ready: ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: _hijauTua,
-                    ),
-                  ),
-                  TextSpan(
-                    text:
-                        'Kartu antrean dapat dibuka kembali kapan saja. Data otomatis tersinkronisasi ke server pada saat sinyal tersedia.',
-                    style: TextStyle(color: _hijauGelap),
-                  ),
-                ],
-              ),
-              style: TextStyle(fontSize: 11, height: 1.4),
+          SizedBox(height: 6),
+          Text(
+            'Kartu antrean dapat dibuka kembali kapan saja. Data otomatis tersinkronisasi ke server pada saat sinyal tersedia.',
+            style: TextStyle(
+              fontSize: 14.5,
+              height: 1.5,
+              color: Color(0xFF374151),
             ),
           ),
         ],
@@ -1039,7 +923,7 @@ class _OrangTuaPendaftaranPageState
               teks,
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
-                fontSize: 12.5,
+                fontSize: 15,
                 height: 1.4,
               ),
             ),
@@ -1089,7 +973,7 @@ class _OrangTuaPendaftaranPageState
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

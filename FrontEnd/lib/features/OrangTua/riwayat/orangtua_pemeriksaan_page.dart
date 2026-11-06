@@ -6,7 +6,6 @@ import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 import '../datadiri/data_orang_tua_page.dart' show KeluargaApi, parseTgl;
-import 'orangtua_grafik_page.dart';
 
 // Warna tampilan
 const _latarHalaman = Color(0xFFF3F5FB);
@@ -291,54 +290,32 @@ class _Kartu extends StatelessWidget {
   }
 }
 
+/// Judul kartu polos (tanpa ikon).
 class _KepalaKartu extends StatelessWidget {
-  final IconData icon;
-  final Color bg;
-  final Color fg;
   final String judul;
 
-  const _KepalaKartu({
-    required this.icon,
-    required this.bg,
-    required this.fg,
-    required this.judul,
-  });
+  const _KepalaKartu({required this.judul});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-          child: Icon(icon, size: 18, color: fg),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            judul,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: _teksGelap,
-            ),
-          ),
-        ),
-      ],
+    return Text(
+      judul,
+      style: const TextStyle(
+        fontSize: 16.5,
+        fontWeight: FontWeight.w900,
+        color: Colors.black,
+      ),
     );
   }
 }
 
 /// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
 Widget _judulTebal(String teks) {
   const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
+  const jarak = 1.2;
 
   return Stack(
     children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
       Text(
         teks,
         maxLines: 1,
@@ -355,7 +332,6 @@ Widget _judulTebal(String teks) {
             ..color = Colors.white,
         ),
       ),
-      // Lapis atas: isi huruf
       Text(
         teks,
         maxLines: 1,
@@ -384,7 +360,6 @@ Widget _header(
   BuildContext context,
   String judul, {
   String? sub,
-  Widget? aksi,
 }) {
   return AnnotatedRegion<SystemUiOverlayStyle>(
     value: const SystemUiOverlayStyle(
@@ -424,7 +399,7 @@ Widget _header(
                         sub,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 13,
                           color: Color(0xE6FFFFFF),
                           height: 1.3,
                         ),
@@ -433,11 +408,7 @@ Widget _header(
                   ],
                 ),
               ),
-              if (aksi != null) ...[
-                const SizedBox(width: 8),
-                aksi,
-              ] else
-                const SizedBox(width: 40),
+              const SizedBox(width: 40),
             ],
           ),
         ),
@@ -572,17 +543,6 @@ class _OrangTuaPemeriksaanPageState
     );
   }
 
-  void _bukaGrafik() {
-    final id = _terkunci
-        ? widget.anakId
-        : (_anakAktif.isNotEmpty ? _anakAktif : null);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => OrangTuaGrafikPage(anakId: id)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final anak = <String, String>{};
@@ -603,23 +563,6 @@ class _OrangTuaPemeriksaanPageState
             _terkunci && _data.isNotEmpty
                 ? 'Riwayat ${_data.first.namaAnak}'
                 : 'Riwayat Pemeriksaan',
-            aksi: InkWell(
-              onTap: _bukaGrafik,
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  borderRadius: BorderRadius.zero,
-                  border: Border.all(color: Colors.white54),
-                ),
-                child: const Icon(
-                  Icons.show_chart_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-            ),
           ),
           Expanded(
             child: RefreshIndicator(
@@ -648,7 +591,7 @@ class _OrangTuaPemeriksaanPageState
                               _gagal!,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 13,
+                                fontSize: 15.5,
                               ),
                             ),
                           ),
@@ -667,17 +610,12 @@ class _OrangTuaPemeriksaanPageState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _KepalaKartu(
-                            icon: Icons.monitor_heart_outlined,
-                            bg: _hijauPil,
-                            fg: _hijauTeks,
-                            judul: 'Belum ada hasil pemeriksaan',
-                          ),
-                          SizedBox(height: 12),
+                          _KepalaKartu(judul: 'Belum ada hasil pemeriksaan'),
+                          SizedBox(height: 10),
                           Text(
                             'Hasil pemeriksaan muncul di sini setelah bidan menyimpan catatan pemeriksaan anak Anda di posyandu.',
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: 15,
                               color: _teksAbu,
                             ),
                           ),
@@ -754,38 +692,9 @@ class _OrangTuaPemeriksaanPageState
           borderRadius: BorderRadius.circular(20),
           onTap: () => _buka(p),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.fromLTRB(18, 18, 14, 18),
             child: Row(
               children: [
-                Container(
-                  width: 54,
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  decoration: BoxDecoration(
-                    color: _hijauPil,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        t == null ? '-' : t.day.toString().padLeft(2, '0'),
-                        style: const TextStyle(
-                          color: _hijauTeks,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 19,
-                        ),
-                      ),
-                      Text(
-                        t == null ? '' : bulanSingkat(t),
-                        style: const TextStyle(
-                          color: _hijauTeks,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -794,57 +703,22 @@ class _OrangTuaPemeriksaanPageState
                         t == null ? '-' : formatTanggal(t),
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
-                          fontSize: 14,
+                          fontSize: 18,
                           color: _teksGelap,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         '${p.namaAnak}${p.adaUkur ? ' · ${p.usiaTeks}' : ''}',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 15.5,
                           color: _teksAbu,
                         ),
-                      ),
-                      if (p.adaUkur) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          'BB ${_num(p.bb)} kg · TB ${_num(p.tb)} cm',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: _teksGelap,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          if (p.adaCatatan)
-                            const Pill(
-                              'Ada catatan bidan',
-                              icon: Icons.sticky_note_2_outlined,
-                            ),
-                          if (p.vaksin.isNotEmpty)
-                            Pill(
-                              '${p.vaksin.length} vaksin',
-                              bg: AppColors.biruMuda,
-                              fg: AppColors.biru,
-                            ),
-                          if (p.suplemen.isNotEmpty)
-                            Pill(
-                              '${p.suplemen.length} suplemen',
-                              bg: const Color(0xFFFFEBD6),
-                              fg: const Color(0xFFC2410C),
-                            ),
-                        ],
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: _teksAbu),
+                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8)),
               ],
             ),
           ),
@@ -871,35 +745,26 @@ class _DetailPemeriksaanPage extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFEAF8F1),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: _hijauTeks),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  judul,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                    color: _hijauTeks,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  isi,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    height: 1.4,
-                    color: _teksGelap,
-                  ),
-                ),
-              ],
+          Text(
+            judul,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 14.5,
+              color: _hijauTeks,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            isi,
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.4,
+              color: _teksGelap,
             ),
           ),
         ],
@@ -916,10 +781,10 @@ class _DetailPemeriksaanPage extends StatelessWidget {
   ) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(4, 14, 4, 12),
+        padding: const EdgeInsets.fromLTRB(4, 12, 4, 10),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: border),
         ),
         child: Column(
@@ -927,17 +792,17 @@ class _DetailPemeriksaanPage extends StatelessWidget {
             Text(
               nilai,
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 21,
                 fontWeight: FontWeight.w800,
                 color: fg,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Text(
               label,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 10.5,
+                fontSize: 12,
                 height: 1.25,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF475569),
@@ -949,38 +814,53 @@ class _DetailPemeriksaanPage extends StatelessWidget {
     );
   }
 
-  Widget _itemSuplemenVaksin(String judul, List<String> baris) {
+  Widget _itemSuplemen(String judul, List<String> baris) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFEBD6),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFF7C99B)),
+        color: const Color(0xFFFFF8E6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFF5DFA8)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            judul,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-              color: Color(0xFFC2410C),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  judul,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14.5,
+                    color: _teksGelap,
+                  ),
+                ),
+                for (final b in baris)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      b,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF92400E),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          for (final b in baris)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                b,
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  color: Color(0xFF9A3412),
-                ),
-              ),
+          const SizedBox(width: 8),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: Color(0xFF3B82F6),
+              shape: BoxShape.circle,
             ),
+          ),
         ],
       ),
     );
@@ -1013,6 +893,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
               children: [
                 // Identitas anak
                 _Kartu(
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1030,39 +911,61 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
+                              horizontal: 10,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
                               color: _hijauPil,
                               borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFFBDEBD3),
+                              ),
                             ),
                             child: Text(
                               t == null ? '-' : formatTanggal(t),
                               style: const TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
                                 color: _hijauTeks,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 6),
                       if (d.adaUkur)
-                        Text(
-                          'Usia ${d.usiaTeks}${d.caraUkur.isEmpty ? '' : ' · diukur ${d.caraUkur}'}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: _teksAbu,
+                        Text.rich(
+                          TextSpan(
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: _teksAbu,
+                            ),
+                            children: [
+                              TextSpan(text: 'Usia ${d.usiaTeks}'),
+                              if (d.caraUkur.isNotEmpty) ...[
+                                const TextSpan(text: '  ·  '),
+                                TextSpan(
+                                  text: 'diukur ${d.caraUkur}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF2B7BB9),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       if (d.jamMulai.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
+                        const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Color(0xFFEEF1F6),
+                        ),
+                        const SizedBox(height: 8),
                         Text(
                           'Sesi posyandu pukul ${d.jamMulai} WIB',
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 13.5,
                             color: _teksAbu,
                           ),
                         ),
@@ -1077,13 +980,8 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _KepalaKartu(
-                          icon: Icons.straighten,
-                          bg: Color(0xFFDDF5EA),
-                          fg: _hijauTeks,
-                          judul: 'Hasil Pengukuran',
-                        ),
-                        const SizedBox(height: 14),
+                        const _KepalaKartu(judul: 'Hasil Pengukuran'),
+                        const SizedBox(height: 12),
                         IntrinsicHeight(
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1093,23 +991,23 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                                 'Berat\n(kg)',
                                 const Color(0xFFE3F2FD),
                                 const Color(0xFFBFDFF7),
-                                const Color(0xFF0369A1),
+                                const Color(0xFF2563EB),
                               ),
                               const SizedBox(width: 8),
                               _kotakUkur(
                                 _num(d.tb),
-                                'Tinggi/\nPanjang\n(cm)',
+                                'Tinggi/\nPanjang (cm)',
                                 const Color(0xFFE6F8EF),
                                 const Color(0xFFBDEBD3),
-                                const Color(0xFF047857),
+                                const Color(0xFF059669),
                               ),
                               const SizedBox(width: 8),
                               _kotakUkur(
                                 d.lk,
-                                'Lingkar\nKepala\n(cm)',
-                                const Color(0xFFFFF1E3),
-                                const Color(0xFFF9D3AE),
-                                const Color(0xFFEA580C),
+                                'Lingkar\nKepala (cm)',
+                                const Color(0xFFFFF4DC),
+                                const Color(0xFFF9E0A8),
+                                const Color(0xFFD97706),
                               ),
                               const SizedBox(width: 8),
                               _kotakUkur(
@@ -1131,17 +1029,19 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const _KepalaKartu(
-                        icon: Icons.assignment_outlined,
-                        bg: Color(0xFFE8EAFE),
-                        fg: Color(0xFF4F46E5),
-                        judul: 'Catatan Bidan',
-                      ),
-                      const SizedBox(height: 12),
+                      const _KepalaKartu(judul: 'Catatan Bidan'),
+                      const SizedBox(height: 10),
                       if (!d.adaCatatan || !adaIsiCatatan)
-                        const Text(
-                          'Bidan belum menuliskan catatan untuk kunjungan ini.',
-                          style: TextStyle(fontSize: 12, color: _teksAbu),
+                        const SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'Bidan belum menuliskan catatan untuk kunjungan ini.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF2B7BB9),
+                            ),
+                          ),
                         )
                       else ...[
                         if (gejala.isNotEmpty)
@@ -1196,11 +1096,6 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                     color: AppColors.biruMuda,
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.event_repeat,
-                          color: AppColors.biru,
-                        ),
-                        const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1208,15 +1103,16 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                               const Text(
                                 'Kunjungan ulang',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 13.5,
                                   color: _teksAbu,
                                 ),
                               ),
+                              const SizedBox(height: 2),
                               Text(
                                 formatTanggal(d.kunjunganUlang!),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
-                                  fontSize: 14,
+                                  fontSize: 16,
                                   color: _teksGelap,
                                 ),
                               ),
@@ -1233,60 +1129,83 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _KepalaKartu(
-                          icon: Icons.vaccines_outlined,
-                          bg: Color(0xFFE3F2FD),
-                          fg: Color(0xFF0369A1),
-                          judul: 'Imunisasi Hari Ini',
-                        ),
+                        const _KepalaKartu(judul: 'Imunisasi Hari Ini'),
                         for (final v in d.vaksin)
                           Container(
                             width: double.infinity,
                             margin: const EdgeInsets.only(top: 12),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
+                              horizontal: 12,
+                              vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE3F2FD),
-                              borderRadius: BorderRadius.circular(14),
+                              color: const Color(0xFFF1F7FD),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: const Color(0xFFBFDFF7),
+                                color: const Color(0xFFDCEAF7),
                               ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
                               children: [
-                                Text(
-                                  '${v.nama} · Dosis ${v.dosis}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
-                                    color: Color(0xFF0369A1),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        v.nama,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14.5,
+                                          color: Color(0xFF2B7BB9),
+                                        ),
+                                      ),
+                                      if (v.kondisi.isNotEmpty)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 2),
+                                          child: Text(
+                                            'Kondisi: ${v.kondisi}',
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Color(0xFF075985),
+                                            ),
+                                          ),
+                                        ),
+                                      if (v.catatan.isNotEmpty)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 2),
+                                          child: Text(
+                                            'Catatan: ${v.catatan}',
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              color: Color(0xFF075985),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                if (v.kondisi.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 2),
-                                    child: Text(
-                                      'Kondisi: ${v.kondisi}',
-                                      style: const TextStyle(
-                                        fontSize: 11.5,
-                                        color: Color(0xFF075985),
-                                      ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD6E9F8),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'Dosis ${v.dosis}',
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF2B7BB9),
                                     ),
                                   ),
-                                if (v.catatan.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 2),
-                                    child: Text(
-                                      'Catatan: ${v.catatan}',
-                                      style: const TextStyle(
-                                        fontSize: 11.5,
-                                        color: Color(0xFF075985),
-                                      ),
-                                    ),
-                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -1300,14 +1219,9 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _KepalaKartu(
-                          icon: Icons.medication_outlined,
-                          bg: Color(0xFFFFEBD6),
-                          fg: Color(0xFFEA580C),
-                          judul: 'Suplemen Hari Ini',
-                        ),
+                        const _KepalaKartu(judul: 'Suplemen Hari Ini'),
                         for (final s in d.suplemen)
-                          _itemSuplemenVaksin(s.nama, [
+                          _itemSuplemen(s.nama, [
                             if (s.dosis.isNotEmpty) 'Dosis: ${s.dosis}',
                             if (s.catatan.isNotEmpty) 'Catatan: ${s.catatan}',
                           ]),

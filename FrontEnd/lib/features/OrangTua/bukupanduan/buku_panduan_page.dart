@@ -1348,7 +1348,7 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                       const Expanded(
                         child: Text.rich(
                           TextSpan(
-                            style: TextStyle(fontSize: 11.5, height: 1.4, color: _teks),
+                            style: TextStyle(fontSize: 14, height: 1.4, color: _teks),
                             children: [
                               TextSpan(text: 'Materi mengacu pada '),
                               TextSpan(
@@ -1368,10 +1368,10 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                 TextField(
                   controller: _cari,
                   onChanged: (v) => setState(() => _kata = v),
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(fontSize: 15.5),
                   decoration: InputDecoration(
                     hintText: 'Cari materi atau keluhan kesehatan...',
-                    hintStyle: const TextStyle(fontSize: 13, color: _teksRedup),
+                    hintStyle: const TextStyle(fontSize: 15.5, color: _teksRedup),
                     prefixIcon: const Icon(Icons.search, color: _teksRedup),
                     suffixIcon: _kata.isEmpty
                         ? const Icon(Icons.tune, color: _teksRedup, size: 20)
@@ -1397,7 +1397,7 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                 ),
                 const SizedBox(height: 14),
                 SizedBox(
-                  height: 36,
+                  height: 42,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _kategori.length,
@@ -1418,7 +1418,7 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                           child: Text(
                             _kategori[k],
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 14.5,
                               fontWeight: FontWeight.w700,
                               color: aktif ? Colors.white : _teks,
                             ),
@@ -1494,7 +1494,7 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                         children: [
                           Text('BAB ${i + 1}',
                               style: const TextStyle(
-                                  fontSize: 9.5,
+                                  fontSize: 12,
                                   letterSpacing: 0.5,
                                   fontWeight: FontWeight.w700,
                                   color: _teksRedup)),
@@ -1509,7 +1509,7 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                               ),
                               child: const Text('Penting',
                                   style: TextStyle(
-                                      fontSize: 9.5,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                       color: _merah)),
                             ),
@@ -1524,12 +1524,12 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                       Text(b.judul,
                           style: const TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 13.5,
+                              fontSize: 15.5,
                               color: _teks)),
                       const SizedBox(height: 2),
                       Text(b.ringkasan,
                           style: const TextStyle(
-                              fontSize: 11, height: 1.3, color: _teksBiru)),
+                              fontSize: 13.5, height: 1.3, color: _teksBiru)),
                     ],
                   ),
                 ),
@@ -1592,7 +1592,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
                   onPressed: ada ? () => _pindah(_i - 1) : null,
                   icon: const Icon(Icons.chevron_left, size: 20),
                   label: const Text('Sebelumnya',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15.5)),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _teks,
                     minimumSize: const Size.fromHeight(46),
@@ -1617,7 +1617,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
                     children: [
                       Text(lanjut ? 'Berikutnya' : 'Selesai',
                           style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 13)),
+                              fontWeight: FontWeight.w700, fontSize: 15.5)),
                       const SizedBox(width: 4),
                       Icon(lanjut ? Icons.chevron_right : Icons.check, size: 20),
                     ],
@@ -1658,7 +1658,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
                 const SizedBox(height: 8),
                 const Text(
                   'Materi ini bersumber dari Buku KIA 2024, bersifat informasi umum, dan tidak menggantikan saran bidan atau dokter.',
-                  style: TextStyle(fontSize: 10.5, color: _teksRedup, height: 1.4),
+                  style: TextStyle(fontSize: 13, color: _teksRedup, height: 1.4),
                 ),
               ],
             ),
@@ -1698,12 +1698,12 @@ class _BacaBabPageState extends State<BacaBabPage> {
                         style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
-                            fontSize: 17,
+                            fontSize: 18,
                             height: 1.25)),
                     const SizedBox(height: 4),
                     Text(b.ringkasan,
                         style: const TextStyle(
-                            color: Colors.white70, fontSize: 11.5, height: 1.3)),
+                            color: Colors.white70, fontSize: 14, height: 1.3)),
                   ],
                 ),
               ),
@@ -1736,7 +1736,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
           const SizedBox(width: 5),
           Text(teks,
               style: const TextStyle(
-                  color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700)),
+                  color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -1758,7 +1758,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
           out.add(Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text.rich(
-              _rich(b.teks, const TextStyle(fontSize: 13.5, height: 1.6, color: _teks)),
+              _rich(b.teks, const TextStyle(fontSize: 15.5, height: 1.6, color: _teks)),
             ),
           ));
           i++;
@@ -1817,7 +1817,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
                   Expanded(
                     child: Text(judul,
                         style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 14.5, color: _teks)),
+                            fontWeight: FontWeight.w800, fontSize: 16.5, color: _teks)),
                   ),
                 ],
               ),
@@ -1834,7 +1834,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
                   ),
                   Expanded(
                     child: Text.rich(
-                      _poin(t, const TextStyle(fontSize: 13.5, height: 1.55, color: _teks)),
+                      _poin(t, const TextStyle(fontSize: 15.5, height: 1.55, color: _teks)),
                     ),
                   ),
                 ],
@@ -1865,7 +1865,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
               Expanded(
                 child: Text(judul.toUpperCase(),
                     style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 14.5,
                         letterSpacing: 0.4,
                         fontWeight: FontWeight.w800,
                         color: _hijauTua)),
@@ -1885,7 +1885,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
                   ),
                   Expanded(
                     child: Text.rich(
-                      _poin(t, const TextStyle(fontSize: 13, height: 1.5, color: _teks)),
+                      _poin(t, const TextStyle(fontSize: 15.5, height: 1.5, color: _teks)),
                     ),
                   ),
                 ],
@@ -1920,7 +1920,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
               Expanded(
                 child: Text(darurat ? 'PERHATIAN' : 'PESAN PENTING',
                     style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 14,
                         letterSpacing: 0.4,
                         fontWeight: FontWeight.w800,
                         color: warna)),
@@ -1932,14 +1932,14 @@ class _BacaBabPageState extends State<BacaBabPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text('Standar Kemenkes RI',
-                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: warna)),
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: warna)),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text('"$teks"',
               style: const TextStyle(
-                  fontSize: 13, height: 1.55, fontStyle: FontStyle.italic, color: _teks)),
+                  fontSize: 15.5, height: 1.55, fontStyle: FontStyle.italic, color: _teks)),
         ],
       ),
     );
