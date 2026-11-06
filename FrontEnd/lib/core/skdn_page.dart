@@ -38,14 +38,14 @@ void tampilkanPenjelasanSkdn(BuildContext context) {
                 Icon(Icons.info_outline, color: AppColors.hijau),
                 SizedBox(width: 8),
                 Text('Tentang Ringkasan Penimbangan',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                    style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w900)),
               ],
             ),
             const SizedBox(height: 12),
             const Text(
               'Halaman ini menunjukkan hasil penimbangan balita di posyandu selama satu bulan. '
               'Di laporan resmi ke puskesmas, ringkasan ini disebut SKDN.',
-              style: TextStyle(fontSize: 13, height: 1.45),
+              style: TextStyle(fontSize: 13.5, height: 1.45),
             ),
             const SizedBox(height: 14),
             _barisInfo('S', 'Jumlah seluruh balita', 'Semua balita usia 0-59 bulan di posyandu.'),
@@ -53,14 +53,14 @@ void tampilkanPenjelasanSkdn(BuildContext context) {
             _barisInfo('D', 'Balita yang datang ditimbang', 'Balita yang ditimbang pada bulan ini.'),
             _barisInfo('N', 'Balita yang berat badannya naik', 'Kenaikan berat badan sesuai standar Kemenkes.'),
             const Divider(height: 24),
-            const Text('Cara membaca', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5)),
+            const Text('Cara membaca', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
             const SizedBox(height: 8),
             const Text(
               '• Tingkat kehadiran menunjukkan berapa persen balita yang datang ditimbang. Targetnya minimal 85%.\n'
               '• Balita yang tumbuh baik menunjukkan berapa persen balita yang ditimbang dan berat badannya naik.\n'
               '• Balita yang tidak naik 2 bulan berturut-turut atau berat badannya sangat kurang perlu segera '
               'diperiksa bidan atau dirujuk ke puskesmas.',
-              style: TextStyle(fontSize: 12.5, height: 1.5),
+              style: TextStyle(fontSize: 13.5, height: 1.5),
             ),
           ],
         ),
@@ -80,8 +80,8 @@ Widget _barisInfo(String huruf, String judul, String isi) => Padding(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(judul, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                Text(isi, style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                Text(judul, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                Text(isi, style: const TextStyle(fontSize: 13, color: AppColors.teksRedup)),
               ],
             ),
           ),
@@ -94,7 +94,7 @@ Widget _hurufBulat(String huruf, {Color bg = AppColors.hijauMuda, Color fg = App
       height: 28,
       alignment: Alignment.center,
       decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-      child: Text(huruf, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: fg)),
+      child: Text(huruf, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: fg)),
     );
 
 /// Ringkasan Penimbangan (SKDN) untuk sekretaris dan bidan.
@@ -235,7 +235,7 @@ class _SkdnPageState extends State<SkdnPage> {
               Expanded(
                 child: Text(
                   'Hasil penimbangan balita bulan ini (SKDN). Ketuk untuk penjelasan.',
-                  style: TextStyle(fontSize: 12, color: AppColors.biru, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 13, color: AppColors.biru, fontWeight: FontWeight.w600),
                 ),
               ),
               Icon(Icons.chevron_right, color: AppColors.biru),
@@ -284,7 +284,7 @@ class _SkdnPageState extends State<SkdnPage> {
         children: [
           _hurufBulat(huruf, bg: bg, fg: fg),
           const SizedBox(width: 10),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600))),
           Text('$nilai', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: fg)),
         ],
       ),
@@ -318,7 +318,7 @@ class _SkdnPageState extends State<SkdnPage> {
           Row(
             children: [
               Expanded(
-                child: Text(judul, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                child: Text(judul, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
               ),
               Text(_persen(nilai), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: warna)),
             ],
@@ -336,13 +336,13 @@ class _SkdnPageState extends State<SkdnPage> {
           const SizedBox(height: 4),
           Row(
             children: [
-              Text(rumus, style: const TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
+              Text(rumus, style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
               const Spacer(),
               if (target != null)
                 Text(
                   capai ? 'Target ${_persen(target)} tercapai' : 'Belum mencapai target ${_persen(target)}',
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: capai ? AppColors.hijau : AppColors.merah,
                   ),
@@ -395,7 +395,7 @@ class _SkdnPageState extends State<SkdnPage> {
             child: Icon(ikon, size: 16, color: fg),
           ),
           const SizedBox(width: 10),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 12.5))),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 13.5))),
           Text('$nilai', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: fg)),
         ],
       ),
@@ -457,7 +457,7 @@ class _SkdnPageState extends State<SkdnPage> {
                         Text(
                           t.labelSingkat,
                           style: TextStyle(
-                            fontSize: 10.5,
+                            fontSize: 12,
                             fontWeight: t.bulan == d.bulan.bulan ? FontWeight.w900 : FontWeight.w500,
                             color: t.bulan == d.bulan.bulan ? Colors.black87 : AppColors.teksRedup,
                           ),
@@ -488,7 +488,7 @@ class _SkdnPageState extends State<SkdnPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(persen == 0 ? '' : persen.toStringAsFixed(0),
-            style: const TextStyle(fontSize: 8.5, color: AppColors.teksRedup)),
+            style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
         const SizedBox(height: 2),
         Container(
           width: 12,
@@ -511,7 +511,7 @@ class _SkdnPageState extends State<SkdnPage> {
             decoration: BoxDecoration(color: warna, borderRadius: BorderRadius.circular(3)),
           ),
           const SizedBox(width: 6),
-          Text(teks, style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+          Text(teks, style: const TextStyle(fontSize: 13, color: AppColors.teksRedup)),
         ],
       );
 
@@ -523,7 +523,7 @@ class _SkdnPageState extends State<SkdnPage> {
       icon: ikon,
       trailing: Pill('${list.length} balita', bg: bg, fg: fg),
       child: list.isEmpty
-          ? Text(kosong, style: const TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+          ? Text(kosong, style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup))
           : Column(children: [for (final a in list) _barisAnak(a, fg, bg)]),
     );
   }
@@ -552,18 +552,18 @@ class _SkdnPageState extends State<SkdnPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(a.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                      Text(a.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                       Text('${a.jkTeks} · ${a.usiaTeks}',
-                          style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                          style: const TextStyle(fontSize: 13, color: AppColors.teksRedup)),
                       const SizedBox(height: 4),
-                      Text(a.keterangan, style: TextStyle(fontSize: 11.5, color: fg, fontWeight: FontWeight.w700)),
+                      Text(a.keterangan, style: TextStyle(fontSize: 13, color: fg, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 2),
                       Text(
                         'BB ${a.bbKg} kg'
                         '${naik == null ? '' : ' · ${naik > 0 ? '+' : ''}$naik g'}'
                         '${a.kbmGram == null ? '' : ' (minimal ${a.kbmGram} g)'}'
                         '${a.tanggalUkur == null ? '' : ' · ${formatTanggal(a.tanggalUkur!)}'}',
-                        style: const TextStyle(fontSize: 11, color: AppColors.teksRedup),
+                        style: const TextStyle(fontSize: 13, color: AppColors.teksRedup),
                       ),
                     ],
                   ),

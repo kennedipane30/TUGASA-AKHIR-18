@@ -141,7 +141,7 @@ class PemilihBulan extends StatelessWidget {
                 const Icon(Icons.calendar_month, size: 18, color: AppColors.hijau),
                 const SizedBox(width: 8),
                 Text('${namaBulanRekap[bulan.month]} ${bulan.year}',
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
               ],
             ),
           ),
@@ -162,7 +162,9 @@ Widget _kosong(IconData ikon, String teks) => Padding(
         children: [
           Icon(ikon, size: 38, color: AppColors.teksRedup),
           const SizedBox(height: 8),
-          Text(teks, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.teksRedup)),
+          Text(teks,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
         ],
       ),
     );
@@ -173,7 +175,7 @@ Widget _gagal(String pesan, VoidCallback ulang) => Padding(
         children: [
           const Icon(Icons.cloud_off, size: 40, color: AppColors.teksRedup),
           const SizedBox(height: 10),
-          Text(pesan, textAlign: TextAlign.center),
+          Text(pesan, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15.5)),
           const SizedBox(height: 12),
           AppButton('Coba Lagi', icon: Icons.refresh, onPressed: ulang),
         ],
@@ -198,14 +200,14 @@ Widget _batang(String label, int nilai, int dasar, Color warna, Color latar, {St
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                   if (sub != null && sub.isNotEmpty)
-                    Text(sub, style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                    Text(sub, style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                 ],
               ),
             ),
             Text('$nilai (${_angka(p * 100)}%)',
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: warna)),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: warna)),
           ],
         ),
         const SizedBox(height: 5),
@@ -274,7 +276,7 @@ class _AdminRekapPageState extends State<AdminRekapPage> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 12.5,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w800,
                                 color: _tab == i ? Colors.white : Colors.black87,
                               ),
@@ -429,7 +431,7 @@ class _TabGiziState extends State<_TabGizi> {
             const SizedBox(height: 10),
             const Text(
               'Persentase dihitung dari balita yang diukur bulan ini. Satu anak bisa termasuk lebih dari satu kategori.',
-              style: TextStyle(fontSize: 11, color: AppColors.teksRedup),
+              style: TextStyle(fontSize: 13.5, color: AppColors.teksRedup),
             ),
           ],
         ),
@@ -477,14 +479,14 @@ class _TabGiziState extends State<_TabGizi> {
           Row(
             children: [
               Expanded(
-                child: Text(a.anak.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                child: Text(a.anak.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
               ),
               if (a.tanggalUkur != null)
-                Text(formatTanggal(a.tanggalUkur!), style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                Text(formatTanggal(a.tanggalUkur!), style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
             ],
           ),
           const SizedBox(height: 2),
-          Text('${a.anak.jkTeks} · ${a.anak.usiaTeks}', style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+          Text('${a.anak.jkTeks} · ${a.anak.usiaTeks}', style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 6,
@@ -504,7 +506,7 @@ class _TabGiziState extends State<_TabGizi> {
           ),
           if (nilai.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Text('Z-score: $nilai', style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+            Text('Z-score: $nilai', style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
           ],
         ],
       ),
@@ -538,7 +540,7 @@ class _TrenGizi extends StatelessWidget {
           children: [
             Container(width: 10, height: 10, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(3))),
             const SizedBox(width: 5),
-            Text(l, style: const TextStyle(fontSize: 11)),
+            Text(l, style: const TextStyle(fontSize: 13.5)),
           ],
         );
     return Column(
@@ -554,7 +556,7 @@ class _TrenGizi extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text('${t.stunting}/${t.wasting}/${t.underweight}',
-                          style: const TextStyle(fontSize: 9.5, color: AppColors.teksRedup)),
+                          style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
                       const SizedBox(height: 4),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -568,8 +570,8 @@ class _TrenGizi extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text(t.label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                      Text('${t.diukur} anak', style: const TextStyle(fontSize: 9.5, color: AppColors.teksRedup)),
+                      Text(t.label, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                      Text('${t.diukur} anak', style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
                     ],
                   ),
                 ),
@@ -664,7 +666,7 @@ class _TabSuplemenState extends State<_TabSuplemen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  fontSize: 12.5,
+                  fontSize: 14,
                   color: aktif ? Colors.white : (masaDepan ? _abu : Colors.black87),
                 )),
           ),
@@ -686,7 +688,7 @@ class _TabSuplemenState extends State<_TabSuplemen> {
               ),
               Expanded(
                 child: Text('Tahun $_tahun',
-                    textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
+                    textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
               ),
               IconButton(
                 tooltip: 'Tahun berikutnya',
@@ -749,8 +751,8 @@ class _TabSuplemenState extends State<_TabSuplemen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(k.label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
-                    Text(k.keterangan, style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                    Text(k.label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    Text(k.keterangan, style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
@@ -770,7 +772,7 @@ class _TabSuplemenState extends State<_TabSuplemen> {
           ),
           const SizedBox(height: 6),
           Text('${k.sudah} dari ${k.sasaran} sasaran sudah menerima · ${k.belum} belum',
-              style: const TextStyle(fontSize: 11.5)),
+              style: const TextStyle(fontSize: 13.5)),
         ],
       ),
     );
@@ -804,7 +806,7 @@ class _TabSuplemenState extends State<_TabSuplemen> {
             if (merah != null) _kelompok(merah, AppColors.merah, AppColors.merahMuda, Icons.circle),
             if (total != null) _kelompok(total, AppColors.hijau, AppColors.hijauMuda, Icons.summarize_outlined),
             if (rentang.isNotEmpty)
-              Text(rentang, style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+              Text(rentang, style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
           ],
         ),
       ),
@@ -833,13 +835,13 @@ class _TabSuplemenState extends State<_TabSuplemen> {
                             children: [
                               Expanded(
                                 child: Text(a.anak.nama,
-                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                               ),
                               Pill(a.kelompok, bg: Colors.white, fg: Colors.black87),
                             ],
                           ),
                           Text('${a.anak.jkTeks} · ${a.anak.usiaTeks}',
-                              style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                              style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                           const SizedBox(height: 8),
                           Wrap(
                             spacing: 6,
@@ -980,7 +982,7 @@ class _TidakHadirViewState extends State<TidakHadirView> {
                 sub: 'Target posyandu ≥ 85%'),
             if (d.jumlahJadwal == 0)
               const Text('Belum ada jadwal posyandu pada bulan ini.',
-                  style: TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                  style: TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
           ],
         ),
       ),
@@ -998,6 +1000,7 @@ class _TidakHadirViewState extends State<TidakHadirView> {
                   backgroundColor: Colors.white,
                   showCheckmark: false,
                   labelStyle: TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: _aktif == f ? Colors.white : Colors.black87,
                   ),
@@ -1046,11 +1049,11 @@ class _TidakHadirViewState extends State<TidakHadirView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(a.anak.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                Text(a.anak.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                 Text('${a.anak.jkTeks} · ${a.anak.usiaTeks}',
-                    style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                    style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                 const SizedBox(height: 6),
-                Text(a.keterangan, style: const TextStyle(fontSize: 12)),
+                Text(a.keterangan, style: const TextStyle(fontSize: 14)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,

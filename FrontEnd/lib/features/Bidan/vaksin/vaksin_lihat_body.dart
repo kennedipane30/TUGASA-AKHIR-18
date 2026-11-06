@@ -99,7 +99,8 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
             children: [
               const Icon(Icons.cloud_off, size: 40, color: AppColors.teksRedup),
               const SizedBox(height: 10),
-              Text(_gagal ?? 'Data vaksin tidak dapat dimuat', textAlign: TextAlign.center),
+              Text(_gagal ?? 'Data vaksin tidak dapat dimuat',
+                  textAlign: TextAlign.center, style: const TextStyle(fontSize: 15.5)),
               const SizedBox(height: 12),
               AppButton('Coba Lagi', icon: Icons.refresh, onPressed: () {
                 setState(() => _memuat = true);
@@ -158,7 +159,7 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text('${r.sudah} dari ${r.totalDosis} dosis imunisasi rutin sudah diberikan',
-                    style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                    style: const TextStyle(fontSize: 14, color: AppColors.teksRedup)),
               ),
             ],
           ),
@@ -234,7 +235,7 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
                       color: _tab == i ? Colors.white : Colors.black87,
                     ),
@@ -253,7 +254,9 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
           children: [
             Icon(ikon, size: 40, color: AppColors.teksRedup),
             const SizedBox(height: 8),
-            Text(teks, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.teksRedup)),
+            Text(teks,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
           ],
         ),
       );
@@ -312,9 +315,9 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(e.jadwal.namaDosis,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                   const SizedBox(height: 2),
-                  Text(sub, style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                  Text(sub, style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                   if (e.opsional || e.jadwal.lanjutan) ...[
                     const SizedBox(height: 4),
                     Wrap(spacing: 4, children: [
@@ -342,9 +345,9 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
         children: [
           SizedBox(
             width: 120,
-            child: Text(label, style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+            child: Text(label, style: const TextStyle(fontSize: 14, color: AppColors.teksRedup)),
           ),
-          Expanded(child: Text(nilai, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600))),
+          Expanded(child: Text(nilai, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
         ],
       ),
     );
@@ -398,7 +401,7 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
               _info('Keterangan', j.keterangan),
               if (r != null) ...[
                 const Divider(height: 24),
-                const Text('Riwayat Pemberian', style: TextStyle(fontWeight: FontWeight.w900)),
+                const Text('Riwayat Pemberian', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                 const SizedBox(height: 10),
                 _info('Tanggal', r.tanggal == null ? '-' : formatTanggal(r.tanggal!)),
                 _info('Usia saat diberikan', r.usiaTeks),
@@ -454,10 +457,10 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(nama, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5)),
+                    Text(nama, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                     const SizedBox(height: 2),
                     Text(r.tanggal == null ? '-' : formatTanggal(r.tanggal!),
-                        style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                        style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
@@ -484,9 +487,9 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
           if (r.namaPemberi.isNotEmpty || r.kondisiAnak.isNotEmpty || r.catatan.isNotEmpty) ...[
             const SizedBox(height: 10),
             if (r.namaPemberi.isNotEmpty)
-              Text('Dicatat oleh: ${r.namaPemberi}', style: const TextStyle(fontSize: 12)),
-            if (r.kondisiAnak.isNotEmpty) Text('Kondisi anak: ${r.kondisiAnak}', style: const TextStyle(fontSize: 12)),
-            if (r.catatan.isNotEmpty) Text('Catatan: ${r.catatan}', style: const TextStyle(fontSize: 12)),
+              Text('Dicatat oleh: ${r.namaPemberi}', style: const TextStyle(fontSize: 13.5)),
+            if (r.kondisiAnak.isNotEmpty) Text('Kondisi anak: ${r.kondisiAnak}', style: const TextStyle(fontSize: 13.5)),
+            if (r.catatan.isNotEmpty) Text('Catatan: ${r.catatan}', style: const TextStyle(fontSize: 13.5)),
           ],
         ],
       ),
@@ -543,11 +546,11 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.nama, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5)),
+                    Text(s.nama, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                     const SizedBox(height: 2),
                     Text(
                       '${s.tanggal == null ? '-' : formatTanggal(s.tanggal!)} · usia ${s.usiaTeks}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.teksRedup),
+                      style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup),
                     ),
                     if (s.ringkasDosis.isNotEmpty) ...[
                       const SizedBox(height: 6),
@@ -555,11 +558,11 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
                     ],
                     if (s.catatan.isNotEmpty) ...[
                       const SizedBox(height: 6),
-                      Text('Catatan: ${s.catatan}', style: const TextStyle(fontSize: 12)),
+                      Text('Catatan: ${s.catatan}', style: const TextStyle(fontSize: 13.5)),
                     ],
                     if (s.namaPemberi.isNotEmpty)
                       Text('Diberikan oleh: ${s.namaPemberi}',
-                          style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                          style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
@@ -712,7 +715,7 @@ class _FormSusulanState extends State<_FormSusulan> {
               const SizedBox(height: 4),
               const Text(
                 'Untuk vaksin yang diberikan di puskesmas, rumah sakit, atau bidan praktik (sesuai buku KIA).',
-                style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
+                style: TextStyle(fontSize: 14, color: AppColors.teksRedup),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -752,7 +755,7 @@ class _FormSusulanState extends State<_FormSusulan> {
                 Padding(
                   padding: const EdgeInsets.only(top: 6, left: 4),
                   child: Text('Usia anak saat itu: ${usiaDariLahir(lahir, _tanggal)}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                      style: const TextStyle(fontSize: 14, color: AppColors.teksRedup)),
                 ),
               const SizedBox(height: 10),
               TextField(
@@ -769,7 +772,7 @@ class _FormSusulanState extends State<_FormSusulan> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(color: AppColors.merahMuda, borderRadius: BorderRadius.circular(10)),
-                  child: Text(_gagal!, style: const TextStyle(fontSize: 12, color: AppColors.merah)),
+                  child: Text(_gagal!, style: const TextStyle(fontSize: 14, color: AppColors.merah)),
                 ),
               ],
               const SizedBox(height: 16),

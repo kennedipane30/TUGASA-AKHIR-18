@@ -92,7 +92,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
             color: Colors.white, borderRadius: BorderRadius.circular(20)),
         child: Text('$selesai/2',
             style: const TextStyle(
-                fontSize: 11.5,
+                fontSize: 12,
                 fontWeight: FontWeight.w800,
                 color: AppColors.kuning)),
       ),
@@ -157,11 +157,11 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
                 children: [
                   Text(judul,
                       style: TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 14, color: fg)),
+                          fontWeight: FontWeight.w800, fontSize: 15, color: fg)),
                   const SizedBox(height: 2),
                   Text(sub,
                       style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: terisi
                               ? const Color(0xFFA8F0C6)
@@ -226,11 +226,11 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
                       Text('Kelola Data Keluarga',
                           style: TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 14,
+                              fontSize: 15,
                               color: kHijauTua)),
                       Text('Pilih berkas profil yang ingin diperbarui',
                           style: TextStyle(
-                              fontSize: 11, color: AppColors.teksRedup)),
+                              fontSize: 13, color: AppColors.teksRedup)),
                     ],
                   ),
                 ],
@@ -270,7 +270,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
               Expanded(
                 child: Text(
                   'Data keluarga tersimpan aman secara terenkripsi di perangkat Anda dan otomatis disinkronkan ke server Posyandu Care saat terhubung internet.',
-                  style: TextStyle(fontSize: 11, color: kHijauGelap),
+                  style: TextStyle(fontSize: 13, color: kHijauGelap),
                 ),
               ),
             ],

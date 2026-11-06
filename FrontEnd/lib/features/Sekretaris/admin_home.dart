@@ -160,7 +160,7 @@ class _AdminHomeState extends State<AdminHome> {
               const SizedBox(height: 2),
               const Text(
                   'Kelola akun kader dan bidan, jadwal, data vaksin, dan laporan untuk desa Anda.',
-                  style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                  style: TextStyle(fontSize: 14, color: AppColors.teksRedup)),
             ],
           ),
         ),
@@ -228,7 +228,7 @@ class _AdminHomeState extends State<AdminHome> {
                   Padding(
                     padding: EdgeInsets.only(bottom: 8),
                     child: Text('Jiwa terdaftar di wilayah',
-                        style: TextStyle(color: AppColors.teksRedup)),
+                        style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
                   ),
                 ],
               ),
@@ -244,7 +244,7 @@ class _AdminHomeState extends State<AdminHome> {
               ),
               const SizedBox(height: 10),
               const Text('Laki-laki 178 (51%)  ·  Perempuan 170 (49%)',
-                  style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                  style: TextStyle(fontSize: 14, color: AppColors.teksRedup)),
             ],
           ),
         ),
@@ -258,7 +258,7 @@ class _AdminHomeState extends State<AdminHome> {
             children: [
               const Text(
                 'Lihat jumlah vaksin yang sudah diberikan dan jenis-jenis vaksin.',
-                style: TextStyle(fontSize: 12, color: AppColors.teksRedup),
+                style: TextStyle(fontSize: 14, color: AppColors.teksRedup),
               ),
               const SizedBox(height: 10),
               SizedBox(
@@ -313,11 +313,11 @@ class _AdminHomeState extends State<AdminHome> {
             children: [
               const Text(
                 'Buat, ubah, atau batalkan jadwal posyandu di desa Anda. Orang tua di desa lain tidak melihat jadwal ini.',
-                style: TextStyle(fontSize: 12.5),
+                style: TextStyle(fontSize: 15),
               ),
               const SizedBox(height: 4),
               const Text('Pendaftaran dibuka sejak jadwal dibuat, check-in 1 jam sebelumnya.',
-                  style: TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                  style: TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
               const SizedBox(height: 10),
               AppButton('Kelola Jadwal',
                   icon: Icons.edit_calendar, filled: false, onPressed: _bukaJadwal),
@@ -336,7 +336,7 @@ class _AdminHomeState extends State<AdminHome> {
                   padding: EdgeInsets.symmetric(vertical: 10),
                   child: Center(
                     child: Text('Tidak ada tugas tertunda',
-                        style: TextStyle(color: AppColors.teksRedup)),
+                        style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
                   ),
                 )
               : Column(
@@ -345,8 +345,8 @@ class _AdminHomeState extends State<AdminHome> {
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(_tugas[i].$1,
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
-                        subtitle: Text(_tugas[i].$2, style: const TextStyle(fontSize: 11.5)),
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                        subtitle: Text(_tugas[i].$2, style: const TextStyle(fontSize: 13.5)),
                         trailing: SizedBox(
                           width: 84,
                           child: AppButton(_tugas[i].$3, onPressed: () => _selesaikanTugas(i)),
@@ -383,7 +383,7 @@ class _AdminHomeState extends State<AdminHome> {
               ? Column(
                   children: [
                     const Text('Ringkasan penimbangan belum dapat dimuat.',
-                        style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                        style: TextStyle(fontSize: 14, color: AppColors.teksRedup)),
                     TextButton(
                       onPressed: () {
                         setState(() => _skdnMemuat = true);
@@ -397,7 +397,7 @@ class _AdminHomeState extends State<AdminHome> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(b.label,
-                        style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                        style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -439,7 +439,7 @@ class _AdminHomeState extends State<AdminHome> {
                     ),
                     const SizedBox(height: 4),
                     Text('Target kehadiran minimal ${_persen(d.targetDS)}',
-                        style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                        style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -481,11 +481,11 @@ class _AdminHomeState extends State<AdminHome> {
                   Text(judul,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800)),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
                   Text(sub,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 10, color: AppColors.teksRedup)),
+                      style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
                 ],
               ),
             ),
@@ -503,10 +503,10 @@ class _AdminHomeState extends State<AdminHome> {
         children: [
           Row(
             children: [
-              Expanded(child: Text(label, style: const TextStyle(fontSize: 12.5))),
+              Expanded(child: Text(label, style: const TextStyle(fontSize: 15))),
               Text('$jumlah ($persen%)',
                   style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w800, color: giziFg(g))),
+                      fontSize: 14, fontWeight: FontWeight.w800, color: giziFg(g))),
             ],
           ),
           const SizedBox(height: 4),

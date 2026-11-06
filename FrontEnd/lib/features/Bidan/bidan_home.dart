@@ -162,7 +162,7 @@ class _BidanHomeState extends State<BidanHome> {
               onTap: () => soon(context, 'Pencarian anak'),
               decoration: const InputDecoration(
                 hintText: 'Cari data balita, NIK, atau nama ibu...',
-                hintStyle: TextStyle(fontSize: 13, color: _teksAbu),
+                hintStyle: TextStyle(fontSize: 15, color: _teksAbu),
                 border: InputBorder.none,
               ),
             ),
@@ -230,7 +230,7 @@ class _BidanHomeState extends State<BidanHome> {
                         child: const Text('TUGAS UTAMA BIDAN',
                             style: TextStyle(
                                 color: Colors.white70,
-                                fontSize: 10.5,
+                                fontSize: 12,
                                 letterSpacing: 0.5,
                                 fontWeight: FontWeight.w800)),
                       ),
@@ -245,7 +245,7 @@ class _BidanHomeState extends State<BidanHome> {
                         child: Text('$_menunggu Balita Menunggu',
                             style: const TextStyle(
                                 color: _mint,
-                                fontSize: 11.5,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w800)),
                       ),
                     ],
@@ -261,7 +261,7 @@ class _BidanHomeState extends State<BidanHome> {
                   const Text(
                       'Konfirmasi klinis hasil pengukuran kader sebelum disinkronkan ke database nasional.',
                       style: TextStyle(
-                          color: Color(0xFFD1FAE5), fontSize: 12, height: 1.5)),
+                          color: Color(0xFFD1FAE5), fontSize: 14, height: 1.5)),
                   const SizedBox(height: 16),
                   Container(
                     width: double.infinity,
@@ -287,7 +287,7 @@ class _BidanHomeState extends State<BidanHome> {
                       icon: const Icon(Icons.assignment_turned_in_outlined, size: 20),
                       label: Text('Buka Verifikasi ($_menunggu Data)',
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 14)),
+                              fontWeight: FontWeight.w800, fontSize: 15.5)),
                     ),
                   ),
                 ],
@@ -310,14 +310,14 @@ class _BidanHomeState extends State<BidanHome> {
           Expanded(
             child: Text('MENU & LAYANAN BIDAN',
                 style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     letterSpacing: 0.6,
                     fontWeight: FontWeight.w800,
                     color: _teksAbu)),
           ),
           Text('Akses Cepat',
               style: TextStyle(
-                  fontSize: 11.5, fontWeight: FontWeight.w800, color: _teksGelap)),
+                  fontSize: 13.5, fontWeight: FontWeight.w800, color: _teksGelap)),
         ],
       ),
     );
@@ -407,13 +407,13 @@ class _BidanHomeState extends State<BidanHome> {
                     Text(m.judul,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: _teksGelap)),
                     const SizedBox(height: 3),
                     Text(m.sub,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 10.5, color: _teksBiru)),
+                        style: const TextStyle(fontSize: 12, color: _teksBiru)),
                   ],
                 ),
               ),
@@ -434,7 +434,7 @@ class _BidanHomeState extends State<BidanHome> {
                     child: Text('${m.badge}',
                         style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800)),
                   ),
                 ),
@@ -484,7 +484,7 @@ class _BidanHomeState extends State<BidanHome> {
               const Expanded(
                 child: Text('Ringkasan Penimbangan (SKDN)',
                     style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: 15.5,
                         fontWeight: FontWeight.w800,
                         color: _teksGelap)),
               ),
@@ -501,7 +501,7 @@ class _BidanHomeState extends State<BidanHome> {
           const SizedBox(height: 2),
           Text(b == null ? 'Bulan ini' : b.label,
               style: const TextStyle(
-                  fontSize: 11.5, fontWeight: FontWeight.w600, color: _teksAbu)),
+                  fontSize: 13.5, fontWeight: FontWeight.w600, color: _teksAbu)),
           const SizedBox(height: 12),
           const Divider(height: 1, color: Color(0xFFEDF1F5)),
           const SizedBox(height: 14),
@@ -557,7 +557,7 @@ class _BidanHomeState extends State<BidanHome> {
                   SizedBox(width: 8),
                   Text('Lihat Ringkasan Lengkap',
                       style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: _hijauTeks)),
                 ],
@@ -583,7 +583,7 @@ class _BidanHomeState extends State<BidanHome> {
                   SizedBox(width: 8),
                   Text('Ekspor Laporan PDF / Excel',
                       style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: _teksGelap)),
                 ],
@@ -600,7 +600,7 @@ class _BidanHomeState extends State<BidanHome> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
       child: Text(teks,
-          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: fg)),
+          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: fg)),
     );
   }
 
@@ -625,11 +625,11 @@ class _BidanHomeState extends State<BidanHome> {
             const SizedBox(height: 4),
             Text(huruf,
                 style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w800, color: fg)),
+                    fontSize: 14, fontWeight: FontWeight.w800, color: fg)),
             const SizedBox(height: 8),
             Text(label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 10, color: _teksBiru)),
+                style: const TextStyle(fontSize: 12, color: _teksBiru)),
           ],
         ),
       ),

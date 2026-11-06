@@ -84,7 +84,7 @@ class _RegisterPageState extends State<RegisterPage> {
   InputDecoration _dekor(String hint, IconData icon, {Widget? suffix, String? counter}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13.5),
+      hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 15.5),
       counterText: counter,
       prefixIcon: Icon(icon, color: _hijau.withOpacity(0.75)),
       suffixIcon: suffix,
@@ -106,12 +106,12 @@ class _RegisterPageState extends State<RegisterPage> {
             Expanded(
               child: Text(teks,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 13.5, color: Color(0xFF1F2933))),
+                      fontWeight: FontWeight.w700, fontSize: 15.5, color: Color(0xFF1F2933))),
             ),
             Text(tag,
                 style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 11.5,
+                    fontSize: 14,
                     color: oranye ? _oranye : Colors.black45)),
           ],
         ),
@@ -130,13 +130,13 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           child: Text('$no',
               style: const TextStyle(
-                  color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
+                  color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w800)),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(judul,
               style: const TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 16, color: _hijauTeal)),
+                  fontWeight: FontWeight.w800, fontSize: 18, color: _hijauTeal)),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -146,7 +146,7 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           child: Text(badge,
               style: const TextStyle(
-                  fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFF3563D6))),
+                  fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF3563D6))),
         ),
       ],
     );
@@ -166,7 +166,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               child: const Text('LANGKAH SELANJUTNYA',
                   style: TextStyle(
-                      fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF3563D6))),
+                      fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF3563D6))),
             ),
             Expanded(child: Divider(color: Colors.grey.shade300)),
           ],
@@ -211,14 +211,14 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: 4),
           const Text('Posyandu Care',
               style: TextStyle(
-                  color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+                  color: Colors.white, fontSize: 29, fontWeight: FontWeight.w800)),
           const SizedBox(height: 6),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               'Aplikasi Pemantauan Tumbuh Kembang Anak & KIA Digital',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFFBDEBD9), fontSize: 12.5),
+              style: TextStyle(color: Color(0xFFBDEBD9), fontSize: 15),
             ),
           ),
         ],
@@ -244,7 +244,7 @@ class _RegisterPageState extends State<RegisterPage> {
           const Center(
             child: Text('Daftar Akun Orang Tua',
                 style: TextStyle(
-                    fontSize: 22, fontWeight: FontWeight.w800, color: _hijauTeal)),
+                    fontSize: 23, fontWeight: FontWeight.w800, color: _hijauTeal)),
           ),
           const SizedBox(height: 8),
           Center(
@@ -262,7 +262,7 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Text(
               'Buat akun terlebih dahulu. Data keluarga seperti data diri, suami/ayah, dan anak dapat dilengkapi setelah masuk.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black54, fontSize: 12.5, height: 1.45),
+              style: TextStyle(color: Colors.black54, fontSize: 15, height: 1.45),
             ),
           ),
           const SizedBox(height: 16),
@@ -285,12 +285,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       Text('Khusus Orang Tua / Wali Balita',
                           style: TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 13.5,
+                              fontSize: 15.5,
                               color: Colors.white)),
                       SizedBox(height: 4),
                       Text(
                         'Akun Kader Posyandu & Tenaga Bidan dibuatkan oleh Sekretaris posyandu di desa Anda.',
-                        style: TextStyle(fontSize: 12, color: Colors.white, height: 1.4),
+                        style: TextStyle(fontSize: 14.5, color: Colors.white, height: 1.4),
                       ),
                     ],
                   ),
@@ -306,9 +306,10 @@ class _RegisterPageState extends State<RegisterPage> {
           DropdownButtonFormField<String>(
             value: _posyandu,
             isExpanded: true,
+            style: const TextStyle(fontSize: 16.5, color: Colors.black87),
             icon: const Icon(Icons.keyboard_arrow_down, color: _hijau),
             hint: Text('Pilih posyandu',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 13.5)),
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 15.5)),
             decoration: _dekor('', Icons.place_outlined),
             items: itemPosyandu(),
             onChanged: (v) => setState(() => _posyandu = v),
@@ -318,12 +319,13 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: EdgeInsets.only(top: 6),
             child: Text(
               'Pendaftaran, jadwal, dan data anak hanya berlaku di posyandu yang dipilih.',
-              style: TextStyle(fontSize: 11, color: Colors.black54, height: 1.4),
+              style: TextStyle(fontSize: 13.5, color: Colors.black54, height: 1.4),
             ),
           ),
           _label('Nama Lengkap Ibu / Wali', 'Wajib'),
           TextFormField(
             controller: _nama,
+            style: const TextStyle(fontSize: 16.5),
             textCapitalization: TextCapitalization.words,
             decoration: _dekor('Sesuai KTP / Kartu KIA', Icons.person_outline),
             validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
@@ -331,6 +333,7 @@ class _RegisterPageState extends State<RegisterPage> {
           _label('NIK Ibu / Wali (16 Digit)', 'Wajib'),
           TextFormField(
             controller: _nik,
+            style: const TextStyle(fontSize: 16.5),
             keyboardType: TextInputType.number,
             maxLength: 16,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -343,6 +346,7 @@ class _RegisterPageState extends State<RegisterPage> {
           _label('Nomor WhatsApp Aktif', 'Wajib'),
           TextFormField(
             controller: _hp,
+            style: const TextStyle(fontSize: 16.5),
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: _dekor('Contoh: 081234567890', Icons.phone_outlined),
@@ -353,7 +357,7 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: EdgeInsets.only(top: 8),
             child: Text(
               'Digunakan untuk masuk dan pengingat otomatis jadwal imunisasi & vitamin A',
-              style: TextStyle(fontSize: 11, color: Colors.black54, height: 1.4),
+              style: TextStyle(fontSize: 13.5, color: Colors.black54, height: 1.4),
             ),
           ),
 
@@ -364,6 +368,7 @@ class _RegisterPageState extends State<RegisterPage> {
           _label('Buat PIN Masuk (6 Digit Angka)', 'Enkripsi Lokal', oranye: false),
           TextFormField(
             controller: _pin,
+            style: const TextStyle(fontSize: 16.5),
             obscureText: _hidePin,
             keyboardType: TextInputType.number,
             maxLength: 6,
@@ -386,12 +391,13 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: EdgeInsets.only(top: 2),
             child: Text(
               'Gunakan kombinasi angka yang mudah diingat dan sulit ditebak orang lain.',
-              style: TextStyle(fontSize: 11, color: Colors.black54, height: 1.4),
+              style: TextStyle(fontSize: 13.5, color: Colors.black54, height: 1.4),
             ),
           ),
           _label('Ulangi PIN Masuk', 'Wajib'),
           TextFormField(
             controller: _pin2,
+            style: const TextStyle(fontSize: 16.5),
             obscureText: _hidePin2,
             keyboardType: TextInputType.number,
             maxLength: 6,
@@ -434,7 +440,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     padding: EdgeInsets.only(top: 12, bottom: 6),
                     child: Text(
                       'Saya menyatakan dengan sadar bahwa data yang diisi adalah benar dan sah sesuai KTP / Kartu Keluarga (KK).',
-                      style: TextStyle(fontSize: 12, height: 1.4),
+                      style: TextStyle(fontSize: 14.5, height: 1.4),
                     ),
                   ),
                 ),
@@ -481,7 +487,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 15)),
+                                    fontSize: 17)),
                           ],
                         )
                       : const Row(
@@ -491,7 +497,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 15)),
+                                    fontSize: 17)),
                             SizedBox(width: 8),
                             Icon(Icons.arrow_forward, color: Colors.white, size: 19),
                           ],
@@ -523,18 +529,19 @@ class _RegisterPageState extends State<RegisterPage> {
                 offset: const Offset(0, -40),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text('Sudah memiliki akun terdaftar sebelumnya? ',
-                          style: TextStyle(fontSize: 12.5)),
+                          style: TextStyle(fontSize: 15)),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: const Text('Masuk di sini',
                             style: TextStyle(
                                 color: _oranye,
                                 fontWeight: FontWeight.w800,
-                                fontSize: 12.5)),
+                                fontSize: 15)),
                       ),
                     ],
                   ),

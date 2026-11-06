@@ -205,7 +205,10 @@ class AkunPage extends StatelessWidget {
                             Icons.person_outline,
                             color: AppColors.hijau,
                           ),
-                          title: const Text('Profil Saya'),
+                          title: const Text(
+                            'Profil Saya',
+                            style: TextStyle(fontSize: 15),
+                          ),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => soon(context, 'Profil'),
                         ),
@@ -215,7 +218,10 @@ class AkunPage extends StatelessWidget {
                             Icons.lock_outline,
                             color: AppColors.hijau,
                           ),
-                          title: const Text('Ubah Kata Sandi'),
+                          title: const Text(
+                            'Ubah Kata Sandi',
+                            style: TextStyle(fontSize: 15),
+                          ),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => Navigator.push(
                             context,
@@ -230,7 +236,10 @@ class AkunPage extends StatelessWidget {
                             Icons.notifications_none,
                             color: AppColors.hijau,
                           ),
-                          title: const Text('Notifikasi'),
+                          title: const Text(
+                            'Notifikasi',
+                            style: TextStyle(fontSize: 15),
+                          ),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => soon(context, 'Pengaturan notifikasi'),
                         ),

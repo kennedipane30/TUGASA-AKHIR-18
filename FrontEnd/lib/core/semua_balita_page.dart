@@ -243,7 +243,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
             const SizedBox(height: 10),
             Text(
               'Laki-laki ${r.lakiLaki} · Perempuan ${r.perempuan} · Belum pernah ditimbang ${r.belumPernah}',
-              style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup),
+              style: const TextStyle(fontSize: 13, color: AppColors.teksRedup),
             ),
           ],
         ),
@@ -262,6 +262,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
                   backgroundColor: Colors.white,
                   showCheckmark: false,
                   labelStyle: TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: _aktif == f ? Colors.white : Colors.black87,
                   ),
@@ -311,17 +312,17 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(b.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                      Text(b.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                       const SizedBox(height: 2),
                       Text('${b.jkTeks} · ${b.usiaTeks}',
-                          style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                          style: const TextStyle(fontSize: 13, color: AppColors.teksRedup)),
                       const SizedBox(height: 6),
                       Text(
                         t == null
                             ? 'Belum pernah ditimbang'
                             : 'Terakhir ${t.tanggal == null ? '-' : formatTanggal(t.tanggal!)} · '
                                 'BB ${t.bbKg} kg · TB ${t.tbCm} cm',
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(fontSize: 13),
                       ),
                       const SizedBox(height: 8),
                       Wrap(

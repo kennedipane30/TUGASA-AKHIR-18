@@ -139,6 +139,7 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
       ),
     );
   }
+
   Widget _isi() {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -188,6 +189,7 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
                         selectedColor: AppColors.hijau,
                         backgroundColor: AppColors.latar,
                         labelStyle: TextStyle(
+                            fontSize: 15,
                             fontWeight: FontWeight.w700,
                             color: _dipilih?.id == a.id
                                 ? Colors.white
@@ -215,10 +217,10 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
                     children: [
                       Text(_dipilih!.nama,
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 14)),
+                              fontWeight: FontWeight.w800, fontSize: 15)),
                       Text('Usia ${_dipilih!.usia}',
                           style: const TextStyle(
-                              fontSize: 11.5, color: AppColors.teksRedup)),
+                              fontSize: 13, color: AppColors.teksRedup)),
                     ],
                   ),
                 ),

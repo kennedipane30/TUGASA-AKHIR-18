@@ -201,10 +201,12 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: TextField(
                 controller: _cari,
+                style: const TextStyle(fontSize: 16.5),
                 textInputAction: TextInputAction.search,
                 onSubmitted: (_) => _muat(),
                 decoration: InputDecoration(
                   hintText: 'Cari nama anak atau NIK anak',
+                  hintStyle: const TextStyle(fontSize: 15.5),
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.arrow_forward),
@@ -242,6 +244,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
                               _error!,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
+                                fontSize: 16,
                                 color: AppColors.teksRedup,
                               ),
                             ),
@@ -255,6 +258,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
                                   'Ketik nama atau NIK anak untuk mencari di posyandu Anda.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
+                                    fontSize: 16,
                                     color: AppColors.teksRedup,
                                   ),
                                 ),
@@ -265,6 +269,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
                                   child: Text(
                                     'Anak tidak ditemukan di posyandu Anda',
                                     style: TextStyle(
+                                      fontSize: 16,
                                       color: AppColors.teksRedup,
                                     ),
                                   ),
@@ -298,13 +303,13 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
                                                       style: const TextStyle(
                                                         fontWeight:
                                                             FontWeight.w800,
-                                                        fontSize: 13.5,
+                                                        fontSize: 15.5,
                                                       ),
                                                     ),
                                                     Text(
                                                       'Usia ${a.usia}',
                                                       style: const TextStyle(
-                                                        fontSize: 11,
+                                                        fontSize: 13.5,
                                                         color:
                                                             AppColors.teksRedup,
                                                       ),

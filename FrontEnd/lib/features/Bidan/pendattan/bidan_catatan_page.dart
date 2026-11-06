@@ -67,13 +67,13 @@ Widget _bannerBelumMulai(DateTime mulai) {
             children: [
               const Text(
                 'Sesi posyandu belum dimulai',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(
                 'Pendataan dapat dilakukan mulai ${formatTanggal(mulai)} '
                 'pukul ${_jamMenit(mulai)} WIB.',
-                style: const TextStyle(fontSize: 12.5, height: 1.35),
+                style: const TextStyle(fontSize: 15, height: 1.35),
               ),
             ],
           ),
@@ -512,6 +512,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
 
   InputDecoration _dekor(String label) => InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(fontSize: 15),
         filled: true,
         fillColor: AppColors.latar,
         border: OutlineInputBorder(
@@ -530,6 +531,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
         child: TextField(
           controller: c,
           maxLines: baris,
+          style: const TextStyle(fontSize: 16.5),
           decoration: _dekor(label),
         ),
       );
@@ -612,6 +614,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                                 Text(
                                   _gagal!,
                                   textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 16),
                                 ),
                                 const SizedBox(height: 12),
                                 AppButton(
@@ -701,7 +704,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
               Text(
                 '$jk · $usiaTeks',
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 14.5,
                   color: AppColors.teksRedup,
                 ),
               ),
@@ -746,7 +749,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                 Text(
                   'Kunjungan sebelumnya: BB ${_num(prev['bb_kg'])} kg · TB ${_num(prev['tb_cm'])} cm',
                   style: const TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 14,
                     color: AppColors.teksRedup,
                   ),
                 ),
@@ -755,14 +758,14 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                 const SizedBox(height: 8),
                 Text(
                   'Keluhan (kader): ${ukur['keluhan']}',
-                  style: const TextStyle(fontSize: 12),
+                  style: const TextStyle(fontSize: 14.5),
                 ),
               ],
               if ((ukur['catatan']?.toString() ?? '').isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
                   'Catatan kader: ${ukur['catatan']}',
-                  style: const TextStyle(fontSize: 12),
+                  style: const TextStyle(fontSize: 14.5),
                 ),
               ],
               if (ukur['sedang_sakit'] == true) ...[
@@ -794,7 +797,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                       Expanded(
                         child: Text(
                           peringatan,
-                          style: const TextStyle(fontSize: 11.5),
+                          style: const TextStyle(fontSize: 14),
                         ),
                       ),
                     ],
@@ -839,16 +842,19 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                 children: [
                   FilterChip(
                     label: const Text('Demam'),
+                    labelStyle: const TextStyle(fontSize: 15),
                     selected: _demam,
                     onSelected: (v) => setState(() => _demam = v),
                   ),
                   FilterChip(
                     label: const Text('Diare'),
+                    labelStyle: const TextStyle(fontSize: 15),
                     selected: _diare,
                     onSelected: (v) => setState(() => _diare = v),
                   ),
                   FilterChip(
                     label: const Text('Batuk'),
+                    labelStyle: const TextStyle(fontSize: 15),
                     selected: _batuk,
                     onSelected: (v) => setState(() => _batuk = v),
                   ),
@@ -864,7 +870,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                 'Tanggal kunjungan ulang',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: 12.5,
+                  fontSize: 15,
                 ),
               ),
               const SizedBox(height: 6),
@@ -893,6 +899,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                                   ? 'Tidak dijadwalkan'
                                   : formatTanggal(_ulang!),
                               style: const TextStyle(
+                                fontSize: 15.5,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -946,7 +953,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
             Text(
               _gagalKartu ?? 'Jadwal imunisasi anak tidak dapat dimuat',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: AppColors.teksRedup),
+              style: const TextStyle(fontSize: 14.5, color: AppColors.teksRedup),
             ),
             const SizedBox(height: 10),
             AppButton('Muat Ulang', icon: Icons.refresh, filled: false, onPressed: () {
@@ -980,14 +987,14 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
             calon.isEmpty
                 ? 'Tidak ada vaksin yang dijadwalkan untuk usia anak saat ini.'
                 : 'Vaksin sesuai jadwal imunisasi untuk usia ${k.anak.usiaTeks}. Centang yang diberikan hari ini.',
-            style: const TextStyle(fontSize: 12, color: AppColors.teksRedup),
+            style: const TextStyle(fontSize: 14.5, color: AppColors.teksRedup),
           ),
           const SizedBox(height: 10),
           for (final e in calon) _barisCalon(e),
           if (berikutnya.isNotEmpty) ...[
             const SizedBox(height: 4),
             const Text('Jadwal berikutnya',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
             const SizedBox(height: 6),
             for (final e in berikutnya)
               Padding(
@@ -1000,7 +1007,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                       child: Text(
                         '${e.jadwal.namaDosis} · '
                         '${e.tanggalJadwal == null ? e.jadwal.labelUsia : formatTanggal(e.tanggalJadwal!)}',
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(fontSize: 14.5),
                       ),
                     ),
                   ],
@@ -1038,13 +1045,13 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
           }
         }),
         title: Text(e.jadwal.namaDosis,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
         subtitle: Text(
           [
             if (e.jadwal.jenis.penyakit.isNotEmpty) 'Mencegah ${e.jadwal.jenis.penyakit}',
             if (e.jadwal.jenis.caraPemberian.isNotEmpty) e.jadwal.jenis.caraPemberian,
           ].join(' · '),
-          style: const TextStyle(fontSize: 11),
+          style: const TextStyle(fontSize: 13.5),
         ),
         secondary: _vaksinSesiIni.contains(kunci)
             ? const Pill('Tersimpan', bg: AppColors.hijauMuda, fg: AppColors.hijau)
@@ -1069,7 +1076,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Tambah cepat',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6,
@@ -1079,6 +1086,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                 ActionChip(
                   avatar: Icon(p.ikon, size: 16, color: AppColors.hijau),
                   label: Text(p.label),
+                  labelStyle: const TextStyle(fontSize: 15),
                   backgroundColor: AppColors.latar,
                   side: BorderSide.none,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -1091,7 +1099,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 6),
               child: Text('Belum ada suplemen yang diberikan hari ini.',
-                  style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                  style: TextStyle(fontSize: 14.5, color: AppColors.teksRedup)),
             ),
           for (var i = 0; i < _suplemen.length; i++) _barisSuplemen(i),
         ],
@@ -1115,7 +1123,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
           Row(
             children: [
               Text('Suplemen ${i + 1}',
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
               const Spacer(),
               IconButton(
                 visualDensity: VisualDensity.compact,
@@ -1131,6 +1139,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
               children: [
                 TextField(
                   controller: s.nama,
+                  style: const TextStyle(fontSize: 16.5),
                   textCapitalization: TextCapitalization.sentences,
                   maxLength: 100,
                   decoration: _dekor('Nama suplemen').copyWith(counterText: ''),
@@ -1138,6 +1147,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: s.dosis,
+                  style: const TextStyle(fontSize: 16.5),
                   maxLength: 60,
                   decoration: _dekor('Dosis (mis. 200.000 IU, 400 mg)').copyWith(counterText: ''),
                 ),
@@ -1158,10 +1168,10 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                             icon: const Icon(Icons.remove),
                           ),
                           SizedBox(
-                            width: 34,
+                            width: 38,
                             child: Text('${s.jumlah}',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
                           ),
                           IconButton(
                             visualDensity: VisualDensity.compact,
@@ -1176,6 +1186,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                       child: DropdownButtonFormField<String>(
                         value: s.satuan,
                         isExpanded: true,
+                        style: const TextStyle(fontSize: 16.5, color: Colors.black87),
                         decoration: _dekor('Satuan'),
                         items: [
                           for (final x in satuan) DropdownMenuItem(value: x, child: Text(x)),
@@ -1188,6 +1199,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
                 const SizedBox(height: 8),
                 TextField(
                   controller: s.catatan,
+                  style: const TextStyle(fontSize: 16.5),
                   decoration: _dekor('Catatan (opsional)'),
                 ),
               ],

@@ -63,7 +63,7 @@ Widget _label(String teks, {bool wajib = false, String? ket}) => Padding(
               TextSpan(
                 text: ' $ket',
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   color: AppColors.teksRedup,
                 ),
               ),
@@ -243,7 +243,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                             child: const Text(
                               'Aktif',
                               style: TextStyle(
-                                fontSize: 10.5,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w800,
                                 color: _hijauTua,
                               ),
@@ -256,14 +256,14 @@ class _DataAnakPageState extends State<DataAnakPage> {
                         '${anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'} • '
                         '${usiaAnak(anak.tglLahir)} •',
                         style: const TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 13,
                           color: AppColors.teksRedup,
                         ),
                       ),
                       Text(
                         'lahir ${anak.tglLahir}',
                         style: const TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 13,
                           color: AppColors.teksRedup,
                         ),
                       ),
@@ -297,12 +297,12 @@ class _DataAnakPageState extends State<DataAnakPage> {
                 const SizedBox(width: 6),
                 const Text(
                   'Jadwal Imunisasi: ',
-                  style: TextStyle(fontSize: 11.5),
+                  style: TextStyle(fontSize: 13),
                 ),
                 const Text(
                   'HB-0 Siap',
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -314,7 +314,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                       Text(
                         'Lihat KMS',
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: _hijauTua,
                         ),
@@ -370,7 +370,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
               const Text(
                 'DAFTAR TERDAFTAR',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                   letterSpacing: .5,
                   color: AppColors.teksRedup,
@@ -390,7 +390,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                   '${_anak.length}',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 10.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -405,7 +405,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
               const Text(
                 'Posyandu Mawar I',
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: _hijauTua,
                 ),
@@ -423,7 +423,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                       'untuk menambah data anak balita.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         color: AppColors.teksRedup,
                       ),
                     ),
@@ -444,7 +444,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
               'untuk menambah data adik atau kakak.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 13,
                 color: AppColors.teksRedup,
               ),
             ),
@@ -476,7 +476,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                   'Tambah Anak',
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 15,
+                    fontSize: 15.5,
                   ),
                 ),
               ),
@@ -630,7 +630,10 @@ class _FormAnakState extends State<_FormAnak> {
           icon: Icon(icon, size: 18),
           label: Text(
             teks,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
           ),
         ),
       ),
@@ -663,7 +666,7 @@ class _FormAnakState extends State<_FormAnak> {
                                 ? 'Tambah Data Anak'
                                 : 'Ubah Data Anak',
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 20,
                               fontWeight: FontWeight.w800,
                               color: _hijauTua,
                             ),
@@ -672,7 +675,7 @@ class _FormAnakState extends State<_FormAnak> {
                           const Text(
                             'Lengkapi biodata balita',
                             style: TextStyle(
-                              fontSize: 11.5,
+                              fontSize: 13,
                               color: AppColors.teksRedup,
                             ),
                           ),
@@ -828,7 +831,10 @@ class _FormAnakState extends State<_FormAnak> {
                           onPressed: () => Navigator.pop(context),
                           child: const Text(
                             'Batal',
-                            style: TextStyle(fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15.5,
+                            ),
                           ),
                         ),
                       ),
@@ -851,6 +857,7 @@ class _FormAnakState extends State<_FormAnak> {
                             _menyimpan ? 'Menyimpan...' : 'Simpan Data',
                             style: const TextStyle(
                               fontWeight: FontWeight.w800,
+                              fontSize: 15.5,
                             ),
                           ),
                         ),
@@ -878,7 +885,7 @@ class _FormAnakState extends State<_FormAnak> {
                         child: Text(
                           'Data tersimpan dengan aman dan dapat disinkronkan '
                           'otomatis ke sistem Posyandu.',
-                          style: TextStyle(fontSize: 11),
+                          style: TextStyle(fontSize: 13),
                         ),
                       ),
                     ],

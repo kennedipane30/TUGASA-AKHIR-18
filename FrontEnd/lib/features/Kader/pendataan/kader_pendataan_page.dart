@@ -141,13 +141,13 @@ Widget _bannerBelumMulai(DateTime mulai) {
             children: [
               const Text(
                 'Sesi posyandu belum dimulai',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(
                 'Pendataan dapat dilakukan mulai ${formatTanggal(mulai)} '
                 'pukul ${_jamMenit(mulai)} WIB.',
-                style: const TextStyle(fontSize: 12.5, height: 1.35),
+                style: const TextStyle(fontSize: 15, height: 1.35),
               ),
             ],
           ),
@@ -335,11 +335,11 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                 KotakPenilaian(p: p),
                 if (hasil.isNotEmpty) ...[
                   const SizedBox(height: 10),
-                  Text('Perhatian: $hasil', style: const TextStyle(fontSize: 12, color: AppColors.kuning)),
+                  Text('Perhatian: $hasil', style: const TextStyle(fontSize: 14.5, color: AppColors.kuning)),
                 ],
                 const SizedBox(height: 10),
                 const Text('Data tersimpan dan diteruskan ke bidan.',
-                    style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                    style: TextStyle(fontSize: 14.5, color: AppColors.teksRedup)),
               ],
             ),
           ),
@@ -441,7 +441,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                                 _gagal!,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 13,
+                                  fontSize: 15.5,
                                 ),
                               ),
                             ),
@@ -462,7 +462,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                         child: const Text(
                           'Belum ada jadwal posyandu aktif. Antrean pendataan muncul setelah admin menerbitkan jadwal.',
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 15,
                             color: AppColors.teksRedup,
                           ),
                         ),
@@ -483,7 +483,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                               '${formatTanggal(j.tanggal)} · ${j.jam} WIB',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
-                                fontSize: 14,
+                                fontSize: 16,
                               ),
                             ),
                             if (j.lokasi.isNotEmpty) ...[
@@ -491,7 +491,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                               Text(
                                 j.lokasi,
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14.5,
                                   color: AppColors.teksRedup,
                                 ),
                               ),
@@ -535,7 +535,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                         trailing: const Text(
                           'Ketuk untuk mendata',
                           style: TextStyle(
-                            fontSize: 10.5,
+                            fontSize: 13,
                             color: AppColors.teksRedup,
                           ),
                         ),
@@ -543,7 +543,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                             ? const Text(
                                 'Belum ada anak. Data anak masuk ke sini setelah orang tua melakukan check-in dengan scan QR.',
                                 style: TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: 15,
                                   color: AppColors.teksRedup,
                                 ),
                               )
@@ -578,7 +578,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
             child: Row(
               children: [
                 Container(
-                  width: 52,
+                  width: 62,
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
@@ -590,7 +590,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                     style: const TextStyle(
                       color: AppColors.hijau,
                       fontWeight: FontWeight.w800,
-                      fontSize: 13,
+                      fontSize: 15.5,
                     ),
                   ),
                 ),
@@ -603,13 +603,13 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                         a.nama,
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
-                          fontSize: 13.5,
+                          fontSize: 16,
                         ),
                       ),
                       Text(
                         '${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(a.usiaBulan)}',
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 13.5,
                           color: AppColors.teksRedup,
                         ),
                       ),
@@ -825,11 +825,13 @@ class _FormUkurState extends State<_FormUkur> {
     return TextField(
       controller: c,
       maxLines: baris,
+      style: const TextStyle(fontSize: 16.5),
       keyboardType: angka
           ? const TextInputType.numberWithOptions(decimal: true)
           : null,
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(fontSize: 15),
         filled: true,
         fillColor: AppColors.latar,
         border: OutlineInputBorder(
@@ -865,7 +867,7 @@ class _FormUkurState extends State<_FormUkur> {
                         child: Text(
                           'Pendataan ${widget.anak.nama}',
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -876,7 +878,7 @@ class _FormUkurState extends State<_FormUkur> {
                   Text(
                     '${widget.anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(widget.anak.usiaBulan)}',
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 14.5,
                       color: AppColors.teksRedup,
                     ),
                   ),
@@ -921,7 +923,7 @@ class _FormUkurState extends State<_FormUkur> {
                     contentPadding: EdgeInsets.zero,
                     title: const Text(
                       'Sedang sakit',
-                      style: TextStyle(fontSize: 13),
+                      style: TextStyle(fontSize: 15.5),
                     ),
                     value: _sakit,
                     onChanged: (v) {
@@ -932,7 +934,7 @@ class _FormUkurState extends State<_FormUkur> {
                     contentPadding: EdgeInsets.zero,
                     title: const Text(
                       'ASI eksklusif',
-                      style: TextStyle(fontSize: 13),
+                      style: TextStyle(fontSize: 15.5),
                     ),
                     value: _asi,
                     onChanged: (v) {
@@ -945,7 +947,7 @@ class _FormUkurState extends State<_FormUkur> {
                       _galat!,
                       style: const TextStyle(
                         color: AppColors.merah,
-                        fontSize: 12.5,
+                        fontSize: 15,
                       ),
                     ),
                   ],

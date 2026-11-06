@@ -274,7 +274,7 @@ Widget _kartu({
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 14.5, fontWeight: FontWeight.w800, color: _teksGelap)),
+                        fontSize: 16, fontWeight: FontWeight.w800, color: _teksGelap)),
               ),
               if (trailing != null) ...[const SizedBox(width: 8), trailing],
             ],
@@ -298,7 +298,7 @@ Widget _gagalKartu(String pesan, VoidCallback ulang) => Container(
           const SizedBox(width: 10),
           Expanded(
             child: Text(pesan,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15.5)),
           ),
           TextButton(onPressed: ulang, child: const Text('Coba lagi')),
         ],
@@ -377,10 +377,10 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
                 title: 'Tanggal Posyandu',
                 icon: Icons.history,
                 trailing: const Text('Ketuk untuk melihat',
-                    style: TextStyle(fontSize: 10.5, color: AppColors.teksRedup)),
+                    style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup)),
                 child: _data.isEmpty
                     ? const Text('Belum ada jadwal posyandu.',
-                        style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+                        style: TextStyle(fontSize: 15, color: AppColors.teksRedup))
                     : Column(children: [for (final j in _data) _baris(j)]),
               ),
           ],
@@ -432,12 +432,12 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
                           style: const TextStyle(
                               color: AppColors.hijau,
                               fontWeight: FontWeight.w800,
-                              fontSize: 18)),
+                              fontSize: 20)),
                       Text(t == null ? '' : _bulan[t.month - 1].substring(0, 3),
                           style: const TextStyle(
                               color: AppColors.hijau,
                               fontWeight: FontWeight.w700,
-                              fontSize: 11)),
+                              fontSize: 13)),
                     ],
                   ),
                 ),
@@ -449,13 +449,13 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
                       Text(_fmtTgl(t),
                           style: const TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 13.5,
+                              fontSize: 16,
                               color: _teksGelap)),
                       Text(
                           [if (jam.isNotEmpty) '$jam WIB', if (lokasi.isNotEmpty) lokasi]
                               .join(' · '),
                           style: const TextStyle(
-                              fontSize: 11, color: AppColors.teksRedup)),
+                              fontSize: 13.5, color: AppColors.teksRedup)),
                       const SizedBox(height: 4),
                       Pill('$checkin anak check-in',
                           bg: AppColors.biruMuda, fg: AppColors.biru),
@@ -541,7 +541,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                     bg: AppColors.hijauMuda, fg: AppColors.hijau),
                 child: _data.isEmpty
                     ? const Text('Belum ada anak yang check-in pada jadwal ini.',
-                        style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+                        style: TextStyle(fontSize: 15, color: AppColors.teksRedup))
                     : Column(children: [for (final a in _data) _baris(a)]),
               ),
           ],
@@ -591,7 +591,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                       style: const TextStyle(
                           color: AppColors.hijau,
                           fontWeight: FontWeight.w800,
-                          fontSize: 13)),
+                          fontSize: 15.5)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -601,12 +601,12 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                       Text(_teks(a['nama']),
                           style: const TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 13.5,
+                              fontSize: 16,
                               color: _teksGelap)),
                       Text(
                           '${_teks(a['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(usia, lahir: a['tanggal_lahir'])}',
                           style: const TextStyle(
-                              fontSize: 11, color: AppColors.teksRedup)),
+                              fontSize: 13.5, color: AppColors.teksRedup)),
                       const SizedBox(height: 4),
                       Wrap(
                         spacing: 6,
@@ -704,12 +704,12 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
             SizedBox(
               width: 120,
               child: Text(label,
-                  style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                  style: const TextStyle(fontSize: 14, color: AppColors.teksRedup)),
             ),
             Expanded(
               child: Text(nilai.isEmpty ? '-' : nilai,
                   style: const TextStyle(
-                      fontSize: 12.5, fontWeight: FontWeight.w700, color: _teksGelap)),
+                      fontSize: 15, fontWeight: FontWeight.w700, color: _teksGelap)),
             ),
           ],
         ),
@@ -728,7 +728,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
               const SizedBox(height: 4),
               Text(label,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 10, color: AppColors.teksRedup)),
+                  style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
             ],
           ),
         ),
@@ -756,7 +756,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                 title: 'Data Tidak Tersedia',
                 icon: Icons.info_outline,
                 child: const Text('Data tidak tersedia.',
-                    style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup)),
+                    style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
               )
             else
               ..._isi(_d!),
@@ -806,7 +806,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
         icon: Icons.straighten,
         child: u == null
             ? const Text('Kader belum menginput pengukuran.',
-                style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+                style: TextStyle(fontSize: 15, color: AppColors.teksRedup))
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -841,7 +841,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                     Text('Perhatian: $peringatan',
                         style: const TextStyle(
                             color: AppColors.merah,
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700)),
                   ],
                 ],
@@ -852,7 +852,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
         icon: Icons.assignment_outlined,
         child: c == null
             ? const Text('Bidan belum menuliskan catatan.',
-                style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+                style: TextStyle(fontSize: 15, color: AppColors.teksRedup))
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -894,16 +894,16 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                           '${_namaVaksin[_teks(v['jenis_vaksin_id'])] ?? 'Vaksin'} · Dosis ${_teks(v['dosis_ke'])}',
                           style: const TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 13,
+                              fontSize: 16,
                               color: _teksGelap)),
                       if (_teks(v['kondisi_anak']).isNotEmpty)
                         Text('Kondisi: ${_teks(v['kondisi_anak'])}',
                             style: const TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
+                                fontSize: 13.5, color: AppColors.teksRedup)),
                       if (_teks(v['catatan']).isNotEmpty)
                         Text('Catatan: ${_teks(v['catatan'])}',
                             style: const TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
+                                fontSize: 13.5, color: AppColors.teksRedup)),
                     ],
                   ),
                 ),
@@ -926,16 +926,16 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                       Text(_namaSuplemen[_teks(s['jenis'])] ?? _teks(s['jenis']),
                           style: const TextStyle(
                               fontWeight: FontWeight.w800,
-                              fontSize: 13,
+                              fontSize: 16,
                               color: _teksGelap)),
                       if (_teks(s['keterangan_dosis']).isNotEmpty)
                         Text('Dosis: ${_teks(s['keterangan_dosis'])}',
                             style: const TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
+                                fontSize: 13.5, color: AppColors.teksRedup)),
                       if (_teks(s['catatan']).isNotEmpty)
                         Text('Catatan: ${_teks(s['catatan'])}',
                             style: const TextStyle(
-                                fontSize: 11.5, color: AppColors.teksRedup)),
+                                fontSize: 13.5, color: AppColors.teksRedup)),
                     ],
                   ),
                 ),

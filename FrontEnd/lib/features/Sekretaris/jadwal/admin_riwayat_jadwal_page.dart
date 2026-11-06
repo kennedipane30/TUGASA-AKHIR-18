@@ -258,7 +258,9 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                         child: Row(children: [
                           const Icon(Icons.cloud_off, color: AppColors.kuning),
                           const SizedBox(width: 10),
-                          Expanded(child: Text(_gagal!)),
+                          Expanded(
+                              child: Text(_gagal!,
+                                  style: const TextStyle(fontSize: 15.5))),
                           TextButton(
                             onPressed: () {
                               setState(() => _memuat = true);
@@ -277,7 +279,7 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                           border: Border.all(color: const Color(0xFFE6ECE8)),
                         ),
                         child: const Text('Belum ada jadwal yang sudah lewat.',
-                            style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup)),
+                            style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
                       )
                     else
                       for (final j in _data) _kartu(j),
@@ -322,10 +324,10 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                   children: [
                     Text(formatTanggal(j.tanggal),
                         style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 14.5, color: _teksGelap)),
+                            fontWeight: FontWeight.w800, fontSize: 16, color: _teksGelap)),
                     const SizedBox(height: 2),
                     Text('${j.jam} WIB${j.lokasi.isEmpty ? '' : ' • ${j.lokasi}'}',
-                        style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                        style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
@@ -368,7 +370,7 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
               borderRadius: BorderRadius.circular(20),
               onTap: () => _hapus(j),
               child: Container(
-                height: 32,
+                height: 34,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFEFF1),
@@ -382,7 +384,7 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                     SizedBox(width: 5),
                     Text('Hapus',
                         style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.w700,
                             color: AppColors.merah)),
                   ],

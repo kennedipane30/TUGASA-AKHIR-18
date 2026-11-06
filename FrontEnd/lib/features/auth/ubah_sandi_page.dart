@@ -57,6 +57,7 @@ class _UbahSandiPageState extends State<UbahSandiPage> {
 
   InputDecoration _dekor(String label) => InputDecoration(
         labelText: label,
+        labelStyle: const TextStyle(fontSize: 16.5),
         counterText: '',
         filled: true,
         fillColor: AppColors.isiField,
@@ -78,7 +79,10 @@ class _UbahSandiPageState extends State<UbahSandiPage> {
 
     return Scaffold(
       backgroundColor: AppColors.latar,
-      appBar: AppBar(backgroundColor: Colors.white, title: Text('Ubah $jenis')),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: Text('Ubah $jenis', style: const TextStyle(fontSize: 19)),
+      ),
       body: Form(
         key: _key,
         child: ListView(
@@ -86,6 +90,7 @@ class _UbahSandiPageState extends State<UbahSandiPage> {
           children: [
             TextFormField(
               controller: _lama,
+              style: const TextStyle(fontSize: 16.5),
               obscureText: _hide,
               keyboardType: pin ? TextInputType.number : TextInputType.text,
               inputFormatters: formatter,
@@ -96,6 +101,7 @@ class _UbahSandiPageState extends State<UbahSandiPage> {
             const SizedBox(height: 14),
             TextFormField(
               controller: _baru,
+              style: const TextStyle(fontSize: 16.5),
               obscureText: _hide,
               keyboardType: pin ? TextInputType.number : TextInputType.text,
               inputFormatters: formatter,
@@ -109,6 +115,7 @@ class _UbahSandiPageState extends State<UbahSandiPage> {
             const SizedBox(height: 14),
             TextFormField(
               controller: _ulang,
+              style: const TextStyle(fontSize: 16.5),
               obscureText: _hide,
               keyboardType: pin ? TextInputType.number : TextInputType.text,
               inputFormatters: formatter,
@@ -118,7 +125,7 @@ class _UbahSandiPageState extends State<UbahSandiPage> {
             ),
             const SizedBox(height: 22),
             SizedBox(
-              height: 50,
+              height: 52,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.hijau,
@@ -127,7 +134,7 @@ class _UbahSandiPageState extends State<UbahSandiPage> {
                 ),
                 onPressed: _loading ? null : _simpan,
                 child: Text(_loading ? 'Menyimpan...' : 'Simpan $jenis baru',
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16.5)),
               ),
             ),
           ],

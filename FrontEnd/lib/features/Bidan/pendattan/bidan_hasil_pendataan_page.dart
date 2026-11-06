@@ -134,13 +134,13 @@ Widget _bannerBelumMulai(DateTime mulai) {
             children: [
               const Text(
                 'Sesi posyandu belum dimulai',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(
                 'Pendataan dapat dilakukan mulai ${formatTanggal(mulai)} '
                 'pukul ${_jamMenit(mulai)} WIB.',
-                style: const TextStyle(fontSize: 12.5, height: 1.35),
+                style: const TextStyle(fontSize: 15, height: 1.35),
               ),
             ],
           ),
@@ -436,7 +436,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                                 _gagal!,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 13,
+                                  fontSize: 15.5,
                                 ),
                               ),
                             ),
@@ -457,7 +457,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                         child: Text(
                           'Belum ada jadwal aktif untuk $labelPos.',
                           style: const TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 15,
                             color: AppColors.teksRedup,
                           ),
                         ),
@@ -478,7 +478,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                               '${formatTanggal(j.tanggal)} · ${j.jam} WIB',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
-                                fontSize: 14,
+                                fontSize: 16,
                               ),
                             ),
                             if (j.lokasi.isNotEmpty) ...[
@@ -486,7 +486,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                               Text(
                                 j.lokasi,
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14.5,
                                   color: AppColors.teksRedup,
                                 ),
                               ),
@@ -504,7 +504,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                             Text(
                               '${_data.length} anak sudah check-in. Ketuk antrean untuk mengisi catatan, ketuk ikon untuk melihat detail anak.',
                               style: const TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 14,
                                 color: AppColors.teksRedup,
                               ),
                             ),
@@ -524,6 +524,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                                   selectedColor: AppColors.hijau,
                                   backgroundColor: Colors.white,
                                   labelStyle: TextStyle(
+                                    fontSize: 15,
                                     fontWeight: FontWeight.w700,
                                     color: _aktif == f
                                         ? Colors.white
@@ -546,6 +547,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                               child: Text(
                                 'Belum ada anak yang check-in',
                                 style: TextStyle(
+                                  fontSize: 15.5,
                                   color: AppColors.teksRedup,
                                 ),
                               ),
@@ -578,7 +580,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
             child: Row(
               children: [
                 Container(
-                  width: 52,
+                  width: 62,
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
@@ -590,7 +592,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                     style: const TextStyle(
                       color: AppColors.hijau,
                       fontWeight: FontWeight.w800,
-                      fontSize: 13,
+                      fontSize: 15.5,
                     ),
                   ),
                 ),
@@ -603,13 +605,13 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                         d.nama,
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
-                          fontSize: 13.5,
+                          fontSize: 16,
                         ),
                       ),
                       Text(
                         '${d.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${d.usia}',
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 13.5,
                           color: AppColors.teksRedup,
                         ),
                       ),

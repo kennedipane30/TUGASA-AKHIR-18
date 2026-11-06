@@ -200,7 +200,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
             label,
             style: TextStyle(
               color: warna,
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -225,7 +225,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
               teks,
               style: const TextStyle(
                 color: Color(0xFF52616B),
-                fontSize: 11.5,
+                fontSize: 13,
                 height: 1.4,
               ),
             ),
@@ -252,7 +252,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                 : 'Scan kode QR ini untuk proses check-in kehadiran di $namaPosyandu secara cepat dan akurat.',
             style: const TextStyle(
               color: Color(0xFF25313A),
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: FontWeight.w700,
               height: 1.45,
             ),
@@ -327,7 +327,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                           'QR ini tetap untuk setiap pendaftaran.',
                           style: TextStyle(
                             color: Color(0xFF52616B),
-                            fontSize: 11,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -358,7 +358,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                       'Petunjuk Pemindaian',
                       style: TextStyle(
                         color: Color(0xFF25313A),
-                        fontSize: 12,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -413,7 +413,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Color(0xFF25313A),
-                    fontSize: 13,
+                    fontSize: 15,
                     height: 1.4,
                   ),
                 ),
@@ -424,7 +424,10 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                     backgroundColor: _hijau,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Coba lagi'),
+                  child: const Text(
+                    'Coba lagi',
+                    style: TextStyle(fontSize: 15.5),
+                  ),
                 ),
               ],
             ),

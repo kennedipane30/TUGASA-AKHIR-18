@@ -661,6 +661,7 @@ class _OrangTuaPemeriksaanPageState
         showCheckmark: false,
         side: BorderSide.none,
         labelStyle: TextStyle(
+          fontSize: 15,
           fontWeight: FontWeight.w700,
           color: dipilih ? Colors.white : _teksGelap,
         ),
@@ -754,7 +755,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
             judul,
             style: const TextStyle(
               fontWeight: FontWeight.w800,
-              fontSize: 14.5,
+              fontSize: 15,
               color: _hijauTeks,
             ),
           ),
@@ -802,7 +803,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
               label,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 height: 1.25,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF475569),
@@ -834,7 +835,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                   judul,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 14.5,
+                    fontSize: 15,
                     color: _teksGelap,
                   ),
                 ),
@@ -937,7 +938,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                         Text.rich(
                           TextSpan(
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 15,
                               color: _teksAbu,
                             ),
                             children: [
@@ -1038,7 +1039,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                             'Bidan belum menuliskan catatan untuk kunjungan ini.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 15,
                               color: Color(0xFF2B7BB9),
                             ),
                           ),
@@ -1156,7 +1157,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                                         v.nama,
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
-                                          fontSize: 14.5,
+                                          fontSize: 15,
                                           color: Color(0xFF2B7BB9),
                                         ),
                                       ),
@@ -1200,7 +1201,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                                   child: Text(
                                     'Dosis ${v.dosis}',
                                     style: const TextStyle(
-                                      fontSize: 12.5,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w800,
                                       color: Color(0xFF2B7BB9),
                                     ),

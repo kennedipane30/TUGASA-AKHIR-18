@@ -155,7 +155,7 @@ class _KaderHomeState extends State<KaderHome> {
         Expanded(
           child: Text(judul,
               style: const TextStyle(
-                  fontSize: 15.5, fontWeight: FontWeight.w800, color: _teksGelap)),
+                  fontSize: 16, fontWeight: FontWeight.w800, color: _teksGelap)),
         ),
         if (trailing != null) trailing,
       ],
@@ -171,7 +171,7 @@ class _KaderHomeState extends State<KaderHome> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(_gagal!,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15.5)),
           ),
           TextButton(
             onPressed: () {
@@ -219,7 +219,7 @@ class _KaderHomeState extends State<KaderHome> {
                 const SizedBox(height: 10),
                 const Text(
                   'Belum ada jadwal aktif untuk posyandu Anda. Antrean pendataan muncul setelah admin menerbitkan jadwal.',
-                  style: TextStyle(fontSize: 12.5, color: _teksAbu, height: 1.4),
+                  style: TextStyle(fontSize: 15, color: _teksAbu, height: 1.4),
                 ),
               ],
             ),
@@ -235,7 +235,7 @@ class _KaderHomeState extends State<KaderHome> {
           padding: EdgeInsets.fromLTRB(4, 4, 4, 10),
           child: Text('LAYANAN UTAMA KADER',
               style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   letterSpacing: 0.6,
                   fontWeight: FontWeight.w800,
                   color: _teksAbu)),
@@ -290,7 +290,7 @@ class _KaderHomeState extends State<KaderHome> {
               children: [
                 const Text('SESI POSYANDU TERDEKAT',
                     style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 12.5,
                         letterSpacing: 0.4,
                         fontWeight: FontWeight.w800,
                         color: _hijauTua)),
@@ -300,7 +300,7 @@ class _KaderHomeState extends State<KaderHome> {
                         fontSize: 17, fontWeight: FontWeight.w800, color: _teksGelap)),
                 if (j.lokasi.isNotEmpty)
                   Text(j.lokasi,
-                      style: const TextStyle(fontSize: 11.5, color: _teksAbu)),
+                      style: const TextStyle(fontSize: 13.5, color: _teksAbu)),
               ],
             ),
           ),
@@ -314,7 +314,7 @@ class _KaderHomeState extends State<KaderHome> {
             child: Text(j.jam.replaceAll(' - ', ' -\n'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 14,
                     height: 1.25,
                     fontWeight: FontWeight.w800,
                     color: _teksGelap)),
@@ -344,7 +344,7 @@ class _KaderHomeState extends State<KaderHome> {
             Text(label,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 13.5,
                     height: 1.25,
                     fontWeight: FontWeight.w700,
                     color: _teksGelap)),
@@ -371,7 +371,7 @@ class _KaderHomeState extends State<KaderHome> {
               ),
               child: const Text('Hari Ini',
                   style: TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w800, color: _hijauTua)),
+                      fontSize: 13.5, fontWeight: FontWeight.w800, color: _hijauTua)),
             ),
           ),
           const SizedBox(height: 16),
@@ -403,7 +403,7 @@ class _KaderHomeState extends State<KaderHome> {
           const SizedBox(height: 10),
           Center(
             child: Text('$diukur dari $hadir balita yang check-in sudah diukur',
-                style: const TextStyle(fontSize: 11.5, color: _teksAbu)),
+                style: const TextStyle(fontSize: 13.5, color: _teksAbu)),
           ),
         ],
       ),
@@ -468,7 +468,7 @@ class _KaderHomeState extends State<KaderHome> {
                   const SizedBox(height: 12),
                   const Text(
                     'Orang tua check-in dengan scan QR. Balita yang sudah check-in otomatis masuk antrean ini.',
-                    style: TextStyle(color: _mint, fontSize: 12.5, height: 1.5),
+                    style: TextStyle(color: _mint, fontSize: 15, height: 1.5),
                   ),
                   const SizedBox(height: 18),
                   Container(
@@ -495,7 +495,7 @@ class _KaderHomeState extends State<KaderHome> {
                       icon: const Icon(Icons.sort_rounded, size: 22),
                       label: const Text('Antrian Pendaftaran',
                           style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 15)),
+                              fontWeight: FontWeight.w800, fontSize: 15.5)),
                     ),
                   ),
                 ],
@@ -570,7 +570,7 @@ class _KaderHomeState extends State<KaderHome> {
                 Text(m.$2,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 13,
                         height: 1.25,
                         fontWeight: FontWeight.w800,
                         color: _teksGelap)),
@@ -599,7 +599,7 @@ class _KaderHomeState extends State<KaderHome> {
               const Expanded(
                 child: Text('Menunggu Pengukuran',
                     style: TextStyle(
-                        fontSize: 15.5,
+                        fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: _teksGelap)),
               ),
@@ -611,7 +611,7 @@ class _KaderHomeState extends State<KaderHome> {
                 ),
                 child: Text('${belumDiukur.length} menunggu',
                     style: const TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: _hijauTua)),
               ),
@@ -620,7 +620,7 @@ class _KaderHomeState extends State<KaderHome> {
           const SizedBox(height: 14),
           if (belumDiukur.isEmpty)
             const Text('Tidak ada balita yang menunggu pengukuran saat ini.',
-                style: TextStyle(fontSize: 12.5, height: 1.4, color: _teksBiru))
+                style: TextStyle(fontSize: 15, height: 1.4, color: _teksBiru))
           else
             for (final a in belumDiukur) _barisAntrean(a),
         ],
@@ -657,11 +657,11 @@ class _KaderHomeState extends State<KaderHome> {
                 Text(a.nama,
                     style: const TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 13.5,
+                        fontSize: 16,
                         color: _teksGelap)),
                 const SizedBox(height: 2),
                 Text('${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · $usia',
-                    style: const TextStyle(fontSize: 11, color: _teksAbu)),
+                    style: const TextStyle(fontSize: 13.5, color: _teksAbu)),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -671,7 +671,7 @@ class _KaderHomeState extends State<KaderHome> {
                   ),
                   child: const Text('Sudah check-in',
                       style: TextStyle(
-                          fontSize: 10.5,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                           color: _hijauTua)),
                 ),
@@ -694,7 +694,7 @@ class _KaderHomeState extends State<KaderHome> {
               child: const Text('Ukur\nSekarang',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 12, height: 1.2)),
+                      fontWeight: FontWeight.w800, fontSize: 14, height: 1.2)),
             ),
           ),
         ],
@@ -738,7 +738,7 @@ class _KaderHomeState extends State<KaderHome> {
                     Text(
                       'Daftar balita sasaran yang belum ditimbang bulan ini untuk diingatkan atau dikunjungi.',
                       style: TextStyle(
-                          fontSize: 12.5, height: 1.5, color: _teksBiru),
+                          fontSize: 15, height: 1.5, color: _teksBiru),
                     ),
                   ],
                 ),
@@ -760,7 +760,7 @@ class _KaderHomeState extends State<KaderHome> {
               onPressed: _bukaTidakHadir,
               icon: const Icon(Icons.list_alt_outlined, size: 20),
               label: const Text('Lihat Balita Tidak Hadir',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
             ),
           ),
         ],
@@ -804,7 +804,7 @@ class _KaderHomeState extends State<KaderHome> {
                     const Text(
                       'Cari anak di posyandu Anda untuk melihat jadwal imunisasi, status vaksin, riwayat vaksin, dan suplemen yang sudah diterima.',
                       style: TextStyle(
-                          fontSize: 12.5, height: 1.5, color: _teksBiru),
+                          fontSize: 15, height: 1.5, color: _teksBiru),
                     ),
                   ],
                 ),
@@ -826,7 +826,7 @@ class _KaderHomeState extends State<KaderHome> {
               onPressed: _bukaVaksin,
               icon: const Icon(Icons.event_available_outlined, size: 20),
               label: const Text('Lihat Jadwal & Riwayat Vaksin',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
             ),
           ),
         ],

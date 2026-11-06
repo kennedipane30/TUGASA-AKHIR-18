@@ -249,7 +249,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
               Text(
                 n.isi,
                 style: const TextStyle(
-                  fontSize: 13.5,
+                  fontSize: 15,
                   height: 1.5,
                   color: _teksGelap,
                 ),
@@ -258,7 +258,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
               Text(
                 '${formatTanggal(n.dibuat)} pukul ${formatJam(n.dibuat)} WIB',
                 style: const TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 13,
                   color: AppColors.teksRedup,
                 ),
               ),
@@ -320,7 +320,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w900,
-            fontSize: 16,
+            fontSize: 20,
           ),
         ),
         actions: [
@@ -385,7 +385,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: FontWeight.w700,
             color: aktif ? Colors.white : _teksGelap,
           ),
@@ -428,7 +428,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                     _gagal!,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                 ),
@@ -474,7 +474,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                 : 'Belum ada notifikasi.',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: FontWeight.w800,
               color: _teksGelap,
             ),
@@ -483,7 +483,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
           const Text(
             'Pengingat jadwal posyandu, pemberitahuan check-in, dan peringatan pertumbuhan anak akan muncul di sini.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup),
+            style: TextStyle(fontSize: 13, color: AppColors.teksRedup),
           ),
         ],
       );
@@ -566,7 +566,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 13.5,
+                                  fontSize: 15,
                                   fontWeight: n.sudahDibaca
                                       ? FontWeight.w700
                                       : FontWeight.w900,
@@ -592,7 +592,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 13,
                             height: 1.4,
                             color: Color(0xFF4B5563),
                           ),
@@ -601,7 +601,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                         Text(
                           waktuNotifikasi(n.dibuat),
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
                             color: AppColors.teksRedup,
                           ),
                         ),

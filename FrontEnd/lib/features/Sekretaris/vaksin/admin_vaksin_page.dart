@@ -171,7 +171,9 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                             padding: const EdgeInsets.all(24),
                             children: [
                               const SizedBox(height: 120),
-                              Text(_error!, textAlign: TextAlign.center),
+                              Text(_error!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 15.5)),
                               const SizedBox(height: 12),
                               Center(
                                   child: AppButton('Coba Lagi',
@@ -210,7 +212,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                     child: Text(
                       'Imunisasi Dasar Lengkap: ${d.anakDasarLengkap} dari ${d.anakUsia12Bulan} '
                       'anak usia 12 bulan ke atas',
-                      style: const TextStyle(fontSize: 12, color: AppColors.teksRedup),
+                      style: const TextStyle(fontSize: 14, color: AppColors.teksRedup),
                     ),
                   ),
                 ],
@@ -285,7 +287,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Center(
                     child: Text('Belum ada data jenis vaksin',
-                        style: TextStyle(color: AppColors.teksRedup)),
+                        style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
                   ),
                 )
               : Column(children: [for (final e in d.jenis) _barisJenis(e, maks)]),
@@ -316,12 +318,12 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(e.jenis.nama,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                     if (e.jenis.penyakit.isNotEmpty)
                       Text(e.jenis.penyakit,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                          style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
@@ -343,7 +345,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
           Text(
             '${e.jumlahAnak} anak sudah menerima · ${e.dosisPerAnak} dosis per anak'
             '${e.jenis.khususDaerah ? ' · khusus daerah endemis' : ''}',
-            style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup),
+            style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup),
           ),
         ],
       ),
@@ -356,7 +358,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
         padding: EdgeInsets.symmetric(vertical: 12),
         child: Center(
           child: Text('Jadwal imunisasi belum tersedia',
-              style: TextStyle(color: AppColors.teksRedup)),
+              style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
         ),
       );
     }
@@ -378,7 +380,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                 SizedBox(
                   width: 92,
                   child: Text(g.key,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5)),
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
                 ),
                 Expanded(
                   child: Wrap(

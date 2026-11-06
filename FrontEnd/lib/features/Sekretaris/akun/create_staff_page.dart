@@ -167,7 +167,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
         );
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(fontSize: 13, color: Colors.black38),
+      hintStyle: const TextStyle(fontSize: 15, color: Colors.black38),
       prefixIcon: Icon(ikon, size: 19, color: garis),
       suffixIcon: suffix,
       filled: true,
@@ -193,11 +193,11 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                   TextSpan(
                       text: teks,
                       style: const TextStyle(
-                          fontSize: 11.5, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+                          fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
                   const TextSpan(
                       text: ' *',
                       style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
                           color: AppColors.merah)),
                 ],
@@ -209,7 +209,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
             decoration: BoxDecoration(color: bgBadge, borderRadius: BorderRadius.circular(8)),
             child: Text(badge,
                 style: TextStyle(
-                    fontSize: 9.5, fontWeight: FontWeight.w800, color: warnaBadge)),
+                    fontSize: 12, fontWeight: FontWeight.w800, color: warnaBadge)),
           ),
         ],
       ),
@@ -246,14 +246,14 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : const Icon(Icons.person_add_alt_1, size: 19),
                   label: Text(_loading ? 'Menyimpan...' : 'Buat Akun',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.maybePop(context),
                 child: const Text('Batal',
                     style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: AppColors.teksRedup)),
               ),
@@ -305,13 +305,13 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                                   children: [
                                     const Text('Data Akun Petugas',
                                         style: TextStyle(
-                                            fontSize: 14,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w800,
                                             color: _hijauTua)),
                                     Text(
                                       'Akun otomatis bertugas di Posyandu $desa',
                                       style: const TextStyle(
-                                          fontSize: 10.5,
+                                          fontSize: 13.5,
                                           height: 1.3,
                                           color: AppColors.teksRedup),
                                     ),

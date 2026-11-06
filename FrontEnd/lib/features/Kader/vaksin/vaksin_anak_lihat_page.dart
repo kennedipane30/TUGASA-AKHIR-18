@@ -96,7 +96,7 @@ class VaksinAnakLihatPage extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 14.5,
                         color: Colors.white70,
                       ),
                     ),

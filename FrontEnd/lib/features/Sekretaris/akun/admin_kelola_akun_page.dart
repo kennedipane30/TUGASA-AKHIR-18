@@ -352,13 +352,13 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                                       : 'Akun $_aktif Bertugas',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w800,
-                                      fontSize: 13.5,
+                                      fontSize: 16,
                                       color: _hijauTua),
                                 ),
                                 Text(
                                     '${daftar.length} akun • $jumlahAktif aktif • Posyandu $_desa',
                                     style: const TextStyle(
-                                        fontSize: 11, color: AppColors.teksRedup)),
+                                        fontSize: 13.5, color: AppColors.teksRedup)),
                               ],
                             ),
                           ),
@@ -379,7 +379,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                         onPressed: _tambah,
                         icon: const Icon(Icons.person_add_alt_1, size: 19),
                         label: const Text('Tambah Akun Petugas',
-                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -404,7 +404,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                                     borderRadius: BorderRadius.circular(20)),
                                 labelStyle: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 12.5,
+                                  fontSize: 15,
                                   color: _aktif == f ? Colors.white : Colors.black87,
                                 ),
                                 onSelected: (_) => setState(() => _aktif = f),
@@ -421,7 +421,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                         const Expanded(
                           child: Text('Daftar Akun',
                               style:
-                                  TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                                  TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                         ),
                         Pill('${daftar.length} akun terdaftar',
                             bg: AppColors.hijauMuda, fg: AppColors.hijau),
@@ -452,7 +452,8 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
         child: Column(
           children: [
             Text(_galat!,
-                textAlign: TextAlign.center, style: const TextStyle(color: AppColors.merah)),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 15.5, color: AppColors.merah)),
             const SizedBox(height: 10),
             AppButton('Coba Lagi', icon: Icons.refresh, filled: false, onPressed: () => _muat()),
           ],
@@ -464,7 +465,8 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
         child: Center(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('Belum ada akun', style: TextStyle(color: AppColors.teksRedup)),
+            child: Text('Belum ada akun',
+                style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
           ),
         ),
       );
@@ -514,7 +516,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 13)),
+                                  fontWeight: FontWeight.w800, fontSize: 16)),
                         ),
                         const SizedBox(width: 6),
                         Container(
@@ -527,7 +529,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                           ),
                           child: Text(a.labelPeran,
                               style: TextStyle(
-                                  fontSize: 9.5,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   color: bidan ? _oranyeGaris : _hijauGelap)),
                         ),
@@ -536,7 +538,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                     Text('@${a.username}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                        style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                     const SizedBox(height: 4),
                     Pill('Posyandu $_desa',
                         bg: Colors.white, fg: _biruGaris, icon: Icons.place_outlined),
@@ -552,7 +554,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                 ),
                 child: Text(a.aktif ? 'Aktif' : 'Nonaktif',
                     style: TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: a.aktif ? AppColors.hijau : AppColors.teksRedup)),
               ),
@@ -588,8 +590,8 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
       child: Container(
-        width: 74,
-        height: 30,
+        width: 80,
+        height: 32,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
@@ -601,7 +603,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
             Icon(ikon, size: 14, color: warna),
             const SizedBox(width: 4),
             Text(teks,
-                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: warna)),
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: warna)),
           ],
         ),
       ),
@@ -663,7 +665,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
         );
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(fontSize: 13, color: Colors.black38),
+      hintStyle: const TextStyle(fontSize: 15, color: Colors.black38),
       prefixIcon: Icon(ikon, size: 19, color: garis == _abuGaris ? Colors.black38 : garis),
       suffixIcon: suffix,
       filled: true,
@@ -690,12 +692,12 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                   TextSpan(
                       text: teks,
                       style: const TextStyle(
-                          fontSize: 11.5, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+                          fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
                   if (wajib)
                     const TextSpan(
                         text: ' *',
                         style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: AppColors.merah)),
                 ],
@@ -707,7 +709,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
             decoration: BoxDecoration(color: bgBadge, borderRadius: BorderRadius.circular(8)),
             child: Text(badge,
                 style: TextStyle(
-                    fontSize: 9.5, fontWeight: FontWeight.w800, color: warnaBadge)),
+                    fontSize: 12, fontWeight: FontWeight.w800, color: warnaBadge)),
           ),
         ],
       ),
@@ -750,14 +752,14 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                   onPressed: _simpan,
                   icon: Icon(_edit ? Icons.save_outlined : Icons.person_add_alt_1, size: 19),
                   label: Text(_edit ? 'Simpan Perubahan' : 'Buat Akun',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(_edit ? 'Batal & Kembali' : 'Batal',
                     style: const TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: AppColors.teksRedup)),
               ),
@@ -808,7 +810,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                                   children: [
                                     const Text('Data Akun Petugas',
                                         style: TextStyle(
-                                            fontSize: 14,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w800,
                                             color: _hijauTua)),
                                     Text(
@@ -816,7 +818,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                                           ? 'Perbarui informasi akun petugas Posyandu ${widget.desa}'
                                           : 'Akun otomatis bertugas di Posyandu ${widget.desa}',
                                       style: const TextStyle(
-                                          fontSize: 10.5,
+                                          fontSize: 13.5,
                                           height: 1.3,
                                           color: AppColors.teksRedup),
                                     ),
