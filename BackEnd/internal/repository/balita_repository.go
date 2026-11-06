@@ -66,3 +66,34 @@ func (r *BalitaRepository) PenilaianByPengukuran(ids []uuid.UUID) ([]models.Peni
 	err := r.db.Where("pengukuran_id IN ?", ids).Find(&list).Error
 	return list, err
 }
+
+// PemeriksaanByPendaftaran: catatan bidan untuk banyak kunjungan (pendaftaran).
+func (r *BalitaRepository) PemeriksaanByPendaftaran(ids []uuid.UUID) ([]models.PemeriksaanBidan, error) {
+	list := []models.PemeriksaanBidan{}
+	if len(ids) == 0 {
+		return list, nil
+	}
+	err := r.db.Where("pendaftaran_id IN ?", ids).Find(&list).Error
+	return list, err
+}
+
+// SuplemenByPendaftaran: suplemen (Vitamin A, obat cacing, dll.) yang diberikan pada banyak kunjungan.
+func (r *BalitaRepository) SuplemenByPendaftaran(ids []uuid.UUID) ([]models.SuplemenAnak, error) {
+	list := []models.SuplemenAnak{}
+	if len(ids) == 0 {
+		return list, nil
+	}
+	err := r.db.Where("pendaftaran_id IN ?", ids).Order("created_at ASC").Find(&list).Error
+	return list, err
+}
+
+// ImunisasiByPendaftaran: imunisasi yang diberikan pada banyak kunjungan, beserta nama vaksin.
+func (r *BalitaRepository) ImunisasiByPendaftaran(ids []uuid.UUID) ([]models.ImunisasiAnak, error) {
+	list := []models.ImunisasiAnak{}
+	if len(ids) == 0 {
+		return list, nil
+	}
+	err := r.db.Preload("JenisVaksin").Where("pendaftaran_id IN ?", ids).
+		Order("dosis_ke ASC").Find(&list).Error
+	return list, err
+}

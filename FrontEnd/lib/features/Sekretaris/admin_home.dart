@@ -8,6 +8,8 @@ import '../../core/qr_checkin_page.dart';
 import '../auth/auth_provider.dart';
 import 'akun/admin_kelola_akun_page.dart';
 import '../../core/semua_balita_page.dart';
+import '../../core/skdn_page.dart';
+import '../../service/skdn_service.dart';
 import 'rekap/admin_rekap_page.dart';
 import 'vaksin/admin_vaksin_page.dart';
 
@@ -29,6 +31,38 @@ class _AdminHomeState extends State<AdminHome> {
     ('Reset sandi', 'Ibu Rahmawati (orang tua) meminta reset kata sandi', 'Setujui'),
     ('Koreksi NIK', 'Aisyah Putri: pengajuan koreksi NIK dari orang tua', 'Periksa'),
   ];
+
+  // Ringkasan penimbangan (SKDN) bulan berjalan.
+  SkdnData? _skdn;
+  bool _skdnMemuat = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _muatSkdn();
+  }
+
+  Future<void> _muatSkdn() async {
+    try {
+      final d = await const SkdnService('/sekretaris').hitung();
+      if (!mounted) return;
+      setState(() {
+        _skdn = d;
+        _skdnMemuat = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _skdnMemuat = false);
+    }
+  }
+
+  Future<void> _bukaSkdn() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SkdnPage(prefix: '/sekretaris')),
+    );
+    _muatSkdn();
+  }
 
   Future<void> _sinkronkan() async {
     setState(() => _sinkronBerjalan = true);
@@ -144,7 +178,7 @@ class _AdminHomeState extends State<AdminHome> {
         SectionCard(
           title: 'Aksi Cepat Sekretaris',
           icon: Icons.bolt,
-          trailing: const Pill('9 Menu Utama', bg: AppColors.biruMuda, fg: AppColors.biru),
+          trailing: const Pill('10 Menu Utama', bg: AppColors.biruMuda, fg: AppColors.biru),
           child: GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -171,6 +205,8 @@ class _AdminHomeState extends State<AdminHome> {
                   () => soon(context, 'Data master')),
               _menu(Icons.summarize_outlined, 'Rekap Posyandu', 'Gizi, Vitamin A, tidak hadir',
                   () => _bukaRekap(0)),
+              _menu(Icons.analytics_outlined, 'Ringkasan Penimbangan', 'SKDN bulanan',
+                  _bukaSkdn),
             ],
           ),
         ),
@@ -264,37 +300,8 @@ class _AdminHomeState extends State<AdminHome> {
           ),
         ),
 
-        // AD-03 poin 4: indikator SKDN dan cakupan imunisasi
-        SectionCard(
-          title: 'Indikator SKDN Posyandu',
-          icon: Icons.analytics_outlined,
-          trailing: const Pill('Target ≥ 85%', bg: AppColors.biruMuda, fg: AppColors.biru),
-          child: const Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(child: StatBox(nilai: '348', label: 'S\nSasaran')),
-                  SizedBox(width: 8),
-                  Expanded(child: StatBox(nilai: '348', label: 'K\nPunya KMS')),
-                  SizedBox(width: 8),
-                  Expanded(
-                      child: StatBox(
-                          nilai: '308',
-                          label: 'D\nDitimbang\n88.5%',
-                          bg: AppColors.hijauMuda,
-                          fg: AppColors.hijau)),
-                  SizedBox(width: 8),
-                  Expanded(
-                      child: StatBox(
-                          nilai: '274',
-                          label: 'N\nNaik BB\n89.0%',
-                          bg: AppColors.biruMuda,
-                          fg: AppColors.biru)),
-                ],
-              ),
-            ],
-          ),
-        ),
+        // Ringkasan penimbangan (SKDN) bulan berjalan
+        _kartuSkdn(),
 
         // AD-04: jadwal posyandu desa
         SectionCard(
@@ -349,6 +356,99 @@ class _AdminHomeState extends State<AdminHome> {
                 ),
         ),
       ],
+    );
+  }
+
+  String _persen(double v) =>
+      '${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1)}%';
+
+  Widget _kartuSkdn() {
+    final d = _skdn;
+    final b = d?.bulan;
+    return SectionCard(
+      title: 'Ringkasan Penimbangan',
+      icon: Icons.analytics_outlined,
+      trailing: IconButton(
+        tooltip: 'Penjelasan',
+        visualDensity: VisualDensity.compact,
+        icon: const Icon(Icons.info_outline, color: AppColors.biru),
+        onPressed: () => tampilkanPenjelasanSkdn(context),
+      ),
+      child: _skdnMemuat
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : b == null
+              ? Column(
+                  children: [
+                    const Text('Ringkasan penimbangan belum dapat dimuat.',
+                        style: TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _skdnMemuat = true);
+                        _muatSkdn();
+                      },
+                      child: const Text('Coba lagi'),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(b.label,
+                        style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(child: StatBox(nilai: '${b.s}', label: 'Seluruh\nbalita')),
+                        const SizedBox(width: 8),
+                        Expanded(child: StatBox(nilai: '${b.k}', label: 'Punya\nBuku KIA')),
+                        const SizedBox(width: 8),
+                        Expanded(
+                            child: StatBox(
+                                nilai: '${b.d}',
+                                label: 'Datang\nditimbang',
+                                bg: AppColors.hijauMuda,
+                                fg: AppColors.hijau)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                            child: StatBox(
+                                nilai: '${b.n}',
+                                label: 'Berat\nbadan naik',
+                                bg: AppColors.biruMuda,
+                                fg: AppColors.biru)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        Pill('Kehadiran ${_persen(b.persenDS)}',
+                            bg: d!.capaiTarget ? AppColors.hijauMuda : AppColors.merahMuda,
+                            fg: d.capaiTarget ? AppColors.hijau : AppColors.merah),
+                        Pill('Tumbuh baik ${_persen(b.persenND)}',
+                            bg: AppColors.biruMuda, fg: AppColors.biru),
+                        if (b.duaT + b.bgm > 0)
+                          Pill('${d.perluRujuk.length} perlu dirujuk',
+                              bg: AppColors.merahMuda,
+                              fg: AppColors.merah,
+                              icon: Icons.warning_amber_rounded),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Target kehadiran minimal ${_persen(d.targetDS)}',
+                        style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _bukaSkdn,
+                        child: const Text('Lihat Ringkasan Lengkap'),
+                      ),
+                    ),
+                  ],
+                ),
     );
   }
 

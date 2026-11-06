@@ -61,21 +61,29 @@ class AnakRingkas {
   }
 }
 
-/// Usia anak: "5 hari", "7 bln", "1 th 3 bln".
+DateTime _tambahBulan(DateTime d, int n) {
+  final total = d.month - 1 + n;
+  final y = d.year + total ~/ 12;
+  final m = total % 12 + 1;
+  final akhir = DateTime.utc(y, m + 1, 0).day;
+  return DateTime.utc(y, m, d.day > akhir ? akhir : d.day);
+}
+
+/// Usia detail: "27 hari", "1 bulan 3 hari", "1 tahun 2 bulan", "2 tahun".
 String usiaDariLahir(DateTime lahir, DateTime pada) {
-  int bulan = (pada.year - lahir.year) * 12 + (pada.month - lahir.month);
-  if (pada.day < lahir.day) bulan--;
-  if (bulan < 0) bulan = 0;
-  if (bulan == 0) {
-    final a = DateTime(lahir.year, lahir.month, lahir.day);
-    final b = DateTime(pada.year, pada.month, pada.day);
-    final h = b.difference(a).inDays;
-    return '${h < 0 ? 0 : h} hari';
-  }
-  if (bulan < 12) return '$bulan bln';
-  final th = bulan ~/ 12;
+  final a = DateTime.utc(lahir.year, lahir.month, lahir.day);
+  final b = DateTime.utc(pada.year, pada.month, pada.day);
+  if (b.isBefore(a)) return '0 hari';
+
+  var bulan = (b.year - a.year) * 12 + b.month - a.month;
+  if (_tambahBulan(a, bulan).isAfter(b)) bulan--;
+  final hari = b.difference(_tambahBulan(a, bulan)).inDays;
+  final tahun = bulan ~/ 12;
   final sisa = bulan % 12;
-  return sisa == 0 ? '$th th' : '$th th $sisa bln';
+
+  if (bulan == 0) return '$hari hari';
+  if (tahun == 0) return hari == 0 ? '$bulan bulan' : '$bulan bulan $hari hari';
+  return sisa == 0 ? '$tahun tahun' : '$tahun tahun $sisa bulan';
 }
 
 class JenisVaksinInfo {

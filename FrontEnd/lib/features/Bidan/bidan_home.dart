@@ -5,7 +5,9 @@ import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../../core/posyandu.dart';
 import '../../core/semua_balita_page.dart';
+import '../../core/skdn_page.dart';
 import '../../service/balita_service.dart';
+import '../../service/skdn_service.dart';
 import '../auth/auth_provider.dart';
 import 'balita/balita_berisiko_page.dart';
 import 'riwayat/bidan_riwayat_page.dart';
@@ -54,11 +56,29 @@ class BidanHome extends StatefulWidget {
 class _BidanHomeState extends State<BidanHome> {
   final int _menunggu = 12;
   int? _berisiko;
+  SkdnData? _skdn;
 
   @override
   void initState() {
     super.initState();
     _muatBerisiko();
+    _muatSkdn();
+  }
+
+  Future<void> _muatSkdn() async {
+    try {
+      final d = await const SkdnService('/bidan').hitung();
+      if (!mounted) return;
+      setState(() => _skdn = d);
+    } catch (_) {}
+  }
+
+  Future<void> _bukaSkdn() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SkdnPage(prefix: '/bidan')),
+    );
+    _muatSkdn();
   }
 
   Future<void> _muatBerisiko() async {
@@ -322,8 +342,8 @@ class _BidanHomeState extends State<BidanHome> {
       _Menu(Icons.description_outlined, 'Surat Rujukan', 'Ke Puskesmas',
           _kuningMuda, _kuning, null, _kuning,
           () => soon(context, 'Surat rujukan')),
-      _Menu(Icons.assessment_outlined, 'Rekap SKDN', 'Ekspor Data', _tealMuda,
-          _teal, null, _teal, () => soon(context, 'Ekspor laporan bulanan')),
+      _Menu(Icons.assessment_outlined, 'Rekap SKDN', 'Ringkasan penimbangan', _tealMuda,
+          _teal, null, _teal, _bukaSkdn),
     ];
 
     final baris = <Widget>[];
@@ -428,7 +448,13 @@ class _BidanHomeState extends State<BidanHome> {
   // -------------------------------------------------------------------------
   // Indikator kinerja (SKDN)
   // -------------------------------------------------------------------------
+  String _persen(double v) =>
+      '${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1)}%';
+
   Widget _indikatorKinerja() {
+    final d = _skdn;
+    final b = d?.bulan;
+    String angka(int? v) => v == null ? '-' : '$v';
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 4, bottom: 8),
@@ -456,19 +482,26 @@ class _BidanHomeState extends State<BidanHome> {
               ),
               const SizedBox(width: 10),
               const Expanded(
-                child: Text('Indikator Kinerja Posyandu (SKDN)',
+                child: Text('Ringkasan Penimbangan (SKDN)',
                     style: TextStyle(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: _teksGelap)),
               ),
-              const Text('Bulan Ini',
-                  style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: _teksAbu)),
+              InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => tampilkanPenjelasanSkdn(context),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.info_outline, size: 20, color: _biru),
+                ),
+              ),
             ],
           ),
+          const SizedBox(height: 2),
+          Text(b == null ? 'Bulan ini' : b.label,
+              style: const TextStyle(
+                  fontSize: 11.5, fontWeight: FontWeight.w600, color: _teksAbu)),
           const SizedBox(height: 12),
           const Divider(height: 1, color: Color(0xFFEDF1F5)),
           const SizedBox(height: 14),
@@ -476,21 +509,62 @@ class _BidanHomeState extends State<BidanHome> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _skdn('348', 'S', 'Sasaran', const Color(0xFFF6F8FB),
+                _kotakSkdn(angka(b?.s), 'S', 'Seluruh balita', const Color(0xFFF6F8FB),
                     _teksGelap, const Color(0xFFE9EEF3)),
                 const SizedBox(width: 8),
-                _skdn('348', 'K', 'Punya KMS', const Color(0xFFF6F8FB),
+                _kotakSkdn(angka(b?.k), 'K', 'Punya Buku KIA', const Color(0xFFF6F8FB),
                     _teksGelap, const Color(0xFFE9EEF3)),
                 const SizedBox(width: 8),
-                _skdn('308', 'D', 'Ditimbang', const Color(0xFFE6F8EF),
+                _kotakSkdn(angka(b?.d), 'D', 'Datang ditimbang', const Color(0xFFE6F8EF),
                     _hijauTeks, const Color(0xFFBDEBD3)),
                 const SizedBox(width: 8),
-                _skdn('274', 'N', 'Naik BB', const Color(0xFFE9F0FF), _biru,
+                _kotakSkdn(angka(b?.n), 'N', 'Berat badan naik', const Color(0xFFE9F0FF), _biru,
                     const Color(0xFFC7D8FA)),
               ],
             ),
           ),
+          if (b != null) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _chipSkdn('Kehadiran ${_persen(b.persenDS)}',
+                    d!.capaiTarget ? _hijauMuda : _merahMuda,
+                    d.capaiTarget ? _hijauTeks : _merah),
+                _chipSkdn('Tumbuh baik ${_persen(b.persenND)}', _biruMuda, _biru),
+                if (d.perluRujuk.isNotEmpty)
+                  _chipSkdn('${d.perluRujuk.length} perlu dirujuk', _merahMuda, _merah),
+              ],
+            ),
+          ],
           const SizedBox(height: 14),
+          InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: _bukaSkdn,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE6F8EF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFBDEBD3)),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.analytics_outlined, size: 18, color: _hijauTeks),
+                  SizedBox(width: 8),
+                  Text('Lihat Ringkasan Lengkap',
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: _hijauTeks)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: () => soon(context, 'Ekspor laporan bulanan'),
@@ -521,7 +595,16 @@ class _BidanHomeState extends State<BidanHome> {
     );
   }
 
-  Widget _skdn(String nilai, String huruf, String label, Color bg, Color fg,
+  Widget _chipSkdn(String teks, Color bg, Color fg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      child: Text(teks,
+          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: fg)),
+    );
+  }
+
+  Widget _kotakSkdn(String nilai, String huruf, String label, Color bg, Color fg,
       Color border) {
     return Expanded(
       child: Container(

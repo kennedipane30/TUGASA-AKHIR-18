@@ -24,6 +24,130 @@ DateTime? _tgl(dynamic v) {
   return DateTime.tryParse(t.substring(0, 10));
 }
 
+/// Catatan pemeriksaan bidan pada satu kunjungan.
+class CatatanBidanRingkas {
+  final bool demam;
+  final bool diare;
+  final bool batuk;
+  final String penyakitPenyerta;
+  final String keluhan;
+  final String catatanEvaluasi;
+  final String saranGizi;
+  final String saranPolaAsuh;
+  final DateTime? kunjunganUlang;
+
+  const CatatanBidanRingkas({
+    required this.demam,
+    required this.diare,
+    required this.batuk,
+    required this.penyakitPenyerta,
+    required this.keluhan,
+    required this.catatanEvaluasi,
+    required this.saranGizi,
+    required this.saranPolaAsuh,
+    required this.kunjunganUlang,
+  });
+
+  factory CatatanBidanRingkas.fromJson(Map<String, dynamic> j) => CatatanBidanRingkas(
+        demam: _b(j['demam']),
+        diare: _b(j['diare']),
+        batuk: _b(j['batuk']),
+        penyakitPenyerta: _s(j['penyakit_penyerta']).trim(),
+        keluhan: _s(j['keluhan']).trim(),
+        catatanEvaluasi: _s(j['catatan_evaluasi']).trim(),
+        saranGizi: _s(j['saran_gizi']).trim(),
+        saranPolaAsuh: _s(j['saran_pola_asuh']).trim(),
+        kunjunganUlang: _tgl(j['tanggal_kunjungan_ulang']),
+      );
+
+  List<String> get gejala => [
+        if (demam) 'Demam',
+        if (diare) 'Diare',
+        if (batuk) 'Batuk',
+      ];
+}
+
+/// Satu imunisasi atau suplemen yang diberikan pada kunjungan.
+class PemberianRingkas {
+  final String nama;
+  final String keterangan;
+
+  const PemberianRingkas({required this.nama, required this.keterangan});
+
+  factory PemberianRingkas.fromJson(Map<String, dynamic> j) =>
+      PemberianRingkas(nama: _s(j['nama']), keterangan: _s(j['keterangan']));
+}
+
+/// Data lengkap satu kunjungan posyandu (catatan kader & bidan, imunisasi, suplemen).
+class KunjunganRingkas {
+  final String pendaftaranId;
+  final bool sedangSakit;
+  final bool asiEksklusif;
+  final String keluhanKader;
+  final String catatanKader;
+  final String peringatanValidasi;
+  final CatatanBidanRingkas? catatanBidan;
+  final List<PemberianRingkas> imunisasi;
+  final List<PemberianRingkas> suplemen;
+
+  const KunjunganRingkas({
+    required this.pendaftaranId,
+    required this.sedangSakit,
+    required this.asiEksklusif,
+    required this.keluhanKader,
+    required this.catatanKader,
+    required this.peringatanValidasi,
+    required this.catatanBidan,
+    required this.imunisasi,
+    required this.suplemen,
+  });
+
+  factory KunjunganRingkas.fromJson(Map<String, dynamic> j) => KunjunganRingkas(
+        pendaftaranId: _s(j['pendaftaran_id']),
+        sedangSakit: _b(j['sedang_sakit']),
+        asiEksklusif: _b(j['asi_eksklusif']),
+        keluhanKader: _s(j['keluhan_kader']).trim(),
+        catatanKader: _s(j['catatan_kader']).trim(),
+        peringatanValidasi: _s(j['peringatan_validasi']).trim(),
+        catatanBidan:
+            j['catatan_bidan'] is Map ? CatatanBidanRingkas.fromJson(_m(j['catatan_bidan'])) : null,
+        imunisasi: _l(j['imunisasi']).map(PemberianRingkas.fromJson).toList(),
+        suplemen: _l(j['suplemen']).map(PemberianRingkas.fromJson).toList(),
+      );
+}
+
+// ============================================================================
+// USIA DETAIL
+// ============================================================================
+
+DateTime _tambahBulan(DateTime d, int n) {
+  final total = d.month - 1 + n;
+  final y = d.year + total ~/ 12;
+  final m = total % 12 + 1;
+  final akhir = DateTime.utc(y, m + 1, 0).day;
+  return DateTime.utc(y, m, d.day > akhir ? akhir : d.day);
+}
+
+/// Usia detail dari [lahir] sampai [pada] (default hari ini).
+/// Contoh: "27 hari", "1 bulan 3 hari", "1 tahun 2 bulan", "2 tahun".
+String usiaDetail(DateTime? lahir, [DateTime? pada]) {
+  if (lahir == null) return '-';
+  final p = pada ?? DateTime.now();
+  final a = DateTime.utc(lahir.year, lahir.month, lahir.day);
+  final b = DateTime.utc(p.year, p.month, p.day);
+  if (b.isBefore(a)) return '0 hari';
+
+  var bulan = (b.year - a.year) * 12 + b.month - a.month;
+  if (_tambahBulan(a, bulan).isAfter(b)) bulan--;
+  final hari = b.difference(_tambahBulan(a, bulan)).inDays;
+  final tahun = bulan ~/ 12;
+  final sisaBulan = bulan % 12;
+
+  if (bulan == 0) return '$hari hari';
+  if (tahun == 0) return hari == 0 ? '$bulan bulan' : '$bulan bulan $hari hari';
+  return sisaBulan == 0 ? '$tahun tahun' : '$tahun tahun $sisaBulan bulan';
+}
+
 class TimbangRingkas {
   final DateTime? tanggal;
   final String usiaTeks;
@@ -45,6 +169,7 @@ class TimbangRingkas {
   final double? zBbtb;
   final List<String> masalah;
   final String tingkat;
+  final KunjunganRingkas? kunjungan; // hanya terisi pada detail balita
 
   const TimbangRingkas({
     required this.tanggal,
@@ -67,6 +192,7 @@ class TimbangRingkas {
     required this.zBbtb,
     required this.masalah,
     required this.tingkat,
+    this.kunjungan,
   });
 
   factory TimbangRingkas.fromJson(Map<String, dynamic> j) => TimbangRingkas(
@@ -90,6 +216,7 @@ class TimbangRingkas {
         zBbtb: _dN(j['z_bbtb']),
         masalah: _ls(j['masalah']),
         tingkat: _s(j['tingkat']),
+        kunjungan: j['kunjungan'] is Map ? KunjunganRingkas.fromJson(_m(j['kunjungan'])) : null,
       );
 
   bool get perluPerhatian => duaT || bgm;

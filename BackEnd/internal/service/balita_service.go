@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -52,6 +53,42 @@ type TimbangRingkas struct {
 	ZBbtb         *float64  `json:"z_bbtb"`
 	Masalah       []string  `json:"masalah"`
 	Tingkat       string    `json:"tingkat"`
+
+	// Kunjungan: catatan kader, catatan bidan, imunisasi, dan suplemen pada
+	// kunjungan ini. Hanya diisi pada endpoint detail.
+	Kunjungan *KunjunganRingkas `json:"kunjungan,omitempty"`
+}
+
+// CatatanBidanRingkas: ringkasan pemeriksaan bidan pada satu kunjungan.
+type CatatanBidanRingkas struct {
+	Demam                 bool   `json:"demam"`
+	Diare                 bool   `json:"diare"`
+	Batuk                 bool   `json:"batuk"`
+	PenyakitPenyerta      string `json:"penyakit_penyerta"`
+	Keluhan               string `json:"keluhan"`
+	CatatanEvaluasi       string `json:"catatan_evaluasi"`
+	SaranGizi             string `json:"saran_gizi"`
+	SaranPolaAsuh         string `json:"saran_pola_asuh"`
+	TanggalKunjunganUlang string `json:"tanggal_kunjungan_ulang"`
+}
+
+// PemberianRingkas: satu imunisasi atau suplemen yang diberikan pada kunjungan.
+type PemberianRingkas struct {
+	Nama       string `json:"nama"`
+	Keterangan string `json:"keterangan"`
+}
+
+// KunjunganRingkas: data lengkap satu kunjungan posyandu.
+type KunjunganRingkas struct {
+	PendaftaranID      uuid.UUID            `json:"pendaftaran_id"`
+	SedangSakit        bool                 `json:"sedang_sakit"`
+	AsiEksklusif       bool                 `json:"asi_eksklusif"`
+	KeluhanKader       string               `json:"keluhan_kader"`
+	CatatanKader       string               `json:"catatan_kader"`
+	PeringatanValidasi string               `json:"peringatan_validasi"`
+	CatatanBidan       *CatatanBidanRingkas `json:"catatan_bidan"`
+	Imunisasi          []PemberianRingkas   `json:"imunisasi"`
+	Suplemen           []PemberianRingkas   `json:"suplemen"`
 }
 
 type BalitaItem struct {
@@ -304,6 +341,10 @@ func (s *BalitaService) Detail(pos string, anakID uuid.UUID) (*DetailBalitaResp,
 	if k, err := s.repo.GetKeluarga(a.KeluargaID); err == nil {
 		out.Keluarga = k
 	}
+	kunjungan, err := s.muatKunjungan(d.ukur[a.ID])
+	if err != nil {
+		return nil, err
+	}
 	lahir := tglRekap(a.TanggalLahir)
 	for _, u := range d.ukur[a.ID] {
 		x := u
@@ -315,7 +356,83 @@ func (s *BalitaService) Detail(pos string, anakID uuid.UUID) (*DetailBalitaResp,
 		if v, ok := d.nilai[x.ID]; ok {
 			n = &v
 		}
-		out.Riwayat = append(out.Riwayat, timbangRingkas(lahir, &x, g, n))
+		t := timbangRingkas(lahir, &x, g, n)
+		t.Kunjungan = kunjungan[x.ID]
+		out.Riwayat = append(out.Riwayat, t)
+	}
+	return out, nil
+}
+
+// muatKunjungan: catatan kader, catatan bidan, imunisasi, dan suplemen
+// untuk setiap pengukuran (dipetakan per ID pengukuran).
+func (s *BalitaService) muatKunjungan(ukur []models.Pengukuran) (map[uuid.UUID]*KunjunganRingkas, error) {
+	out := map[uuid.UUID]*KunjunganRingkas{}
+	if len(ukur) == 0 {
+		return out, nil
+	}
+	pids := make([]uuid.UUID, 0, len(ukur))
+	for _, u := range ukur {
+		pids = append(pids, u.PendaftaranID)
+	}
+	catatan, err := s.repo.PemeriksaanByPendaftaran(pids)
+	if err != nil {
+		return nil, err
+	}
+	petaCatatan := map[uuid.UUID]*CatatanBidanRingkas{}
+	for _, c := range catatan {
+		r := &CatatanBidanRingkas{
+			Demam: c.Demam, Diare: c.Diare, Batuk: c.Batuk,
+			PenyakitPenyerta: c.PenyakitPenyerta, Keluhan: c.Keluhan,
+			CatatanEvaluasi: c.CatatanEvaluasi, SaranGizi: c.SaranGizi, SaranPolaAsuh: c.SaranPolaAsuh,
+		}
+		if c.TanggalKunjunganUlang != nil {
+			r.TanggalKunjunganUlang = c.TanggalKunjunganUlang.Format("2006-01-02")
+		}
+		petaCatatan[c.PendaftaranID] = r
+	}
+	suplemen, err := s.repo.SuplemenByPendaftaran(pids)
+	if err != nil {
+		return nil, err
+	}
+	petaSuplemen := map[uuid.UUID][]PemberianRingkas{}
+	for _, x := range suplemen {
+		if x.PendaftaranID == nil {
+			continue
+		}
+		petaSuplemen[*x.PendaftaranID] = append(petaSuplemen[*x.PendaftaranID],
+			PemberianRingkas{Nama: x.Jenis, Keterangan: x.KeteranganDosis})
+	}
+	imun, err := s.repo.ImunisasiByPendaftaran(pids)
+	if err != nil {
+		return nil, err
+	}
+	petaImun := map[uuid.UUID][]PemberianRingkas{}
+	for _, x := range imun {
+		if x.PendaftaranID == nil {
+			continue
+		}
+		nama := "Vaksin"
+		if x.JenisVaksin != nil && x.JenisVaksin.Nama != "" {
+			nama = x.JenisVaksin.Nama
+		}
+		petaImun[*x.PendaftaranID] = append(petaImun[*x.PendaftaranID],
+			PemberianRingkas{Nama: nama, Keterangan: fmt.Sprintf("Dosis %d", x.DosisKe)})
+	}
+	for _, u := range ukur {
+		k := &KunjunganRingkas{
+			PendaftaranID: u.PendaftaranID, SedangSakit: u.SedangSakit, AsiEksklusif: u.AsiEksklusif,
+			KeluhanKader: u.Keluhan, CatatanKader: u.Catatan, PeringatanValidasi: u.PeringatanValidasi,
+			CatatanBidan: petaCatatan[u.PendaftaranID],
+			Imunisasi:    petaImun[u.PendaftaranID],
+			Suplemen:     petaSuplemen[u.PendaftaranID],
+		}
+		if k.Imunisasi == nil {
+			k.Imunisasi = []PemberianRingkas{}
+		}
+		if k.Suplemen == nil {
+			k.Suplemen = []PemberianRingkas{}
+		}
+		out[u.ID] = k
 	}
 	return out, nil
 }

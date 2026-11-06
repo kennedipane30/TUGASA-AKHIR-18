@@ -33,8 +33,13 @@ DateTime? _tgl(dynamic v) {
   return DateTime.tryParse(s.substring(0, 10));
 }
 
-String _usia(int bln) =>
-    bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
+/// Usia dari jumlah bulan (dipakai bila tanggal lahir tidak tersedia).
+String _usia(int bln) {
+  final th = bln ~/ 12;
+  final sisa = bln % 12;
+  if (th == 0) return '$bln bulan';
+  return sisa == 0 ? '$th tahun' : '$th tahun $sisa bulan';
+}
 
 /// Umur dalam bulan penuh pada tanggal [pada] (sama dengan perhitungan server).
 int _usiaBulanPenuh(DateTime lahir, DateTime pada) {
@@ -43,18 +48,30 @@ int _usiaBulanPenuh(DateTime lahir, DateTime pada) {
   return b < 0 ? 0 : b;
 }
 
-/// Teks usia: "12 hari", "5 bln", atau "1 th 3 bln".
-String _teksUsia(DateTime lahir, DateTime pada) {
-  final b = _usiaBulanPenuh(lahir, pada);
-  if (b == 0) {
-    final hari = DateTime(pada.year, pada.month, pada.day)
-        .difference(DateTime(lahir.year, lahir.month, lahir.day))
-        .inDays;
-    return '${hari < 0 ? 0 : hari} hari';
-  }
-  return b >= 12 ? '${b ~/ 12} th ${b % 12} bln' : '$b bln';
+DateTime _tambahBulan(DateTime d, int n) {
+  final total = d.month - 1 + n;
+  final y = d.year + total ~/ 12;
+  final m = total % 12 + 1;
+  final akhir = DateTime.utc(y, m + 1, 0).day;
+  return DateTime.utc(y, m, d.day > akhir ? akhir : d.day);
 }
 
+/// Usia detail: "27 hari", "1 bulan 3 hari", "1 tahun 2 bulan", "2 tahun".
+String _teksUsia(DateTime lahir, DateTime pada) {
+  final a = DateTime.utc(lahir.year, lahir.month, lahir.day);
+  final b = DateTime.utc(pada.year, pada.month, pada.day);
+  if (b.isBefore(a)) return '0 hari';
+
+  var bulan = (b.year - a.year) * 12 + b.month - a.month;
+  if (_tambahBulan(a, bulan).isAfter(b)) bulan--;
+  final hari = b.difference(_tambahBulan(a, bulan)).inDays;
+  final tahun = bulan ~/ 12;
+  final sisa = bulan % 12;
+
+  if (bulan == 0) return '$hari hari';
+  if (tahun == 0) return hari == 0 ? '$bulan bulan' : '$bulan bulan $hari hari';
+  return sisa == 0 ? '$tahun tahun' : '$tahun tahun $sisa bulan';
+}
 
 String _pesanError(Object e) {
   if (e is DioException) {

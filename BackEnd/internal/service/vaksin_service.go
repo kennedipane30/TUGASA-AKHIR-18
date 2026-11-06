@@ -282,24 +282,43 @@ type KartuVaksinResp struct {
 // ---------------------------------------------------------------- helper
 
 // usiaTeks: "3 hari", "5 bln", "1 th 3 bln".
+func tambahBulanUsia(t time.Time, n int) time.Time {
+	total := int(t.Month()) - 1 + n
+	y := t.Year() + total/12
+	m := time.Month(total%12 + 1)
+	akhir := time.Date(y, m+1, 0, 0, 0, 0, 0, time.UTC).Day()
+	d := t.Day()
+	if d > akhir {
+		d = akhir
+	}
+	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+}
+
+// usiaTeks: usia detail, mis. "27 hari", "1 bulan 3 hari", "1 tahun 2 bulan", "2 tahun".
 func usiaTeks(lahir, pada time.Time) string {
-	b := usiaBulan(lahir, pada)
-	if b == 0 {
-		a := time.Date(lahir.Year(), lahir.Month(), lahir.Day(), 0, 0, 0, 0, time.UTC)
-		z := time.Date(pada.Year(), pada.Month(), pada.Day(), 0, 0, 0, 0, time.UTC)
-		h := int(z.Sub(a).Hours() / 24)
-		if h < 0 {
-			h = 0
-		}
-		return fmt.Sprintf("%d hari", h)
+	a := time.Date(lahir.Year(), lahir.Month(), lahir.Day(), 0, 0, 0, 0, time.UTC)
+	z := time.Date(pada.Year(), pada.Month(), pada.Day(), 0, 0, 0, 0, time.UTC)
+	if z.Before(a) {
+		return "0 hari"
 	}
-	if b < 12 {
-		return fmt.Sprintf("%d bln", b)
+	bulan := (z.Year()-a.Year())*12 + int(z.Month()) - int(a.Month())
+	if tambahBulanUsia(a, bulan).After(z) {
+		bulan--
 	}
-	if b%12 == 0 {
-		return fmt.Sprintf("%d th", b/12)
+	hari := int(z.Sub(tambahBulanUsia(a, bulan)).Hours() / 24)
+	tahun, sisa := bulan/12, bulan%12
+	switch {
+	case bulan == 0:
+		return fmt.Sprintf("%d hari", hari)
+	case tahun == 0 && hari == 0:
+		return fmt.Sprintf("%d bulan", bulan)
+	case tahun == 0:
+		return fmt.Sprintf("%d bulan %d hari", bulan, hari)
+	case sisa == 0:
+		return fmt.Sprintf("%d tahun", tahun)
+	default:
+		return fmt.Sprintf("%d tahun %d bulan", tahun, sisa)
 	}
-	return fmt.Sprintf("%d th %d bln", b/12, b%12)
 }
 
 func labelUsiaJadwal(d int16) string {

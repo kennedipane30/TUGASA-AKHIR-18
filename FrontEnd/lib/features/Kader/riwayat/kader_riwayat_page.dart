@@ -45,8 +45,42 @@ const _bulan = [
 String _fmtTgl(DateTime? t) =>
     t == null ? '-' : '${t.day} ${_bulan[t.month - 1]} ${t.year}';
 
-String _usia(int bln) =>
-    bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
+DateTime _tambahBulan(DateTime d, int n) {
+  final total = d.month - 1 + n;
+  final y = d.year + total ~/ 12;
+  final m = total % 12 + 1;
+  final akhir = DateTime.utc(y, m + 1, 0).day;
+  return DateTime.utc(y, m, d.day > akhir ? akhir : d.day);
+}
+
+/// Usia detail dari [lahir] sampai [pada] (default hari ini).
+/// Contoh: "27 hari", "1 bulan 3 hari", "1 tahun 2 bulan", "2 tahun".
+String _usiaDetail(DateTime lahir, [DateTime? pada]) {
+  final p = pada ?? DateTime.now();
+  final a = DateTime.utc(lahir.year, lahir.month, lahir.day);
+  final b = DateTime.utc(p.year, p.month, p.day);
+  if (b.isBefore(a)) return '0 hari';
+
+  var bulan = (b.year - a.year) * 12 + b.month - a.month;
+  if (_tambahBulan(a, bulan).isAfter(b)) bulan--;
+  final hari = b.difference(_tambahBulan(a, bulan)).inDays;
+  final tahun = bulan ~/ 12;
+  final sisaBulan = bulan % 12;
+
+  if (bulan == 0) return '$hari hari';
+  if (tahun == 0) return hari == 0 ? '$bulan bulan' : '$bulan bulan $hari hari';
+  return sisaBulan == 0 ? '$tahun tahun' : '$tahun tahun $sisaBulan bulan';
+}
+
+/// Usia dari tanggal lahir bila ada; bila tidak, dari jumlah bulan.
+String _usia(int bln, {dynamic lahir, DateTime? pada}) {
+  final l = _tgl(lahir);
+  if (l != null) return _usiaDetail(l, pada);
+  final th = bln ~/ 12;
+  final sisa = bln % 12;
+  if (th == 0) return '$bln bulan';
+  return sisa == 0 ? '$th tahun' : '$th tahun $sisa bulan';
+}
 
 String _jam(dynamic v) {
   final s = _teks(v);
@@ -609,7 +643,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                         ),
                       ),
                       Text(
-                        '${_teks(a['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(usia)}',
+                        '${_teks(a['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(usia, lahir: a['tanggal_lahir'])}',
                         style: const TextStyle(
                           fontSize: 11,
                           color: AppColors.teksRedup,
@@ -865,7 +899,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                   ? 'Perempuan'
                   : 'Laki-laki',
             ),
-            _baris('Usia', _usia(usia)),
+            _baris('Usia', _usia(usia, lahir: anak['tanggal_lahir'], pada: _tgl(jadwal['tanggal']))),
             if (_jam(jadwal['jam_mulai']).isNotEmpty)
               _baris(
                 'Sesi posyandu',

@@ -4,15 +4,19 @@ import 'package:flutter/services.dart';
 import 'app_colors.dart';
 import 'common_widgets.dart';
 import '../service/balita_service.dart';
+import '../service/vaksin_service.dart' show namaSuplemen;
 import '../features/Bidan/vaksin/vaksin_lihat_body.dart';
 import '../features/Sekretaris/rekap/admin_rekap_page.dart';
 
-/// Detail satu balita: profil & keluarga, riwayat penimbangan, dan vaksin.
+/// Detail satu balita: profil & keluarga, riwayat penimbangan (beserta catatan
+/// kader, catatan bidan, imunisasi, dan suplemen tiap kunjungan), dan vaksin.
+/// [tabAwal] 0 = Profil, 1 = Penimbangan (kunjungan terbaru langsung terbuka), 2 = Vaksin.
 class BalitaDetailPage extends StatefulWidget {
   final String prefix;
   final String anakId;
   final String nama;
   final bool bisaKelolaVaksin;
+  final int tabAwal;
 
   const BalitaDetailPage({
     super.key,
@@ -20,6 +24,7 @@ class BalitaDetailPage extends StatefulWidget {
     required this.anakId,
     required this.nama,
     this.bisaKelolaVaksin = false,
+    this.tabAwal = 0,
   });
 
   @override
@@ -31,7 +36,8 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
   DetailBalita? _data;
   bool _loading = true;
   String? _error;
-  int _tab = 0;
+  late int _tab = (widget.tabAwal < 0 || widget.tabAwal > 2) ? 0 : widget.tabAwal;
+  late final Set<int> _terbuka = {if (widget.tabAwal == 1) 0};
 
   @override
   void initState() {
@@ -139,6 +145,10 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
     );
   }
 
+  /// Usia detail saat penimbangan [t]; bila tanggal lahir tidak ada, pakai teks dari server.
+  String _usiaUkur(DateTime? lahir, TimbangRingkas t) =>
+      (lahir == null || t.tanggal == null) ? t.usiaTeks : usiaDetail(lahir, t.tanggal);
+
   // ===================================================================== profil
 
   String _t(dynamic v) => v?.toString().trim() ?? '';
@@ -205,7 +215,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
             children: [
               _baris('Jenis kelamin', r.jkTeks),
               _baris('Tanggal lahir', r.tanggalLahir == null ? '' : formatTanggal(r.tanggalLahir!)),
-              _baris('Usia', r.usiaTeks),
+              _baris('Usia', usiaDetail(r.tanggalLahir)),
               _baris('NIK', _t(a['nik'])),
               _baris('Berat lahir', beratLahir == null ? '' : '$beratLahir kg'),
               _baris('Panjang lahir', panjangLahir == null ? '' : '$panjangLahir cm'),
@@ -220,7 +230,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
           child: r.terakhir == null
               ? const Text('Belum pernah ditimbang di posyandu.',
                   style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
-              : _ringkasTimbang(r.terakhir!),
+              : _ringkasTimbang(r.terakhir!, r.tanggalLahir),
         ),
         SectionCard(
           title: 'Imunisasi',
@@ -266,7 +276,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
     );
   }
 
-  Widget _ringkasTimbang(TimbangRingkas t) {
+  Widget _ringkasTimbang(TimbangRingkas t, DateTime? lahir) {
     String z(double? v) => v == null ? '-' : v.toStringAsFixed(2);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,7 +294,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         ),
         const SizedBox(height: 10),
         Text(
-          '${t.tanggal == null ? '-' : formatTanggal(t.tanggal!)} · usia ${t.usiaTeks}',
+          '${t.tanggal == null ? '-' : formatTanggal(t.tanggal!)} · usia ${_usiaUkur(lahir, t)}',
           style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup),
         ),
         const SizedBox(height: 8),
@@ -338,11 +348,32 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
-        for (final t in d.riwayat)
-          Container(
-            margin: const EdgeInsets.only(bottom: 10),
+        for (var i = 0; i < d.riwayat.length; i++) _kartuTimbang(i, d.riwayat[i], d.ringkas.tanggalLahir),
+      ],
+    );
+  }
+
+  Widget _kartuTimbang(int i, TimbangRingkas t, DateTime? lahir) {
+    final buka = _terbuka.contains(i);
+    final k = t.kunjungan;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: k == null
+              ? null
+              : () => setState(() {
+                    if (buka) {
+                      _terbuka.remove(i);
+                    } else {
+                      _terbuka.add(i);
+                    }
+                  }),
+          child: Padding(
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -354,7 +385,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                       child: Text(t.tanggal == null ? '-' : formatTanggal(t.tanggal!),
                           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
                     ),
-                    Text('usia ${t.usiaTeks}', style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                    Text('usia ${_usiaUkur(lahir, t)}', style: const TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -365,9 +396,147 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                   style: const TextStyle(fontSize: 12.5),
                 ),
                 const SizedBox(height: 8),
-                Wrap(spacing: 6, runSpacing: 6, children: _pill(t)),
+                Wrap(spacing: 6, runSpacing: 6, children: [
+                  ..._pill(t),
+                  if (k?.catatanBidan != null)
+                    const Pill('Catatan bidan', bg: AppColors.biruMuda, fg: AppColors.biru, icon: Icons.check),
+                  if (k != null && k.imunisasi.isNotEmpty)
+                    Pill('${k.imunisasi.length} imunisasi',
+                        bg: AppColors.biruMuda, fg: AppColors.biru, icon: Icons.vaccines),
+                  if (k != null && k.suplemen.isNotEmpty)
+                    Pill('${k.suplemen.length} suplemen',
+                        bg: AppColors.kuningMuda, fg: AppColors.kuning, icon: Icons.medication),
+                ]),
+                if (k != null) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Text(
+                        buka ? 'Tutup detail kunjungan' : 'Lihat detail kunjungan',
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.hijau),
+                      ),
+                      Icon(buka ? Icons.expand_less : Icons.expand_more, size: 18, color: AppColors.hijau),
+                    ],
+                  ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 200),
+                    alignment: Alignment.topCenter,
+                    child: buka ? _detailKunjungan(t, k) : const SizedBox(width: double.infinity),
+                  ),
+                ],
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _subjudul(String teks, IconData ikon) => Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 8),
+        child: Row(
+          children: [
+            Icon(ikon, size: 16, color: AppColors.hijau),
+            const SizedBox(width: 6),
+            Text(teks, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+          ],
+        ),
+      );
+
+  Widget _blok(String judul, String isi, {Color bg = AppColors.latar}) {
+    if (isi.isEmpty) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(judul, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
+          const SizedBox(height: 2),
+          Text(isi, style: const TextStyle(fontSize: 12.5, height: 1.35)),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailKunjungan(TimbangRingkas t, KunjunganRingkas k) {
+    final c = k.catatanBidan;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 20),
+
+        // ------------------------------------------------ pengukuran kader
+        _subjudul('Pengukuran Kader', Icons.straighten),
+        _baris('Cara ukur', t.caraUkur),
+        _baris('ASI eksklusif', k.asiEksklusif ? 'Ya' : 'Tidak'),
+        _baris('Sedang sakit', k.sedangSakit ? 'Ya' : 'Tidak'),
+        _blok('Keluhan', k.keluhanKader),
+        _blok('Catatan kader', k.catatanKader),
+        _blok('Peringatan validasi', k.peringatanValidasi, bg: AppColors.merahMuda),
+
+        // ------------------------------------------------ catatan bidan
+        _subjudul('Catatan Bidan', Icons.medical_information_outlined),
+        if (c == null)
+          const Text('Catatan bidan belum diisi.',
+              style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+        else ...[
+          if (c.gejala.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final g in c.gejala) Pill(g, bg: AppColors.merahMuda, fg: AppColors.merah),
+                ],
+              ),
+            ),
+          _blok('Penyakit penyerta', c.penyakitPenyerta, bg: AppColors.hijauMuda),
+          _blok('Keluhan', c.keluhan, bg: AppColors.hijauMuda),
+          _blok('Evaluasi', c.catatanEvaluasi, bg: AppColors.hijauMuda),
+          _blok('Saran gizi', c.saranGizi, bg: AppColors.hijauMuda),
+          _blok('Saran pola asuh', c.saranPolaAsuh, bg: AppColors.hijauMuda),
+          _baris('Kunjungan ulang', c.kunjunganUlang == null ? '' : formatTanggal(c.kunjunganUlang!)),
+          if (c.gejala.isEmpty &&
+              c.penyakitPenyerta.isEmpty &&
+              c.keluhan.isEmpty &&
+              c.catatanEvaluasi.isEmpty &&
+              c.saranGizi.isEmpty &&
+              c.saranPolaAsuh.isEmpty &&
+              c.kunjunganUlang == null)
+            const Text('Tidak ada keluhan atau catatan khusus.',
+                style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup)),
+        ],
+
+        // ------------------------------------------------ diberikan
+        _subjudul('Diberikan Saat Kunjungan', Icons.vaccines_outlined),
+        if (k.imunisasi.isEmpty && k.suplemen.isEmpty)
+          const Text('Tidak ada imunisasi atau suplemen.',
+              style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup))
+        else
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final v in k.imunisasi)
+                Pill(
+                  [v.nama, if (v.keterangan.isNotEmpty) v.keterangan].join(' · '),
+                  bg: AppColors.biruMuda,
+                  fg: AppColors.biru,
+                  icon: Icons.vaccines,
+                ),
+              for (final x in k.suplemen)
+                Pill(
+                  [namaSuplemen(x.nama), if (x.keterangan.isNotEmpty) x.keterangan].join(' · '),
+                  bg: AppColors.kuningMuda,
+                  fg: AppColors.kuning,
+                  icon: Icons.medication,
+                ),
+            ],
           ),
       ],
     );

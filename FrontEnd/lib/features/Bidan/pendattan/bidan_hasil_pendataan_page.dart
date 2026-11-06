@@ -7,13 +7,14 @@ import 'package:provider/provider.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
+import '../../../core/balita_detail_page.dart';
 import '../../../core/common_widgets.dart';
 import '../../../core/posyandu.dart';
+import '../../../service/balita_service.dart' show usiaDetail;
 import '../../../service/kbm_model.dart';
 import '../../auth/auth_provider.dart';
 import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 import 'bidan_catatan_page.dart';
-import 'bidan_data_anak_page.dart';
 
 const _hijauHeader = Color(0xFF065F46);
 
@@ -22,6 +23,7 @@ class _ItemBidan {
   final String anakId;
   final String nama;
   final String jk;
+  final DateTime? tanggalLahir;
   final int usiaBulan;
   final int? nomor;
   final bool sudahDiukur;
@@ -34,6 +36,7 @@ class _ItemBidan {
     required this.anakId,
     required this.nama,
     required this.jk,
+    required this.tanggalLahir,
     required this.usiaBulan,
     required this.nomor,
     required this.sudahDiukur,
@@ -47,6 +50,7 @@ class _ItemBidan {
         anakId: j['anak_id']?.toString() ?? '',
         nama: j['nama']?.toString() ?? '',
         jk: j['jenis_kelamin']?.toString() ?? '',
+        tanggalLahir: _tglLahir(j['tanggal_lahir']),
         usiaBulan: int.tryParse(j['usia_bulan']?.toString() ?? '') ?? 0,
         nomor: int.tryParse(j['nomor_antrean']?.toString() ?? ''),
         sudahDiukur: j['sudah_diukur'] == true,
@@ -60,9 +64,20 @@ class _ItemBidan {
   String get kodeNomor =>
       nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
 
-  String get usia => usiaBulan >= 12
-      ? '${usiaBulan ~/ 12} th ${usiaBulan % 12} bln'
-      : '$usiaBulan bln';
+  /// Usia detail, mis. "27 hari", "1 bulan 3 hari", "1 tahun 2 bulan".
+  String get usia {
+    if (tanggalLahir != null) return usiaDetail(tanggalLahir);
+    final th = usiaBulan ~/ 12;
+    final bl = usiaBulan % 12;
+    if (th == 0) return '$usiaBulan bulan';
+    return bl == 0 ? '$th tahun' : '$th tahun $bl bulan';
+  }
+}
+
+DateTime? _tglLahir(dynamic v) {
+  final s = v?.toString() ?? '';
+  if (s.length < 10) return null;
+  return DateTime.tryParse(s.substring(0, 10));
 }
 
 String _pesanError(Object e) {
@@ -303,17 +318,25 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
     if (ok == true) _muat();
   }
 
-  // Ketuk ikon: tampilkan data pencatatan anak (halaman terpisah).
-  void _bukaDataAnak(_ItemBidan d) {
-    Navigator.push(
+  // Ketuk ikon: buka detail balita (profil, riwayat penimbangan & kunjungan, vaksin).
+  Future<void> _bukaDataAnak(_ItemBidan d) async {
+    if (d.anakId.isEmpty) {
+      _snack('Data anak tidak ditemukan');
+      return;
+    }
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BidanDataAnakPage(
-          pendaftaranId: d.pendaftaranId,
-          nomor: d.kodeNomor,
+        builder: (_) => BalitaDetailPage(
+          prefix: '/bidan',
+          anakId: d.anakId,
+          nama: d.nama.isEmpty ? 'Detail Anak' : d.nama,
+          bisaKelolaVaksin: true,
+          tabAwal: 1,
         ),
       ),
     );
+    _muat();
   }
 
   // -------------------------------------------------------------------------
@@ -479,7 +502,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                             ],
                             const SizedBox(height: 6),
                             Text(
-                              '${_data.length} anak sudah check-in. Ketuk antrean untuk mengisi catatan, ketuk ikon untuk melihat data pencatatan anak.',
+                              '${_data.length} anak sudah check-in. Ketuk antrean untuk mengisi catatan, ketuk ikon untuk melihat detail anak.',
                               style: const TextStyle(
                                 fontSize: 11.5,
                                 color: AppColors.teksRedup,
@@ -629,7 +652,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Data pencatatan anak',
+                  tooltip: 'Detail anak',
                   icon: const Icon(
                     Icons.assignment_ind_outlined,
                     color: AppColors.hijau,

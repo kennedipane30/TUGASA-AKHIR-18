@@ -26,6 +26,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	rekapRepo := repository.NewRekapRepository(db)
 	kbmRepo := repository.NewKbmRepository(db)
 	balitaRepo := repository.NewBalitaRepository(db)
+	skdnRepo := repository.NewSkdnRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
@@ -59,6 +60,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	vaksinH := handler.NewVaksinHandler(vaksinSvc)
 	rekapH := handler.NewRekapHandler(service.NewRekapService(rekapRepo))
 	balitaH := handler.NewBalitaHandler(service.NewBalitaService(balitaRepo, vaksinRepo))
+	skdnH := handler.NewSkdnHandler(service.NewSkdnService(rekapRepo, skdnRepo))
 
 	api := r.Group("/api/v1")
 	api.GET("/posyandu", authH.ListPosyandu) // publik, untuk registrasi
@@ -109,6 +111,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// semua balita posyandu
 	sekretaris.GET("/balita", balitaH.Daftar)
 	sekretaris.GET("/balita/:anak_id", balitaH.Detail)
+	// ringkasan penimbangan (SKDN)
+	sekretaris.GET("/skdn", skdnH.Hitung)
 
 	// orang tua (check-in dengan memindai QR tetap posyandu)
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
@@ -161,6 +165,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	bidan.GET("/balita", balitaH.Daftar)
 	bidan.GET("/balita-berisiko", balitaH.Berisiko)
 	bidan.GET("/balita/:anak_id", balitaH.Detail)
+	// ringkasan penimbangan (SKDN)
+	bidan.GET("/skdn", skdnH.Hitung)
 
 	return r
 }

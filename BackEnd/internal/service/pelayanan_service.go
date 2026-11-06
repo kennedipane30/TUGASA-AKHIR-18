@@ -90,6 +90,7 @@ type AntreanItem struct {
 	AnakID            uuid.UUID                `json:"anak_id"`
 	Nama              string                   `json:"nama"`
 	JenisKelamin      string                   `json:"jenis_kelamin"`
+	TanggalLahir      string                   `json:"tanggal_lahir"` // YYYY-MM-DD, untuk usia detail di aplikasi
 	UsiaBulan         int                      `json:"usia_bulan"`
 	NomorAntrean      *int16                   `json:"nomor_antrean"`
 	StatusKehadiran   string                   `json:"status_kehadiran"`
@@ -104,6 +105,7 @@ type BidanItem struct {
 	AnakID             uuid.UUID                `json:"anak_id"`
 	Nama               string                   `json:"nama"`
 	JenisKelamin       string                   `json:"jenis_kelamin"`
+	TanggalLahir       string                   `json:"tanggal_lahir"` // YYYY-MM-DD, untuk usia detail di aplikasi
 	UsiaBulan          int                      `json:"usia_bulan"`
 	NomorAntrean       *int16                   `json:"nomor_antrean"`
 	SudahDiukur        bool                     `json:"sudah_diukur"`
@@ -339,6 +341,7 @@ func (s *PelayananService) AntreanKader(jadwalID uuid.UUID, pos string) ([]Antre
 		if p.Anak != nil {
 			it.Nama = p.Anak.Nama
 			it.JenisKelamin = p.Anak.JenisKelamin
+			it.TanggalLahir = p.Anak.TanggalLahir.Format("2006-01-02")
 			it.UsiaBulan = usiaBulan(p.Anak.TanggalLahir, now)
 		}
 		out = append(out, it)
@@ -556,6 +559,7 @@ func (s *PelayananService) AntreanBidan(jadwalID uuid.UUID, pos string) ([]Bidan
 		if p.Anak != nil {
 			it.Nama = p.Anak.Nama
 			it.JenisKelamin = p.Anak.JenisKelamin
+			it.TanggalLahir = p.Anak.TanggalLahir.Format("2006-01-02")
 			it.UsiaBulan = usiaBulan(p.Anak.TanggalLahir, now)
 		}
 		out = append(out, it)
