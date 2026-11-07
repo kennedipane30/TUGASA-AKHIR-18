@@ -7,13 +7,15 @@ import '../../core/posyandu.dart';
 import 'auth_service.dart';
 
 const _hijau = Color(0xFF0B6B4D);
-const _hijauGelap = Color(0xFF05503B);
-const _hijauTeal = Color(0xFF0B6B7A);
-const _latar = Color(0xFFF3F2FB);
-const _isiField = Color(0xFFF2FBF7);
-const _garisField = Color(0xFF8FD9C0);
-const _oranye = Color(0xFFFF7A12);
-const _oranyeGelap = Color(0xFFE85D04);
+const _hijauGelap = Color(0xFF062B20);
+const _hijauTerang = Color(0xFF7FE3C0);
+const _teal = Color(0xFF2BB59A);
+const _biru = Color(0xFF1E88D6);
+const _oranye = Color(0xFFFF7A1A);
+const _oranyeGelap = Color(0xFFE8590C);
+const _oranyeTerang = Color(0xFFFFA31A);
+const _latar = Color(0xFF0B6B4D);
+const _isiField = Color(0xFFF3FBF8);
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -76,49 +78,66 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  OutlineInputBorder _garis(Color warna, {double lebar = 1.5}) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+  OutlineInputBorder _garis(Color warna, {double lebar = 1.4}) =>
+      OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: warna, width: lebar),
       );
 
-  InputDecoration _dekor(String hint, IconData icon, {Widget? suffix, String? counter}) {
+  InputDecoration _dekor(String hint, IconData icon,
+      {Widget? suffix, String? counter}) {
     return InputDecoration(
+      isDense: true,
       hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 15.5),
+      hintStyle: const TextStyle(color: Colors.black38, fontSize: 14.5),
       counterText: counter,
-      prefixIcon: Icon(icon, color: _hijau.withOpacity(0.75)),
+      prefixIcon: Icon(icon, color: Colors.black45, size: 20),
+      prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 40),
       suffixIcon: suffix,
+      suffixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 40),
       filled: true,
       fillColor: _isiField,
-      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 14),
-      border: _garis(_garisField),
-      enabledBorder: _garis(_garisField),
-      focusedBorder: _garis(_hijau, lebar: 2),
+      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+      border: _garis(_teal.withOpacity(0.55)),
+      enabledBorder: _garis(_teal.withOpacity(0.55)),
+      focusedBorder: _garis(_teal, lebar: 1.8),
       errorBorder: _garis(Colors.red.shade300),
-      focusedErrorBorder: _garis(Colors.red.shade400, lebar: 2),
+      focusedErrorBorder: _garis(Colors.red.shade400, lebar: 1.8),
     );
   }
 
-  Widget _label(String teks, String tag, {bool oranye = true}) => Padding(
-        padding: const EdgeInsets.only(bottom: 8, top: 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(teks,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 15.5, color: Color(0xFF1F2933))),
+  Widget _label(String teks) => Padding(
+        padding: const EdgeInsets.only(bottom: 6, top: 14),
+        child: SizedBox(
+          width: double.infinity,
+          child: Text(
+            teks,
+            textAlign: TextAlign.left,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 14.5,
+              color: Colors.black87,
             ),
-            Text(tag,
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: oranye ? _oranye : Colors.black45)),
-          ],
+          ),
         ),
       );
 
-  Widget _judulBagian(int no, String judul, String badge) {
+  Widget _catatan(String teks) => Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Text(
+          teks,
+          textAlign: TextAlign.left,
+          style: const TextStyle(
+            fontSize: 12.5,
+            color: Colors.black54,
+            height: 1.4,
+          ),
+        ),
+      );
+
+  Widget _judulBagian(int no, String judul) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Container(
           width: 26,
@@ -126,34 +145,32 @@ class _RegisterPageState extends State<RegisterPage> {
           alignment: Alignment.center,
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(colors: [_hijau, Color(0xFF14946B)]),
+            color: _hijau,
           ),
-          child: Text('$no',
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w800)),
+          child: Text(
+            '$no',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ),
         const SizedBox(width: 10),
-        Expanded(
-          child: Text(judul,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 18, color: _hijauTeal)),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE6EEFF),
-            borderRadius: BorderRadius.circular(20),
+        Text(
+          judul,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 17,
+            color: Colors.black87,
           ),
-          child: Text(badge,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF3563D6))),
         ),
       ],
     );
   }
 
   Widget _pemisah() => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 22),
+        padding: const EdgeInsets.symmetric(vertical: 20),
         child: Row(
           children: [
             Expanded(child: Divider(color: Colors.grey.shade300)),
@@ -161,214 +178,226 @@ class _RegisterPageState extends State<RegisterPage> {
               margin: const EdgeInsets.symmetric(horizontal: 10),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFE6EEFF),
+                color: _teal.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _teal.withOpacity(0.3)),
               ),
-              child: const Text('LANGKAH SELANJUTNYA',
-                  style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF3563D6))),
+              child: const Text(
+                'LANGKAH SELANJUTNYA',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: _hijau,
+                ),
+              ),
             ),
             Expanded(child: Divider(color: Colors.grey.shade300)),
           ],
         ),
       );
 
-  Widget _header() {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [_hijauGelap, _hijau],
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 72),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          const SizedBox(height: 28),
-          ClipRect(
-            child: Align(
-              alignment: Alignment.center,
-              heightFactor: 0.82,
-              child: Image.asset(
+  // Header disamakan persis dengan halaman login
+  Widget _kepala() {
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+          child: Column(
+            children: [
+              Image.asset(
                 'logo.png',
-                width: 190,
-                height: 190,
+                width: 150,
+                height: 150,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.monitor_heart_outlined, color: Colors.white, size: 100),
+                errorBuilder: (_, __, ___) => const SizedBox(
+                  width: 150,
+                  height: 150,
+                  child: Icon(
+                    Icons.monitor_heart_outlined,
+                    color: Colors.white,
+                    size: 100,
+                  ),
+                ),
               ),
-            ),
+              Transform.translate(
+                offset: const Offset(0, -14),
+                child: const Text(
+                  'Posyandu Care',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 27,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Transform.translate(
+                offset: const Offset(0, -8),
+                child: const Text(
+                  'Pantau kesehatan anak dan gizi buah hati secara berkala tanpa batas koneksi',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _hijauTerang,
+                    fontSize: 14.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
           ),
-          const SizedBox(height: 4),
-          const Text('Posyandu Care',
-              style: TextStyle(
-                  color: Colors.white, fontSize: 29, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Aplikasi Pemantauan Tumbuh Kembang Anak & KIA Digital',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFFBDEBD9), fontSize: 15),
-            ),
+        ),
+        Positioned(
+          top: 0,
+          left: 4,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _kartuUtama() {
+  Widget _kartu() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(color: Color(0x1A000000), blurRadius: 20, offset: Offset(0, 8)),
-        ],
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 4),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: _biru,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.verified_user, color: Colors.white, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Khusus Orang Tua / Wali Balita',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13.5,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
           const Center(
-            child: Text('Daftar Akun Orang Tua',
-                style: TextStyle(
-                    fontSize: 23, fontWeight: FontWeight.w800, color: _hijauTeal)),
+            child: Text(
+              'Daftar Akun Orang Tua',
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           Center(
             child: Container(
-              width: 46,
+              width: 44,
               height: 4,
               decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [_teal, _oranye]),
                 borderRadius: BorderRadius.circular(4),
-                gradient: const LinearGradient(colors: [_hijau, _oranye]),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           const Center(
             child: Text(
               'Buat akun terlebih dahulu. Data keluarga seperti data diri, suami/ayah, dan anak dapat dilengkapi setelah masuk.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.black54, fontSize: 15, height: 1.45),
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: 14,
+                height: 1.45,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F7B56),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.verified_user, color: Colors.white),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Khusus Orang Tua / Wali Balita',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15.5,
-                              color: Colors.white)),
-                      SizedBox(height: 4),
-                      Text(
-                        'Akun Kader Posyandu & Tenaga Bidan dibuatkan oleh Sekretaris posyandu di desa Anda.',
-                        style: TextStyle(fontSize: 14.5, color: Colors.white, height: 1.4),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 20),
 
           // 1. Identitas akun
-          _judulBagian(1, 'Identitas Akun', 'Wajib Diisi'),
-          _label('Posyandu Tempat Anak Dilayani', 'Wajib'),
+          _judulBagian(1, 'Identitas Akun'),
+          _label('Posyandu Tempat Anak Dilayani'),
           DropdownButtonFormField<String>(
             value: _posyandu,
             isExpanded: true,
-            style: const TextStyle(fontSize: 16.5, color: Colors.black87),
-            icon: const Icon(Icons.keyboard_arrow_down, color: _hijau),
-            hint: Text('Pilih posyandu',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 15.5)),
+            isDense: true,
+            style: const TextStyle(fontSize: 15, color: Colors.black87),
+            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black45),
+            hint: const Text(
+              'Pilih posyandu',
+              style: TextStyle(color: Colors.black38, fontSize: 14.5),
+            ),
             decoration: _dekor('', Icons.place_outlined),
             items: itemPosyandu(),
             onChanged: (v) => setState(() => _posyandu = v),
             validator: (v) => v == null ? 'Posyandu wajib dipilih' : null,
           ),
-          const Padding(
-            padding: EdgeInsets.only(top: 6),
-            child: Text(
-              'Pendaftaran, jadwal, dan data anak hanya berlaku di posyandu yang dipilih.',
-              style: TextStyle(fontSize: 13.5, color: Colors.black54, height: 1.4),
-            ),
+          _catatan(
+            'Pendaftaran, jadwal, dan data anak hanya berlaku di posyandu yang dipilih.',
           ),
-          _label('Nama Lengkap Ibu / Wali', 'Wajib'),
+          _label('Nama Lengkap Ibu / Wali'),
           TextFormField(
             controller: _nama,
-            style: const TextStyle(fontSize: 16.5),
+            style: const TextStyle(fontSize: 15),
             textCapitalization: TextCapitalization.words,
             decoration: _dekor('Sesuai KTP / Kartu KIA', Icons.person_outline),
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
           ),
-          _label('NIK Ibu / Wali (16 Digit)', 'Wajib'),
+          _label('NIK Ibu / Wali (16 Digit)'),
           TextFormField(
             controller: _nik,
-            style: const TextStyle(fontSize: 16.5),
+            style: const TextStyle(fontSize: 15),
             keyboardType: TextInputType.number,
             maxLength: 16,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onChanged: (_) => setState(() {}),
-            decoration: _dekor('Contoh: 3201234567890001', Icons.badge_outlined,
-                counter: '${_nik.text.length}/16'),
+            decoration: _dekor(
+              'Contoh: 3201234567890001',
+              Icons.badge_outlined,
+              counter: '${_nik.text.length}/16',
+            ),
             validator: (v) =>
                 (v == null || v.trim().length != 16) ? 'NIK harus 16 digit' : null,
           ),
-          _label('Nomor WhatsApp Aktif', 'Wajib'),
+          _label('Nomor WhatsApp Aktif'),
           TextFormField(
             controller: _hp,
-            style: const TextStyle(fontSize: 16.5),
+            style: const TextStyle(fontSize: 15),
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: _dekor('Contoh: 081234567890', Icons.phone_outlined),
-            validator: (v) =>
-                (v == null || v.trim().length < 10) ? 'No. WhatsApp tidak valid' : null,
+            validator: (v) => (v == null || v.trim().length < 10)
+                ? 'No. WhatsApp tidak valid'
+                : null,
           ),
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text(
-              'Digunakan untuk masuk dan pengingat otomatis jadwal imunisasi & vitamin A',
-              style: TextStyle(fontSize: 13.5, color: Colors.black54, height: 1.4),
-            ),
+          _catatan(
+            'Digunakan untuk masuk dan pengingat otomatis jadwal imunisasi & vitamin A',
           ),
 
           _pemisah(),
 
           // 2. Keamanan akun
-          _judulBagian(2, 'Keamanan Akun', 'PIN 6 Digit'),
-          _label('Buat PIN Masuk (6 Digit Angka)', 'Enkripsi Lokal', oranye: false),
+          _judulBagian(2, 'Keamanan Akun'),
+          _label('Buat PIN Masuk (6 Digit Angka)'),
           TextFormField(
             controller: _pin,
-            style: const TextStyle(fontSize: 16.5),
+            style: const TextStyle(fontSize: 15),
             obscureText: _hidePin,
             keyboardType: TextInputType.number,
             maxLength: 6,
@@ -378,26 +407,26 @@ class _RegisterPageState extends State<RegisterPage> {
               Icons.lock_outline,
               counter: '',
               suffix: IconButton(
+                padding: EdgeInsets.zero,
                 icon: Icon(
-                  _hidePin ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: _hijau,
+                  _hidePin
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: Colors.black45,
+                  size: 20,
                 ),
                 onPressed: () => setState(() => _hidePin = !_hidePin),
               ),
             ),
             validator: (v) => validasiPin(v ?? ''),
           ),
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Text(
-              'Gunakan kombinasi angka yang mudah diingat dan sulit ditebak orang lain.',
-              style: TextStyle(fontSize: 13.5, color: Colors.black54, height: 1.4),
-            ),
+          _catatan(
+            'Gunakan kombinasi angka yang mudah diingat dan sulit ditebak orang lain.',
           ),
-          _label('Ulangi PIN Masuk', 'Wajib'),
+          _label('Ulangi PIN Masuk'),
           TextFormField(
             controller: _pin2,
-            style: const TextStyle(fontSize: 16.5),
+            style: const TextStyle(fontSize: 15),
             obscureText: _hidePin2,
             keyboardType: TextInputType.number,
             maxLength: 6,
@@ -407,9 +436,13 @@ class _RegisterPageState extends State<RegisterPage> {
               Icons.lock_reset,
               counter: '',
               suffix: IconButton(
+                padding: EdgeInsets.zero,
                 icon: Icon(
-                  _hidePin2 ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: _hijau,
+                  _hidePin2
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: Colors.black45,
+                  size: 20,
                 ),
                 onPressed: () => setState(() => _hidePin2 = !_hidePin2),
               ),
@@ -432,7 +465,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 Checkbox(
                   value: _setuju,
                   activeColor: _hijau,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
                   onChanged: (v) => setState(() => _setuju = v ?? false),
                 ),
                 const Expanded(
@@ -440,70 +475,119 @@ class _RegisterPageState extends State<RegisterPage> {
                     padding: EdgeInsets.only(top: 12, bottom: 6),
                     child: Text(
                       'Saya menyatakan dengan sadar bahwa data yang diisi adalah benar dan sah sesuai KTP / Kartu Keluarga (KK).',
-                      style: TextStyle(fontSize: 14.5, height: 1.4),
+                      style: TextStyle(fontSize: 13.5, height: 1.4),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
-          Container(
-            width: double.infinity,
-            height: 54,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: _loading
-                    ? [Colors.orange.shade200, Colors.orange.shade300]
-                    : const [_oranye, _oranyeGelap],
-              ),
-              boxShadow: _loading
-                  ? null
-                  : const [
-                      BoxShadow(
-                          color: Color(0x55FF7A12), blurRadius: 14, offset: Offset(0, 6)),
-                    ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
+          Opacity(
+            opacity: _loading ? 0.7 : 1,
+            child: Container(
+              width: double.infinity,
+              height: 52,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [_oranyeGelap, _oranye, _oranyeTerang],
+                ),
                 borderRadius: BorderRadius.circular(16),
-                onTap: _loading ? null : _submit,
-                child: Center(
-                  child: _loading
-                      ? const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            ),
-                            SizedBox(width: 10),
-                            Text('Memproses...',
+                boxShadow: [
+                  BoxShadow(
+                    color: _oranye.withOpacity(0.4),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: _loading ? null : _submit,
+                  child: Center(
+                    child: _loading
+                        ? const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Memproses...',
                                 style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 17)),
-                          ],
-                        )
-                      : const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Buat Akun',
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 17,
+                                ),
+                              ),
+                            ],
+                          )
+                        : const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Buat Akun',
                                 style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 17)),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward, color: Colors.white, size: 19),
-                          ],
-                        ),
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 17,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_forward,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ],
+                          ),
+                  ),
                 ),
               ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Center(
+            child: Text(
+              'Sudah memiliki akun terdaftar sebelumnya?',
+              style: TextStyle(fontSize: 14.5, color: Colors.black54),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: const Text(
+                'Masuk di sini',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(radius: 3, backgroundColor: _teal),
+                SizedBox(width: 6),
+                Text(
+                  'Mendukung pencatatan luring & sinkronisasi otomatis',
+                  style: TextStyle(fontSize: 12, color: Colors.black45),
+                ),
+              ],
             ),
           ),
         ],
@@ -515,40 +599,31 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _latar,
-      body: Form(
-        key: _key,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _header(),
-              Transform.translate(
-                offset: const Offset(0, -40),
-                child: _kartuUtama(),
-              ),
-              Transform.translate(
-                offset: const Offset(0, -40),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [_hijauGelap, _hijau],
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Form(
+            key: _key,
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Column(
                     children: [
-                      const Text('Sudah memiliki akun terdaftar sebelumnya? ',
-                          style: TextStyle(fontSize: 15)),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Text('Masuk di sini',
-                            style: TextStyle(
-                                color: _oranye,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15)),
-                      ),
+                      _kepala(),
+                      Expanded(child: _kartu()),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-            ],
+              ],
+            ),
           ),
         ),
       ),

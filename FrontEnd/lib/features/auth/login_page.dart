@@ -8,9 +8,9 @@ const _hijau = Color(0xFF0B6B4D);
 const _hijauGelap = Color(0xFF062B20);
 const _hijauTerang = Color(0xFF7FE3C0);
 const _teal = Color(0xFF2BB59A);
-const _judul = Color(0xFF0F6F82);
 const _oranye = Color(0xFFFF7A1A);
 const _oranyeGelap = Color(0xFFE8590C);
+const _oranyeTerang = Color(0xFFFFA31A);
 const _latar = Color(0xFF0B6B4D);
 const _isiField = Color(0xFFF3FBF8);
 
@@ -44,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _submit() async {
     if (_idf.text.trim().isEmpty || _pw.text.isEmpty) {
-      _snack('No. HP, NIK, username, dan kata sandi wajib diisi');
+      _snack('No.Hp, username, dan kata sandi wajib diisi');
       return;
     }
 
@@ -57,24 +57,28 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  InputDecoration _dekor(String hint, {Widget? suffix}) {
+  InputDecoration _dekor(String hint, {required IconData ikon, Widget? suffix}) {
     OutlineInputBorder garis(Color c, double w) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: c, width: w),
         );
 
     return InputDecoration(
+      isDense: true,
       hintText: hint,
       hintStyle: const TextStyle(
         color: Colors.black38,
-        fontSize: 15.5,
+        fontSize: 14.5,
       ),
+      prefixIcon: Icon(ikon, color: Colors.black45, size: 20),
+      prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 40),
       suffixIcon: suffix,
+      suffixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 40),
       filled: true,
       fillColor: _isiField,
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 18,
+        horizontal: 14,
+        vertical: 12,
       ),
       border: garis(_teal.withOpacity(0.55), 1.4),
       enabledBorder: garis(_teal.withOpacity(0.55), 1.4),
@@ -82,36 +86,26 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _label(String kiri, String kanan, Color warnaKanan) {
+  Widget _label(String teks) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              kiri,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
+      padding: const EdgeInsets.only(bottom: 6),
+      child: SizedBox(
+        width: double.infinity,
+        child: Text(
+          teks,
+          textAlign: TextAlign.left,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 14.5,
           ),
-          Text(
-            kanan,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-              color: warnaKanan,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _kepala() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
       child: Column(
         children: [
           Image.asset(
@@ -119,30 +113,263 @@ class _LoginPageState extends State<LoginPage> {
             width: 150,
             height: 150,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const Icon(
-              Icons.monitor_heart_outlined,
-              color: Colors.white,
-              size: 100,
+            errorBuilder: (_, __, ___) => const SizedBox(
+              width: 150,
+              height: 150,
+              child: Icon(
+                Icons.monitor_heart_outlined,
+                color: Colors.white,
+                size: 100,
+              ),
+            ),
+          ),
+          Transform.translate(
+            offset: const Offset(0, -14),
+            child: const Text(
+              'Posyandu Care',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 27,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          Transform.translate(
+            offset: const Offset(0, -8),
+            child: const Text(
+              'Pantau kesehatan anak dan gizi buah hati secara berkala tanpa batas koneksi',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _hijauTerang,
+                fontSize: 14.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+      ),
+    );
+  }
+
+  Widget _kartu(bool loading) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 6),
+          const Center(
+            child: Text(
+              'Masuk ke Akun Anda',
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [_teal, _oranye]),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _label('No,.Hp atau Username'),
+          TextField(
+            controller: _idf,
+            style: const TextStyle(fontSize: 15),
+            keyboardType: TextInputType.text,
+            textCapitalization: TextCapitalization.none,
+            autocorrect: false,
+            enableSuggestions: false,
+            textInputAction: TextInputAction.next,
+            decoration: _dekor(
+              '0822/1212/kennedi',
+              ikon: Icons.person_outline,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _label('PIN / Kata Sandi'),
+          TextField(
+            controller: _pw,
+            style: const TextStyle(fontSize: 15),
+            obscureText: _hide,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => loading ? null : _submit(),
+            decoration: _dekor(
+              '••••••••',
+              ikon: Icons.lock_outline,
+              suffix: IconButton(
+                padding: EdgeInsets.zero,
+                icon: Icon(
+                  _hide
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: Colors.black45,
+                  size: 20,
+                ),
+                onPressed: () {
+                  setState(() => _hide = !_hide);
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              SizedBox(
+                width: 28,
+                child: Checkbox(
+                  value: _ingat,
+                  activeColor: _hijau,
+                  visualDensity: VisualDensity.compact,
+                  onChanged: (v) {
+                    setState(() => _ingat = v ?? false);
+                  },
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Text(
+                'Ingat akun',
+                style: TextStyle(fontSize: 15),
+              ),
+              const Spacer(),
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () => _snack(
+                  'Hubungi sekretaris posyandu desa Anda untuk reset kata sandi',
+                ),
+                child: const Text(
+                  'Lupa Sandi?',
+                  style: TextStyle(
+                    color: _oranye,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Opacity(
+            opacity: loading ? 0.7 : 1,
+            child: Container(
+              width: double.infinity,
+              height: 52,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [_oranyeGelap, _oranye, _oranyeTerang],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: _oranye.withOpacity(0.4),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: loading ? null : _submit,
+                  child: Center(
+                    child: loading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Masuk Sekarang',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 17,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_forward,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Center(
+            child: Text(
+              'Belum memiliki akun Posyandu?',
+              style: TextStyle(
+                fontSize: 14.5,
+                color: Colors.black54,
+              ),
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Posyandu Care',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 27,
-              fontWeight: FontWeight.w800,
+          Center(
+            child: GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RegisterPage(),
+                ),
+              ),
+              child: const Text(
+                'Daftar Akun Baru',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'Aplikasi Pemantauan Tumbuh Kembang Anak & KIA Digital',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: _hijauTerang,
-              fontSize: 15,
+          const SizedBox(height: 12),
+          const Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(radius: 3, backgroundColor: _teal),
+                SizedBox(width: 6),
+                Text(
+                  'Mendukung pencatatan luring & sinkronisasi otomatis',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.black45,
+                  ),
+                ),
+              ],
             ),
           ),
+          const Spacer(),
         ],
       ),
     );
@@ -154,278 +381,30 @@ class _LoginPageState extends State<LoginPage> {
 
     return Scaffold(
       backgroundColor: _latar,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [_hijauGelap, _hijau],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [_hijauGelap, _hijau],
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: CustomScrollView(
+            slivers: [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Column(
+                  children: [
+                    _kepala(),
+                    Expanded(child: _kartu(loading)),
+                  ],
                 ),
               ),
-            ),
+            ],
           ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                children: [
-                  _kepala(),
-                  const SizedBox(height: 22),
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.fromLTRB(18, 22, 18, 18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 24,
-                          offset: Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Column(
-                            children: [
-                              const Text(
-                                'Masuk ke Akun Anda',
-                                style: TextStyle(
-                                  color: _judul,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Container(
-                                width: 44,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [_teal, _oranye],
-                                  ),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              const Text(
-                                'Pantau kesehatan dan gizi buah hati secara berkala tanpa batas koneksi',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        _label(
-                          'No. HP, NIK, atau Username',
-                          'Wajib',
-                          _oranye,
-                        ),
-                        TextField(
-                          controller: _idf,
-                          style: const TextStyle(fontSize: 16.5),
-                          keyboardType: TextInputType.text,
-                          textCapitalization: TextCapitalization.none,
-                          autocorrect: false,
-                          enableSuggestions: false,
-                          textInputAction: TextInputAction.next,
-                          decoration: _dekor('0822/1212/kennedi'),
-                        ),
-                        const SizedBox(height: 14),
-                        _label(
-                          'Kata Sandi / PIN 6 Digit',
-                          'Enkripsi Lokal',
-                          Colors.black45,
-                        ),
-                        TextField(
-                          controller: _pw,
-                          style: const TextStyle(fontSize: 16.5),
-                          obscureText: _hide,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => loading ? null : _submit(),
-                          decoration: _dekor(
-                            '••••••••',
-                            suffix: IconButton(
-                              icon: Icon(
-                                _hide
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: _teal,
-                              ),
-                              onPressed: () {
-                                setState(() => _hide = !_hide);
-                              },
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 28,
-                              child: Checkbox(
-                                value: _ingat,
-                                activeColor: _hijau,
-                                visualDensity: VisualDensity.compact,
-                                onChanged: (v) {
-                                  setState(() => _ingat = v ?? false);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'Ingat akun',
-                              style: TextStyle(fontSize: 15),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: const BoxDecoration(
-                                color: _hijau,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.shield_outlined,
-                                color: Colors.white,
-                                size: 11,
-                              ),
-                            ),
-                            const Spacer(),
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(0, 32),
-                                tapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              onPressed: () => _snack(
-                                'Hubungi sekretaris posyandu desa Anda untuk reset kata sandi',
-                              ),
-                              child: const Text(
-                                'Lupa Sandi?',
-                                style: TextStyle(
-                                  color: _oranye,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Opacity(
-                          opacity: loading ? 0.7 : 1,
-                          child: Container(
-                            width: double.infinity,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [_oranye, _oranyeGelap],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _oranye.withOpacity(0.4),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(16),
-                                onTap: loading ? null : _submit,
-                                child: Center(
-                                  child: loading
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'Masuk Sekarang',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 17,
-                                              ),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Icon(
-                                              Icons.arrow_forward,
-                                              color: Colors.white,
-                                              size: 18,
-                                            ),
-                                          ],
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Divider(
-                          color: Colors.black12,
-                          height: 1,
-                        ),
-                        const SizedBox(height: 10),
-                        Center(
-                          child: Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            alignment: WrapAlignment.center,
-                            children: [
-                              const Text(
-                                'Belum memiliki akun Posyandu? ',
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const RegisterPage(),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Daftar Akun Baru',
-                                  style: TextStyle(
-                                    fontSize: 14.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
