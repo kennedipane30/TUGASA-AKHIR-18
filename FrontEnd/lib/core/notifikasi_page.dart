@@ -70,6 +70,8 @@ String waktuNotifikasi(DateTime t) {
       return (Icons.local_hospital_outlined, AppColors.merah, AppColors.merahMuda);
     case 'jadwal_belum_ada':
       return (Icons.event_busy, AppColors.kuning, AppColors.kuningMuda);
+    case 'laporan_kipi':
+      return (Icons.healing_outlined, AppColors.merah, AppColors.merahMuda);
     default:
       return (Icons.notifications, AppColors.hijau, AppColors.hijauMuda);
   }
@@ -98,6 +100,8 @@ String? labelTujuanNotifikasi(String jenis, String role, String? objekId) {
       return role == 'orang_tua' ? 'Lihat Jadwal Vaksin Anak' : null;
     case 'jadwal_belum_ada':
       return role == 'sekretaris' ? 'Buat Jadwal Posyandu' : null;
+    case 'laporan_kipi':
+      return role == 'bidan' && adaObjek ? 'Lihat Vaksin Anak' : null;
   }
   return null;
 }
@@ -107,6 +111,7 @@ String? labelTujuanNotifikasi(String jenis, String role, String? objekId) {
 ///   - Rencana / pengingat H-3 (orang tua): halaman Pendaftaran (kartu Rencana Pelayanan).
 ///   - Imunisasi terlambat / ke puskesmas (orang tua): halaman Vaksin Anak.
 ///   - Jadwal belum dibuat (sekretaris): halaman Kelola Jadwal.
+///   - Laporan reaksi imunisasi / KIPI (bidan): tab Vaksin pada detail balita.
 ///   - Lainnya: daftar notifikasi.
 void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
   final role = _roleDari(nav.context);
@@ -134,6 +139,16 @@ void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
       if (role == 'orang_tua') halaman = const OrangTuaVaksinPage();
     case 'jadwal_belum_ada':
       if (role == 'sekretaris') halaman = const AdminJadwalPage();
+    case 'laporan_kipi':
+      if (role == 'bidan' && adaObjek) {
+        halaman = BalitaDetailPage(
+          prefix: '/bidan',
+          anakId: id,
+          nama: 'Detail Balita',
+          bisaKelolaVaksin: true,
+          tabAwal: 2,
+        );
+      }
   }
   nav.push(MaterialPageRoute(builder: (_) => halaman));
 }

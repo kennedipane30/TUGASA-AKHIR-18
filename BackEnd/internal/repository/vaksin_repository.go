@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"time"
 
 	"posyandu-api/internal/models"
 
@@ -144,6 +145,10 @@ func (r *VaksinRepository) GetRiwayat(id uuid.UUID) (*models.ImunisasiAnak, erro
 	return &m, err
 }
 
+func (r *VaksinRepository) SaveRiwayat(m *models.ImunisasiAnak) error {
+	return r.db.Omit("JenisVaksin", "Anak", "Pendaftaran", "DiberikanOlehUser").Save(m).Error
+}
+
 func (r *VaksinRepository) DeleteRiwayat(id uuid.UUID) error {
 	return r.db.Delete(&models.ImunisasiAnak{}, "id = ?", id).Error
 }
@@ -184,5 +189,41 @@ func (r *VaksinRepository) ListSuplemenAnak(anakID uuid.UUID) ([]models.Suplemen
 	err := r.db.Preload("DiberikanOlehUser").
 		Where("anak_id = ?", anakID).
 		Order("tanggal DESC, created_at DESC").Find(&list).Error
+	return list, err
+}
+
+// ---------------------------------------------------------------- riwayat vaksin awal & konfirmasi
+
+// SimpanStatusRiwayat: status riwayat vaksin anak (lihat models.RiwayatVaksin*).
+func (r *VaksinRepository) SimpanStatusRiwayat(anakID uuid.UUID, status string, oleh *uint, pada *time.Time) error {
+	return r.db.Model(&models.Anak{}).Where("id = ?", anakID).Updates(map[string]any{
+		"status_riwayat_vaksin":     status,
+		"riwayat_dikonfirmasi_oleh": oleh,
+		"riwayat_dikonfirmasi_pada": pada,
+	}).Error
+}
+
+// JumlahMenungguKonfirmasi: catatan laporan orang tua yang belum dikonfirmasi bidan.
+func (r *VaksinRepository) JumlahMenungguKonfirmasi(anakID uuid.UUID) int64 {
+	var n int64
+	r.db.Model(&models.ImunisasiAnak{}).
+		Where("anak_id = ? AND status_konfirmasi = ?", anakID, models.KonfirmasiImunisasiMenunggu).
+		Count(&n)
+	return n
+}
+
+// HapusLaporanOrangTua: hapus laporan orang tua yang belum dikonfirmasi (saat orang tua mengisi ulang).
+func (r *VaksinRepository) HapusLaporanOrangTua(anakID uuid.UUID) error {
+	return r.db.Unscoped().
+		Where("anak_id = ? AND sumber = ? AND status_konfirmasi = ?", anakID,
+			models.SumberImunisasiOrangTua, models.KonfirmasiImunisasiMenunggu).
+		Delete(&models.ImunisasiAnak{}).Error
+}
+
+// JadwalMendatang: jadwal posyandu terjadwal mulai tanggal [dari] (untuk perkiraan tanggal vaksin).
+func (r *VaksinRepository) JadwalMendatang(posyandu string, dari time.Time) ([]models.JadwalPosyandu, error) {
+	list := []models.JadwalPosyandu{}
+	err := r.db.Where("posyandu = ? AND status = ? AND tanggal >= ?", posyandu, "terjadwal", dari.Format("2006-01-02")).
+		Order("tanggal ASC, jam_mulai ASC").Find(&list).Error
 	return list, err
 }

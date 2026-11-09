@@ -43,6 +43,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	notifSvc.SetVaksin(vaksinRepo)
 	jadwalSvc.SetNotifikasi(notifSvc)
 	pelayananSvc.SetNotifikasi(notifSvc) // "Rencana Hari Ini" di catatan bidan
+	vaksinSvc.SetNotifikasi(notifSvc)    // laporan reaksi imunisasi (KIPI) ke bidan
 
 	// master jenis vaksin & jadwal imunisasi rutin Kemenkes (dibuat/diperbarui otomatis)
 	vaksinSvc.SiapkanMaster()
@@ -81,6 +82,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	protected.GET("/vaksin", pelayananH.ListVaksin)
 	protected.GET("/vaksin/jadwal", vaksinH.JadwalMaster)
 	protected.GET("/vaksin/anak/:anak_id", vaksinH.KartuAnak)
+	protected.POST("/vaksin/bukti", vaksinH.UnggahBukti) // orang tua & bidan (dicek di handler)
+	protected.GET("/vaksin/bukti/:nama", vaksinH.AmbilBukti)
 
 	// notifikasi (semua role)
 	protected.GET("/notifikasi", notifH.List)
@@ -138,6 +141,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	ortu.POST("/jadwal/:id/scan", jadwalH.Scan)
 	ortu.GET("/jadwal/:id/kartu", jadwalH.Kartu)
 	ortu.GET("/riwayat", pelayananH.Riwayat)
+	// riwayat vaksin sebelum posyandu & laporan reaksi setelah imunisasi
+	ortu.POST("/vaksin/anak/:anak_id/riwayat-awal", vaksinH.LaporRiwayatAwal)
+	ortu.POST("/vaksin/riwayat/:id/kipi", vaksinH.LaporKipi)
 
 	// kader (menampilkan QR tetap posyandu, bukan memindai)
 	kader := protected.Group("/kader", middleware.RoleRequired("kader"))
@@ -170,6 +176,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// vaksin susulan (diberikan di luar sesi posyandu)
 	bidan.POST("/vaksin/riwayat", vaksinH.CatatRiwayat)
 	bidan.DELETE("/vaksin/riwayat/:id", vaksinH.HapusRiwayat)
+	bidan.PUT("/vaksin/riwayat/:id/konfirmasi", vaksinH.KonfirmasiRiwayat)
+	bidan.PUT("/vaksin/riwayat/:id/kipi", vaksinH.TindakLanjutKipi)
+	bidan.POST("/vaksin/anak/:anak_id/konfirmasi-selesai", vaksinH.SelesaiKonfirmasi)
 	bidan.GET("/balita", balitaH.Daftar)
 	bidan.GET("/balita-berisiko", balitaH.Berisiko)
 	bidan.GET("/balita/:anak_id", balitaH.Detail)

@@ -8,6 +8,7 @@ import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 import '../../../service/kbm_model.dart';
+import '../../../service/vaksin_service.dart' show usiaDariLahir;
 import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 
 const _hijauHeader = Color(0xFF065F46);
@@ -21,6 +22,7 @@ class AntreanKader {
   final String anakId;
   final String nama;
   final String jk;
+  final DateTime? tanggalLahir;
   final int usiaBulan;
   final int? nomor;
   final String sumber;
@@ -33,6 +35,7 @@ class AntreanKader {
     required this.anakId,
     required this.nama,
     required this.jk,
+    required this.tanggalLahir,
     required this.usiaBulan,
     required this.nomor,
     required this.sumber,
@@ -46,6 +49,7 @@ class AntreanKader {
         anakId: j['anak_id']?.toString() ?? '',
         nama: j['nama']?.toString() ?? '',
         jk: j['jenis_kelamin']?.toString() ?? '',
+        tanggalLahir: _tglLahir(j['tanggal_lahir']),
         usiaBulan: int.tryParse(j['usia_bulan']?.toString() ?? '') ?? 0,
         nomor: int.tryParse(j['nomor_antrean']?.toString() ?? ''),
         sumber: j['sumber']?.toString() ?? '',
@@ -56,6 +60,16 @@ class AntreanKader {
 
   String get kodeNomor =>
       nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
+
+  /// Usia detail, mis. "27 hari", "1 bulan 3 hari", "1 tahun 2 bulan".
+  String get usia {
+    final lahir = tanggalLahir;
+    if (lahir != null) return usiaDariLahir(lahir, DateTime.now());
+    final th = usiaBulan ~/ 12;
+    final bl = usiaBulan % 12;
+    if (th == 0) return '$usiaBulan bulan';
+    return bl == 0 ? '$th tahun' : '$th tahun $bl bulan';
+  }
 
   /// GET /kader/jadwal/:id/antrean (anak yang sudah check-in lewat scan orang tua),
   /// diurutkan berdasarkan nomor antrean.
@@ -157,8 +171,11 @@ Widget _bannerBelumMulai(DateTime mulai) {
   );
 }
 
-String _usia(int bln) =>
-    bln >= 12 ? '${bln ~/ 12} th ${bln % 12} bln' : '$bln bln';
+DateTime? _tglLahir(dynamic v) {
+  final s = v?.toString() ?? '';
+  if (s.length < 10) return null;
+  return DateTime.tryParse(s.substring(0, 10));
+}
 
 /// Judul header ekstra tebal (sama seperti halaman Akun).
 /// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
@@ -607,7 +624,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                         ),
                       ),
                       Text(
-                        '${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(a.usiaBulan)}',
+                        '${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${a.usia}',
                         style: const TextStyle(
                           fontSize: 13.5,
                           color: AppColors.teksRedup,
@@ -876,7 +893,7 @@ class _FormUkurState extends State<_FormUkur> {
                     ],
                   ),
                   Text(
-                    '${widget.anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(widget.anak.usiaBulan)}',
+                    '${widget.anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${widget.anak.usia}',
                     style: const TextStyle(
                       fontSize: 14.5,
                       color: AppColors.teksRedup,

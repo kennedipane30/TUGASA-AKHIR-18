@@ -34,6 +34,8 @@ const (
 	NotifImunisasiFaskes = "imunisasi_faskes"
 	// NotifJadwalBelumAda: ke sekretaris dan bidan bila jadwal posyandu berikutnya belum dibuat.
 	NotifJadwalBelumAda = "jadwal_belum_ada"
+	// NotifLaporanKipi: orang tua melaporkan reaksi setelah imunisasi (hanya ke bidan).
+	NotifLaporanKipi = "laporan_kipi"
 )
 
 // Notifikasi: Notifikasi dan pengingat per pengguna beserta status baca.

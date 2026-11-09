@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../core/status_gizi_widget.dart';
 import '../datadiri/data_orang_tua_page.dart' show KeluargaApi, parseTgl;
 
 // Warna tampilan
@@ -136,6 +137,7 @@ class _Pemeriksaan {
 
   final List<_Vaksin> vaksin;
   final List<_Suplemen> suplemen;
+  final Map<String, dynamic>? statusGizi;
 
   _Pemeriksaan({
     required this.pendaftaranId,
@@ -163,6 +165,7 @@ class _Pemeriksaan {
     required this.kunjunganUlang,
     required this.vaksin,
     required this.suplemen,
+    required this.statusGizi,
   });
 
   static const _namaSuplemen = {
@@ -187,11 +190,16 @@ class _Pemeriksaan {
     for (final e in (j['imunisasi'] as List? ?? [])) {
       if (e is! Map) continue;
       final id = _teks(e['jenis_vaksin_id']);
+      final kondisi = switch (_teks(e['kondisi_anak'])) {
+        'sehat' => 'Sehat',
+        'demam_ringan' => 'Demam ringan',
+        final x => x,
+      };
       vaksin.add(
         _Vaksin(
           namaVaksin[id] ?? 'Vaksin',
           int.tryParse(_teks(e['dosis_ke'])) ?? 1,
-          _teks(e['kondisi_anak']),
+          kondisi,
           _teks(e['catatan']),
         ),
       );
@@ -250,6 +258,7 @@ class _Pemeriksaan {
       kunjunganUlang: _tgl(c?['tanggal_kunjungan_ulang']),
       vaksin: vaksin,
       suplemen: suplemen,
+      statusGizi: petaGizi(j['status_gizi']),
     );
   }
 }
@@ -716,6 +725,7 @@ class _OrangTuaPemeriksaanPageState
                           color: _teksAbu,
                         ),
                       ),
+                      BarisPilGizi(p.statusGizi),
                     ],
                   ),
                 ),
@@ -871,17 +881,8 @@ class _DetailPemeriksaanPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = data;
     final t = d.tanggal;
-    final gejala = [
-      if (d.demam) 'Demam',
-      if (d.diare) 'Diare',
-      if (d.batuk) 'Batuk',
-    ];
-    final adaIsiCatatan = d.evaluasi.isNotEmpty ||
-        d.saranGizi.isNotEmpty ||
-        d.saranAsuh.isNotEmpty ||
-        d.keluhan.isNotEmpty ||
-        d.penyakit.isNotEmpty ||
-        gejala.isNotEmpty;
+    final adaIsiCatatan =
+        d.evaluasi.isNotEmpty || d.saranGizi.isNotEmpty || d.keluhan.isNotEmpty;
 
     return Scaffold(
       backgroundColor: _latarHalaman,
@@ -1025,6 +1026,19 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                     ),
                   ),
 
+                // Status gizi
+                if (d.adaUkur && d.statusGizi != null)
+                  _Kartu(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _KepalaKartu(judul: 'Status Gizi Anak'),
+                        const SizedBox(height: 12),
+                        KotakStatusGizi(d.statusGizi, untukOrangTua: true),
+                      ],
+                    ),
+                  ),
+
                 // Catatan bidan
                 _Kartu(
                   child: Column(
@@ -1045,34 +1059,13 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                           ),
                         )
                       else ...[
-                        if (gejala.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: [
-                                for (final g in gejala)
-                                  Pill(
-                                    g,
-                                    bg: AppColors.merahMuda,
-                                    fg: AppColors.merah,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        _blok(
-                          'Penyakit penyerta',
-                          d.penyakit,
-                          icon: Icons.healing_outlined,
-                        ),
                         _blok(
                           'Keluhan',
                           d.keluhan,
                           icon: Icons.sick_outlined,
                         ),
                         _blok(
-                          'Evaluasi bidan',
+                          'Catatan untuk orang tua',
                           d.evaluasi,
                           icon: Icons.fact_check_outlined,
                         ),
@@ -1080,11 +1073,6 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                           'Saran gizi',
                           d.saranGizi,
                           icon: Icons.restaurant_outlined,
-                        ),
-                        _blok(
-                          'Saran pola asuh',
-                          d.saranAsuh,
-                          icon: Icons.family_restroom_outlined,
                         ),
                       ],
                     ],

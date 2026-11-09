@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../../core/posyandu.dart';
+import '../../core/status_gizi_widget.dart';
 import '../auth/auth_provider.dart';
 import 'bukupanduan/buku_panduan_page.dart';
 import 'datadiri/data_keluarga_page.dart';
@@ -88,6 +89,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   bool _memuat = true;
   String? _gagal;
   JadwalTerdekatData? _jadwal;
+  final _kunciGizi = GlobalKey<KartuPeringatanGiziState>();
 
   DataAnak? get _anak => _daftar.isEmpty ? null : _daftar[_aktif];
 
@@ -116,6 +118,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   }
 
   Future<void> _muat() async {
+    _kunciGizi.currentState?.muatUlang();
     JadwalTerdekatData? jadwal;
     try {
       jadwal = await JadwalTerdekatData.ambil();
@@ -182,6 +185,15 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     );
   }
 
+  void _bukaPemeriksaanAnak(String anakId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OrangTuaPemeriksaanPage(anakId: anakId),
+      ),
+    );
+  }
+
   void _bukaGrafik() {
     final a = _anak;
     Navigator.push(
@@ -227,6 +239,10 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
         else if (_daftar.isEmpty)
           _kartuBelumAdaAnak()
         else ...[
+          KartuPeringatanGizi(
+            key: _kunciGizi,
+            onLihat: _bukaPemeriksaanAnak,
+          ),
           _jadwalPosyandu(),
           _layananPosyandu(),
           _tipsHariIni(),
@@ -247,7 +263,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
               _gagal!,
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
-                fontSize: 15.5,
+                fontSize: 13,
               ),
             ),
           ),
@@ -273,7 +289,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           const Text(
             'Belum ada data anak. Lengkapi data keluarga terlebih dahulu.',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 12.5,
               color: AppColors.teksRedup,
             ),
           ),
@@ -307,7 +323,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
             const SizedBox(height: 12),
             const Text(
               'Pilih Anak',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
             for (var i = 0; i < _daftar.length; i++)
@@ -322,13 +338,9 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                 ),
                 title: Text(
                   _daftar[i].nama,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                subtitle: Text(
-                  _usiaAnak(_daftar[i].tglLahir),
-                  style: const TextStyle(fontSize: 13.5),
-                ),
+                subtitle: Text(_usiaAnak(_daftar[i].tglLahir)),
                 onTap: () {
                   setState(() => _aktif = i);
                   Navigator.pop(ctx);
@@ -447,7 +459,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
             teks,
             style: TextStyle(
               color: fg,
-              fontSize: 12,
+              fontSize: 10.5,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -482,7 +494,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -523,7 +535,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
-                    fontSize: 15,
+                    fontSize: 13,
                   ),
                 ),
                 SizedBox(width: 8),
@@ -565,7 +577,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                 pos.isEmpty
                     ? 'Belum ada jadwal posyandu mendatang.'
                     : 'Belum ada jadwal mendatang untuk Posyandu ${labelPosyandu(pos)}.',
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: const TextStyle(color: Colors.white, fontSize: 13),
               ),
             ),
           ],
@@ -626,7 +638,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                         bulanSingkat(j.tanggal).toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 10,
                           letterSpacing: 0.5,
                           fontWeight: FontWeight.w800,
                         ),
@@ -660,7 +672,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 16,
+                                  fontSize: 14.5,
                                   height: 1.2,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -690,7 +702,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Color(0xE6FFFFFF),
-                                  fontSize: 13.5,
+                                  fontSize: 11.5,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -708,7 +720,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                               waktu,
                               style: const TextStyle(
                                 color: Color(0xE6FFFFFF),
-                                fontSize: 13.5,
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -733,7 +745,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                     'Scan QR dibuka 1 jam sebelum mulai (${formatJam(j.checkinBuka!)})',
                     style: const TextStyle(
                       color: Color(0xE6FFFFFF),
-                      fontSize: 13,
+                      fontSize: 11,
                     ),
                   ),
                 ),
@@ -824,7 +836,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                   m.$3,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 11,
                     height: 1.2,
                     color: Color(0xFF0F2547),
                     fontWeight: FontWeight.w800,
@@ -881,7 +893,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                   child: Text(
                     'Layanan Utama',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: AppColors.teksRedup,
                     ),
@@ -895,7 +907,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
             child: Text(
               'Pilih menu layanan kesehatan balita',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: AppColors.teksRedup,
               ),
@@ -942,7 +954,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                   'TIPS POSYANDU HARI INI',
                   style: TextStyle(
                     color: _hijauTeks,
-                    fontSize: 14,
+                    fontSize: 12.5,
                     letterSpacing: 0.3,
                     fontWeight: FontWeight.w800,
                   ),
@@ -952,7 +964,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                   'Bawalah buku KIA fisik jika ini kunjungan pertama, '
                   'dan pastikan bayi sudah cukup minum susu sebelum penimbangan.',
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 12.5,
                     height: 1.55,
                     color: Color(0xFF1F2937),
                   ),

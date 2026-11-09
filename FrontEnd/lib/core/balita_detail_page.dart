@@ -484,29 +484,13 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
           const Text('Catatan bidan belum diisi.',
               style: TextStyle(fontSize: 13, color: AppColors.teksRedup))
         else ...[
-          if (c.gejala.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final g in c.gejala) Pill(g, bg: AppColors.merahMuda, fg: AppColors.merah),
-                ],
-              ),
-            ),
-          _blok('Penyakit penyerta', c.penyakitPenyerta, bg: AppColors.hijauMuda),
           _blok('Keluhan', c.keluhan, bg: AppColors.hijauMuda),
-          _blok('Evaluasi', c.catatanEvaluasi, bg: AppColors.hijauMuda),
+          _blok('Catatan untuk orang tua', c.catatanEvaluasi, bg: AppColors.hijauMuda),
           _blok('Saran gizi', c.saranGizi, bg: AppColors.hijauMuda),
-          _blok('Saran pola asuh', c.saranPolaAsuh, bg: AppColors.hijauMuda),
           _baris('Kunjungan ulang', c.kunjunganUlang == null ? '' : formatTanggal(c.kunjunganUlang!)),
-          if (c.gejala.isEmpty &&
-              c.penyakitPenyerta.isEmpty &&
-              c.keluhan.isEmpty &&
+          if (c.keluhan.isEmpty &&
               c.catatanEvaluasi.isEmpty &&
               c.saranGizi.isEmpty &&
-              c.saranPolaAsuh.isEmpty &&
               c.kunjunganUlang == null)
             const Text('Tidak ada keluhan atau catatan khusus.',
                 style: TextStyle(fontSize: 13, color: AppColors.teksRedup)),

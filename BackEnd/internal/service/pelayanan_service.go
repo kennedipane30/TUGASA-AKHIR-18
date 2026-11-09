@@ -60,7 +60,9 @@ type PengukuranInput struct {
 type VaksinInput struct {
 	JenisVaksinID string `json:"jenis_vaksin_id" binding:"required"`
 	DosisKe       int16  `json:"dosis_ke" binding:"required"`
-	KondisiAnak   string `json:"kondisi_anak"`
+	KondisiAnak   string `json:"kondisi_anak"` // sehat | demam_ringan (sakit = imunisasi ditunda)
+	NomorBatch    string `json:"nomor_batch"`  // opsional
+	ReaksiKipi    string `json:"reaksi_kipi"`  // opsional, reaksi setelah imunisasi
 	Catatan       string `json:"catatan"`
 }
 
@@ -73,6 +75,8 @@ type SuplemenInput struct {
 	Catatan string `json:"catatan"`
 }
 
+// CatatanBidanInput: Demam/Diare/Batuk, PenyakitPenyerta, dan SaranPolaAsuh tidak lagi
+// ditampilkan di aplikasi (kolom tetap ada untuk data lama). Keluhan diisi manual.
 type CatatanBidanInput struct {
 	Demam                 bool            `json:"demam"`
 	Diare                 bool            `json:"diare"`
@@ -101,6 +105,7 @@ type AntreanItem struct {
 	Sumber            string                   `json:"sumber"`
 	SudahDiukur       bool                     `json:"sudah_diukur"`
 	SudahDicatatBidan bool                     `json:"sudah_dicatat_bidan"`
+	StatusGizi        *models.StatusGizi       `json:"status_gizi"`
 	Penilaian         *models.PenilaianTimbang `json:"penilaian"`
 }
 
@@ -134,6 +139,10 @@ type DetailBidan struct {
 	Suplemen         []models.SuplemenAnak    `json:"suplemen"`
 	RiwayatImunisasi []models.ImunisasiAnak   `json:"riwayat_imunisasi"`
 	Rencana          *RencanaAnak             `json:"rencana"` // rencana imunisasi & suplemen kunjungan ini
+
+	// Riwayat vaksin sebelum posyandu: harus dikonfirmasi bidan sebelum imunisasi diberikan.
+	StatusRiwayatVaksin string              `json:"status_riwayat_vaksin"`
+	RiwayatLuar         []RiwayatVaksinResp `json:"riwayat_luar"`
 }
 
 type PengukuranRiwayat struct {
@@ -322,6 +331,16 @@ func (s *PelayananService) AntreanKader(jadwalID uuid.UUID, pos string) ([]Antre
 	if err != nil {
 		return nil, err
 	}
+	petaGizi := map[uuid.UUID]models.StatusGizi{}
+	if s.gizi != nil {
+		ukurIDs := make([]uuid.UUID, 0, len(ukur))
+		for _, u := range ukur {
+			ukurIDs = append(ukurIDs, u.ID)
+		}
+		if petaGizi, err = s.gizi.PetaPengukuran(ukurIDs); err != nil {
+			return nil, err
+		}
+	}
 	adaCatatan := map[uuid.UUID]bool{}
 	for _, c := range periksa {
 		adaCatatan[c.PendaftaranID] = true
@@ -342,6 +361,10 @@ func (s *PelayananService) AntreanKader(jadwalID uuid.UUID, pos string) ([]Antre
 		if n, ok := nilai[ukurPer[p.ID]]; ok && adaUkur[p.ID] {
 			nn := n
 			it.Penilaian = &nn
+		}
+		if g, ok := petaGizi[ukurPer[p.ID]]; ok && adaUkur[p.ID] {
+			gg := g
+			it.StatusGizi = &gg
 		}
 		if p.Anak != nil {
 			it.Nama = p.Anak.Nama
@@ -624,6 +647,16 @@ func (s *PelayananService) DetailBidan(pos string, pendaftaranID uuid.UUID) (*De
 		return nil, err
 	}
 	d.Rencana = s.notif.RencanaPendaftaran(p.Anak, p.Jadwal, p.ID)
+	d.StatusRiwayatVaksin = p.Anak.StatusRiwayatVaksin
+	if d.StatusRiwayatVaksin == "" {
+		d.StatusRiwayatVaksin = models.RiwayatVaksinBelumDitanya
+	}
+	d.RiwayatLuar = []RiwayatVaksinResp{}
+	if s.vaksin != nil {
+		if d.RiwayatLuar, err = s.vaksin.RiwayatLuar(p.Anak); err != nil {
+			return nil, err
+		}
+	}
 	return d, nil
 }
 
@@ -675,6 +708,25 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 	tanggal := hariIni()
 	vaksin := make([]models.ImunisasiAnak, 0, len(in.Vaksin))
 	items := make([]ItemVaksin, 0, len(in.Vaksin))
+
+	if len(in.Vaksin) > 0 && p.Anak != nil && !p.Anak.RiwayatVaksinSudahDikonfirmasi() {
+		return nil, konflik("konfirmasi riwayat vaksin anak terlebih dahulu sebelum memberikan imunisasi")
+	}
+
+	// data reaksi (KIPI) dari catatan lama sesi ini dipertahankan
+	lama := map[string]models.ImunisasiAnak{}
+	if sebelumnya, err := s.repo.ListImunisasi([]uuid.UUID{p.ID}); err == nil {
+		for _, x := range sebelumnya {
+			lama[fmt.Sprintf("%s|%d", x.JenisVaksinID, x.DosisKe)] = x
+		}
+	}
+	tempatPos := "Posyandu"
+	if p.Jadwal != nil {
+		tempatPos = "Posyandu " + notifNamaPosyandu(p.Jadwal.Posyandu)
+	}
+	oleh := bidanID
+	now := time.Now()
+
 	for _, v := range in.Vaksin {
 		id, err := uuid.Parse(strings.TrimSpace(v.JenisVaksinID))
 		if err != nil {
@@ -687,22 +739,61 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 		if v.DosisKe < 1 || v.DosisKe > jv.JumlahDosis {
 			return nil, validasi("dosis ke-%d tidak sesuai untuk %s (1-%d)", v.DosisKe, jv.Nama, jv.JumlahDosis)
 		}
+		if strings.EqualFold(jv.Kode, kodeHB0) {
+			return nil, validasi("HB0 diberikan di faskes paling lambat usia 7 hari, tidak diberikan di posyandu")
+		}
 		if s.repo.ImunisasiSudahAda(p.AnakID, id, v.DosisKe, p.ID) {
-			return nil, konflik("%s dosis ke-%d sudah pernah dicatat untuk anak ini", jv.Nama, v.DosisKe)
+			return nil, konflik("%s dosis ke-%d sudah tercatat untuk anak ini, tidak boleh diberikan dua kali", jv.Nama, v.DosisKe)
+		}
+		kondisi := strings.TrimSpace(v.KondisiAnak)
+		switch kondisi {
+		case models.KondisiAnakSehat, models.KondisiAnakDemamRingan:
+		case models.KondisiAnakSakit:
+			return nil, validasi("anak sedang sakit, tunda imunisasi sampai anak sehat")
+		default:
+			return nil, validasi("pilih kondisi anak sebelum imunisasi (sehat atau demam ringan)")
+		}
+		batch, err := batasTeks(v.NomorBatch, 50, "nomor batch")
+		if err != nil {
+			return nil, err
+		}
+		reaksi, err := batasTeks(v.ReaksiKipi, 500, "reaksi setelah imunisasi")
+		if err != nil {
+			return nil, err
 		}
 		items = append(items, ItemVaksin{JenisVaksinID: id, DosisKe: v.DosisKe})
-		vaksin = append(vaksin, models.ImunisasiAnak{
+		m := models.ImunisasiAnak{
 			AnakID:           p.AnakID,
 			JenisVaksinID:    id,
 			DosisKe:          v.DosisKe,
 			TanggalPemberian: tanggal,
-			Tempat:           "Posyandu",
-			KondisiAnak:      strings.TrimSpace(v.KondisiAnak),
+			Tempat:           tempatPos,
+			Sumber:           models.SumberImunisasiPosyandu,
+			StatusKonfirmasi: models.KonfirmasiImunisasiOK,
+			NomorBatch:       batch,
+			KondisiAnak:      kondisi,
 			PendaftaranID:    &pid,
 			DiberikanOleh:    bidanID,
+			DikonfirmasiOleh: &oleh,
+			DikonfirmasiPada: &now,
 			Catatan:          strings.TrimSpace(v.Catatan),
 			Version:          1,
-		})
+		}
+		if x, ada := lama[fmt.Sprintf("%s|%d", id, v.DosisKe)]; ada {
+			m.ReaksiKipi = x.ReaksiKipi
+			m.KipiDilaporkanPada = x.KipiDilaporkanPada
+			m.KipiTindakLanjut = x.KipiTindakLanjut
+			m.KipiDitanganiOleh = x.KipiDitanganiOleh
+			m.KipiDitanganiPada = x.KipiDitanganiPada
+			m.TanggalPemberian = tglSaja(x.TanggalPemberian)
+		}
+		if reaksi != "" {
+			if m.ReaksiKipi != reaksi {
+				m.KipiDilaporkanPada = &now
+			}
+			m.ReaksiKipi = reaksi
+		}
+		vaksin = append(vaksin, m)
 	}
 	if s.vaksin != nil && p.Anak != nil {
 		if err := s.vaksin.ValidasiPemberian(p.Anak, tanggal, items, &pid); err != nil {
@@ -730,6 +821,22 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 		}
 		if x.Jumlah < 1 || x.Jumlah > 999 {
 			return nil, validasi("jumlah %s harus antara 1-999", nama)
+		}
+		// Vitamin A dan obat cacing: sesuai usia, selalu 1 kapsul/tablet.
+		if p.Anak != nil {
+			usiaSup := usiaBulan(p.Anak.TanggalLahir, tanggal)
+			switch {
+			case isVitaminA(nama):
+				if usiaSup < 6 || usiaSup > batasUsiaBalita {
+					return nil, validasi("Vitamin A diberikan untuk usia 6-59 bulan (usia anak %s)", usiaTeks(p.Anak.TanggalLahir, tanggal))
+				}
+				x.Jumlah, satuan = 1, "kapsul"
+			case isObatCacing(nama):
+				if usiaSup < 12 || usiaSup > batasUsiaBalita {
+					return nil, validasi("obat cacing diberikan untuk usia 12-59 bulan (usia anak %s)", usiaTeks(p.Anak.TanggalLahir, tanggal))
+				}
+				x.Jumlah, satuan = 1, "tablet"
+			}
 		}
 		suplemen = append(suplemen, models.SuplemenAnak{
 			AnakID:          p.AnakID,

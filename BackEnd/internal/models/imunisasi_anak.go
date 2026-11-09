@@ -7,23 +7,37 @@ import (
 	"gorm.io/gorm"
 )
 
+// Sumber catatan imunisasi.
+const (
+	SumberImunisasiPosyandu = "posyandu"     // diberikan saat sesi posyandu (catatan bidan)
+	SumberImunisasiLuar     = "luar"         // dicatat bidan: diberikan di RS/puskesmas/klinik/bidan praktik
+	SumberImunisasiOrangTua = "laporan_ortu" // dilaporkan orang tua saat mendaftarkan anak
+)
+
+// Status konfirmasi catatan imunisasi.
+const (
+	KonfirmasiImunisasiOK       = "dikonfirmasi"
+	KonfirmasiImunisasiMenunggu = "menunggu" // laporan orang tua, menunggu konfirmasi bidan
+)
+
+// Kondisi anak sebelum imunisasi di posyandu.
+const (
+	KondisiAnakSehat       = "sehat"
+	KondisiAnakDemamRingan = "demam_ringan"
+	KondisiAnakSakit       = "sakit" // imunisasi ditunda, tidak dapat disimpan
+)
+
 // ImunisasiAnak adalah riwayat vaksin yang sudah diberikan kepada seorang anak.
 //
 // Tabel : imunisasi_anak
-// Diisi oleh bidan melalui dua cara:
-//  1. Saat sesi posyandu (form Catatan Bidan):
-//     PendaftaranID terisi, Tempat = "Posyandu".
-//  2. Vaksin susulan dari luar posyandu (puskesmas, RS, bidan praktik):
-//     PendaftaranID kosong, Tempat diisi bidan.
+// Diisi melalui tiga cara:
+//  1. Sesi posyandu (form Catatan Bidan): Sumber = posyandu, PendaftaranID terisi.
+//  2. Bidan mencatat vaksin dari luar posyandu: Sumber = luar.
+//  3. Orang tua melaporkan vaksin saat mendaftarkan anak: Sumber = laporan_ortu,
+//     StatusKonfirmasi = menunggu sampai bidan mengonfirmasi.
 //
-// Usia anak saat divaksin tidak disimpan, melainkan dihitung dari
-// TanggalPemberian dikurangi tanggal lahir anak.
-//
-// Validasi saat pencatatan (service.VaksinService.ValidasiPemberian):
-//   - dosis ada pada JadwalImunisasi,
-//   - usia anak >= UsiaMinBulan dan <= UsiaMaksBulan,
-//   - dosis sebelumnya sudah diberikan dan jarak minimal terpenuhi,
-//   - dosis yang sama belum pernah diberikan.
+// Satu anak + satu jenis vaksin + satu dosis hanya boleh tercatat sekali.
+// Usia anak saat divaksin dihitung dari TanggalPemberian dikurangi tanggal lahir.
 type ImunisasiAnak struct {
 	// ID: kunci utama (UUID).
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
@@ -40,17 +54,43 @@ type ImunisasiAnak struct {
 	// TanggalPemberian: tanggal vaksin diberikan.
 	TanggalPemberian time.Time `gorm:"column:tanggal_pemberian;type:date;not null" json:"tanggal_pemberian"`
 
-	// Tempat: lokasi pemberian, mis. "Posyandu", "Puskesmas Balige".
+	// Tempat: nama tempat / faskes, mis. "Posyandu Silimbat", "RSUD Porsea".
 	Tempat string `gorm:"column:tempat;size:100" json:"tempat"`
 
-	// KondisiAnak: kondisi anak saat divaksin (opsional).
+	// Sumber: posyandu | luar | laporan_ortu.
+	Sumber string `gorm:"column:sumber;size:20;not null;default:'posyandu'" json:"sumber"`
+
+	// StatusKonfirmasi: dikonfirmasi | menunggu.
+	StatusKonfirmasi string `gorm:"column:status_konfirmasi;size:20;not null;default:'dikonfirmasi'" json:"status_konfirmasi"`
+
+	// NomorBatch: nomor batch vaksin (opsional).
+	NomorBatch string `gorm:"column:nomor_batch;size:50" json:"nomor_batch"`
+
+	// KondisiAnak: kondisi anak sebelum imunisasi (sehat | demam_ringan).
 	KondisiAnak string `gorm:"column:kondisi_anak;type:text" json:"kondisi_anak"`
 
-	// PendaftaranID: kunjungan posyandu saat vaksin diberikan; nil = vaksin susulan.
+	// PemberiLuar: nama petugas pemberi vaksin di luar posyandu (opsional).
+	PemberiLuar string `gorm:"column:pemberi_luar;size:100" json:"pemberi_luar"`
+
+	// FotoBukti: nama file foto bukti vaksin dari luar (opsional).
+	FotoBukti string `gorm:"column:foto_bukti;size:120" json:"foto_bukti"`
+
+	// PendaftaranID: kunjungan posyandu saat vaksin diberikan; nil = vaksin dari luar.
 	PendaftaranID *uuid.UUID `gorm:"column:pendaftaran_id;type:uuid;index" json:"pendaftaran_id"`
 
-	// DiberikanOleh: user bidan yang mencatat (FK ke users).
+	// DiberikanOleh: user yang mencatat (bidan, atau orang tua untuk laporan).
 	DiberikanOleh uint `gorm:"column:diberikan_oleh;not null;index" json:"diberikan_oleh"`
+
+	// DikonfirmasiOleh / DikonfirmasiPada: bidan yang mengonfirmasi catatan.
+	DikonfirmasiOleh *uint      `gorm:"column:dikonfirmasi_oleh" json:"dikonfirmasi_oleh,omitempty"`
+	DikonfirmasiPada *time.Time `gorm:"column:dikonfirmasi_pada" json:"dikonfirmasi_pada,omitempty"`
+
+	// Reaksi setelah imunisasi (KIPI).
+	ReaksiKipi         string     `gorm:"column:reaksi_kipi;type:text" json:"reaksi_kipi"`
+	KipiDilaporkanPada *time.Time `gorm:"column:kipi_dilaporkan_pada" json:"kipi_dilaporkan_pada,omitempty"`
+	KipiTindakLanjut   string     `gorm:"column:kipi_tindak_lanjut;type:text" json:"kipi_tindak_lanjut"`
+	KipiDitanganiOleh  *uint      `gorm:"column:kipi_ditangani_oleh" json:"kipi_ditangani_oleh,omitempty"`
+	KipiDitanganiPada  *time.Time `gorm:"column:kipi_ditangani_pada" json:"kipi_ditangani_pada,omitempty"`
 
 	// Catatan: catatan tambahan (opsional).
 	Catatan string `gorm:"column:catatan;type:text" json:"catatan"`
@@ -76,5 +116,26 @@ func (m *ImunisasiAnak) BeforeCreate(*gorm.DB) error {
 	if m.ID == uuid.Nil {
 		m.ID = uuid.New()
 	}
+	if m.Sumber == "" {
+		if m.PendaftaranID != nil {
+			m.Sumber = SumberImunisasiPosyandu
+		} else {
+			m.Sumber = SumberImunisasiLuar
+		}
+	}
+	if m.StatusKonfirmasi == "" {
+		m.StatusKonfirmasi = KonfirmasiImunisasiOK
+	}
 	return nil
+}
+
+// SumberEfektif: data lama tanpa kolom sumber dibaca dari ada/tidaknya PendaftaranID.
+func (m *ImunisasiAnak) SumberEfektif() string {
+	if m.PendaftaranID != nil {
+		return SumberImunisasiPosyandu
+	}
+	if m.Sumber == "" || m.Sumber == SumberImunisasiPosyandu {
+		return SumberImunisasiLuar
+	}
+	return m.Sumber
 }

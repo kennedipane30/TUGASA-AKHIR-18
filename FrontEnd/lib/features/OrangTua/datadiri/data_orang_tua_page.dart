@@ -124,6 +124,8 @@ class DataAnak {
   String? id; // UUID
   String kodeQr;
   String nama, nik, tglLahir, jk, beratLahir, panjangLahir; // tglLahir: dd/mm/yyyy
+  // belum_ditanya | belum_pernah | dilaporkan | perlu_ditanyakan | dikonfirmasi
+  String statusRiwayatVaksin;
 
   DataAnak({
     this.id,
@@ -134,6 +136,7 @@ class DataAnak {
     this.jk = '',
     this.beratLahir = '',
     this.panjangLahir = '',
+    this.statusRiwayatVaksin = 'belum_ditanya',
   });
 
   factory DataAnak.fromApi(Map<String, dynamic> j) => DataAnak(
@@ -145,6 +148,9 @@ class DataAnak {
         jk: j['jenis_kelamin']?.toString() ?? '',
         beratLahir: angka(j['berat_lahir_kg']),
         panjangLahir: angka(j['panjang_lahir_cm']),
+        statusRiwayatVaksin: (j['status_riwayat_vaksin']?.toString() ?? '').isEmpty
+            ? 'belum_ditanya'
+            : j['status_riwayat_vaksin'].toString(),
       );
 }
 

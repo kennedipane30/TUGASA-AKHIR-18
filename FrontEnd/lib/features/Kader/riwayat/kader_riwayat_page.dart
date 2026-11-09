@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../core/status_gizi_widget.dart';
 
 const _prefix = '/kader/riwayat';
 const _hijauHeader = Color(0xFF065F46);
@@ -14,6 +15,19 @@ const _hijauHeader = Color(0xFF065F46);
 // ---------------------------------------------------------------------------
 
 String _teks(dynamic v) => v?.toString().trim() ?? '';
+
+/// Label kondisi anak sebelum imunisasi.
+String _kondisiTeks(dynamic v) {
+  switch (_teks(v)) {
+    case 'sehat':
+      return 'Sehat';
+    case 'demam_ringan':
+      return 'Demam ringan';
+    case 'sakit':
+      return 'Sakit';
+  }
+  return _teks(v);
+}
 
 String _num(dynamic v) {
   final d = double.tryParse(v?.toString() ?? '');
@@ -675,6 +689,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                                   bg: AppColors.kuningMuda,
                                   fg: AppColors.kuning,
                                 ),
+                          ...pilGizi(a['status_gizi']),
                         ],
                       ),
                     ],
@@ -875,12 +890,6 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
     final sup =
         (d['suplemen'] as List? ?? []).whereType<Map>().toList();
 
-    final gejala = [
-      if (c?['demam'] == true) 'Demam',
-      if (c?['diare'] == true) 'Diare',
-      if (c?['batuk'] == true) 'Batuk',
-    ];
-
     final ulang = _tgl(c?['tanggal_kunjungan_ulang']);
     final peringatan = _teks(u?['peringatan_validasi']);
 
@@ -990,6 +999,16 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
               ),
       ),
       SectionCard(
+        title: 'Status Gizi',
+        icon: Icons.monitor_weight_outlined,
+        child: u == null
+            ? const Text(
+                'Belum ada pengukuran.',
+                style: TextStyle(fontSize: 15, color: AppColors.teksRedup),
+              )
+            : KotakStatusGizi(d['status_gizi']),
+      ),
+      SectionCard(
         title: 'Catatan Bidan',
         icon: Icons.assignment_outlined,
         child: c == null
@@ -1003,30 +1022,9 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (gejala.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          for (final g in gejala)
-                            Pill(
-                              g,
-                              bg: AppColors.merahMuda,
-                              fg: AppColors.merah,
-                            ),
-                        ],
-                      ),
-                    ),
-                  _baris(
-                    'Penyakit penyerta',
-                    _teks(c['penyakit_penyerta']),
-                  ),
                   _baris('Keluhan', _teks(c['keluhan'])),
-                  _baris('Evaluasi', _teks(c['catatan_evaluasi'])),
+                  _baris('Catatan untuk orang tua', _teks(c['catatan_evaluasi'])),
                   _baris('Saran gizi', _teks(c['saran_gizi'])),
-                  _baris('Saran pola asuh', _teks(c['saran_pola_asuh'])),
                   _baris(
                     'Kunjungan ulang',
                     ulang == null ? '' : _fmtTgl(ulang),
@@ -1056,12 +1054,21 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                       ),
                       if (_teks(v['kondisi_anak']).isNotEmpty)
                         Text(
-                          'Kondisi: ${_teks(v['kondisi_anak'])}',
+                          'Kondisi: ${_kondisiTeks(v['kondisi_anak'])}',
                           style: const TextStyle(
                             fontSize: 14,
                             color: AppColors.teksRedup,
                           ),
                         ),
+                      if (_teks(v['nomor_batch']).isNotEmpty)
+                        Text('No. batch: ${_teks(v['nomor_batch'])}',
+                            style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
+                      if (_teks(v['reaksi_kipi']).isNotEmpty)
+                        Text('Reaksi setelah imunisasi: ${_teks(v['reaksi_kipi'])}',
+                            style: const TextStyle(fontSize: 13.5, color: AppColors.merah)),
+                      if (_teks(v['tempat']).isNotEmpty)
+                        Text('Tempat: ${_teks(v['tempat'])}',
+                            style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
                       if (_teks(v['catatan']).isNotEmpty)
                         Text(
                           'Catatan: ${_teks(v['catatan'])}',

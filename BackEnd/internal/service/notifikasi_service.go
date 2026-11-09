@@ -1450,6 +1450,40 @@ func (s *NotifikasiService) cekJadwalBelumAda(pos string, anak []models.Anak, d 
 		})
 }
 
+// ---------------------------------------------------------------- laporan reaksi imunisasi (KIPI)
+
+// LaporanKipi: orang tua melaporkan reaksi setelah imunisasi; dikirim hanya ke bidan posyandu anak.
+func (s *NotifikasiService) LaporanKipi(anak *models.Anak, m *models.ImunisasiAnak, pengirim uint) {
+	defer s.pulih("laporan KIPI")
+	if anak == nil || m == nil {
+		return
+	}
+	pos, err := s.repo.PosyanduAnak(anak.ID)
+	if err != nil || pos == "" {
+		return
+	}
+	bidan, err := s.repo.Penerima(pos, []string{string(models.RoleBidan)})
+	if err != nil || len(bidan) == 0 {
+		return
+	}
+	vaksin := "imunisasi"
+	if m.JenisVaksin != nil && m.JenisVaksin.Nama != "" {
+		vaksin = m.JenisVaksin.Nama
+		if m.JenisVaksin.JumlahDosis > 1 {
+			vaksin += fmt.Sprintf(" dosis ke-%d", m.DosisKe)
+		}
+	}
+	h := fnv.New32a()
+	h.Write([]byte(m.ReaksiKipi))
+	kunci := fmt.Sprintf("%s:%s:%08x", models.NotifLaporanKipi, m.ID, h.Sum32())
+	aid := anak.ID
+	nama := strings.TrimSpace(anak.Nama)
+	isi := fmt.Sprintf("Orang tua %s melaporkan reaksi setelah %s (%s): %s. Mohon segera dihubungi dan ditindaklanjuti.",
+		nama, vaksin, notifTglIndo(tglSaja(m.TanggalPemberian)), m.ReaksiKipi)
+	s.kirimKeUser(bidan, models.NotifLaporanKipi, kunci, "anak", &aid, &pengirim,
+		func(models.Role) (string, string) { return "Laporan Reaksi Imunisasi: " + nama, isi })
+}
+
 // ---------------------------------------------------------------- notifikasi pengguna
 
 func (s *NotifikasiService) List(userID uint, hanyaBelumDibaca bool, limit, offset int) (*DaftarNotifikasi, error) {
