@@ -36,6 +36,21 @@ flutter:
     - pendaftaran.png
     - hasil_pemeriksaan.png
     - vaksin_anak.png
+    - rekap_posyandu.png
+    - data_master.png
+    - antropometri.png
+    - deteksi_dini.png
+    - imunisasi.png
+    - jadwal.png
+    - kelola_akun.png
+    - pengumuman.png
+    - qr_chekin.png
+    - rekap_skdn.png
+    - riwatar_pemeriksaan.png
+    - semua_balita.png
+    - surat_rujukan.png
+    - ukur_data.png
+    - vitamin_pmt.png
     - assets/standar_antropometri.csv
 
   uses-material-design: true

@@ -29,13 +29,17 @@ const bukaCheckinMenit = 60
 const prefixQRPosyandu = "POSYANDU-CHECKIN:"
 
 type JadwalService struct {
-	repo *repository.JadwalRepository
-	kel  *repository.KeluargaRepository
+	repo  *repository.JadwalRepository
+	kel   *repository.KeluargaRepository
+	notif *NotifikasiService
 }
 
 func NewJadwalService(r *repository.JadwalRepository, k *repository.KeluargaRepository) *JadwalService {
 	return &JadwalService{repo: r, kel: k}
 }
+
+// SetNotifikasi: rencana imunisasi & suplemen ditampilkan pada jadwal terdekat orang tua.
+func (s *JadwalService) SetNotifikasi(n *NotifikasiService) { s.notif = n }
 
 // ---------------------------------------------------------------- fungsi bantu waktu
 
@@ -126,6 +130,7 @@ type AnakStatus struct {
 	BolehBatal      bool          `json:"boleh_batal"`
 	BolehCheckin    bool          `json:"boleh_checkin"`
 	Kartu           *KartuAntrean `json:"kartu"`
+	Rencana         *RencanaAnak  `json:"rencana"` // imunisasi, Vitamin A, obat cacing pada jadwal ini
 }
 
 type JadwalTerdekat struct {
@@ -466,6 +471,7 @@ func (s *JadwalService) Terdekat(userID uint, role, pos string) (*JadwalTerdekat
 	for _, p := range daftar {
 		peta[p.AnakID] = p
 	}
+	rencana := s.notif.RencanaBanyak(anak, j)
 
 	now := time.Now()
 	bukaDaftar := now.Before(selesaiJadwal(j))
@@ -482,6 +488,7 @@ func (s *JadwalService) Terdekat(userID uint, role, pos string) (*JadwalTerdekat
 			st.Kartu = k
 		}
 		st.BolehDaftar = bukaDaftar && st.StatusKehadiran == "belum_daftar"
+		st.Rencana = rencana[a.ID]
 		out.Anak = append(out.Anak, st)
 	}
 	return out, nil

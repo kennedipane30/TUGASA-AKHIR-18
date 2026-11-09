@@ -10,17 +10,20 @@ class AuthProvider extends ChangeNotifier {
 
   String? get role => user?['role'];
 
+  /// true bila PIN dibuat/direset petugas dan wajib diganti pemilik akun.
+  bool get wajibGantiPin => user?['wajib_ganti_pin'] == true;
+
   Future<void> restoreSession() async {
     user = await _svc.me();
     initialized = true;
     notifyListeners();
   }
 
-  Future<void> login(String identifier, String password) async {
+  Future<void> login(String identifier, String pin) async {
     loading = true;
     notifyListeners();
     try {
-      user = await _svc.login(identifier, password);
+      user = await _svc.login(identifier, pin);
     } finally {
       loading = false;
       notifyListeners();

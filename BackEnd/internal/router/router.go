@@ -39,11 +39,15 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kbmSvc := service.NewKbmService(kbmRepo)
 	kbmSvc.SetNotifikasi(notifSvc)
 	pelayananSvc.SetKbm(kbmSvc)
+	// rencana & pengingat imunisasi, Vitamin A, dan obat cacing (ikut jadwal posyandu)
+	notifSvc.SetVaksin(vaksinRepo)
+	jadwalSvc.SetNotifikasi(notifSvc)
+	pelayananSvc.SetNotifikasi(notifSvc) // "Rencana Hari Ini" di catatan bidan
 
 	// master jenis vaksin & jadwal imunisasi rutin Kemenkes (dibuat/diperbarui otomatis)
 	vaksinSvc.SiapkanMaster()
 
-	// pengingat otomatis (24 jam sebelum mulai & check-in dibuka)
+	// pengingat otomatis (24 jam sebelum mulai, check-in dibuka, kesehatan anak 07.00 WIB)
 	go notifSvc.JalankanPengingat(context.Background())
 	// hitung status gizi, lalu penilaian N/T (KBM), 2T, BGM untuk pengukuran lama
 	go func() {
@@ -53,6 +57,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
+	pinH := handler.NewPinHandler(service.NewPinService(userRepo))
 	keluargaH := handler.NewKeluargaHandler(service.NewKeluargaService(keluargaRepo))
 	jadwalH := handler.NewJadwalHandler(jadwalSvc, notifSvc)
 	pelayananH := handler.NewPelayananHandler(pelayananSvc)
@@ -65,11 +70,12 @@ func Setup(db *gorm.DB) *gin.Engine {
 	api := r.Group("/api/v1")
 	api.GET("/posyandu", authH.ListPosyandu) // publik, untuk registrasi
 	api.POST("/auth/register", authH.Register)
-	api.POST("/auth/login", authH.Login)
+	api.POST("/auth/login", pinH.Login) // identitas + PIN 6 digit (semua role)
 
 	// semua role (sudah login); posyandu akun dimuat di middleware
 	protected := api.Group("/", middleware.AuthRequired(), middleware.Posyandu(userRepo))
 	protected.GET("/auth/me", authH.Me)
+	protected.POST("/auth/ubah-pin", pinH.UbahPIN)
 	protected.GET("/jadwal", jadwalH.List)
 	protected.GET("/jadwal/terdekat", jadwalH.Terdekat)
 	protected.GET("/vaksin", pelayananH.ListVaksin)
@@ -92,6 +98,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.PUT("/users/:id", authH.UpdateStaff)
 	sekretaris.PATCH("/users/:id/aktif", authH.SetStaffActive)
 	sekretaris.DELETE("/users/:id", authH.DeleteStaff)
+	sekretaris.POST("/users/:id/reset-pin", pinH.ResetPIN)
 	sekretaris.POST("/jadwal", jadwalH.Buat)
 	sekretaris.GET("/jadwal/riwayat", jadwalH.Riwayat) // harus sebelum /jadwal/:id
 	sekretaris.PUT("/jadwal/:id", jadwalH.Ubah)
@@ -135,7 +142,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// kader (menampilkan QR tetap posyandu, bukan memindai)
 	kader := protected.Group("/kader", middleware.RoleRequired("kader"))
 	kader.GET("/anak", jadwalH.CariAnak)
-	kader.GET("/qr", jadwalH.QRPosyandu) // QR tetap, satu per posyandu
+	kader.POST("/users/:id/reset-pin", pinH.ResetPIN) // hanya akun orang tua
+	kader.GET("/qr", jadwalH.QRPosyandu)              // QR tetap, satu per posyandu
 	kader.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
 	kader.POST("/jadwal/:id/walkin", jadwalH.WalkIn)
 	kader.POST("/pendaftaran/:id/checkin", jadwalH.CheckinManual)

@@ -14,7 +14,7 @@ import 'features/OrangTua/orangtua_home.dart';
 import 'features/akun/akun_page.dart';
 import 'features/auth/auth_provider.dart';
 import 'features/auth/login_page.dart';
-import 'features/auth/ubah_sandi_page.dart';
+import 'features/auth/ubah_pin_page.dart';
 
 const _roleDikenal = {'sekretaris', 'bidan', 'kader', 'orang_tua'};
 
@@ -61,9 +61,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
-    final wajibGanti = auth.user != null &&
-        auth.role == 'orang_tua' &&
-        auth.user!['must_change_password'] == true;
+    // Hanya orang tua yang PIN-nya direset petugas wajib mengganti PIN dulu.
+    // Sekretaris, bidan, dan kader langsung masuk ke beranda.
+    final wajibGanti =
+        auth.user != null && auth.role == 'orang_tua' && auth.wajibGantiPin;
 
     final sesiAktif = auth.initialized &&
         auth.user != null &&
@@ -76,7 +77,7 @@ class MyApp extends StatelessWidget {
         body: Center(child: CircularProgressIndicator()),
       );
     } else if (wajibGanti) {
-      home = const UbahSandiPage();
+      home = const UbahPinPage(wajib: true);
     } else {
       switch (auth.role) {
         case 'sekretaris':

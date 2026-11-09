@@ -15,7 +15,7 @@ var (
 type UpdateStaffInput struct {
 	Nama     string      `json:"nama" binding:"required"`
 	Username string      `json:"username" binding:"required,min=4"`
-	Password string      `json:"password" binding:"omitempty,min=6"`
+	Pin      string      `json:"pin" binding:"omitempty,len=6,numeric"` // PIN baru (opsional)
 	Role     models.Role `json:"role" binding:"required"`
 }
 
@@ -51,19 +51,26 @@ func (s *AuthService) UpdateStaff(id uint, posyandu string, in UpdateStaffInput)
 	if in.Role != models.RoleKader && in.Role != models.RoleBidan {
 		return nil, ErrInvalidRole
 	}
+	if in.Pin != "" {
+		if err := pinMudah(in.Pin); err != nil {
+			return nil, err
+		}
+	}
 	if s.repo.ExistsExcept("username", in.Username, u.ID) {
 		return nil, ErrDuplicate
 	}
 	u.Nama = in.Nama
 	u.Username = &in.Username
 	u.Role = in.Role
-	if in.Password != "" {
-		hash, err := utils.HashPassword(in.Password)
+	if in.Pin != "" {
+		hash, err := utils.HashPIN(in.Pin)
 		if err != nil {
 			return nil, err
 		}
-		u.Password = hash
-		u.MustChangePassword = true
+		u.PinHash = hash
+		u.WajibGantiPIN = false
+		u.GagalLogin = 0
+		u.TerkunciSampai = nil
 	}
 	return u, s.repo.Save(u)
 }

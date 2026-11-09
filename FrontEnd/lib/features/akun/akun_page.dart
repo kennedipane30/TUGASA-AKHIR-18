@@ -8,7 +8,7 @@ import '../../core/app_colors.dart';
 import '../../core/common_widgets.dart';
 import '../../core/posyandu.dart';
 import '../auth/auth_provider.dart';
-import '../auth/ubah_sandi_page.dart';
+import '../auth/ubah_pin_page.dart';
 
 const Color _hijauHeader = Color(0xFF065F46);
 
@@ -16,7 +16,7 @@ class AkunPage extends StatelessWidget {
   const AkunPage({super.key});
 
   String _labelPeran(String? role) => switch (role) {
-        'admin' => 'Admin',
+        'sekretaris' => 'Sekretaris',
         'bidan' => 'Bidan',
         'kader' => 'Kader',
         'orang_tua' => 'Orang Tua',
@@ -179,7 +179,7 @@ class AkunPage extends StatelessWidget {
                                 runSpacing: 4,
                                 children: [
                                   Pill(_labelPeran(auth.role)),
-                                  if (auth.role != 'admin')
+                                  if (auth.role != null)
                                     Pill(
                                       pos.isEmpty
                                           ? 'Posyandu belum dipilih'
@@ -215,18 +215,18 @@ class AkunPage extends StatelessWidget {
                         ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: const Icon(
-                            Icons.lock_outline,
+                            Icons.pin_outlined,
                             color: AppColors.hijau,
                           ),
                           title: const Text(
-                            'Ubah Kata Sandi',
+                            'Ubah PIN',
                             style: TextStyle(fontSize: 15),
                           ),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const UbahSandiPage(),
+                              builder: (_) => const UbahPinPage(),
                             ),
                           ),
                         ),

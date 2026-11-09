@@ -36,7 +36,7 @@ class StaffAkun {
 String posyanduLabel(String kode) => labelPosyandu(kode);
 
 /// Layanan akun untuk sekretaris. Server hanya mengembalikan dan mengubah
-/// akun milik desa sekretaris yang sedang login.
+/// akun milik desa sekretaris yang sedang login. Semua akun memakai PIN 6 digit.
 class AdminService {
   String _pesan(DioException e) {
     final d = e.response?.data;
@@ -59,14 +59,14 @@ class AdminService {
   Future<void> tambah({
     required String nama,
     required String username,
-    required String password,
+    required String pin,
     required String role,
   }) async {
     try {
       await ApiClient.dio.post('/sekretaris/users', data: {
         'nama': nama,
         'username': username,
-        'password': password,
+        'pin': pin,
         'role': role,
       });
     } on DioException catch (e) {
@@ -79,15 +79,25 @@ class AdminService {
     required String nama,
     required String username,
     required String role,
-    String? password,
+    String? pin,
   }) async {
     try {
       await ApiClient.dio.put('/sekretaris/users/$id', data: {
         'nama': nama,
         'username': username,
         'role': role,
-        if (password != null && password.isNotEmpty) 'password': password,
+        if (pin != null && pin.isNotEmpty) 'pin': pin,
       });
+    } on DioException catch (e) {
+      throw Exception(_pesan(e));
+    }
+  }
+
+  /// Membuat PIN sementara untuk akun yang lupa PIN. Mengembalikan PIN sementara.
+  Future<String> resetPin(int id) async {
+    try {
+      final res = await ApiClient.dio.post('/sekretaris/users/$id/reset-pin');
+      return (res.data['data']?['pin_sementara'] ?? '').toString();
     } on DioException catch (e) {
       throw Exception(_pesan(e));
     }

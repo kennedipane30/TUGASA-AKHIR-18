@@ -12,6 +12,7 @@ import (
 )
 
 func Connect() (*gorm.DB, error) {
+	// DB_PASSWORD adalah kredensial PostgreSQL (bukan login aplikasi).
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Jakarta",
 		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"),
@@ -43,6 +44,10 @@ END $$;`, kolom)
 		}
 	}
 
+	// Login memakai PIN: ganti nama kolom lama tanpa menghilangkan data akun.
+	gantiNamaKolom(db, "users", "password", "pin_hash")
+	gantiNamaKolom(db, "users", "must_change_password", "wajib_ganti_pin")
+
 	if err := db.AutoMigrate(models.AllModels()...); err != nil {
 		return nil, err
 	}
@@ -50,6 +55,27 @@ END $$;`, kolom)
 	samakanKodePosyandu(db)
 	isiPosyanduData(db)
 	return db, nil
+}
+
+// gantiNamaKolom: RENAME COLUMN lama -> baru bila kolom lama masih ada dan kolom baru
+// belum ada. Aman dijalankan berulang kali (setelah berhasil, tidak melakukan apa pun).
+func gantiNamaKolom(db *gorm.DB, tabel, lama, baru string) {
+	sql := fmt.Sprintf(`
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = '%[1]s' AND column_name = '%[2]s'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = '%[1]s' AND column_name = '%[3]s'
+  ) THEN
+    ALTER TABLE %[1]s RENAME COLUMN %[2]s TO %[3]s;
+  END IF;
+END $$;`, tabel, lama, baru)
+	if err := db.Exec(sql).Error; err != nil {
+		log.Printf("peringatan: ganti nama kolom %s.%s gagal: %v", tabel, lama, err)
+	}
 }
 
 // samakanKodePosyandu: ubah kode lama menjadi kode baku (silimbat, sitoluama, aekbolon).
@@ -84,4 +110,4 @@ func isiPosyanduData(db *gorm.DB) {
 	).Error; err != nil {
 		log.Printf("peringatan: isi posyandu akun gagal: %v", err)
 	}
-} 
+}

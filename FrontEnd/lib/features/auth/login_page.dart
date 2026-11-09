@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'auth_provider.dart';
@@ -23,7 +24,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _idf = TextEditingController();
-  final _pw = TextEditingController();
+  final _pin = TextEditingController();
 
   bool _hide = true;
   bool _ingat = true;
@@ -31,7 +32,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void dispose() {
     _idf.dispose();
-    _pw.dispose();
+    _pin.dispose();
     super.dispose();
   }
 
@@ -43,15 +44,19 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submit() async {
-    if (_idf.text.trim().isEmpty || _pw.text.isEmpty) {
-      _snack('No.Hp, username, dan kata sandi wajib diisi');
+    if (_idf.text.trim().isEmpty) {
+      _snack('No. HP atau username wajib diisi');
+      return;
+    }
+    if (!RegExp(r'^\d{6}$').hasMatch(_pin.text)) {
+      _snack('PIN harus 6 digit angka');
       return;
     }
 
     try {
       await context
           .read<AuthProvider>()
-          .login(_idf.text.trim(), _pw.text);
+          .login(_idf.text.trim(), _pin.text);
     } catch (e) {
       _snack(e.toString().replaceFirst('Exception: ', ''));
     }
@@ -65,6 +70,7 @@ class _LoginPageState extends State<LoginPage> {
 
     return InputDecoration(
       isDense: true,
+      counterText: '',
       hintText: hint,
       hintStyle: const TextStyle(
         color: Colors.black38,
@@ -185,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           const SizedBox(height: 20),
-          _label('No,.Hp atau Username'),
+          _label('No. HP atau Username'),
           TextField(
             controller: _idf,
             style: const TextStyle(fontSize: 15),
@@ -195,21 +201,24 @@ class _LoginPageState extends State<LoginPage> {
             enableSuggestions: false,
             textInputAction: TextInputAction.next,
             decoration: _dekor(
-              '0822/1212/kennedi',
+              'Contoh: 081234567890 atau kennedi',
               ikon: Icons.person_outline,
             ),
           ),
           const SizedBox(height: 14),
-          _label('PIN / Kata Sandi'),
+          _label('PIN (6 Digit Angka)'),
           TextField(
-            controller: _pw,
-            style: const TextStyle(fontSize: 15),
+            controller: _pin,
+            style: const TextStyle(fontSize: 15, letterSpacing: 4),
             obscureText: _hide,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => loading ? null : _submit(),
             decoration: _dekor(
-              '••••••••',
-              ikon: Icons.lock_outline,
+              '••••••',
+              ikon: Icons.pin_outlined,
               suffix: IconButton(
                 padding: EdgeInsets.zero,
                 icon: Icon(
@@ -252,10 +261,10 @@ class _LoginPageState extends State<LoginPage> {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 onPressed: () => _snack(
-                  'Hubungi sekretaris posyandu desa Anda untuk reset kata sandi',
+                  'Hubungi sekretaris posyandu desa Anda untuk reset PIN',
                 ),
                 child: const Text(
-                  'Lupa Sandi?',
+                  'Lupa PIN?',
                   style: TextStyle(
                     color: _oranye,
                     fontWeight: FontWeight.w800,

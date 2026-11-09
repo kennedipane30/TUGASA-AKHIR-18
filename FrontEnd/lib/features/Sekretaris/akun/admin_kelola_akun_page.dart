@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../core/pin_util.dart';
 import '../../auth/auth_provider.dart';
 import '../admin_service.dart';
 
@@ -210,7 +211,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
       await _service.tambah(
         nama: hasil.nama,
         username: hasil.username,
-        password: hasil.sandi ?? '',
+        pin: hasil.pin ?? '',
         role: hasil.role,
       );
       _pesan('Akun ${hasil.nama} berhasil dibuat di $_desa');
@@ -232,7 +233,7 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
         nama: hasil.nama,
         username: hasil.username,
         role: hasil.role,
-        password: hasil.sandi,
+        pin: hasil.pin,
       );
       _pesan('Akun ${hasil.nama} diperbarui');
       await _muat(tampilLoading: false);
@@ -618,8 +619,8 @@ class _HasilForm {
   final String nama;
   final String username;
   final String role; // 'kader' atau 'bidan'
-  final String? sandi;
-  const _HasilForm(this.nama, this.username, this.role, this.sandi);
+  final String? pin;
+  const _HasilForm(this.nama, this.username, this.role, this.pin);
 }
 
 class _AkunFormPage extends StatefulWidget {
@@ -636,7 +637,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
   final _form = GlobalKey<FormState>();
   late final TextEditingController _nama;
   late final TextEditingController _username;
-  final _sandi = TextEditingController();
+  final _pin = TextEditingController();
   late String _peran;
   bool _lihat = false;
 
@@ -654,7 +655,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
   void dispose() {
     _nama.dispose();
     _username.dispose();
-    _sandi.dispose();
+    _pin.dispose();
     super.dispose();
   }
 
@@ -666,6 +667,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(fontSize: 15, color: Colors.black38),
+      counterText: '',
       prefixIcon: Icon(ikon, size: 19, color: garis == _abuGaris ? Colors.black38 : garis),
       suffixIcon: suffix,
       filled: true,
@@ -718,11 +720,11 @@ class _AkunFormPageState extends State<_AkunFormPage> {
 
   void _simpan() {
     if (!_form.currentState!.validate()) return;
-    final sandi = _sandi.text.trim();
+    final pin = _pin.text.trim();
     Navigator.pop(
       context,
       _HasilForm(_nama.text.trim(), _username.text.trim(), _peran,
-          sandi.isEmpty ? null : sandi),
+          pin.isEmpty ? null : pin),
     );
   }
 
@@ -864,17 +866,20 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                                 : null,
                           ),
                           _label(
-                              _edit ? 'KATA SANDI BARU' : 'KATA SANDI AWAL',
-                              _edit ? 'Opsional' : 'Min. 6 karakter',
+                              _edit ? 'PIN BARU' : 'PIN AWAL',
+                              _edit ? 'Opsional' : '6 digit angka',
                               _edit ? AppColors.teksRedup : _oranyeGaris,
                               _edit ? Colors.transparent : const Color(0xFFFFF1E6),
                               wajib: !_edit),
                           TextFormField(
-                            controller: _sandi,
+                            controller: _pin,
                             obscureText: !_lihat,
+                            keyboardType: TextInputType.number,
+                            maxLength: 6,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                             decoration: _dekor(
-                              _edit ? 'Kosongkan jika tidak diubah' : 'Minimal 6 karakter',
-                              Icons.lock_outline,
+                              _edit ? 'Kosongkan jika tidak diubah' : 'Buat 6 angka, tidak berurutan',
+                              Icons.pin_outlined,
                               _edit ? _abuGaris : _oranyeGaris,
                               suffix: IconButton(
                                 icon: Icon(
@@ -889,7 +894,7 @@ class _AkunFormPageState extends State<_AkunFormPage> {
                             validator: (v) {
                               final t = (v ?? '').trim();
                               if (_edit && t.isEmpty) return null;
-                              return t.length < 6 ? 'Minimal 6 karakter' : null;
+                              return validasiPin(t);
                             },
                           ),
                         ],

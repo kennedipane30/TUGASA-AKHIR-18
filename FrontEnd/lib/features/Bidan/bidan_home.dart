@@ -27,24 +27,8 @@ const _biru = Color(0xFF2563EB);
 const _biruMuda = Color(0xFFE3EDFF);
 const _hijauMuda = Color(0xFFE3F8EE);
 const _ungu = Color(0xFF9333EA);
-const _unguMuda = Color(0xFFF1E6FF);
 const _kuning = Color(0xFFD97706);
-const _kuningMuda = Color(0xFFFFF3D6);
 const _teal = Color(0xFF0F766E);
-const _tealMuda = Color(0xFFDDF6F2);
-
-class _Menu {
-  final IconData ikon;
-  final String judul;
-  final String sub;
-  final Color bg;
-  final Color fg;
-  final int? badge;
-  final Color badgeWarna;
-  final VoidCallback onTap;
-  const _Menu(this.ikon, this.judul, this.sub, this.bg, this.fg, this.badge,
-      this.badgeWarna, this.onTap);
-}
 
 class BidanHome extends StatefulWidget {
   const BidanHome({super.key});
@@ -130,7 +114,6 @@ class _BidanHomeState extends State<BidanHome> {
         const SizedBox(height: 14),
         _tugasUtama(),
         const SizedBox(height: 18),
-        _judulMenu(),
         _menuGrid(),
         const SizedBox(height: 6),
         _indikatorKinerja(),
@@ -299,150 +282,165 @@ class _BidanHomeState extends State<BidanHome> {
     );
   }
 
+
   // -------------------------------------------------------------------------
-  // Menu & layanan
+  // Ikon menu dari assets (gaya sama dengan beranda orang tua)
   // -------------------------------------------------------------------------
-  Widget _judulMenu() {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(4, 0, 4, 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text('MENU & LAYANAN BIDAN',
-                style: TextStyle(
-                    fontSize: 14,
-                    letterSpacing: 0.6,
-                    fontWeight: FontWeight.w800,
-                    color: _teksAbu)),
+  Widget _itemAset(String aset, IconData cadangan, Color warna, String judul,
+      VoidCallback onTap, {int? badge, Color badgeWarna = const Color(0xFFE11D48)}) {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Image.asset(
+                      aset,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (_, __, ___) => Icon(cadangan, color: warna, size: 38),
+                    ),
+                  ),
+                  if (badge != null && badge > 0)
+                    Positioned(
+                      top: -4,
+                      right: -6,
+                      child: Container(
+                        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: badgeWarna,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: Text(
+                          badge > 99 ? '99+' : '$badge',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                judul,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 11,
+                  height: 1.2,
+                  color: Color(0xFF0F2547),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
-          Text('Akses Cepat',
-              style: TextStyle(
-                  fontSize: 13.5, fontWeight: FontWeight.w800, color: _teksGelap)),
+        ),
+      ),
+    );
+  }
+
+  Widget _gridAset(String judul, String sub, List<Widget> item) {
+    final baris = <Widget>[];
+    for (var i = 0; i < item.length; i += 4) {
+      final potong = item.sublist(i, i + 4 > item.length ? item.length : i + 4);
+      baris.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...potong,
+              for (var k = potong.length; k < 4; k++) const Expanded(child: SizedBox()),
+            ],
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    judul,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      height: 1.2,
+                      color: Color(0xFF0F172A),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Layanan Utama',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.teksRedup,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
+            child: Text(
+              sub,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.teksRedup,
+              ),
+            ),
+          ),
+          ...baris,
         ],
       ),
     );
   }
 
   Widget _menuGrid() {
-    final menu = <_Menu>[
-      _Menu(Icons.warning_amber_rounded, 'Deteksi Dini', 'Anak berisiko',
-          _merahMuda, _merah, (_berisiko ?? 0) > 0 ? _berisiko : null, _merah,
-          _bukaBerisiko),
-      _Menu(Icons.child_care, 'Semua Balita', 'Data, gizi & vaksin', _hijauMuda,
-          _hijauTeks, null, _hijauTeks, _bukaBalita),
-      _Menu(Icons.balance_outlined, 'Antropometri', 'Validasi BB/TB', _biruMuda,
-          _biru, 12, _biru, () => soon(context, 'Daftar verifikasi per sesi')),
-      _Menu(Icons.science_outlined, 'Imunisasi', '8 Terjadwal', _hijauMuda,
-          _hijauTeks, 8, _hijauTeks, () => soon(context, 'Pencatatan imunisasi')),
-      _Menu(Icons.science_outlined, 'Vitamin & PMT', 'Kapsul & Biskuit',
-          _unguMuda, _ungu, null, _ungu,
+    return _gridAset('Layanan Bidan', 'Pilih menu pelayanan dan pemantauan balita', [
+      _itemAset('deteksi_dini.png', Icons.warning_amber_rounded, _merah, 'Deteksi\nDini',
+          _bukaBerisiko, badge: _berisiko, badgeWarna: _merah),
+      _itemAset('semua_balita.png', Icons.child_care, _hijauTeks, 'Semua\nBalita', _bukaBalita),
+      _itemAset('antropometri.png', Icons.balance_outlined, _biru, 'Antropo-\nmetri',
+          () => soon(context, 'Daftar verifikasi per sesi'), badge: 12, badgeWarna: _biru),
+      _itemAset('imunisasi.png', Icons.vaccines_outlined, _hijauTeks, 'Imunisasi',
+          () => soon(context, 'Pencatatan imunisasi'), badge: 8, badgeWarna: _hijauTeks),
+      _itemAset('vitamin_pmt.png', Icons.medication_outlined, _ungu, 'Vitamin\n& PMT',
           () => soon(context, 'Pencatatan suplemen')),
-      _Menu(Icons.history, 'Riwayat', 'Hasil per tanggal', _tealMuda, _teal, null,
-          _teal, _bukaRiwayat),
-      _Menu(Icons.description_outlined, 'Surat Rujukan', 'Ke Puskesmas',
-          _kuningMuda, _kuning, null, _kuning,
+      _itemAset('riwatar_pemeriksaan.png', Icons.history, _teal, 'Riwayat\nPemeriksaan',
+          _bukaRiwayat),
+      _itemAset('surat_rujukan.png', Icons.description_outlined, _kuning, 'Surat\nRujukan',
           () => soon(context, 'Surat rujukan')),
-      _Menu(Icons.assessment_outlined, 'Rekap SKDN', 'Ringkasan penimbangan', _tealMuda,
-          _teal, null, _teal, _bukaSkdn),
-    ];
-
-    final baris = <Widget>[];
-    for (var i = 0; i < menu.length; i += 3) {
-      final potong = menu.sublist(i, i + 3 > menu.length ? menu.length : i + 3);
-      baris.add(Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (var k = 0; k < potong.length; k++) ...[
-                if (k > 0) const SizedBox(width: 10),
-                Expanded(child: _itemMenu(potong[k])),
-              ],
-              for (var k = potong.length; k < 3; k++) ...[
-                const SizedBox(width: 10),
-                const Expanded(child: SizedBox()),
-              ],
-            ],
-          ),
-        ),
-      ));
-    }
-    return Column(children: baris);
-  }
-
-  Widget _itemMenu(_Menu m) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFEDF1F5)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0F1E293B), blurRadius: 10, offset: Offset(0, 3)),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(22),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(22),
-          onTap: m.onTap,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(6, 16, 6, 14),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: m.bg,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(m.ikon, color: m.fg, size: 26),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(m.judul,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: _teksGelap)),
-                    const SizedBox(height: 3),
-                    Text(m.sub,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 12, color: _teksBiru)),
-                  ],
-                ),
-              ),
-              if (m.badge != null)
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: m.badgeWarna,
-                      shape: m.badge! < 10 ? BoxShape.circle : BoxShape.rectangle,
-                      borderRadius:
-                          m.badge! < 10 ? null : BorderRadius.circular(12),
-                    ),
-                    child: Text('${m.badge}',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800)),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
+      _itemAset('rekap_skdn.png', Icons.assessment_outlined, _teal, 'Rekap\nSKDN', _bukaSkdn),
+    ]);
   }
 
   // -------------------------------------------------------------------------

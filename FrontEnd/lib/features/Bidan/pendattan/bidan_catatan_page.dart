@@ -9,6 +9,8 @@ import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
 import '../../../service/kbm_model.dart';
 import '../../../service/vaksin_service.dart';
+import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart'
+    show RencanaAnakJadwal, RencanaItemJadwal;
 import '../vaksin/bidan_vaksin_anak_page.dart';
 
 const _hijauHeader = Color(0xFF065F46);
@@ -162,6 +164,33 @@ final _presetSuplemen = <_PresetSuplemen>[
   ),
 ];
 
+bool _namaVitaminA(String n) {
+  final s = n.toLowerCase();
+  return s == 'vitamin_a' || s.contains('vitamin a') || s.contains('vit a') || s.contains('vit. a');
+}
+
+bool _namaObatCacing(String n) {
+  final s = n.toLowerCase();
+  return s == 'obat_cacing' || s.contains('cacing') || s.contains('albendazol') || s.contains('pirantel');
+}
+
+/// Baris suplemen dari rencana (Vitamin A biru/merah, obat cacing).
+_BarisSuplemen _barisDariRencana(RencanaItemJadwal it, int usiaBulan) {
+  switch (it.kode) {
+    case 'VITA-BIRU':
+      return _BarisSuplemen(nama: 'Vitamin A (kapsul biru)', dosis: '100.000 IU', satuan: 'kapsul');
+    case 'VITA-MERAH':
+      return _BarisSuplemen(nama: 'Vitamin A (kapsul merah)', dosis: '200.000 IU', satuan: 'kapsul');
+    case 'OBAT-CACING':
+      return _BarisSuplemen(
+        nama: 'Obat Cacing (Albendazol)',
+        dosis: usiaBulan < 24 ? '200 mg' : '400 mg',
+        satuan: 'tablet',
+      );
+  }
+  return _BarisSuplemen(nama: it.nama);
+}
+
 /// Judul header ekstra tebal (sama seperti halaman Akun).
 /// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
 Widget _judulTebal(String teks) {
@@ -254,6 +283,12 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
   final Set<String> _vaksinSesiIni = {};
 
   final List<_BarisSuplemen> _suplemen = [];
+
+  /// Rencana imunisasi & suplemen kunjungan ini (dihitung server).
+  RencanaAnakJadwal? _rencana;
+
+  /// Centang/isian otomatis dari rencana (catatan belum pernah disimpan).
+  bool _otomatis = false;
 
   /// Waktu mulai sesi posyandu kunjungan ini.
   DateTime? _mulaiSesi;
@@ -390,6 +425,26 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
         }
       }
 
+      // Rencana hari ini: bila catatan belum pernah disimpan, vaksin dan suplemen
+      // sesuai rencana langsung dicentang/ditambahkan (bidan tetap bisa mengubah).
+      final rRaw = detail['rencana'];
+      final rencana = rRaw is Map
+          ? RencanaAnakJadwal.fromApi(Map<String, dynamic>.from(rRaw))
+          : null;
+      final usiaBln = int.tryParse(detail['usia_bulan']?.toString() ?? '') ?? 0;
+      var otomatis = false;
+      if (rencana != null && c is! Map) {
+        for (final it in rencana.imunisasi) {
+          if (it.jenisVaksinId.isEmpty) continue;
+          if (_vaksinDipilih.add('${it.jenisVaksinId}|${it.dosisKe}')) otomatis = true;
+        }
+        for (final it in rencana.suplemen) {
+          if (_suplemenAda(it)) continue;
+          _suplemen.add(_barisDariRencana(it, usiaBln));
+          otomatis = true;
+        }
+      }
+
       // Kartu vaksin anak: jadwal imunisasi + status (untuk rekomendasi hari ini).
       KartuVaksin? kartu;
       String? gagalKartu;
@@ -409,6 +464,8 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
         _mulaiSesi = mulaiSesi;
         _kartu = kartu;
         _gagalKartu = gagalKartu;
+        _rencana = rencana;
+        _otomatis = otomatis;
         _gagal = null;
         _memuat = false;
       });
@@ -918,6 +975,7 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
             ],
           ),
         ),
+        _kartuRencana(usia),
         _kartuImunisasi(),
         _kartuSuplemen(usia),
         const SizedBox(height: 8),
@@ -937,6 +995,169 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
       if (!mounted) return;
       setState(() => _gagalKartu = e.toString().replaceFirst('Exception: ', ''));
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // RENCANA HARI INI: imunisasi, Vitamin A, obat cacing sesuai jadwal anak
+  // -------------------------------------------------------------------------
+
+  /// Suplemen rencana sudah ada di daftar suplemen hari ini.
+  bool _suplemenAda(RencanaItemJadwal it) {
+    for (final s in _suplemen) {
+      final n = s.nama.text;
+      if (it.jenis == 'vitamin_a' && _namaVitaminA(n)) return true;
+      if (it.jenis == 'obat_cacing' && _namaObatCacing(n)) return true;
+    }
+    return false;
+  }
+
+  Widget _kartuRencana(int usia) {
+    final r = _rencana;
+    if (r == null) return const SizedBox.shrink();
+
+    final total = r.imunisasi.length + r.suplemen.length;
+    return SectionCard(
+      title: 'Rencana Hari Ini',
+      icon: Icons.event_note_outlined,
+      trailing: total == 0
+          ? null
+          : Pill('$total item', bg: AppColors.biruMuda, fg: AppColors.biru),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (r.kosong)
+            const Text(
+              'Tidak ada imunisasi, Vitamin A, atau obat cacing yang direncanakan untuk kunjungan ini.',
+              style: TextStyle(fontSize: 14.5, color: AppColors.teksRedup),
+            )
+          else ...[
+            if (_otomatis)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.hijauMuda,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.auto_awesome, size: 18, color: AppColors.hijau),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Vaksin dan suplemen sesuai rencana sudah dipilih otomatis. '
+                        'Hapus pilihan bila tidak diberikan (mis. anak sedang sakit).',
+                        style: TextStyle(fontSize: 13.5, height: 1.35),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            for (final it in r.imunisasi) _barisRencanaVaksin(it),
+            for (final it in r.suplemen) _barisRencanaSuplemen(it, usia),
+            for (final it in r.keFaskes) _barisRencanaFaskes(it),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _barisRencana({
+    required IconData ikon,
+    required Color warna,
+    required String nama,
+    required String keterangan,
+    required Widget status,
+    VoidCallback? onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: AppColors.latar,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+            child: Row(
+              children: [
+                Icon(ikon, size: 20, color: warna),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(nama,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                      if (keterangan.isNotEmpty)
+                        Text(keterangan,
+                            style: const TextStyle(fontSize: 13, color: AppColors.teksRedup)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                status,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _barisRencanaVaksin(RencanaItemJadwal it) {
+    final kunci = '${it.jenisVaksinId}|${it.dosisKe}';
+    final tersimpan = _vaksinSesiIni.contains(kunci);
+    final dipilih = _vaksinDipilih.contains(kunci);
+    return _barisRencana(
+      ikon: Icons.vaccines_outlined,
+      warna: AppColors.biru,
+      nama: it.nama,
+      keterangan: it.keterangan,
+      status: tersimpan
+          ? const Pill('Tersimpan', bg: AppColors.hijauMuda, fg: AppColors.hijau)
+          : dipilih
+              ? const Pill('Dipilih', bg: AppColors.hijauMuda, fg: AppColors.hijau, icon: Icons.check)
+              : it.terlambat
+                  ? const Pill('Terlambat', bg: AppColors.merahMuda, fg: AppColors.merah)
+                  : const Pill('Belum dipilih', bg: AppColors.kuningMuda, fg: AppColors.kuning),
+      onTap: it.jenisVaksinId.isEmpty
+          ? null
+          : () => setState(() {
+                if (dipilih) {
+                  _vaksinDipilih.remove(kunci);
+                } else {
+                  _vaksinDipilih.add(kunci);
+                }
+              }),
+    );
+  }
+
+  Widget _barisRencanaSuplemen(RencanaItemJadwal it, int usia) {
+    final ada = _suplemenAda(it);
+    return _barisRencana(
+      ikon: Icons.medication_outlined,
+      warna: AppColors.kuning,
+      nama: it.nama,
+      keterangan: it.keterangan,
+      status: ada
+          ? const Pill('Ditambahkan', bg: AppColors.hijauMuda, fg: AppColors.hijau, icon: Icons.check)
+          : const Pill('Tambah', bg: AppColors.biruMuda, fg: AppColors.biru, icon: Icons.add),
+      onTap: ada ? null : () => setState(() => _suplemen.add(_barisDariRencana(it, usia))),
+    );
+  }
+
+  Widget _barisRencanaFaskes(RencanaItemJadwal it) {
+    return _barisRencana(
+      ikon: Icons.local_hospital_outlined,
+      warna: AppColors.merah,
+      nama: it.nama,
+      keterangan: it.keterangan.isEmpty ? 'Rujuk ke puskesmas' : it.keterangan,
+      status: const Pill('Ke puskesmas', bg: AppColors.merahMuda, fg: AppColors.merah),
+    );
   }
 
   // -------------------------------------------------------------------------

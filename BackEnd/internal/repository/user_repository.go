@@ -64,6 +64,25 @@ func (r *UserRepository) FindByRoles(roles []string, posyandu string) ([]models.
 
 func (r *UserRepository) Save(u *models.User) error { return r.db.Save(u).Error }
 
+// SimpanStatusLogin: hanya kolom percobaan gagal, kunci, dan waktu login terakhir.
+func (r *UserRepository) SimpanStatusLogin(u *models.User) error {
+	return r.db.Model(&models.User{}).Where("id = ?", u.ID).Updates(map[string]any{
+		"gagal_login":     u.GagalLogin,
+		"terkunci_sampai": u.TerkunciSampai,
+		"terakhir_login":  u.TerakhirLogin,
+	}).Error
+}
+
+// SimpanPIN: hash PIN baru beserta status wajib ganti dan reset penguncian.
+func (r *UserRepository) SimpanPIN(u *models.User) error {
+	return r.db.Model(&models.User{}).Where("id = ?", u.ID).Updates(map[string]any{
+		"pin_hash":        u.PinHash,
+		"wajib_ganti_pin": u.WajibGantiPIN,
+		"gagal_login":     u.GagalLogin,
+		"terkunci_sampai": u.TerkunciSampai,
+	}).Error
+}
+
 func (r *UserRepository) Delete(id uint) error {
 	return r.db.Delete(&models.User{}, id).Error
 }

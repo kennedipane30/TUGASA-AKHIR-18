@@ -18,8 +18,22 @@ const (
 	// (bawah garis merah); dikirim ke bidan posyandu anak dan orang tuanya.
 	NotifPeringatanTimbang = "peringatan_timbang"
 
-	// NotifHasilTimbang: hasil setiap penimbangan untuk orang tua (selain kasus 2T/BGM).
+	// NotifHasilTimbang: hasil penimbangan (bukan 2T/BGM) ke orang tua.
 	NotifHasilTimbang = "hasil_timbang"
+
+	// Pengingat kesehatan anak (imunisasi, Vitamin A, obat cacing); tanpa tabel baru.
+	// NotifRencanaPosyandu: rencana per anak saat jadwal dibuat/diubah/dipindah karena batal.
+	NotifRencanaPosyandu = "rencana_posyandu"
+	// NotifPengingatImunisasi: H-3 sebelum posyandu yang berisi imunisasi.
+	NotifPengingatImunisasi = "pengingat_imunisasi"
+	// NotifPengingatSuplemen: H-3 sebelum posyandu yang hanya berisi Vitamin A / obat cacing.
+	NotifPengingatSuplemen = "pengingat_suplemen"
+	// NotifImunisasiTerlambat: sekali saat terdeteksi, lalu H-1 maksimal 3 kali.
+	NotifImunisasiTerlambat = "imunisasi_terlambat"
+	// NotifImunisasiFaskes: harus ke puskesmas/faskes (HB0 atau mendekati batas usia).
+	NotifImunisasiFaskes = "imunisasi_faskes"
+	// NotifJadwalBelumAda: ke sekretaris dan bidan bila jadwal posyandu berikutnya belum dibuat.
+	NotifJadwalBelumAda = "jadwal_belum_ada"
 )
 
 // Notifikasi: Notifikasi dan pengingat per pengguna beserta status baca.

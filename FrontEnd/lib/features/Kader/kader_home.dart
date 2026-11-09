@@ -22,7 +22,6 @@ const _oranye = Color(0xFFFF7A00);
 const _teksGelap = Color(0xFF0F172A);
 const _teksAbu = Color(0xFF64748B);
 const _teksBiru = Color(0xFF7C8DA6);
-const _biruVaksin = Color(0xFF0B7FBF);
 
 class KaderHome extends StatefulWidget {
   const KaderHome({super.key});
@@ -231,25 +230,10 @@ class _KaderHomeState extends State<KaderHome> {
         ],
 
         // Layanan utama kader
-        const Padding(
-          padding: EdgeInsets.fromLTRB(4, 4, 4, 10),
-          child: Text('LAYANAN UTAMA KADER',
-              style: TextStyle(
-                  fontSize: 14,
-                  letterSpacing: 0.6,
-                  fontWeight: FontWeight.w800,
-                  color: _teksAbu)),
-        ),
         _layananUtama(),
 
         // Menunggu pengukuran
         if (!_memuat && _gagal == null && j != null) _menungguPengukuran(belumDiukur),
-
-        // Balita tidak hadir
-        _balitaTidakHadir(),
-
-        // Vaksin anak
-        _vaksinAnak(),
       ],
     );
   }
@@ -507,79 +491,163 @@ class _KaderHomeState extends State<KaderHome> {
     );
   }
 
-  // -------------------------------------------------------------------------
-  // Layanan utama kader
-  // -------------------------------------------------------------------------
-  Widget _layananUtama() {
-    final menu = <(IconData, String, Color, Color, VoidCallback)>[
-      (Icons.qr_code_2_rounded, 'QR\nCheck-in\nPosyandu', const Color(0xFFE7F1FD),
-          const Color(0xFF1D6FD6), _bukaQr),
-      (Icons.calendar_view_week_rounded, 'Ukur Data\nBB TB LiLA',
-          const Color(0xFFE3F8EE), const Color(0xFF0B6B55), _bukaAntrean),
-      (Icons.child_care, 'Semua\nBalita',
-          const Color(0xFFFFF4D9), const Color(0xFFEA580C), _bukaBalita),
-      (Icons.history, 'Riwayat\nPemeriksaan', const Color(0xFFE0F7F4),
-          const Color(0xFF0E8F7E), _bukaRiwayat),
-    ];
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < menu.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8),
-              Expanded(child: _itemLayanan(menu[i])),
+  // -------------------------------------------------------------------------
+  // Ikon menu dari assets (gaya sama dengan beranda orang tua)
+  // -------------------------------------------------------------------------
+  Widget _itemAset(String aset, IconData cadangan, Color warna, String judul,
+      VoidCallback onTap, {int? badge, Color badgeWarna = const Color(0xFFE11D48)}) {
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Image.asset(
+                      aset,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (_, __, ___) => Icon(cadangan, color: warna, size: 38),
+                    ),
+                  ),
+                  if (badge != null && badge > 0)
+                    Positioned(
+                      top: -4,
+                      right: -6,
+                      child: Container(
+                        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: badgeWarna,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        child: Text(
+                          badge > 99 ? '99+' : '$badge',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                judul,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 11,
+                  height: 1.2,
+                  color: Color(0xFF0F2547),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _itemLayanan((IconData, String, Color, Color, VoidCallback) m) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(color: Color(0x14000000), blurRadius: 10, offset: Offset(0, 3)),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: m.$5,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 2),
-            child: Column(
+  Widget _gridAset(String judul, String sub, List<Widget> item) {
+    final baris = <Widget>[];
+    for (var i = 0; i < item.length; i += 4) {
+      final potong = item.sublist(i, i + 4 > item.length ? item.length : i + 4);
+      baris.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...potong,
+              for (var k = potong.length; k < 4; k++) const Expanded(child: SizedBox()),
+            ],
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: m.$3,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(m.$1, color: m.$4, size: 26),
-                ),
-                const SizedBox(height: 10),
-                Text(m.$2,
-                    textAlign: TextAlign.center,
+                Expanded(
+                  child: Text(
+                    judul,
                     style: const TextStyle(
-                        fontSize: 13,
-                        height: 1.25,
-                        fontWeight: FontWeight.w800,
-                        color: _teksGelap)),
+                      fontSize: 20,
+                      height: 1.2,
+                      color: Color(0xFF0F172A),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Layanan Utama',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.teksRedup,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
+            child: Text(
+              sub,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.teksRedup,
+              ),
+            ),
+          ),
+          ...baris,
+        ],
       ),
     );
+  }
+
+  Widget _layananUtama() {
+    return _gridAset('Layanan Kader', 'Pilih menu pendataan balita di posyandu', [
+      _itemAset('qr_chekin.png', Icons.qr_code_2_rounded, const Color(0xFF1D6FD6),
+          'QR\nCheck-in', _bukaQr),
+      _itemAset('ukur_data.png', Icons.calendar_view_week_rounded, const Color(0xFF0B6B55),
+          'Ukur Data\nBB TB LiLA', _bukaAntrean),
+      _itemAset('semua_balita.png', Icons.child_care, const Color(0xFFEA580C),
+          'Semua\nBalita', _bukaBalita),
+      _itemAset('riwatar_pemeriksaan.png', Icons.history, const Color(0xFF0E8F7E),
+          'Riwayat\nPemeriksaan', _bukaRiwayat),
+      _itemAset('balita_tidak_hadir.png', Icons.person_search_outlined,
+          const Color(0xFFB45309), 'Balita\nTidak Hadir', _bukaTidakHadir),
+      _itemAset('vaksin_anak.png', Icons.vaccines_outlined, const Color(0xFF0B7FBF),
+          'Vaksin\nAnak', _bukaVaksin),
+    ]);
   }
 
   // -------------------------------------------------------------------------
@@ -695,138 +763,6 @@ class _KaderHomeState extends State<KaderHome> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       fontWeight: FontWeight.w800, fontSize: 14, height: 1.2)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // Balita tidak hadir
-  // -------------------------------------------------------------------------
-  Widget _balitaTidakHadir() {
-    return _kartuPutih(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFEFDD),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.person_search_outlined,
-                    color: Color(0xFFB45309), size: 24),
-              ),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Balita Tidak Hadir',
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: _teksGelap)),
-                    SizedBox(height: 6),
-                    Text(
-                      'Daftar balita sasaran yang belum ditimbang bulan ini untuk diingatkan atau dikunjungi.',
-                      style: TextStyle(
-                          fontSize: 15, height: 1.5, color: _teksBiru),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _oranye,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-              ),
-              onPressed: _bukaTidakHadir,
-              icon: const Icon(Icons.list_alt_outlined, size: 20),
-              label: const Text('Lihat Balita Tidak Hadir',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // Vaksin anak
-  // -------------------------------------------------------------------------
-  Widget _vaksinAnak() {
-    return _kartuPutih(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0F7F4),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.vaccines_outlined,
-                    color: Color(0xFF0E8F7E), size: 24),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Vaksin Anak',
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: _teksGelap)),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Cari anak di posyandu Anda untuk melihat jadwal imunisasi, status vaksin, riwayat vaksin, dan suplemen yang sudah diterima.',
-                      style: TextStyle(
-                          fontSize: 15, height: 1.5, color: _teksBiru),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _biruVaksin,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-              ),
-              onPressed: _bukaVaksin,
-              icon: const Icon(Icons.event_available_outlined, size: 20),
-              label: const Text('Lihat Jadwal & Riwayat Vaksin',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
             ),
           ),
         ],

@@ -63,6 +63,35 @@ func (r *NotifikasiRepository) OrangTuaAnak(anakID uuid.UUID) ([]models.User, er
 	return list, err
 }
 
+// ---------------------------------------------------------------- pengingat kesehatan anak
+
+// JadwalMendatangPosyandu: jadwal terjadwal satu posyandu mulai tanggal [dari], urut tanggal.
+func (r *NotifikasiRepository) JadwalMendatangPosyandu(posyandu string, dari time.Time) ([]models.JadwalPosyandu, error) {
+	list := []models.JadwalPosyandu{}
+	err := r.db.Where("posyandu = ? AND status = ? AND tanggal >= ?", posyandu, "terjadwal", dari.Format("2006-01-02")).
+		Order("tanggal ASC, jam_mulai ASC").Find(&list).Error
+	return list, err
+}
+
+// SuplemenBanyakAnak: riwayat suplemen (Vitamin A, obat cacing, dll.) untuk banyak anak sekaligus.
+func (r *NotifikasiRepository) SuplemenBanyakAnak(anakIDs []uuid.UUID) ([]models.SuplemenAnak, error) {
+	list := []models.SuplemenAnak{}
+	if len(anakIDs) == 0 {
+		return list, nil
+	}
+	err := r.db.Where("anak_id IN ?", anakIDs).Order("tanggal ASC").Find(&list).Error
+	return list, err
+}
+
+// JumlahKunci: jumlah notifikasi berbeda (per kunci) yang diawali [awalan].
+func (r *NotifikasiRepository) JumlahKunci(awalan string) int64 {
+	var n int64
+	r.db.Unscoped().Model(&models.Notifikasi{}).
+		Where("kunci LIKE ?", awalan+"%").
+		Distinct("kunci").Count(&n)
+	return n
+}
+
 // ---------------------------------------------------------------- notifikasi
 
 // KunciSudahAda: notifikasi dengan kunci ini sudah pernah dibuat untuk minimal satu pengguna.

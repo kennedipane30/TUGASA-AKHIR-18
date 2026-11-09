@@ -24,6 +24,7 @@ type PelayananService struct {
 	gizi   *StatusGiziService
 	vaksin *VaksinService
 	kbm    *KbmService
+	notif  *NotifikasiService
 }
 
 func NewPelayananService(j *repository.JadwalRepository, p *repository.PelayananRepository, k *repository.KeluargaRepository) *PelayananService {
@@ -38,6 +39,9 @@ func (s *PelayananService) SetKbm(k *KbmService) { s.kbm = k }
 
 // SetVaksin mengaktifkan validasi vaksin berdasarkan jadwal imunisasi Kemenkes.
 func (s *PelayananService) SetVaksin(v *VaksinService) { s.vaksin = v }
+
+// SetNotifikasi mengaktifkan "Rencana Hari Ini" (imunisasi, Vitamin A, obat cacing) di catatan bidan.
+func (s *PelayananService) SetNotifikasi(n *NotifikasiService) { s.notif = n }
 
 // ---------------------------------------------------------------- input
 
@@ -129,6 +133,7 @@ type DetailBidan struct {
 	Imunisasi        []models.ImunisasiAnak   `json:"imunisasi"`
 	Suplemen         []models.SuplemenAnak    `json:"suplemen"`
 	RiwayatImunisasi []models.ImunisasiAnak   `json:"riwayat_imunisasi"`
+	Rencana          *RencanaAnak             `json:"rencana"` // rencana imunisasi & suplemen kunjungan ini
 }
 
 type PengukuranRiwayat struct {
@@ -618,6 +623,7 @@ func (s *PelayananService) DetailBidan(pos string, pendaftaranID uuid.UUID) (*De
 	if d.RiwayatImunisasi, err = s.repo.ListImunisasiAnak(p.AnakID); err != nil {
 		return nil, err
 	}
+	d.Rencana = s.notif.RencanaPendaftaran(p.Anak, p.Jadwal, p.ID)
 	return d, nil
 }
 

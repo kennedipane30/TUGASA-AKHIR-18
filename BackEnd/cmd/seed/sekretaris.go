@@ -17,13 +17,14 @@ var daftarSekretaris = []struct{ Nama, Username, NoHP, Posyandu string }{
 	{"Sekretaris Aek Bolon", "sekretaris.aekbolon", "082235805310", "aekbolon"},
 }
 
-// seedSekretaris membuat satu akun sekretaris untuk setiap desa.
+// seedSekretaris membuat (atau memperbarui) satu akun sekretaris untuk setiap desa.
+// Sekretaris masuk dengan username atau No. HP + PIN dari .env: SEKRETARIS_PIN.
 func seedSekretaris(db *gorm.DB) {
-	password := os.Getenv("SEKRETARIS_PASSWORD")
-	if len(password) < 6 {
-		log.Fatal("SEKRETARIS_PASSWORD wajib diisi di .env (minimal 6 karakter)")
+	pin := os.Getenv("SEKRETARIS_PIN")
+	if err := utils.ValidasiPIN(pin); err != nil {
+		log.Fatal("SEKRETARIS_PIN di .env tidak valid: ", err.Error())
 	}
-	hash, err := utils.HashPassword(password)
+	hash, err := utils.HashPIN(pin)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,7 +40,7 @@ func seedSekretaris(db *gorm.DB) {
 				Nama:     s.Nama,
 				Username: &username,
 				NoHP:     &noHP,
-				Password: hash,
+				PinHash:  hash,
 				Role:     models.RoleSekretaris,
 				Posyandu: s.Posyandu,
 				IsActive: true,
@@ -59,9 +60,13 @@ func seedSekretaris(db *gorm.DB) {
 		u.Role = models.RoleSekretaris
 		u.Posyandu = s.Posyandu
 		u.IsActive = true
+		u.PinHash = hash
+		u.WajibGantiPIN = false
+		u.GagalLogin = 0
+		u.TerkunciSampai = nil
 		if err := db.Save(&u).Error; err != nil {
 			log.Fatal("gagal memperbarui sekretaris ", s.Posyandu, ": ", err)
 		}
-		log.Println("sekretaris sudah ada, diperbarui:", s.Username, "| No. HP:", s.NoHP)
+		log.Println("sekretaris sudah ada, PIN diperbarui:", s.Username, "| No. HP:", s.NoHP)
 	}
 }

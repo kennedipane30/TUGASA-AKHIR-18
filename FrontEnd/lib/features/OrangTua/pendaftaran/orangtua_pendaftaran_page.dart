@@ -10,6 +10,64 @@ import 'orangtua_kartu_antrean_page.dart';
 // ---------------------------------------------------------------------------
 // MODEL
 // ---------------------------------------------------------------------------
+
+/// Satu item rencana pelayanan: imunisasi, Vitamin A, atau obat cacing.
+class RencanaItemJadwal {
+  final String jenis; // imunisasi | vitamin_a | obat_cacing
+  final String kode;
+  final String jenisVaksinId; // hanya untuk imunisasi
+  final String nama;
+  final int dosisKe;
+  final String keterangan;
+  final bool terlambat;
+
+  RencanaItemJadwal({
+    required this.jenis,
+    required this.kode,
+    this.jenisVaksinId = '',
+    required this.nama,
+    required this.dosisKe,
+    required this.keterangan,
+    required this.terlambat,
+  });
+
+  factory RencanaItemJadwal.fromApi(Map<String, dynamic> j) => RencanaItemJadwal(
+        jenis: j['jenis']?.toString() ?? '',
+        kode: j['kode']?.toString() ?? '',
+        jenisVaksinId: j['jenis_vaksin_id']?.toString() ?? '',
+        nama: j['nama']?.toString() ?? '',
+        dosisKe: int.tryParse(j['dosis_ke']?.toString() ?? '') ?? 0,
+        keterangan: j['keterangan']?.toString() ?? '',
+        terlambat: j['terlambat'] == true,
+      );
+}
+
+/// Rencana imunisasi & suplemen anak pada jadwal posyandu (dihitung server).
+class RencanaAnakJadwal {
+  final List<RencanaItemJadwal> imunisasi;
+  final List<RencanaItemJadwal> suplemen;
+  final List<RencanaItemJadwal> keFaskes;
+
+  RencanaAnakJadwal({
+    required this.imunisasi,
+    required this.suplemen,
+    required this.keFaskes,
+  });
+
+  static List<RencanaItemJadwal> _daftar(dynamic v) => ((v as List?) ?? [])
+      .whereType<Map>()
+      .map((e) => RencanaItemJadwal.fromApi(Map<String, dynamic>.from(e)))
+      .toList();
+
+  factory RencanaAnakJadwal.fromApi(Map<String, dynamic> j) => RencanaAnakJadwal(
+        imunisasi: _daftar(j['imunisasi']),
+        suplemen: _daftar(j['suplemen']),
+        keFaskes: _daftar(j['ke_faskes']),
+      );
+
+  bool get kosong => imunisasi.isEmpty && suplemen.isEmpty && keFaskes.isEmpty;
+}
+
 class AnakStatusJadwal {
   final String anakId;
   final String nama;
@@ -18,6 +76,7 @@ class AnakStatusJadwal {
   final bool bolehDaftar;
   final bool bolehBatal;
   final bool bolehCheckin;
+  final RencanaAnakJadwal? rencana;
 
   AnakStatusJadwal({
     required this.anakId,
@@ -27,6 +86,7 @@ class AnakStatusJadwal {
     required this.bolehDaftar,
     required this.bolehBatal,
     required this.bolehCheckin,
+    this.rencana,
   });
 
   factory AnakStatusJadwal.fromApi(Map<String, dynamic> j) =>
@@ -38,6 +98,9 @@ class AnakStatusJadwal {
         bolehDaftar: j['boleh_daftar'] == true,
         bolehBatal: j['boleh_batal'] == true,
         bolehCheckin: j['boleh_checkin'] == true,
+        rencana: j['rencana'] is Map
+            ? RencanaAnakJadwal.fromApi(Map<String, dynamic>.from(j['rencana'] as Map))
+            : null,
       );
 }
 
@@ -417,6 +480,8 @@ class _OrangTuaPendaftaranPageState
                           j,
                           j.anak[_idx.clamp(0, j.anak.length - 1)],
                         ),
+                        const SizedBox(height: 14),
+                        _kartuRencana(j.anak[_idx.clamp(0, j.anak.length - 1)]),
                         const SizedBox(height: 14),
                         _kartuPetunjuk(),
                         const SizedBox(height: 12),
@@ -832,6 +897,180 @@ class _OrangTuaPendaftaranPageState
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // RENCANA PELAYANAN (imunisasi, Vitamin A, obat cacing)
+  // -------------------------------------------------------------------------
+  Widget _kartuRencana(AnakStatusJadwal a) {
+    final r = a.rencana;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: _dekorPutih,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE7F6F0),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.event_note_rounded, size: 20, color: _hijauHeader),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Rencana Pelayanan',
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (r == null || r.kosong)
+            Text(
+              'Tidak ada imunisasi, Vitamin A, atau obat cacing untuk ${a.nama} pada jadwal ini. Tetap datang untuk penimbangan, ya.',
+              style: const TextStyle(fontSize: 14, height: 1.45, color: Color(0xFF4B5563)),
+            )
+          else ...[
+            if (r.imunisasi.isNotEmpty)
+              _grupRencana(
+                'Imunisasi',
+                Icons.vaccines_outlined,
+                const Color(0xFF0B7FBF),
+                const Color(0xFFE6F3FB),
+                r.imunisasi,
+              ),
+            if (r.suplemen.isNotEmpty)
+              _grupRencana(
+                'Vitamin A & Obat Cacing',
+                Icons.medication_outlined,
+                const Color(0xFFB45309),
+                const Color(0xFFFFF4E5),
+                r.suplemen,
+              ),
+            if (r.keFaskes.isNotEmpty)
+              _grupRencana(
+                'Segera ke Puskesmas',
+                Icons.local_hospital_outlined,
+                const Color(0xFFDC2626),
+                const Color(0xFFFDECEC),
+                r.keFaskes,
+              ),
+            const SizedBox(height: 2),
+            const Text(
+              'Pastikan anak dalam keadaan sehat dan bawa buku KIA.',
+              style: TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _grupRencana(
+    String judul,
+    IconData ikon,
+    Color warna,
+    Color latar,
+    List<RencanaItemJadwal> items,
+  ) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: latar,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(ikon, size: 18, color: warna),
+              const SizedBox(width: 6),
+              Text(
+                judul,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: warna),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (final it in items)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(color: warna, shape: BoxShape.circle),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                it.nama,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                            if (it.terlambat) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFDECEC),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'Terlambat',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFDC2626),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        if (it.keterangan.isNotEmpty)
+                          Text(
+                            it.keterangan,
+                            style: const TextStyle(fontSize: 12.5, height: 1.35, color: Color(0xFF4B5563)),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/app_colors.dart';
+import '../../../core/pin_util.dart';
 import '../../auth/auth_provider.dart';
 import '../../auth/auth_service.dart';
 
@@ -76,7 +77,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
   final _key = GlobalKey<FormState>();
   final _nama = TextEditingController();
   final _username = TextEditingController();
-  final _pw = TextEditingController();
+  final _pin = TextEditingController();
   String _role = 'kader';
   bool _loading = false;
   bool _lihat = false;
@@ -85,7 +86,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
   void dispose() {
     _nama.dispose();
     _username.dispose();
-    _pw.dispose();
+    _pin.dispose();
     super.dispose();
   }
 
@@ -102,7 +103,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
       await AuthService().createStaff(
         nama: _nama.text.trim(),
         username: _username.text.trim(),
-        password: _pw.text,
+        pin: _pin.text,
         role: _role,
       );
       if (!mounted) return;
@@ -110,7 +111,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
           SnackBar(content: Text('Akun $_role di ${_desa()} berhasil dibuat')));
       _nama.clear();
       _username.clear();
-      _pw.clear();
+      _pin.clear();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -168,6 +169,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(fontSize: 15, color: Colors.black38),
+      counterText: '',
       prefixIcon: Icon(ikon, size: 19, color: garis),
       suffixIcon: suffix,
       filled: true,
@@ -353,14 +355,17 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                                 ? 'Minimal 4 karakter'
                                 : null,
                           ),
-                          _label('KATA SANDI AWAL', 'Min. 6 karakter', _oranyeGaris,
+                          _label('PIN AWAL', '6 digit angka', _oranyeGaris,
                               const Color(0xFFFFF1E6)),
                           TextFormField(
-                            controller: _pw,
+                            controller: _pin,
                             obscureText: !_lihat,
+                            keyboardType: TextInputType.number,
+                            maxLength: 6,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                             decoration: _dekor(
-                              'Minimal 6 karakter',
-                              Icons.lock_outline,
+                              'Buat 6 angka, tidak berurutan',
+                              Icons.pin_outlined,
                               _oranyeGaris,
                               suffix: IconButton(
                                 icon: Icon(
@@ -372,8 +377,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                                 onPressed: () => setState(() => _lihat = !_lihat),
                               ),
                             ),
-                            validator: (v) =>
-                                (v == null || v.length < 6) ? 'Minimal 6 karakter' : null,
+                            validator: (v) => validasiPin(v ?? ''),
                           ),
                         ],
                       ),

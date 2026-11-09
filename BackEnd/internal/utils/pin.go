@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 var rePIN = regexp.MustCompile(`^[0-9]{6}$`)
@@ -15,7 +17,23 @@ var pinUmum = map[string]bool{
 	"258369": true, "102030": true, "696969": true, "121314": true,
 }
 
-// ValidasiPIN memastikan PIN tepat 6 digit angka dan tidak terlalu mudah ditebak.
+// HashPIN membuat hash bcrypt dari PIN (PIN asli tidak pernah disimpan).
+func HashPIN(pin string) (string, error) {
+	b, err := bcrypt.GenerateFromPassword([]byte(pin), bcrypt.DefaultCost)
+	return string(b), err
+}
+
+// CekPIN membandingkan PIN yang diketik dengan hash tersimpan.
+func CekPIN(hash, pin string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(pin)) == nil
+}
+
+// FormatPIN: PIN tepat 6 digit angka (dipakai saat login).
+func FormatPIN(pin string) bool { return rePIN.MatchString(pin) }
+
+// ValidasiPIN memastikan PIN tepat 6 digit angka dan tidak terlalu mudah ditebak:
+// tidak kembar (111111), tidak berurutan naik/turun (123456, 654321),
+// tidak berulang (123123, 121212), dan bukan PIN umum.
 func ValidasiPIN(pin string) error {
 	if !rePIN.MatchString(pin) {
 		return errors.New("PIN harus 6 digit angka")

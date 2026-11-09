@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"posyandu-api/internal/service"
@@ -17,24 +18,22 @@ func (h *AuthHandler) ListPosyandu(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": h.svc.ListPosyandu()})
 }
 
+// POST /auth/register  {nama, nik, no_hp, pin, posyandu}
 func (h *AuthHandler) Register(c *gin.Context) {
 	var in service.RegisterInput
 	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "data belum lengkap: NIK 16 digit, No. HP, dan PIN 6 digit wajib diisi"})
 		return
 	}
 	u, err := h.svc.RegisterOrangTua(in)
 	if err != nil {
+		var pin service.ErrPin
 		code := http.StatusInternalServerError
-		switch err {
-		case service.ErrDuplicate:
+		switch {
+		case errors.Is(err, service.ErrDuplicate):
 			code = http.StatusConflict
-		case service.ErrPosyandu:
+		case errors.Is(err, service.ErrPosyandu), errors.As(err, &pin):
 			code = http.StatusBadRequest
-		default:
-			if _, ok := err.(service.ErrPin); ok {
-				code = http.StatusBadRequest
-			}
 		}
 		c.JSON(code, gin.H{"error": err.Error()})
 		return
@@ -42,23 +41,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"user": u})
 }
 
-func (h *AuthHandler) Login(c *gin.Context) {
-	var in struct {
-		Identifier string `json:"identifier" binding:"required"`
-		Password   string `json:"password" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	token, u, err := h.svc.Login(in.Identifier, in.Password)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"token": token, "user": u})
-}
-
+// GET /auth/me
 func (h *AuthHandler) Me(c *gin.Context) {
 	u, err := h.svc.Me(c.GetUint("user_id"))
 	if err != nil {
@@ -68,7 +51,8 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": u})
 }
 
-// khusus sekretaris: akun dibuat pada posyandu milik sekretaris
+// POST /sekretaris/users  {nama, username, pin, role}
+// Akun dibuat pada posyandu milik sekretaris.
 func (h *AuthHandler) CreateStaff(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
@@ -76,12 +60,16 @@ func (h *AuthHandler) CreateStaff(c *gin.Context) {
 	}
 	var in service.CreateStaffInput
 	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "nama, username (min. 4 karakter), dan PIN 6 digit wajib diisi"})
 		return
 	}
 	u, err := h.svc.CreateStaff(pos, in)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		code := http.StatusBadRequest
+		if errors.Is(err, service.ErrDuplicate) {
+			code = http.StatusConflict
+		}
+		c.JSON(code, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"user": u})

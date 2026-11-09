@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../features/Sekretaris/jadwal/admin_jadwal_page.dart';
+import '../features/OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
 import '../features/OrangTua/riwayat/orangtua_grafik_page.dart';
+import '../features/OrangTua/vaksin/orangtua_vaksin_page.dart';
 import '../features/auth/auth_provider.dart';
 import 'app_colors.dart';
 import 'balita_detail_page.dart';
@@ -54,29 +57,84 @@ String waktuNotifikasi(DateTime t) {
       return (Icons.event_busy, AppColors.merah, AppColors.merahMuda);
     case 'peringatan_timbang':
       return (Icons.warning_amber_rounded, AppColors.merah, AppColors.merahMuda);
+    // pengingat kesehatan anak (imunisasi, Vitamin A, obat cacing)
+    case 'rencana_posyandu':
+      return (Icons.event_note, AppColors.hijau, AppColors.hijauMuda);
+    case 'pengingat_imunisasi':
+      return (Icons.vaccines_outlined, AppColors.biru, AppColors.biruMuda);
+    case 'pengingat_suplemen':
+      return (Icons.medication_outlined, AppColors.kuning, AppColors.kuningMuda);
+    case 'imunisasi_terlambat':
+      return (Icons.running_with_errors, AppColors.merah, AppColors.merahMuda);
+    case 'imunisasi_faskes':
+      return (Icons.local_hospital_outlined, AppColors.merah, AppColors.merahMuda);
+    case 'jadwal_belum_ada':
+      return (Icons.event_busy, AppColors.kuning, AppColors.kuningMuda);
     default:
       return (Icons.notifications, AppColors.hijau, AppColors.hijauMuda);
   }
 }
 
-/// Membuka halaman tujuan sebuah notifikasi.
-/// Peringatan 2T/BGM: orang tua ke Grafik anak, petugas ke detail balita.
-void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
-  if (jenis != 'peringatan_timbang' || objekId == null || objekId.isEmpty) {
-    nav.push(MaterialPageRoute(builder: (_) => const NotifikasiPage()));
-    return;
-  }
-  var role = '';
+String _roleDari(BuildContext context) {
   try {
-    role = (Provider.of<AuthProvider>(nav.context, listen: false).user?['role'] ?? '').toString();
-  } catch (_) {}
-  final Widget halaman = switch (role) {
-    'orang_tua' => OrangTuaGrafikPage(anakId: objekId),
-    'bidan' => BalitaDetailPage(prefix: '/bidan', anakId: objekId, nama: 'Detail Balita', bisaKelolaVaksin: true),
-    'kader' => BalitaDetailPage(prefix: '/kader', anakId: objekId, nama: 'Detail Balita'),
-    'sekretaris' => BalitaDetailPage(prefix: '/sekretaris', anakId: objekId, nama: 'Detail Balita'),
-    _ => const NotifikasiPage(),
-  };
+    return (Provider.of<AuthProvider>(context, listen: false).user?['role'] ?? '').toString();
+  } catch (_) {
+    return '';
+  }
+}
+
+/// Label tombol tujuan notifikasi; null bila notifikasi cukup dibaca saja.
+String? labelTujuanNotifikasi(String jenis, String role, String? objekId) {
+  final adaObjek = objekId != null && objekId.isNotEmpty;
+  switch (jenis) {
+    case 'peringatan_timbang':
+      return adaObjek ? 'Lihat Data Anak' : null;
+    case 'rencana_posyandu':
+    case 'pengingat_imunisasi':
+    case 'pengingat_suplemen':
+      return role == 'orang_tua' ? 'Lihat Rencana & Daftar' : null;
+    case 'imunisasi_terlambat':
+    case 'imunisasi_faskes':
+      return role == 'orang_tua' ? 'Lihat Jadwal Vaksin Anak' : null;
+    case 'jadwal_belum_ada':
+      return role == 'sekretaris' ? 'Buat Jadwal Posyandu' : null;
+  }
+  return null;
+}
+
+/// Membuka halaman tujuan sebuah notifikasi.
+///   - Peringatan 2T/BGM: orang tua ke Grafik anak, petugas ke detail balita.
+///   - Rencana / pengingat H-3 (orang tua): halaman Pendaftaran (kartu Rencana Pelayanan).
+///   - Imunisasi terlambat / ke puskesmas (orang tua): halaman Vaksin Anak.
+///   - Jadwal belum dibuat (sekretaris): halaman Kelola Jadwal.
+///   - Lainnya: daftar notifikasi.
+void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
+  final role = _roleDari(nav.context);
+  final id = objekId ?? '';
+  final adaObjek = id.isNotEmpty;
+
+  Widget halaman = const NotifikasiPage();
+  switch (jenis) {
+    case 'peringatan_timbang':
+      if (adaObjek) {
+        halaman = switch (role) {
+          'orang_tua' => OrangTuaGrafikPage(anakId: id),
+          'bidan' => BalitaDetailPage(prefix: '/bidan', anakId: id, nama: 'Detail Balita', bisaKelolaVaksin: true),
+          'kader' => BalitaDetailPage(prefix: '/kader', anakId: id, nama: 'Detail Balita'),
+          'sekretaris' => BalitaDetailPage(prefix: '/sekretaris', anakId: id, nama: 'Detail Balita'),
+          _ => const NotifikasiPage(),
+        };
+      }
+    case 'rencana_posyandu':
+    case 'pengingat_imunisasi':
+    case 'pengingat_suplemen':
+      if (role == 'orang_tua') halaman = const OrangTuaPendaftaranPage();
+    case 'imunisasi_terlambat':
+    case 'imunisasi_faskes':
+      if (role == 'orang_tua') halaman = const OrangTuaVaksinPage();
+    case 'jadwal_belum_ada':
+      if (role == 'sekretaris') halaman = const AdminJadwalPage();
+  }
   nav.push(MaterialPageRoute(builder: (_) => halaman));
 }
 
@@ -208,6 +266,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
       _svc.tandaiDibaca(n.id);
     }
     final (ikon, fg, bg) = _gayaJenis(n.jenis);
+    final tujuan = labelTujuanNotifikasi(n.jenis, _roleDari(context), n.objekId);
     await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -263,10 +322,10 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              if (n.jenis == 'peringatan_timbang' && (n.objekId ?? '').isNotEmpty) ...[
+              if (tujuan != null) ...[
                 SizedBox(
                   width: double.infinity,
-                  child: AppButton('Lihat Data Anak', icon: Icons.child_care, onPressed: () {
+                  child: AppButton(tujuan, icon: Icons.arrow_forward, onPressed: () {
                     Navigator.pop(ctx);
                     bukaObjekNotifikasi(Navigator.of(context), n.jenis, n.objekId);
                   }),
@@ -481,7 +540,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Pengingat jadwal posyandu, pemberitahuan check-in, dan peringatan pertumbuhan anak akan muncul di sini.',
+            'Pengingat jadwal posyandu, check-in, imunisasi, Vitamin A, obat cacing, dan peringatan pertumbuhan anak akan muncul di sini.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: AppColors.teksRedup),
           ),
