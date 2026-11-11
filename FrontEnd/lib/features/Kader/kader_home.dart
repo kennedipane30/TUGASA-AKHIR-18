@@ -40,10 +40,25 @@ class _KaderHomeState extends State<KaderHome> {
   int _tertunda = 0;
   String _sinkronTerakhir = 'baru saja';
 
+  final _cariCtrl = TextEditingController();
+  String _kata = '';
+
   @override
   void initState() {
     super.initState();
     _muat();
+  }
+
+  @override
+  void dispose() {
+    _cariCtrl.dispose();
+    super.dispose();
+  }
+
+  void _bersihkanCari() {
+    _cariCtrl.clear();
+    FocusScope.of(context).unfocus();
+    setState(() => _kata = '');
   }
 
   Future<void> _muat() async {
@@ -184,9 +199,217 @@ class _KaderHomeState extends State<KaderHome> {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // Pencarian
+  // -------------------------------------------------------------------------
+  Widget _pencarian() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE6EAEF)),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0A1E293B), blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search, color: _teksAbu, size: 22),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _cariCtrl,
+              textInputAction: TextInputAction.search,
+              onChanged: (v) => setState(() => _kata = v.trim()),
+              decoration: const InputDecoration(
+                hintText: 'Cari nama balita...',
+                hintStyle: TextStyle(fontSize: 15, color: _teksAbu),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          if (_kata.isNotEmpty)
+            InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: _bersihkanCari,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF2F6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.close_rounded, size: 18, color: _teksGelap),
+              ),
+            )
+          else
+            InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: _bukaBalita,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF2F6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.filter_alt_outlined, size: 18, color: _teksGelap),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _hasilPencarian() {
+    final q = _kata.toLowerCase();
+    final hasil = _antrean.where((a) => a.nama.toLowerCase().contains(q)).toList();
+
+    return _kartuPutih(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.manage_search_rounded, size: 22, color: _hijauTua),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text('Hasil pencarian "$_kata"',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 15.5, fontWeight: FontWeight.w800, color: _teksGelap)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F8EF),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text('${hasil.length} anak',
+                    style: const TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w800, color: _hijauTua)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_memuat)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (hasil.isEmpty)
+            const Text('Tidak ditemukan di antrean hari ini.',
+                style: TextStyle(fontSize: 14.5, height: 1.4, color: _teksBiru))
+          else
+            for (final a in hasil) _barisHasil(a),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _hijauTua,
+                side: const BorderSide(color: Color(0xFFB9EBD2)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: _bukaBalita,
+              icon: const Icon(Icons.child_care, size: 20),
+              label: const Text('Cari di Semua Balita',
+                  style: TextStyle(fontWeight: FontWeight.w800)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _barisHasil(AntreanKader a) {
+    final usia = a.usiaBulan >= 12
+        ? '${a.usiaBulan ~/ 12} th ${a.usiaBulan % 12} bln'
+        : '${a.usiaBulan} bln';
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: _bukaAntrean,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF6F8FB),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE9EEF3)),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: const Color(0xFFE6F8EF),
+              child: Text(a.nomor?.toString() ?? '-',
+                  style: const TextStyle(color: _hijauTua, fontWeight: FontWeight.w800)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(a.nama,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 15, color: _teksGelap)),
+                  const SizedBox(height: 2),
+                  Text('${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · $usia',
+                      style: const TextStyle(fontSize: 13, color: _teksAbu)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: a.sudahDiukur ? const Color(0xFFE6F5EC) : const Color(0xFFFFEFDD),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(a.sudahDiukur ? 'Sudah diukur' : 'Menunggu',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: a.sudahDiukur ? _hijauTua : const Color(0xFFB45309))),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Nama depan pengguna yang login, huruf kapital (mis. "KENNEDI").
+  String _namaSapaan(Map? user) {
+    final nama = (user?['nama'] ?? '').toString().trim();
+    if (nama.isEmpty) return 'KADER';
+    return nama.split(RegExp(r'\s+')).first.toUpperCase();
+  }
+
+  Widget _sapaan(String nama) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
+      child: Text(
+        'Hi, $nama',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 20,
+          height: 1.2,
+          color: Color(0xFF0F172A),
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pos = (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
+    final user = context.watch<AuthProvider>().user;
+    final pos = (user?['posyandu'] ?? '').toString();
     final lokasi = pos.isEmpty
         ? 'Posyandu belum ditetapkan, hubungi admin'
         : 'Posyandu ${labelPosyandu(pos)}';
@@ -202,6 +425,13 @@ class _KaderHomeState extends State<KaderHome> {
       lokasi: lokasi,
       notif: 3,
       children: [
+        // Sapaan
+        _sapaan(_namaSapaan(user)),
+
+        // Pencarian
+        _pencarian(),
+        if (_kata.isNotEmpty) _hasilPencarian(),
+
         if (_memuat)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
@@ -490,7 +720,6 @@ class _KaderHomeState extends State<KaderHome> {
       ),
     );
   }
-
 
   // -------------------------------------------------------------------------
   // Ikon menu dari assets (gaya sama dengan beranda orang tua)

@@ -137,7 +137,7 @@ class _AdminHomeState extends State<AdminHome> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
-    final nama = (user?['nama'] ?? 'Sekretaris').toString();
+    final nama = _namaSapaan(user);
     final desa = (user?['posyandu_nama'] ?? '').toString();
     final labelDesa = desa.isEmpty ? 'Posyandu' : 'Posyandu $desa';
 
@@ -147,32 +147,7 @@ class _AdminHomeState extends State<AdminHome> {
       notif: _tugas.length,
       children: [
         // Sapaan
-        SectionCard(
-          color: AppColors.hijauMuda,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Pill(desa.isEmpty ? 'Sekretaris Posyandu' : 'Sekretaris $desa',
-                  bg: Colors.white, fg: AppColors.hijau),
-              const SizedBox(height: 8),
-              Text('Selamat bertugas, $nama',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 2),
-              const Text(
-                  'Kelola akun kader dan bidan, jadwal, data vaksin, dan laporan untuk desa Anda.',
-                  style: TextStyle(fontSize: 14, color: AppColors.teksRedup)),
-            ],
-          ),
-        ),
-
-        // Status sinkronisasi (AD-03 poin 5, AD-10 poin 3)
-        SyncStrip(
-          online: true,
-          tertunda: _tertunda,
-          sinkronTerakhir: _sinkronTerakhir,
-          sedangSinkron: _sinkronBerjalan,
-          onSinkron: _sinkronkan,
-        ),
+        _sapaan(nama),
 
         // Aksi cepat (ikon dari assets)
         _gridAset('Layanan Sekretaris', 'Kelola data, jadwal, dan laporan posyandu', [
@@ -197,245 +172,31 @@ class _AdminHomeState extends State<AdminHome> {
           _itemAset('rekap_skdn.png', Icons.analytics_outlined, AppColors.hijau,
               'Ringkasan\nPenimbangan', _bukaSkdn),
         ]),
-
-        // AD-03: sasaran balita
-        SectionCard(
-          title: 'Sasaran Balita',
-          icon: Icons.groups_outlined,
-          trailing: const Pill('+12 bulan ini', bg: AppColors.hijauMuda, fg: AppColors.hijau),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('348',
-                      style: TextStyle(fontSize: 38, fontWeight: FontWeight.w800)),
-                  SizedBox(width: 8),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 8),
-                    child: Text('Jiwa terdaftar di wilayah',
-                        style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Row(
-                children: [
-                  Expanded(child: StatBox(nilai: '96', label: '0-11 bln')),
-                  SizedBox(width: 8),
-                  Expanded(child: StatBox(nilai: '126', label: '12-23 bln')),
-                  SizedBox(width: 8),
-                  Expanded(child: StatBox(nilai: '126', label: '24-59 bln')),
-                ],
-              ),
-              const SizedBox(height: 10),
-              const Text('Laki-laki 178 (51%)  ·  Perempuan 170 (49%)',
-                  style: TextStyle(fontSize: 14, color: AppColors.teksRedup)),
-            ],
-          ),
-        ),
-
-        // Data vaksin: jumlah vaksin diberikan dan jenis vaksin
-        SectionCard(
-          title: 'Data Vaksin',
-          icon: Icons.vaccines_outlined,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Lihat jumlah vaksin yang sudah diberikan dan jenis-jenis vaksin.',
-                style: TextStyle(fontSize: 14, color: AppColors.teksRedup),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: AppButton('Lihat Data Vaksin',
-                    icon: Icons.bar_chart, onPressed: _bukaVaksin),
-              ),
-            ],
-          ),
-        ),
-
-        // AD-03 poin 2: tren kehadiran
-        SectionCard(
-          title: 'Tren Kehadiran per Pelaksanaan',
-          icon: Icons.bar_chart,
-          child: const MiniBars(
-            nilai: [286, 301, 295, 318, 305, 322],
-            label: ['Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt'],
-          ),
-        ),
-
-        // AD-03 poin 3: status gizi dan stunting
-        SectionCard(
-          title: 'Status Gizi & Stunting',
-          icon: Icons.pie_chart_outline,
-          child: Column(
-            children: [
-              _barisGizi('Gizi Baik / Normal', 312, 89.7, Gizi.baik),
-              _barisGizi('Gizi Kurang / Defisit BB', 24, 6.9, Gizi.waspada),
-              _barisGizi('Berisiko Stunting (pendek/sangat pendek)', 12, 3.4, Gizi.risiko),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => _bukaRekap(0),
-                  child: const Text('Lihat Rekap Status Gizi'),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Ringkasan penimbangan (SKDN) bulan berjalan
-        _kartuSkdn(),
-
-        // AD-04: jadwal posyandu desa
-        SectionCard(
-          title: 'Jadwal $labelDesa',
-          icon: Icons.event,
-          trailing: const Pill('Jadwal Desa', bg: AppColors.hijauMuda, fg: AppColors.hijau),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Buat, ubah, atau batalkan jadwal posyandu di desa Anda. Orang tua di desa lain tidak melihat jadwal ini.',
-                style: TextStyle(fontSize: 15),
-              ),
-              const SizedBox(height: 4),
-              const Text('Pendaftaran dibuka sejak jadwal dibuat, check-in 1 jam sebelumnya.',
-                  style: TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
-              const SizedBox(height: 10),
-              AppButton('Kelola Jadwal',
-                  icon: Icons.edit_calendar, filled: false, onPressed: _bukaJadwal),
-            ],
-          ),
-        ),
-
-        // AD-02 poin 3 dan AD-06 poin 3: verifikasi dan tugas tertunda
-        SectionCard(
-          title: 'Verifikasi & Tugas Tertunda',
-          icon: Icons.pending_actions,
-          trailing: Pill('${_tugas.length} tindakan',
-              bg: AppColors.kuningMuda, fg: AppColors.kuning),
-          child: _tugas.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Center(
-                    child: Text('Tidak ada tugas tertunda',
-                        style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
-                  ),
-                )
-              : Column(
-                  children: [
-                    for (var i = 0; i < _tugas.length; i++)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(_tugas[i].$1,
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-                        subtitle: Text(_tugas[i].$2, style: const TextStyle(fontSize: 13.5)),
-                        trailing: SizedBox(
-                          width: 84,
-                          child: AppButton(_tugas[i].$3, onPressed: () => _selesaikanTugas(i)),
-                        ),
-                      ),
-                  ],
-                ),
-        ),
       ],
     );
   }
 
-  String _persen(double v) =>
-      '${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1)}%';
+  /// Nama depan pengguna yang login, huruf kapital (mis. "KENNEDI").
+  String _namaSapaan(Map? user) {
+    final nama = (user?['nama'] ?? '').toString().trim();
+    if (nama.isEmpty) return 'SEKRETARIS';
+    return nama.split(RegExp(r'\s+')).first.toUpperCase();
+  }
 
-  Widget _kartuSkdn() {
-    final d = _skdn;
-    final b = d?.bulan;
-    return SectionCard(
-      title: 'Ringkasan Penimbangan',
-      icon: Icons.analytics_outlined,
-      trailing: IconButton(
-        tooltip: 'Penjelasan',
-        visualDensity: VisualDensity.compact,
-        icon: const Icon(Icons.info_outline, color: AppColors.biru),
-        onPressed: () => tampilkanPenjelasanSkdn(context),
+  Widget _sapaan(String nama) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
+      child: Text(
+        'Hi, $nama',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 20,
+          height: 1.2,
+          color: Color(0xFF0F172A),
+          fontWeight: FontWeight.w800,
+        ),
       ),
-      child: _skdnMemuat
-          ? const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          : b == null
-              ? Column(
-                  children: [
-                    const Text('Ringkasan penimbangan belum dapat dimuat.',
-                        style: TextStyle(fontSize: 14, color: AppColors.teksRedup)),
-                    TextButton(
-                      onPressed: () {
-                        setState(() => _skdnMemuat = true);
-                        _muatSkdn();
-                      },
-                      child: const Text('Coba lagi'),
-                    ),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(b.label,
-                        style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(child: StatBox(nilai: '${b.s}', label: 'Seluruh\nbalita')),
-                        const SizedBox(width: 8),
-                        Expanded(child: StatBox(nilai: '${b.k}', label: 'Punya\nBuku KIA')),
-                        const SizedBox(width: 8),
-                        Expanded(
-                            child: StatBox(
-                                nilai: '${b.d}',
-                                label: 'Datang\nditimbang',
-                                bg: AppColors.hijauMuda,
-                                fg: AppColors.hijau)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                            child: StatBox(
-                                nilai: '${b.n}',
-                                label: 'Berat\nbadan naik',
-                                bg: AppColors.biruMuda,
-                                fg: AppColors.biru)),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        Pill('Kehadiran ${_persen(b.persenDS)}',
-                            bg: d!.capaiTarget ? AppColors.hijauMuda : AppColors.merahMuda,
-                            fg: d.capaiTarget ? AppColors.hijau : AppColors.merah),
-                        Pill('Tumbuh baik ${_persen(b.persenND)}',
-                            bg: AppColors.biruMuda, fg: AppColors.biru),
-                        if (b.duaT + b.bgm > 0)
-                          Pill('${d.perluRujuk.length} perlu dirujuk',
-                              bg: AppColors.merahMuda,
-                              fg: AppColors.merah,
-                              icon: Icons.warning_amber_rounded),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text('Target kehadiran minimal ${_persen(d.targetDS)}',
-                        style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _bukaSkdn,
-                        child: const Text('Lihat Ringkasan Lengkap'),
-                      ),
-                    ),
-                  ],
-                ),
     );
   }
 
@@ -575,35 +336,6 @@ class _AdminHomeState extends State<AdminHome> {
             ),
           ),
           ...baris,
-        ],
-      ),
-    );
-  }
-
-  Widget _barisGizi(String label, int jumlah, double persen, Gizi g) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text(label, style: const TextStyle(fontSize: 15))),
-              Text('$jumlah ($persen%)',
-                  style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w800, color: giziFg(g))),
-            ],
-          ),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: persen / 100,
-              minHeight: 8,
-              backgroundColor: giziBg(g),
-              color: giziFg(g),
-            ),
-          ),
         ],
       ),
     );

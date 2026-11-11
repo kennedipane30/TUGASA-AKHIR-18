@@ -12,9 +12,9 @@ import (
 )
 
 var daftarSekretaris = []struct{ Nama, Username, NoHP, Posyandu string }{
-	{"Sekretaris Sitoluama", "sekretaris.sitoluama", "082235805348", "sitoluama"},
-	{"Sekretaris Silimbat", "sekretaris.silimbat", "082235805349", "silimbat"},
-	{"Sekretaris Aek Bolon", "sekretaris.aekbolon", "082235805310", "aekbolon"},
+	{"Kennedi Pane", "sekretaris.sitoluama", "082235805348", "sitoluama"},
+	{"Natasya Tambunan", "sekretaris.silimbat", "082235805349", "silimbat"},
+	{"Sara Rajagukguk", "sekretaris.aekbolon", "082235805310", "aekbolon"},
 }
 
 // seedSekretaris membuat (atau memperbarui) satu akun sekretaris untuk setiap desa.
@@ -48,7 +48,7 @@ func seedSekretaris(db *gorm.DB) {
 			if err := db.Create(&u).Error; err != nil {
 				log.Fatal("gagal membuat sekretaris ", s.Posyandu, ": ", err)
 			}
-			log.Println("sekretaris dibuat:", s.Username, "| No. HP:", s.NoHP)
+			log.Println("sekretaris dibuat:", s.Nama, "| username:", s.Username, "| No. HP:", s.NoHP)
 			continue
 		}
 		if err != nil {
@@ -67,6 +67,6 @@ func seedSekretaris(db *gorm.DB) {
 		if err := db.Save(&u).Error; err != nil {
 			log.Fatal("gagal memperbarui sekretaris ", s.Posyandu, ": ", err)
 		}
-		log.Println("sekretaris sudah ada, PIN diperbarui:", s.Username, "| No. HP:", s.NoHP)
+		log.Println("sekretaris sudah ada, data diperbarui:", s.Nama, "| username:", s.Username, "| No. HP:", s.NoHP)
 	}
 }

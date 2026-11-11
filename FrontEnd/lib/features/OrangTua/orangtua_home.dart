@@ -216,10 +216,34 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     _muat();
   }
 
+  /// Nama depan pengguna yang login, huruf kapital (mis. "KENNEDI").
+  String _namaSapaan(Map? user) {
+    final nama = (user?['nama'] ?? '').toString().trim();
+    if (nama.isEmpty) return 'BUNDA';
+    return nama.split(RegExp(r'\s+')).first.toUpperCase();
+  }
+
+  Widget _sapaan(String nama) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
+      child: Text(
+        'Hi, $nama',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 20,
+          height: 1.2,
+          color: Color(0xFF0F172A),
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pos = (context.watch<AuthProvider>().user?['posyandu'] ?? '')
-        .toString();
+    final user = context.watch<AuthProvider>().user;
+    final pos = (user?['posyandu'] ?? '').toString();
     final lokasi = pos.isEmpty
         ? 'Posyandu belum ditetapkan, hubungi admin'
         : 'Posyandu ${labelPosyandu(pos)}';
@@ -229,6 +253,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       lokasi: lokasi,
       notif: 2,
       children: [
+        _sapaan(_namaSapaan(user)),
         if (_memuat)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),

@@ -97,6 +97,30 @@ class _BidanHomeState extends State<BidanHome> {
     );
   }
 
+  /// Nama depan pengguna yang login, huruf kapital (mis. "KENNEDI").
+  String _namaSapaan(Map? user) {
+    final nama = (user?['nama'] ?? '').toString().trim();
+    if (nama.isEmpty) return 'BIDAN';
+    return nama.split(RegExp(r'\s+')).first.toUpperCase();
+  }
+
+  Widget _sapaan(String nama) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
+      child: Text(
+        'Hi, $nama',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 20,
+          height: 1.2,
+          color: Color(0xFF0F172A),
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -110,13 +134,10 @@ class _BidanHomeState extends State<BidanHome> {
       lokasi: lokasi,
       notif: 4,
       children: [
+        _sapaan(_namaSapaan(user)),
         _pencarian(),
         const SizedBox(height: 14),
-        _tugasUtama(),
-        const SizedBox(height: 18),
         _menuGrid(),
-        const SizedBox(height: 6),
-        _indikatorKinerja(),
       ],
     );
   }
@@ -162,126 +183,6 @@ class _BidanHomeState extends State<BidanHome> {
       ),
     );
   }
-
-  // -------------------------------------------------------------------------
-  // Tugas utama
-  // -------------------------------------------------------------------------
-  Widget _tugasUtama() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_hijauTua, _hijauGelap],
-        ),
-        boxShadow: const [
-          BoxShadow(color: Color(0x26054D3A), blurRadius: 14, offset: Offset(0, 6)),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          children: [
-            Positioned(
-              right: -36,
-              bottom: -48,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.06),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.13),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Text('TUGAS UTAMA BIDAN',
-                            style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                letterSpacing: 0.5,
-                                fontWeight: FontWeight.w800)),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text('$_menunggu Balita Menunggu',
-                            style: const TextStyle(
-                                color: _mint,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Verifikasi & Kunci Data Antropometri',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18.5,
-                          height: 1.2,
-                          fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 8),
-                  const Text(
-                      'Konfirmasi klinis hasil pengukuran kader sebelum disinkronkan ke database nasional.',
-                      style: TextStyle(
-                          color: Color(0xFFD1FAE5), fontSize: 14, height: 1.5)),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Color(0x55FF7A1A),
-                            blurRadius: 12,
-                            offset: Offset(0, 5)),
-                      ],
-                    ),
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: _oranye,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                      ),
-                      onPressed: () => soon(context, 'Daftar verifikasi per sesi'),
-                      icon: const Icon(Icons.assignment_turned_in_outlined, size: 20),
-                      label: Text('Buka Verifikasi ($_menunggu Data)',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 15.5)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
 
   // -------------------------------------------------------------------------
   // Ikon menu dari assets (gaya sama dengan beranda orang tua)
@@ -441,196 +342,5 @@ class _BidanHomeState extends State<BidanHome> {
           () => soon(context, 'Surat rujukan')),
       _itemAset('rekap_skdn.png', Icons.assessment_outlined, _teal, 'Rekap\nSKDN', _bukaSkdn),
     ]);
-  }
-
-  // -------------------------------------------------------------------------
-  // Indikator kinerja (SKDN)
-  // -------------------------------------------------------------------------
-  String _persen(double v) =>
-      '${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1)}%';
-
-  Widget _indikatorKinerja() {
-    final d = _skdn;
-    final b = d?.bulan;
-    String angka(int? v) => v == null ? '-' : '$v';
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 4, bottom: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFEDF1F5)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0F1E293B), blurRadius: 12, offset: Offset(0, 3)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                    color: Color(0xFFE6F8EF), shape: BoxShape.circle),
-                child: const Icon(Icons.bar_chart_rounded,
-                    size: 19, color: _hijauTeks),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text('Ringkasan Penimbangan (SKDN)',
-                    style: TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: _teksGelap)),
-              ),
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () => tampilkanPenjelasanSkdn(context),
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.info_outline, size: 20, color: _biru),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(b == null ? 'Bulan ini' : b.label,
-              style: const TextStyle(
-                  fontSize: 13.5, fontWeight: FontWeight.w600, color: _teksAbu)),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFEDF1F5)),
-          const SizedBox(height: 14),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _kotakSkdn(angka(b?.s), 'S', 'Seluruh balita', const Color(0xFFF6F8FB),
-                    _teksGelap, const Color(0xFFE9EEF3)),
-                const SizedBox(width: 8),
-                _kotakSkdn(angka(b?.k), 'K', 'Punya Buku KIA', const Color(0xFFF6F8FB),
-                    _teksGelap, const Color(0xFFE9EEF3)),
-                const SizedBox(width: 8),
-                _kotakSkdn(angka(b?.d), 'D', 'Datang ditimbang', const Color(0xFFE6F8EF),
-                    _hijauTeks, const Color(0xFFBDEBD3)),
-                const SizedBox(width: 8),
-                _kotakSkdn(angka(b?.n), 'N', 'Berat badan naik', const Color(0xFFE9F0FF), _biru,
-                    const Color(0xFFC7D8FA)),
-              ],
-            ),
-          ),
-          if (b != null) ...[
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                _chipSkdn('Kehadiran ${_persen(b.persenDS)}',
-                    d!.capaiTarget ? _hijauMuda : _merahMuda,
-                    d.capaiTarget ? _hijauTeks : _merah),
-                _chipSkdn('Tumbuh baik ${_persen(b.persenND)}', _biruMuda, _biru),
-                if (d.perluRujuk.isNotEmpty)
-                  _chipSkdn('${d.perluRujuk.length} perlu dirujuk', _merahMuda, _merah),
-              ],
-            ),
-          ],
-          const SizedBox(height: 14),
-          InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: _bukaSkdn,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE6F8EF),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFBDEBD3)),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.analytics_outlined, size: 18, color: _hijauTeks),
-                  SizedBox(width: 8),
-                  Text('Lihat Ringkasan Lengkap',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: _hijauTeks)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: () => soon(context, 'Ekspor laporan bulanan'),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.file_download_outlined, size: 18, color: _teksGelap),
-                  SizedBox(width: 8),
-                  Text('Ekspor Laporan PDF / Excel',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: _teksGelap)),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _chipSkdn(String teks, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(teks,
-          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: fg)),
-    );
-  }
-
-  Widget _kotakSkdn(String nilai, String huruf, String label, Color bg, Color fg,
-      Color border) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 2),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: border),
-        ),
-        child: Column(
-          children: [
-            Text(nilai,
-                style: const TextStyle(
-                    fontSize: 19,
-                    height: 1.1,
-                    fontWeight: FontWeight.w800,
-                    color: _teksGelap)),
-            const SizedBox(height: 4),
-            Text(huruf,
-                style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w800, color: fg)),
-            const SizedBox(height: 8),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: _teksBiru)),
-          ],
-        ),
-      ),
-    );
   }
 }
