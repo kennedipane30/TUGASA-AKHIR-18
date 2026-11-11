@@ -20,7 +20,7 @@ const _roleDikenal = {'sekretaris', 'bidan', 'kader', 'orang_tua'};
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotifikasiService.instance.init();
+    await NotifikasiService.instance.init();
 
   runApp(
     ChangeNotifierProvider(

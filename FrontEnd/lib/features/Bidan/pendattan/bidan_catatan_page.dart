@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../../../core/api_client.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/common_widgets.dart';
+import '../../../core/status_gizi_widget.dart';
 import '../../../service/kbm_model.dart';
 import '../../../service/vaksin_service.dart';
 import '../../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart' show RencanaAnakJadwal;
@@ -898,6 +899,12 @@ class _BidanCatatanPageState extends State<BidanCatatanPage> {
             ],
           ),
         ),
+        if (ukur.isNotEmpty)
+          SectionCard(
+            title: 'Status Gizi',
+            icon: Icons.monitor_weight_outlined,
+            child: KotakStatusGizi(d['status_gizi']),
+          ),
         if (!_riwayatOk) _kartuRiwayat(),
         SectionCard(
           title: 'Catatan Pemeriksaan',

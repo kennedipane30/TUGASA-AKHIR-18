@@ -897,12 +897,23 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 	if err != nil {
 		return nil, err
 	}
-	return s.DetailBidan(pos, p.ID)
+	d, err := s.DetailBidan(pos, p.ID)
+	if err != nil {
+		return nil, err
+	}
+	// Kabari orang tua: hasil pendataan anak selesai diperiksa bidan.
+	if s.notif != nil && p.Anak != nil && d.Catatan != nil && d.Catatan.TampilKeOrangTua {
+		a := *p.Anak
+		pengirim := bidanID
+		go s.notif.HasilPemeriksaan(&a, p.ID, int(d.Catatan.Version), &pengirim)
+	}
+	return d, nil
 }
 
 // ---------------------------------------------------------------- orang tua: riwayat
 
-// Riwayat menampilkan kunjungan yang SUDAH diberi catatan bidan, hanya untuk anak keluarga sendiri.
+// Riwayat menampilkan kunjungan yang SUDAH diukur kader atau SUDAH diberi catatan bidan,
+// hanya untuk anak keluarga sendiri. Status gizi tampil begitu kader menyimpan pengukuran.
 func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatItem, error) {
 	kosong := []RiwayatItem{}
 	ibu, err := s.kel.FindIbuByUser(userID)
@@ -974,7 +985,9 @@ func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatIte
 	}
 	petaCatatan := map[uuid.UUID]models.PemeriksaanBidan{}
 	for _, c := range periksa {
-		petaCatatan[c.PendaftaranID] = c
+		if c.TampilKeOrangTua {
+			petaCatatan[c.PendaftaranID] = c
+		}
 	}
 	petaImun := map[uuid.UUID][]models.ImunisasiAnak{}
 	for _, i := range imun {

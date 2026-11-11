@@ -432,7 +432,10 @@ Widget _header(
 class OrangTuaPemeriksaanPage extends StatefulWidget {
   final String? anakId;
 
-  const OrangTuaPemeriksaanPage({super.key, this.anakId});
+  /// Bila diisi (mis. dari notifikasi), detail pemeriksaan kunjungan ini langsung dibuka.
+  final String? pendaftaranId;
+
+  const OrangTuaPemeriksaanPage({super.key, this.anakId, this.pendaftaranId});
 
   @override
   State<OrangTuaPemeriksaanPage> createState() =>
@@ -445,6 +448,7 @@ class _OrangTuaPemeriksaanPageState
   bool _memuat = true;
   String? _gagal;
   String _anakAktif = '';
+  bool _sudahBukaAwal = false;
 
   bool get _terkunci => widget.anakId != null && widget.anakId!.isNotEmpty;
 
@@ -536,6 +540,7 @@ class _OrangTuaPemeriksaanPageState
           _anakAktif = '';
         }
       });
+      _bukaAwal();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -543,6 +548,19 @@ class _OrangTuaPemeriksaanPageState
         _memuat = false;
       });
     }
+  }
+
+  // Dari notifikasi: langsung buka detail kunjungan yang dituju (sekali saja).
+  void _bukaAwal() {
+    final id = widget.pendaftaranId;
+    if (_sudahBukaAwal || id == null || id.isEmpty) return;
+    _sudahBukaAwal = true;
+    final i = _data.indexWhere((e) => e.pendaftaranId == id);
+    if (i < 0) return;
+    final p = _data[i];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _buka(p);
+    });
   }
 
   void _buka(_Pemeriksaan p) {
@@ -622,7 +640,7 @@ class _OrangTuaPemeriksaanPageState
                           _KepalaKartu(judul: 'Belum ada hasil pemeriksaan'),
                           SizedBox(height: 10),
                           Text(
-                            'Hasil pemeriksaan muncul di sini setelah bidan menyimpan catatan pemeriksaan anak Anda di posyandu.',
+                            'Hasil pemeriksaan muncul di sini setelah anak Anda ditimbang dan diukur di posyandu.',
                             style: TextStyle(
                               fontSize: 15,
                               color: _teksAbu,

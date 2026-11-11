@@ -91,6 +91,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	protected.POST("/notifikasi/baca-semua", notifH.BacaSemua)
 	protected.PATCH("/notifikasi/:id/baca", notifH.Baca)
 	protected.DELETE("/notifikasi/:id", notifH.Hapus)
+	protected.POST("/notifikasi/hapus", notifH.HapusBanyak)       // hapus notifikasi terpilih
+	protected.POST("/notifikasi/hapus-semua", notifH.HapusSemua) // ?sudah_dibaca=true: hanya yang sudah dibaca
 	protected.POST("/perangkat/token", notifH.SimpanToken)
 	protected.DELETE("/perangkat/token", notifH.HapusToken)
 

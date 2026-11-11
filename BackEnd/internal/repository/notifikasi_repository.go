@@ -168,6 +168,27 @@ func (r *NotifikasiRepository) Hapus(userID uint, id uuid.UUID) (bool, error) {
 	return res.RowsAffected > 0, res.Error
 }
 
+// HapusBanyak: hapus beberapa notifikasi milik pengguna sekaligus.
+// Soft delete: kunci tetap tersimpan sehingga pengingat yang sama tidak dikirim ulang.
+func (r *NotifikasiRepository) HapusBanyak(userID uint, ids []uuid.UUID) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	res := r.db.Where("user_id = ? AND id IN ?", userID, ids).Delete(&models.Notifikasi{})
+	return res.RowsAffected, res.Error
+}
+
+// HapusSemua: hapus semua notifikasi pengguna; [hanyaSudahDibaca] = hanya yang sudah dibaca.
+// Soft delete: kunci tetap tersimpan sehingga pengingat yang sama tidak dikirim ulang.
+func (r *NotifikasiRepository) HapusSemua(userID uint, hanyaSudahDibaca bool) (int64, error) {
+	q := r.db.Where("user_id = ?", userID)
+	if hanyaSudahDibaca {
+		q = q.Where("sudah_dibaca = ?", true)
+	}
+	res := q.Delete(&models.Notifikasi{})
+	return res.RowsAffected, res.Error
+}
+
 // ---------------------------------------------------------------- token perangkat
 
 func (r *NotifikasiRepository) TokenPerangkat(userIDs []uint) ([]models.Perangkat, error) {

@@ -144,7 +144,8 @@ func (r *PelayananRepository) ListSuplemen(pendaftaranIDs []uuid.UUID) ([]models
 
 // ---------------------------------------------------------------- riwayat
 
-// RiwayatPendaftaran: kunjungan anak yang SUDAH diberi catatan bidan (dan boleh ditampilkan).
+// RiwayatPendaftaran: kunjungan anak yang SUDAH diukur kader atau SUDAH diberi catatan bidan
+// (catatan yang boleh ditampilkan ke orang tua).
 func (r *PelayananRepository) RiwayatPendaftaran(anakIDs []uuid.UUID) ([]models.Pendaftaran, error) {
 	list := []models.Pendaftaran{}
 	if len(anakIDs) == 0 {
@@ -152,8 +153,10 @@ func (r *PelayananRepository) RiwayatPendaftaran(anakIDs []uuid.UUID) ([]models.
 	}
 	err := r.db.Preload("Jadwal").
 		Where("anak_id IN ?", anakIDs).
-		Where("id IN (?)", r.db.Model(&models.PemeriksaanBidan{}).
-			Select("pendaftaran_id").Where("tampil_ke_orang_tua = ?", true)).
+		Where(r.db.
+			Where("id IN (?)", r.db.Model(&models.Pengukuran{}).Select("pendaftaran_id")).
+			Or("id IN (?)", r.db.Model(&models.PemeriksaanBidan{}).
+				Select("pendaftaran_id").Where("tampil_ke_orang_tua = ?", true))).
 		Find(&list).Error
 	return list, err
 }

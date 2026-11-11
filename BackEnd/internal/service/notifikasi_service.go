@@ -32,6 +32,9 @@ var notifNamaBulan = [...]string{
 	"Juli", "Agustus", "September", "Oktober", "November", "Desember",
 }
 
+// maksHapusSekaligus: batas jumlah notifikasi terpilih yang dihapus dalam satu permintaan.
+const maksHapusSekaligus = 500
+
 type NotifikasiService struct {
 	repo *repository.NotifikasiRepository
 	push *PushService
@@ -61,6 +64,11 @@ type TokenPerangkatInput struct {
 	Platform      string `json:"platform"`
 	NamaPerangkat string `json:"nama_perangkat"`
 	VersiAplikasi string `json:"versi_aplikasi"`
+}
+
+// HapusNotifikasiInput: daftar id notifikasi yang akan dihapus.
+type HapusNotifikasiInput struct {
+	IDs []string `json:"ids" binding:"required"`
 }
 
 type DaftarNotifikasi struct {
@@ -368,7 +376,8 @@ func (s *NotifikasiService) JadwalDibatalkan(jadwalID uuid.UUID, pengirim uint) 
 // ---------------------------------------------------------------- peringatan penimbangan
 
 // PeringatanTimbang: dipanggil setelah pengukuran dinilai 2T atau BGM.
-// Dikirim sekali per pengukuran ke bidan posyandu anak tersebut dan orang tuanya.
+// Dikirim sekali per pengukuran HANYA ke bidan posyandu anak tersebut.
+// Orang tua dikabari setelah bidan menyimpan catatan (HasilPemeriksaan).
 func (s *NotifikasiService) PeringatanTimbang(anak *models.Anak, p *models.PenilaianTimbang, pengirim *uint) {
 	defer s.pulih("peringatan timbang")
 	if anak == nil || p == nil || !(p.DuaT || p.Bgm) {
@@ -385,11 +394,7 @@ func (s *NotifikasiService) PeringatanTimbang(anak *models.Anak, p *models.Penil
 		log.Printf("notifikasi: gagal mengambil bidan: %v", err)
 		return
 	}
-	ortu, err := s.repo.OrangTuaAnak(anak.ID)
-	if err != nil {
-		log.Printf("notifikasi: gagal mengambil orang tua: %v", err)
-	}
-	penerima := append(bidan, ortu...)
+	penerima := bidan
 	if len(penerima) == 0 {
 		return
 	}
@@ -439,28 +444,15 @@ func notifTeksKg(v float64) string {
 	return strings.Replace(fmt.Sprintf("%.1f", v), ".", ",", 1) + " kg"
 }
 
-// notifLabelBbu: kategori BB/U sesuai Permenkes No. 2 Tahun 2020.
-func notifLabelBbu(z *float64) string {
-	if z == nil {
-		return ""
-	}
-	switch {
-	case *z < -3:
-		return "berat badan sangat kurang"
-	case *z < -2:
-		return "berat badan kurang"
-	case *z <= 1:
-		return "berat badan normal"
-	default:
-		return "berisiko berat badan lebih"
-	}
-}
+// notifHasilPemeriksaan: hasil pendataan anak selesai diperiksa bidan (hanya ke orang tua).
+// objek_tabel = "pendaftaran", objek_id = id pendaftaran (aplikasi membuka detail pemeriksaan).
+const notifHasilPemeriksaan = "hasil_pemeriksaan"
 
-// HasilTimbang: dipanggil setiap kader menyimpan pengukuran yang BUKAN 2T/BGM.
-// Dikirim ke orang tua anak, sekali per versi pengukuran (koreksi kader = notifikasi baru).
-func (s *NotifikasiService) HasilTimbang(anak *models.Anak, p *models.PenilaianTimbang, versi int, pengirim *uint) {
-	defer s.pulih("hasil timbang")
-	if anak == nil || p == nil {
+// HasilPemeriksaan: dipanggil setelah bidan menyimpan catatan pemeriksaan.
+// Dikirim HANYA ke orang tua anak, sekali per versi catatan (bidan mengubah = notifikasi baru).
+func (s *NotifikasiService) HasilPemeriksaan(anak *models.Anak, pendaftaranID uuid.UUID, versi int, pengirim *uint) {
+	defer s.pulih("hasil pemeriksaan")
+	if anak == nil || pendaftaranID == uuid.Nil {
 		return
 	}
 	ortu, err := s.repo.OrangTuaAnak(anak.ID)
@@ -474,63 +466,16 @@ func (s *NotifikasiService) HasilTimbang(anak *models.Anak, p *models.PenilaianT
 	}
 
 	nama := strings.TrimSpace(anak.Nama)
-	bb := notifTeksKg(p.BbKg)
-	status := ""
-	if l := notifLabelBbu(p.ZBbu); l != "" {
-		status = fmt.Sprintf(" Status: %s untuk usianya.", l)
-	}
-
-	var judul, isi string
-	switch p.Status {
-	case models.StatusTimbangBaru:
-		judul = fmt.Sprintf("Hasil Penimbangan %s", nama)
-		isi = fmt.Sprintf(
-			"Berat badan %s hari ini %s.%s Ini penimbangan pertama, kenaikan berat badan akan dinilai pada penimbangan bulan depan.",
-			nama, bb, status)
-
-	case models.StatusTimbangNaik:
-		naik := 0
-		if p.KenaikanGram != nil {
-			naik = *p.KenaikanGram
-		}
-		judul = fmt.Sprintf("Berat Badan %s Naik", nama)
-		isi = fmt.Sprintf(
-			"Berat badan %s hari ini %s, naik %d gram dari bulan lalu.%s Pertahankan ASI dan pola makannya, ya!",
-			nama, bb, naik, status)
-
-	case models.StatusTimbangTidakNaik:
-		perubahan := "tidak berubah"
-		if p.KenaikanGram != nil {
-			switch g := *p.KenaikanGram; {
-			case g < 0:
-				perubahan = fmt.Sprintf("turun %d gram", -g)
-			case g > 0:
-				perubahan = fmt.Sprintf("hanya naik %d gram", g)
-			}
-		}
-		minimal := ""
-		if p.KbmGram != nil {
-			minimal = fmt.Sprintf(" (seharusnya naik minimal %d gram)", *p.KbmGram)
-		}
-		judul = fmt.Sprintf("Berat Badan %s Belum Naik", nama)
-		isi = fmt.Sprintf(
-			"Berat badan %s hari ini %s, %s dari bulan lalu%s.%s Silakan konsultasikan dengan bidan atau kader posyandu.",
-			nama, bb, perubahan, minimal, status)
-
-	default:
-		judul = fmt.Sprintf("Hasil Penimbangan %s", nama)
-		isi = fmt.Sprintf("Berat badan %s hari ini %s.%s", nama, bb, status)
-		if p.SelisihBulan != nil && *p.SelisihBulan > 1 {
-			isi += " Kenaikan berat badan belum dapat dinilai karena bulan lalu tidak ditimbang. Usahakan datang ke posyandu setiap bulan, ya."
-		}
-	}
+	judul := fmt.Sprintf("Hasil Pemeriksaan %s", nama)
+	isi := fmt.Sprintf("Hasil pengukuran %s telah selesai didata dan diperiksa bidan. Lihat detailnya.", nama)
 	if versi > 1 {
 		judul = "Diperbarui: " + judul
+		isi = fmt.Sprintf("Hasil pemeriksaan %s diperbarui oleh bidan. Lihat detailnya.", nama)
 	}
 
-	aid := anak.ID
-	kunci := fmt.Sprintf("%s:%s:v%d", models.NotifHasilTimbang, p.PengukuranID, versi)
-	s.kirimKeUser(ortu, models.NotifHasilTimbang, kunci, "anak", &aid, pengirim,
+	pid := pendaftaranID
+	kunci := fmt.Sprintf("%s:%s:v%d", notifHasilPemeriksaan, pendaftaranID, versi)
+	s.kirimKeUser(ortu, notifHasilPemeriksaan, kunci, "pendaftaran", &pid, pengirim,
 		func(role models.Role) (string, string) { return judul, isi })
 }
 
@@ -1530,6 +1475,42 @@ func (s *NotifikasiService) Hapus(userID uint, id uuid.UUID) error {
 		return ErrNotifikasiTidakAda
 	}
 	return nil
+}
+
+// HapusBanyak: hapus notifikasi terpilih milik pengguna (id yang bukan miliknya diabaikan).
+func (s *NotifikasiService) HapusBanyak(userID uint, ids []string) (int64, error) {
+	if len(ids) == 0 {
+		return 0, validasi("pilih minimal satu notifikasi")
+	}
+	if len(ids) > maksHapusSekaligus {
+		return 0, validasi("maksimal %d notifikasi sekali hapus", maksHapusSekaligus)
+	}
+	daftar := make([]uuid.UUID, 0, len(ids))
+	sudah := make(map[uuid.UUID]bool, len(ids))
+	for _, v := range ids {
+		id, err := uuid.Parse(strings.TrimSpace(v))
+		if err != nil {
+			return 0, validasi("id notifikasi tidak valid")
+		}
+		if sudah[id] {
+			continue
+		}
+		sudah[id] = true
+		daftar = append(daftar, id)
+	}
+	n, err := s.repo.HapusBanyak(userID, daftar)
+	if err != nil {
+		return 0, err
+	}
+	if n == 0 {
+		return 0, ErrNotifikasiTidakAda
+	}
+	return n, nil
+}
+
+// HapusSemua: hapus semua notifikasi pengguna; [hanyaSudahDibaca] = hanya yang sudah dibaca.
+func (s *NotifikasiService) HapusSemua(userID uint, hanyaSudahDibaca bool) (int64, error) {
+	return s.repo.HapusSemua(userID, hanyaSudahDibaca)
 }
 
 // ---------------------------------------------------------------- token perangkat

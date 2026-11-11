@@ -398,4 +398,38 @@ class NotifikasiService {
     await ApiClient.dio.delete('/notifikasi/$id', options: _opsi);
     await perbaruiJumlah();
   }
+
+  /// Hapus beberapa notifikasi terpilih. Mengembalikan jumlah yang terhapus.
+  Future<int> hapusBanyak(List<String> ids) async {
+    if (ids.isEmpty) return 0;
+    final r = await ApiClient.dio.post(
+      '/notifikasi/hapus',
+      data: {'ids': ids},
+      options: _opsi,
+    );
+    await perbaruiJumlah();
+    return _jumlahDihapus(r.data);
+  }
+
+  /// Hapus semua notifikasi; [hanyaSudahDibaca] = hanya yang sudah dibaca.
+  /// Mengembalikan jumlah yang terhapus.
+  Future<int> hapusSemua({bool hanyaSudahDibaca = false}) async {
+    final r = await ApiClient.dio.post(
+      '/notifikasi/hapus-semua',
+      queryParameters: {
+        if (hanyaSudahDibaca) 'sudah_dibaca': 'true',
+      },
+      options: _opsi,
+    );
+    if (!hanyaSudahDibaca) belumDibaca.value = 0;
+    await perbaruiJumlah();
+    return _jumlahDihapus(r.data);
+  }
+
+  int _jumlahDihapus(dynamic d) {
+    if (d is Map && d['data'] is Map) {
+      return int.tryParse((d['data'] as Map)['dihapus']?.toString() ?? '') ?? 0;
+    }
+    return 0;
+  }
 }

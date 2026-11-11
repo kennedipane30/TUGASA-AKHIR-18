@@ -139,8 +139,9 @@ func (s *KbmService) NilaiDanSimpan(anak *models.Anak, u *models.Pengukuran) (*m
 	return p, nil
 }
 
-// NilaiDanKabari: dipakai saat kader menyimpan pengukuran. Menilai, menyimpan, lalu
-// mengirim notifikasi: peringatan bila 2T/BGM, selain itu hasil penimbangan ke orang tua.
+// NilaiDanKabari: dipakai saat kader menyimpan pengukuran. Menilai dan menyimpan.
+// Orang tua TIDAK dikabari di sini; orang tua dikabari setelah bidan menyimpan catatan
+// (lihat PelayananService.SimpanCatatan). Bidan tetap diberi peringatan bila 2T/BGM.
 func (s *KbmService) NilaiDanKabari(anak *models.Anak, u *models.Pengukuran, pengirim *uint) (*models.PenilaianTimbang, error) {
 	p, err := s.NilaiDanSimpan(anak, u)
 	if err != nil {
@@ -151,8 +152,6 @@ func (s *KbmService) NilaiDanKabari(anak *models.Anak, u *models.Pengukuran, pen
 		pp := *p
 		if p.PerluRujuk {
 			go s.notif.PeringatanTimbang(&a, &pp, pengirim)
-		} else {
-			go s.notif.HasilTimbang(&a, &pp, int(u.Version), pengirim)
 		}
 	}
 	return p, nil

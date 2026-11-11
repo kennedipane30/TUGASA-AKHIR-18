@@ -105,6 +105,39 @@ func (h *NotifikasiHandler) Hapus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "notifikasi dihapus"})
 }
 
+// POST /notifikasi/hapus   body: {"ids": ["uuid", "uuid", ...]}
+func (h *NotifikasiHandler) HapusBanyak(c *gin.Context) {
+	var in service.HapusNotifikasiInput
+	if err := c.ShouldBindJSON(&in); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "daftar notifikasi wajib diisi"})
+		return
+	}
+	n, err := h.svc.HapusBanyak(c.GetUint("user_id"), in.IDs)
+	if err != nil {
+		tulisErrorNotif(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "notifikasi dihapus",
+		"data":    gin.H{"dihapus": n},
+	})
+}
+
+// POST /notifikasi/hapus-semua?sudah_dibaca=true
+// tanpa query: hapus semua notifikasi; sudah_dibaca=true: hanya yang sudah dibaca.
+func (h *NotifikasiHandler) HapusSemua(c *gin.Context) {
+	dibaca := c.Query("sudah_dibaca") == "true" || c.Query("sudah_dibaca") == "1"
+	n, err := h.svc.HapusSemua(c.GetUint("user_id"), dibaca)
+	if err != nil {
+		tulisErrorNotif(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "notifikasi dihapus",
+		"data":    gin.H{"dihapus": n},
+	})
+}
+
 // POST /perangkat/token
 func (h *NotifikasiHandler) SimpanToken(c *gin.Context) {
 	var in service.TokenPerangkatInput

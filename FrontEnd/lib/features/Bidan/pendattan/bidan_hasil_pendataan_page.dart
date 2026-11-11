@@ -10,6 +10,7 @@ import '../../../core/app_colors.dart';
 import '../../../core/balita_detail_page.dart';
 import '../../../core/common_widgets.dart';
 import '../../../core/posyandu.dart';
+import '../../../core/status_gizi_widget.dart';
 import '../../../service/balita_service.dart' show usiaDetail;
 import '../../../service/kbm_model.dart';
 import '../../auth/auth_provider.dart';
@@ -30,6 +31,7 @@ class _ItemBidan {
   final String peringatan;
   final bool selesai;
   final PenilaianTimbang? penilaian;
+  final Map<String, dynamic>? statusGizi;
 
   _ItemBidan({
     required this.pendaftaranId,
@@ -43,6 +45,7 @@ class _ItemBidan {
     required this.peringatan,
     required this.selesai,
     this.penilaian,
+    this.statusGizi,
   });
 
   factory _ItemBidan.fromApi(Map<String, dynamic> j) => _ItemBidan(
@@ -57,9 +60,11 @@ class _ItemBidan {
         peringatan: j['peringatan_validasi']?.toString() ?? '',
         selesai: j['status_catatan']?.toString() == 'selesai',
         penilaian: PenilaianTimbang.dari(j['penilaian']),
+        statusGizi: petaGizi(j['status_gizi']),
       );
 
-  bool get perluPerhatian => penilaian?.perluRujuk == true;
+  bool get perluPerhatian =>
+      penilaian?.perluRujuk == true || masalahGiziBerat(statusGizi);
 
   String get kodeNomor =>
       nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
@@ -641,6 +646,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                                   fg: AppColors.biru,
                                 ),
                           ...pillPenilaian(d.penilaian, ringkas: true),
+                          ...pilGizi(d.statusGizi),
                           if (d.peringatan.isNotEmpty)
                             const Pill(
                               'Ada peringatan',
