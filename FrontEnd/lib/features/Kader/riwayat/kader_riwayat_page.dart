@@ -158,8 +158,8 @@ Widget _gagalKartu(String pesan, VoidCallback ulang) => SectionCard(
             child: Text(
               pesan,
               style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 15.5,
+                fontWeight: FontWeight.w500,
+                fontSize: 16.5,
               ),
             ),
           ),
@@ -171,52 +171,19 @@ Widget _gagalKartu(String pesan, VoidCallback ulang) => SectionCard(
       ),
     );
 
-/// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
-
-  return Stack(
-    children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      // Lapis atas: isi huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -372,7 +339,7 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
                 trailing: const Text(
                   'Ketuk untuk melihat',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 15.5,
                     color: AppColors.teksRedup,
                   ),
                 ),
@@ -380,7 +347,7 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
                     ? const Text(
                         'Belum ada jadwal posyandu.',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 16,
                           color: AppColors.teksRedup,
                         ),
                       )
@@ -435,16 +402,16 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
                         t == null ? '-' : t.day.toString().padLeft(2, '0'),
                         style: const TextStyle(
                           color: AppColors.hijau,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 19,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
                         ),
                       ),
                       Text(
                         t == null ? '' : _bulan[t.month - 1].substring(0, 3),
                         style: const TextStyle(
                           color: AppColors.hijau,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13.5,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
                         ),
                       ),
                     ],
@@ -458,8 +425,8 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
                       Text(
                         _fmtTgl(t),
                         style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15.5,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.5,
                         ),
                       ),
                       Text(
@@ -468,7 +435,7 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
                           if (lokasi.isNotEmpty) lokasi,
                         ].join(' · '),
                         style: const TextStyle(
-                          fontSize: 13.5,
+                          fontSize: 16,
                           color: AppColors.teksRedup,
                         ),
                       ),
@@ -584,7 +551,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                     ? const Text(
                         'Belum ada anak yang check-in pada jadwal ini.',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 16,
                           color: AppColors.teksRedup,
                         ),
                       )
@@ -639,8 +606,8 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                     kode,
                     style: const TextStyle(
                       color: AppColors.hijau,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15.5,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16.5,
                     ),
                   ),
                 ),
@@ -652,14 +619,14 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
                       Text(
                         _teks(a['nama']),
                         style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15.5,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.5,
                         ),
                       ),
                       Text(
                         '${_teks(a['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(usia, lahir: a['tanggal_lahir'])}',
                         style: const TextStyle(
-                          fontSize: 13.5,
+                          fontSize: 16,
                           color: AppColors.teksRedup,
                         ),
                       ),
@@ -791,7 +758,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
               child: Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 14.5,
+                  fontSize: 16.5,
                   color: AppColors.teksRedup,
                 ),
               ),
@@ -800,8 +767,8 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
               child: Text(
                 nilai.isEmpty ? '-' : nilai,
                 style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -827,8 +794,8 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
               Text(
                 nilai,
                 style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
                   color: fg,
                 ),
               ),
@@ -837,7 +804,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                 label,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 12.5,
+                  fontSize: 15,
                   color: AppColors.teksRedup,
                 ),
               ),
@@ -867,7 +834,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
               const SectionCard(
                 child: Text(
                   'Data tidak tersedia.',
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 17),
                 ),
               )
             else
@@ -927,7 +894,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
             ? const Text(
                 'Kader belum menginput pengukuran.',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 16,
                   color: AppColors.teksRedup,
                 ),
               )
@@ -990,8 +957,8 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                       'Perhatian: $peringatan',
                       style: const TextStyle(
                         color: AppColors.merah,
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -1004,7 +971,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
         child: u == null
             ? const Text(
                 'Belum ada pengukuran.',
-                style: TextStyle(fontSize: 15, color: AppColors.teksRedup),
+                style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
               )
             : KotakStatusGizi(d['status_gizi']),
       ),
@@ -1015,7 +982,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
             ? const Text(
                 'Bidan belum menuliskan catatan.',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 16,
                   color: AppColors.teksRedup,
                 ),
               )
@@ -1048,32 +1015,32 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                       Text(
                         '${_namaVaksin[_teks(v['jenis_vaksin_id'])] ?? 'Vaksin'} · Dosis ${_teks(v['dosis_ke'])}',
                         style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15.5,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.5,
                         ),
                       ),
                       if (_teks(v['kondisi_anak']).isNotEmpty)
                         Text(
                           'Kondisi: ${_kondisiTeks(v['kondisi_anak'])}',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             color: AppColors.teksRedup,
                           ),
                         ),
                       if (_teks(v['nomor_batch']).isNotEmpty)
                         Text('No. batch: ${_teks(v['nomor_batch'])}',
-                            style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
+                            style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
                       if (_teks(v['reaksi_kipi']).isNotEmpty)
                         Text('Reaksi setelah imunisasi: ${_teks(v['reaksi_kipi'])}',
-                            style: const TextStyle(fontSize: 13.5, color: AppColors.merah)),
+                            style: const TextStyle(fontSize: 16, color: AppColors.merah)),
                       if (_teks(v['tempat']).isNotEmpty)
                         Text('Tempat: ${_teks(v['tempat'])}',
-                            style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
+                            style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
                       if (_teks(v['catatan']).isNotEmpty)
                         Text(
                           'Catatan: ${_teks(v['catatan'])}',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             color: AppColors.teksRedup,
                           ),
                         ),
@@ -1100,15 +1067,15 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                         _namaSuplemen[_teks(s['jenis'])] ??
                             _teks(s['jenis']),
                         style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15.5,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.5,
                         ),
                       ),
                       if (_teks(s['keterangan_dosis']).isNotEmpty)
                         Text(
                           'Dosis: ${_teks(s['keterangan_dosis'])}',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             color: AppColors.teksRedup,
                           ),
                         ),
@@ -1116,7 +1083,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                         Text(
                           'Catatan: ${_teks(s['catatan'])}',
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             color: AppColors.teksRedup,
                           ),
                         ),

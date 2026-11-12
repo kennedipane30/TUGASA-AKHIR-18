@@ -15,54 +15,20 @@ const _oranyeGaris = Color(0xFFEA580C);
 const _hijauHeader = Color(0xFF065F46);
 
 // ---------------------------------------------------------------------------
-// JUDUL HEADER EKSTRA TEBAL (sama seperti halaman Akun)
-// Teks ditumpuk dua lapis: lapis bawah berupa garis tepi (stroke) putih
-// sehingga huruf terlihat lebih gemuk, lapis atas berupa isi putih biasa.
+// JUDUL HEADER (gaya teks sama dengan halaman lain)
 // ---------------------------------------------------------------------------
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
-
-  return Stack(
-    children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      // Lapis atas: isi huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -168,7 +134,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
         );
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(fontSize: 15, color: Colors.black38),
+      hintStyle: const TextStyle(fontSize: 16, color: Colors.black38),
       counterText: '',
       prefixIcon: Icon(ikon, size: 19, color: garis),
       suffixIcon: suffix,
@@ -195,12 +161,12 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                   TextSpan(
                       text: teks,
                       style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+                          fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
                   const TextSpan(
                       text: ' *',
                       style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.merah)),
                 ],
               ),
@@ -211,7 +177,7 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
             decoration: BoxDecoration(color: bgBadge, borderRadius: BorderRadius.circular(8)),
             child: Text(badge,
                 style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w800, color: warnaBadge)),
+                    fontSize: 14.5, fontWeight: FontWeight.w600, color: warnaBadge)),
           ),
         ],
       ),
@@ -248,15 +214,15 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : const Icon(Icons.person_add_alt_1, size: 19),
                   label: Text(_loading ? 'Menyimpan...' : 'Buat Akun',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.maybePop(context),
                 child: const Text('Batal',
                     style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                         color: AppColors.teksRedup)),
               ),
             ],
@@ -307,13 +273,13 @@ class _CreateStaffPageState extends State<CreateStaffPage> {
                                   children: [
                                     const Text('Data Akun Petugas',
                                         style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w800,
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.w600,
                                             color: _hijauTua)),
                                     Text(
                                       'Akun otomatis bertugas di Posyandu $desa',
                                       style: const TextStyle(
-                                          fontSize: 13.5,
+                                          fontSize: 16,
                                           height: 1.3,
                                           color: AppColors.teksRedup),
                                     ),

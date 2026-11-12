@@ -115,52 +115,19 @@ class KartuAntreanData {
       '${_hari[tanggal.weekday - 1]}, ${tanggal.day} ${_bulan[tanggal.month - 1]} ${tanggal.year}';
 }
 
-/// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
-
-  return Stack(
-    children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      // Lapis atas: isi huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -369,7 +336,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                             Expanded(
                               child: Text(_gagal!,
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.w700, fontSize: 13)),
+                                      fontWeight: FontWeight.w500, fontSize: 15.5)),
                             ),
                             TextButton(
                               onPressed: () {
@@ -450,8 +417,8 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                         k.tanggalPanjang,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -459,7 +426,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                         'Sesi (${k.jam} WIB)',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.75),
-                          fontSize: 12,
+                          fontSize: 14.5,
                         ),
                       ),
                       if (k.lokasi.isNotEmpty) ...[
@@ -470,7 +437,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.75),
-                            fontSize: 12,
+                            fontSize: 14.5,
                           ),
                         ),
                       ],
@@ -492,8 +459,8 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                       const Text(
                         'NOMOR PANGGILAN ANDA',
                         style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                           letterSpacing: 1,
                           color: AppColors.teksRedup,
                         ),
@@ -502,9 +469,9 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                       Text(
                         k.kodeNomor,
                         style: TextStyle(
-                          fontSize: 46,
+                          fontSize: 47,
                           height: 1.1,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 1,
                           color: batal ? AppColors.teksRedup : _hijauHeader,
                           decoration: batal ? TextDecoration.lineThrough : null,
@@ -532,8 +499,8 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                             Text(
                               teksStatus,
                               style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w500,
                                 color: _hijauTua,
                               ),
                             ),
@@ -544,7 +511,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                       Text(
                         'ID: ${k.idTiket}',
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 14,
                           fontFamily: 'monospace',
                           letterSpacing: 0.5,
                           color: AppColors.teksRedup,
@@ -579,12 +546,12 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
       children: [
         Text(label,
             style: const TextStyle(
-                color: _mintLabel, fontSize: 11.5, fontWeight: FontWeight.w600)),
+                color: _mintLabel, fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 4),
         Text(nilai,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800)),
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -681,7 +648,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                       _sibuk ? 'Memproses...' : 'Cek in Sekarang (Scan QR di Posyandu)',
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
+                          color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -693,7 +660,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
           const SizedBox(height: 6),
           Text('Check-in dibuka pukul ${formatJam(k.checkinBuka!)} WIB (1 jam sebelum jadwal dimulai)',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 11, color: AppColors.teksRedup)),
+              style: const TextStyle(fontSize: 14, color: AppColors.teksRedup)),
         ],
         const SizedBox(height: 12),
         Opacity(
@@ -714,7 +681,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                 children: [
                   Text('Batalkan Antrean',
                       style: TextStyle(
-                          color: _biruTombol, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                          color: _biruTombol, fontSize: 16, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -744,7 +711,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
               child: Text(teks,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 11.5, fontWeight: FontWeight.w700, color: _hijauTua)),
+                      fontSize: 14, fontWeight: FontWeight.w500, color: _hijauTua)),
             ),
           ],
         ),
@@ -790,7 +757,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
             onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
             icon: const Icon(Icons.arrow_back, size: 14, color: AppColors.teksRedup),
             label: const Text('Kembali ke Beranda Posyandu',
-                style: TextStyle(fontSize: 11.5, color: AppColors.teksRedup)),
+                style: TextStyle(fontSize: 14, color: AppColors.teksRedup)),
           ),
         ],
       ),
@@ -879,7 +846,7 @@ class _LayarScanQrState extends State<_LayarScanQr> {
             child: Text(
               'Arahkan kamera ke QR check-in yang dipasang di lokasi posyandu',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 12.5),
+              style: TextStyle(color: Colors.white, fontSize: 15),
             ),
           ),
         ],

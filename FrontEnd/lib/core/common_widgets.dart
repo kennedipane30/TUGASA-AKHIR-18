@@ -196,7 +196,7 @@ class HomeShell extends StatelessWidget {
           enabled: false,
           child: Text(
             nama.isEmpty ? 'Pengguna' : nama,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: const TextStyle(fontWeight: FontWeight.w500),
           ),
         ),
         const PopupMenuItem(
@@ -222,8 +222,8 @@ class HomeShell extends StatelessWidget {
             _inisial(nama),
             style: const TextStyle(
               color: _hijauTua,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),
           ),
@@ -322,8 +322,8 @@ class HomeShell extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 21,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
                             color: Colors.white,
                             letterSpacing: 0.2,
                           ),
@@ -344,7 +344,7 @@ class HomeShell extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                   color: _headerTeksTerang,
                                 ),
@@ -459,8 +459,8 @@ class SectionCard extends StatelessWidget {
                     child: Text(
                       title!,
                       style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         color: _hijauTua,
                       ),
                     ),
@@ -509,8 +509,8 @@ class Pill extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
                 color: fg,
               ),
             ),
@@ -549,8 +549,8 @@ class StatBox extends StatelessWidget {
           Text(
             nilai,
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
+              fontSize: 21,
+              fontWeight: FontWeight.w600,
               color: fg,
             ),
           ),
@@ -559,7 +559,7 @@ class StatBox extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 10.5,
+              fontSize: 13.5,
               color: AppColors.teksRedup,
             ),
           ),
@@ -594,8 +594,8 @@ class AppButton extends StatelessWidget {
       label,
       textAlign: TextAlign.center,
       style: const TextStyle(
-        fontWeight: FontWeight.w800,
-        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        fontSize: 15.5,
       ),
     );
     final ikon = icon == null ? null : Icon(icon, size: 17);
@@ -696,8 +696,8 @@ class SyncStrip extends StatelessWidget {
                 Text(
                   online ? 'Mode Online Terhubung' : 'Mode Offline',
                   style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15.5,
                     color: fg,
                   ),
                 ),
@@ -705,7 +705,7 @@ class SyncStrip extends StatelessWidget {
                   '$tertunda data belum terkirim · '
                   'sinkron terakhir $sinkronTerakhir',
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 14,
                     color: Colors.black54,
                   ),
                 ),
@@ -736,8 +736,8 @@ class SyncStrip extends StatelessWidget {
               label: Text(
                 sedangSinkron ? 'Proses' : 'Sinkron',
                 style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -779,8 +779,8 @@ class MiniBars extends StatelessWidget {
                   Text(
                     nilai[i].toInt().toString(),
                     style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -796,7 +796,7 @@ class MiniBars extends StatelessWidget {
                   Text(
                     label[i],
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 13,
                       color: AppColors.teksRedup,
                     ),
                   ),

@@ -31,52 +31,19 @@ String _pesanError(Object e) {
   return 'Terjadi kesalahan: $e';
 }
 
-/// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
-
-  return Stack(
-    children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      // Lapis atas: isi huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -200,8 +167,8 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
             label,
             style: TextStyle(
               color: warna,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontSize: 14.5,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -225,7 +192,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
               teks,
               style: const TextStyle(
                 color: Color(0xFF52616B),
-                fontSize: 13,
+                fontSize: 15.5,
                 height: 1.4,
               ),
             ),
@@ -252,8 +219,8 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                 : 'Scan kode QR ini untuk proses check-in kehadiran di $namaPosyandu secara cepat dan akurat.',
             style: const TextStyle(
               color: Color(0xFF25313A),
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
               height: 1.45,
             ),
           ),
@@ -327,7 +294,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                           'QR ini tetap untuk setiap pendaftaran.',
                           style: TextStyle(
                             color: Color(0xFF52616B),
-                            fontSize: 13,
+                            fontSize: 15.5,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -358,8 +325,8 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                       'Petunjuk Pemindaian',
                       style: TextStyle(
                         color: Color(0xFF25313A),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -413,7 +380,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Color(0xFF25313A),
-                    fontSize: 15,
+                    fontSize: 16,
                     height: 1.4,
                   ),
                 ),
@@ -426,7 +393,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                   ),
                   child: const Text(
                     'Coba lagi',
-                    style: TextStyle(fontSize: 15.5),
+                    style: TextStyle(fontSize: 16.5),
                   ),
                 ),
               ],

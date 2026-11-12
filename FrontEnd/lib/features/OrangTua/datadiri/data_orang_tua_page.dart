@@ -20,52 +20,19 @@ const kOranye2 = Color(0xFFF97316);
 const kGarisKartu = Color(0xFFE6ECE8);
 const kGarisInput = Color(0xFFD7E6DD);
 
-/// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
-
-  return Stack(
-    children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      // Lapis atas: isi huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -347,7 +314,7 @@ InputDecoration dekorKeluarga(String hint,
       );
   return InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(fontSize: 13, color: Colors.black38),
+    hintStyle: const TextStyle(fontSize: 15.5, color: Colors.black38),
     prefixIcon: icon == null ? null : Icon(icon, size: 20, color: Colors.black45),
     counterText: counter ?? '',
     filled: true,
@@ -366,11 +333,11 @@ Widget labelKeluarga(String teks, {String? ket}) => Padding(
       child: Text.rich(TextSpan(children: [
         TextSpan(
             text: teks,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
         if (ket != null)
           TextSpan(
               text: ' $ket',
-              style: const TextStyle(fontSize: 12, color: AppColors.teksRedup)),
+              style: const TextStyle(fontSize: 14.5, color: AppColors.teksRedup)),
       ])),
     );
 
@@ -383,7 +350,7 @@ Widget centangKeluarga(bool nilai, String teks, ValueChanged<bool?> onChanged) =
       controlAffinity: ListTileControlAffinity.leading,
       activeColor: kHijauGelap,
       value: nilai,
-      title: Text(teks, style: const TextStyle(fontSize: 13)),
+      title: Text(teks, style: const TextStyle(fontSize: 15.5)),
       onChanged: onChanged,
     );
 
@@ -395,8 +362,8 @@ Widget pillStatusKeluarga(bool lengkap) => Container(
       ),
       child: Text(lengkap ? 'Lengkap' : 'Belum lengkap',
           style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontSize: 14.5,
+              fontWeight: FontWeight.w500,
               color: lengkap ? kHijauTua : AppColors.kuning)),
     );
 
@@ -452,8 +419,8 @@ class KartuKeluarga extends StatelessWidget {
                 Expanded(
                   child: Text(title!,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
                           color: kHijauTua)),
                 ),
                 if (trailing != null) trailing!,
@@ -486,7 +453,7 @@ class StepperKeluarga extends StatelessWidget {
             ? const Icon(Icons.check, size: 18, color: kHijauGelap)
             : Text(no,
                 style: TextStyle(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: no == '1' ? kHijauGelap : Colors.grey)),
       );
 
@@ -502,7 +469,7 @@ class StepperKeluarga extends StatelessWidget {
               _bulat('1', d.ibuLengkap),
               const SizedBox(height: 4),
               const Text('Data Diri',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500)),
             ]),
             Expanded(
               child: Padding(
@@ -514,7 +481,7 @@ class StepperKeluarga extends StatelessWidget {
               _bulat('2', d.ayahLengkap),
               const SizedBox(height: 4),
               const Text('Suami / Ayah',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500)),
             ]),
           ],
         ),
@@ -530,7 +497,7 @@ class StepperKeluarga extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text('${d.langkahSelesai} dari 2 bagian lengkap. Data boleh disimpan bertahap.',
-            style: const TextStyle(fontSize: 13, color: AppColors.teksRedup)),
+            style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
       ],
     );
   }
@@ -947,7 +914,7 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
                         strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.save_alt_outlined),
             label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Data Keluarga',
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
           ),
         ),
       ),

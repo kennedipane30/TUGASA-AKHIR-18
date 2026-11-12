@@ -191,10 +191,10 @@ class _AdminHomeState extends State<AdminHome> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
-          fontSize: 20,
+          fontSize: 21,
           height: 1.2,
           color: Color(0xFF0F172A),
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -246,8 +246,8 @@ class _AdminHomeState extends State<AdminHome> {
                           badge > 99 ? '99+' : '$badge',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -259,10 +259,10 @@ class _AdminHomeState extends State<AdminHome> {
                 judul,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 14,
                   height: 1.2,
                   color: Color(0xFF0F2547),
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -303,10 +303,10 @@ class _AdminHomeState extends State<AdminHome> {
                   child: Text(
                     judul,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 21,
                       height: 1.2,
                       color: Color(0xFF0F172A),
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -315,8 +315,8 @@ class _AdminHomeState extends State<AdminHome> {
                   child: Text(
                     'Layanan Utama',
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.teksRedup,
                     ),
                   ),
@@ -329,7 +329,7 @@ class _AdminHomeState extends State<AdminHome> {
             child: Text(
               sub,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 14.5,
                 fontWeight: FontWeight.w500,
                 color: AppColors.teksRedup,
               ),

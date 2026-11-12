@@ -11,52 +11,19 @@ import 'vaksin_anak_lihat_page.dart';
 
 const _hijauHeader = Color(0xFF065F46);
 
-/// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
-
-  return Stack(
-    children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      // Lapis atas: isi huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -201,12 +168,12 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: TextField(
                 controller: _cari,
-                style: const TextStyle(fontSize: 16.5),
+                style: const TextStyle(fontSize: 17.5),
                 textInputAction: TextInputAction.search,
                 onSubmitted: (_) => _muat(),
                 decoration: InputDecoration(
                   hintText: 'Cari nama anak atau NIK anak',
-                  hintStyle: const TextStyle(fontSize: 15.5),
+                  hintStyle: const TextStyle(fontSize: 16.5),
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.arrow_forward),
@@ -244,7 +211,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
                               _error!,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 17,
                                 color: AppColors.teksRedup,
                               ),
                             ),
@@ -258,7 +225,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
                                   'Ketik nama atau NIK anak untuk mencari di posyandu Anda.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 17,
                                     color: AppColors.teksRedup,
                                   ),
                                 ),
@@ -269,7 +236,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
                                   child: Text(
                                     'Anak tidak ditemukan di posyandu Anda',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 17,
                                       color: AppColors.teksRedup,
                                     ),
                                   ),
@@ -302,14 +269,14 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
                                                       a.nama,
                                                       style: const TextStyle(
                                                         fontWeight:
-                                                            FontWeight.w800,
-                                                        fontSize: 15.5,
+                                                            FontWeight.w600,
+                                                        fontSize: 16.5,
                                                       ),
                                                     ),
                                                     Text(
                                                       'Usia ${a.usia}',
                                                       style: const TextStyle(
-                                                        fontSize: 13.5,
+                                                        fontSize: 16,
                                                         color:
                                                             AppColors.teksRedup,
                                                       ),

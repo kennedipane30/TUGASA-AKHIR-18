@@ -220,49 +220,19 @@ String _fmtZ(double z) => '${z >= 0 ? '+' : ''}${z.toStringAsFixed(2)}';
 // ---------------------------------------------------------------------------
 // HALAMAN
 // ---------------------------------------------------------------------------
-/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2;
-
-  return Stack(
-    children: [
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -481,7 +451,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                       padding: EdgeInsets.fromLTRB(4, 0, 4, 14),
                       child: Text(
                         'Pemantauan kurva standar WHO (Permenkes No. 2 Tahun 2020) untuk tumbuh kembang optimal anak',
-                        style: TextStyle(fontSize: 12, color: _teksAbu, height: 1.3),
+                        style: TextStyle(fontSize: 14.5, color: _teksAbu, height: 1.3),
                       ),
                     ),
                     if (_memuat)
@@ -500,7 +470,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                               child: Text(
                                 _gagal!,
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.w700, fontSize: 13),
+                                    fontWeight: FontWeight.w500, fontSize: 15.5),
                               ),
                             ),
                             TextButton(
@@ -521,15 +491,15 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                             Text(
                               'Belum ada data anak',
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                                 color: _teksGelap,
                               ),
                             ),
                             SizedBox(height: 6),
                             Text(
                               'Lengkapi data keluarga terlebih dahulu.',
-                              style: TextStyle(fontSize: 12.5, color: _teksAbu),
+                              style: TextStyle(fontSize: 15, color: _teksAbu),
                             ),
                           ],
                         ),
@@ -580,8 +550,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
               Text(
                 _daftarMetrik[i].tab,
                 style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                   color: aktif ? Colors.white : _teksGelap,
                 ),
               ),
@@ -682,7 +652,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   showCheckmark: false,
                   label: Text(_anak[i].nama),
                   labelStyle: TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
                     color: i == _aktif ? Colors.white : _teksGelap,
                   ),
                   onSelected: (_) => setState(() => _aktif = i),
@@ -696,8 +666,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
           child: Text(
             a.nama,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
               color: _hijauTua,
             ),
           ),
@@ -735,8 +705,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   child: Text(
                     m.judul,
                     style: const TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.w600,
                       color: _teksGelap,
                     ),
                   ),
@@ -750,8 +720,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   child: Text(
                     a.laki ? 'Laki-laki' : 'Perempuan',
                     style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
                       color: aksen,
                     ),
                   ),
@@ -802,7 +772,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 padding: EdgeInsets.only(top: 8),
                 child: Text(
                   'Garis kurva bergeser di usia 24 bulan karena cara ukur berubah dari berbaring (PB) menjadi berdiri (TB).',
-                  style: TextStyle(fontSize: 10.5, color: _teksAbu, height: 1.4),
+                  style: TextStyle(fontSize: 13.5, color: _teksAbu, height: 1.4),
                 ),
               ),
             const SizedBox(height: 12),
@@ -812,7 +782,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
               children: [
                 Text(
                   zAkhir == null ? 'Status terakhir:' : 'Status terakhir (Z ${_fmtZ(zAkhir)}):',
-                  style: const TextStyle(fontSize: 12, color: _teksAbu),
+                  style: const TextStyle(fontSize: 14.5, color: _teksAbu),
                 ),
                 const Spacer(),
                 Flexible(
@@ -837,8 +807,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                           child: Text(
                             status,
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
                               color: sFg,
                             ),
                           ),
@@ -868,7 +838,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                       child: Text(
                         peringatan,
                         style: const TextStyle(
-                          fontSize: 11.5,
+                          fontSize: 14,
                           height: 1.45,
                           color: Color(0xFF92400E),
                         ),
@@ -884,7 +854,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
                   'Belum ada data ${m.tab.toLowerCase()} yang tersimpan untuk anak ini. Titik grafik muncul setelah kader mengukur dan bidan menyimpan catatan.',
-                  style: const TextStyle(fontSize: 12, color: _teksAbu, height: 1.4),
+                  style: const TextStyle(fontSize: 14.5, color: _teksAbu, height: 1.4),
                 ),
               ),
             if (tanpaData > 0 && titikData.isNotEmpty)
@@ -892,7 +862,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 padding: const EdgeInsets.only(top: 10),
                 child: Text(
                   '$tanpaData kunjungan tidak ditampilkan (data kosong atau di luar rentang grafik).',
-                  style: const TextStyle(fontSize: 11, color: _teksAbu),
+                  style: const TextStyle(fontSize: 14, color: _teksAbu),
                 ),
               ),
           ],
@@ -920,8 +890,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   child: Text(
                     'Riwayat Pengukuran Tersimpan',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       color: _teksGelap,
                     ),
                   ),
@@ -934,8 +904,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                       child: Text(
                         _semuaRiwayat ? 'Ringkas' : 'Lihat Semua',
                         style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                           color: _teksGelap,
                         ),
                       ),
@@ -947,7 +917,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
             if (riwayat.isEmpty)
               const Text(
                 'Belum ada pengukuran.',
-                style: TextStyle(fontSize: 12.5, color: _teksAbu),
+                style: TextStyle(fontSize: 15, color: _teksAbu),
               )
             else
               for (final t in tampil) _barisRiwayat(t, a.laki),
@@ -976,15 +946,15 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   Text(
                     'Panduan Standar WHO',
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w600,
                       color: _teksGelap,
                     ),
                   ),
                   SizedBox(height: 2),
                   Text(
                     'Pelajari arti kurva Z-score pada anak Anda',
-                    style: TextStyle(fontSize: 11, color: _teksAbu),
+                    style: TextStyle(fontSize: 14, color: _teksAbu),
                   ),
                 ],
               ),
@@ -1002,7 +972,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
               onPressed: _bukaPanduan,
               child: const Text(
                 'Baca',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
               ),
             ),
           ],
@@ -1133,15 +1103,15 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(judul, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: fg)),
+                    Text(judul, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: fg)),
                     if (adaSebelum && status.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(_gayaNT(status).$1,
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: fg)),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: fg)),
                     ],
                     const SizedBox(height: 4),
                     Text(rincian.join(' '),
-                        style: const TextStyle(fontSize: 11.5, height: 1.45, color: _teksGelap)),
+                        style: const TextStyle(fontSize: 14, height: 1.45, color: _teksGelap)),
                   ],
                 ),
               ),
@@ -1170,7 +1140,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                       if (t.bgm) 'Berat badan $nama masih di bawah batas yang dianjurkan untuk usianya.',
                       'Silakan konsultasikan dengan bidan di posyandu atau puskesmas agar mendapat saran gizi yang tepat.',
                     ].join(' '),
-                    style: const TextStyle(fontSize: 11.5, height: 1.45, color: Color(0xFF991B1B)),
+                    style: const TextStyle(fontSize: 14, height: 1.45, color: Color(0xFF991B1B)),
                   ),
                 ),
               ],
@@ -1227,8 +1197,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                     Text(
                       t.tanggal == null ? '-' : formatTanggal(t.tanggal!),
                       style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
                         color: _teksGelap,
                       ),
                     ),
@@ -1236,7 +1206,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                     Text(
                       'Usia ${t.usiaTeks}'
                       '${t.caraUkur.isEmpty ? '' : ' · diukur ${t.caraUkur}'}',
-                      style: const TextStyle(fontSize: 11, color: _teksAbu),
+                      style: const TextStyle(fontSize: 14, color: _teksAbu),
                     ),
                   ],
                 ),
@@ -1274,7 +1244,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
         ),
         child: Text(
           teks,
-          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: fg),
+          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: fg),
         ),
       );
 
@@ -1286,8 +1256,8 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
             Text(
               l,
               style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
                 color: warna,
               ),
             ),
@@ -1298,15 +1268,15 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   TextSpan(
                     text: v == null ? '-' : _fmt(v),
                     style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                       color: _teksGelap,
                     ),
                   ),
                   if (v != null)
                     TextSpan(
                       text: ' $satuan',
-                      style: const TextStyle(fontSize: 10, color: _teksAbu),
+                      style: const TextStyle(fontSize: 13, color: _teksAbu),
                     ),
                 ],
               ),
@@ -1338,7 +1308,7 @@ class _Leg extends StatelessWidget {
           Text(
             teks,
             style: const TextStyle(
-              fontSize: 10.5,
+              fontSize: 13.5,
               fontWeight: FontWeight.w600,
               color: _teksGelap,
             ),

@@ -310,57 +310,27 @@ class _KepalaKartu extends StatelessWidget {
     return Text(
       judul,
       style: const TextStyle(
-        fontSize: 16.5,
-        fontWeight: FontWeight.w900,
+        fontSize: 17.5,
+        fontWeight: FontWeight.w700,
         color: Colors.black,
       ),
     );
   }
 }
 
-/// Judul header ekstra tebal (sama seperti halaman Akun).
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2;
-
-  return Stack(
-    children: [
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -408,7 +378,7 @@ Widget _header(
                         sub,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 15.5,
                           color: Color(0xE6FFFFFF),
                           height: 1.3,
                         ),
@@ -617,8 +587,8 @@ class _OrangTuaPemeriksaanPageState
                             child: Text(
                               _gagal!,
                               style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15.5,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16.5,
                               ),
                             ),
                           ),
@@ -642,7 +612,7 @@ class _OrangTuaPemeriksaanPageState
                           Text(
                             'Hasil pemeriksaan muncul di sini setelah anak Anda ditimbang dan diukur di posyandu.',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 16,
                               color: _teksAbu,
                             ),
                           ),
@@ -688,8 +658,8 @@ class _OrangTuaPemeriksaanPageState
         showCheckmark: false,
         side: BorderSide.none,
         labelStyle: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
           color: dipilih ? Colors.white : _teksGelap,
         ),
         onSelected: (_) => setState(() => _anakAktif = id),
@@ -730,8 +700,8 @@ class _OrangTuaPemeriksaanPageState
                       Text(
                         t == null ? '-' : formatTanggal(t),
                         style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 19,
                           color: _teksGelap,
                         ),
                       ),
@@ -739,7 +709,7 @@ class _OrangTuaPemeriksaanPageState
                       Text(
                         '${p.namaAnak}${p.adaUkur ? ' · ${p.usiaTeks}' : ''}',
                         style: const TextStyle(
-                          fontSize: 15.5,
+                          fontSize: 16.5,
                           color: _teksAbu,
                         ),
                       ),
@@ -782,8 +752,8 @@ class _DetailPemeriksaanPage extends StatelessWidget {
           Text(
             judul,
             style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
               color: _hijauTeks,
             ),
           ),
@@ -791,7 +761,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
           Text(
             isi,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 16,
               height: 1.4,
               color: _teksGelap,
             ),
@@ -821,8 +791,8 @@ class _DetailPemeriksaanPage extends StatelessWidget {
             Text(
               nilai,
               style: TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.w800,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
                 color: fg,
               ),
             ),
@@ -831,7 +801,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
               label,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 15.5,
                 height: 1.25,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF475569),
@@ -862,8 +832,8 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                 Text(
                   judul,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                     color: _teksGelap,
                   ),
                 ),
@@ -873,7 +843,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                     child: Text(
                       b,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 15.5,
                         color: Color(0xFF92400E),
                       ),
                     ),
@@ -923,8 +893,8 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                             child: Text(
                               d.namaAnak,
                               style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 19,
+                                fontWeight: FontWeight.w600,
                                 color: _teksGelap,
                               ),
                             ),
@@ -944,8 +914,8 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                             child: Text(
                               t == null ? '-' : formatTanggal(t),
                               style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w500,
                                 color: _hijauTeks,
                               ),
                             ),
@@ -957,7 +927,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                         Text.rich(
                           TextSpan(
                             style: const TextStyle(
-                              fontSize: 15,
+                              fontSize: 16,
                               color: _teksAbu,
                             ),
                             children: [
@@ -985,7 +955,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                         Text(
                           'Sesi posyandu pukul ${d.jamMulai} WIB',
                           style: const TextStyle(
-                            fontSize: 13.5,
+                            fontSize: 16,
                             color: _teksAbu,
                           ),
                         ),
@@ -1071,7 +1041,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                             'Bidan belum menuliskan catatan untuk kunjungan ini.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 16,
                               color: Color(0xFF2B7BB9),
                             ),
                           ),
@@ -1110,7 +1080,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                               const Text(
                                 'Kunjungan ulang',
                                 style: TextStyle(
-                                  fontSize: 13.5,
+                                  fontSize: 16,
                                   color: _teksAbu,
                                 ),
                               ),
@@ -1118,8 +1088,8 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                               Text(
                                 formatTanggal(d.kunjunganUlang!),
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 17,
                                   color: _teksGelap,
                                 ),
                               ),
@@ -1163,7 +1133,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                                         v.nama,
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
-                                          fontSize: 15,
+                                          fontSize: 16,
                                           color: Color(0xFF2B7BB9),
                                         ),
                                       ),
@@ -1174,7 +1144,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                                           child: Text(
                                             'Kondisi: ${v.kondisi}',
                                             style: const TextStyle(
-                                              fontSize: 13,
+                                              fontSize: 15.5,
                                               color: Color(0xFF075985),
                                             ),
                                           ),
@@ -1186,7 +1156,7 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                                           child: Text(
                                             'Catatan: ${v.catatan}',
                                             style: const TextStyle(
-                                              fontSize: 13,
+                                              fontSize: 15.5,
                                               color: Color(0xFF075985),
                                             ),
                                           ),
@@ -1207,8 +1177,8 @@ class _DetailPemeriksaanPage extends StatelessWidget {
                                   child: Text(
                                     'Dosis ${v.dosis}',
                                     style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w600,
                                       color: Color(0xFF2B7BB9),
                                     ),
                                   ),

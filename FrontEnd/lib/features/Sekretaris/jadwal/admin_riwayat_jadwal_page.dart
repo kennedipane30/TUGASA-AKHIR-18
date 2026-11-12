@@ -52,52 +52,19 @@ class _Riwayat {
   int get totalDaftar => terdaftar + checkin + tidakHadir;
 }
 
-/// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
-
-  return Stack(
-    children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      // Lapis atas: isi huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -260,7 +227,7 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                           const SizedBox(width: 10),
                           Expanded(
                               child: Text(_gagal!,
-                                  style: const TextStyle(fontSize: 15.5))),
+                                  style: const TextStyle(fontSize: 16.5))),
                           TextButton(
                             onPressed: () {
                               setState(() => _memuat = true);
@@ -279,7 +246,7 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                           border: Border.all(color: const Color(0xFFE6ECE8)),
                         ),
                         child: const Text('Belum ada jadwal yang sudah lewat.',
-                            style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
+                            style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
                       )
                     else
                       for (final j in _data) _kartu(j),
@@ -324,10 +291,10 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                   children: [
                     Text(formatTanggal(j.tanggal),
                         style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 16, color: _teksGelap)),
+                            fontWeight: FontWeight.w600, fontSize: 17, color: _teksGelap)),
                     const SizedBox(height: 2),
                     Text('${j.jam} WIB${j.lokasi.isEmpty ? '' : ' • ${j.lokasi}'}',
-                        style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup)),
+                        style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
@@ -384,8 +351,8 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                     SizedBox(width: 5),
                     Text('Hapus',
                         style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                             color: AppColors.merah)),
                   ],
                 ),

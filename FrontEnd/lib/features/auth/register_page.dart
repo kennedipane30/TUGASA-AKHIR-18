@@ -89,7 +89,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return InputDecoration(
       isDense: true,
       hintText: hint,
-      hintStyle: const TextStyle(color: Colors.black38, fontSize: 14.5),
+      hintStyle: const TextStyle(color: Colors.black38, fontSize: 16.5),
       counterText: counter,
       prefixIcon: Icon(icon, color: Colors.black45, size: 20),
       prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 40),
@@ -114,8 +114,8 @@ class _RegisterPageState extends State<RegisterPage> {
             teks,
             textAlign: TextAlign.left,
             style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14.5,
+              fontWeight: FontWeight.w500,
+              fontSize: 16.5,
               color: Colors.black87,
             ),
           ),
@@ -128,7 +128,7 @@ class _RegisterPageState extends State<RegisterPage> {
           teks,
           textAlign: TextAlign.left,
           style: const TextStyle(
-            fontSize: 12.5,
+            fontSize: 15,
             color: Colors.black54,
             height: 1.4,
           ),
@@ -151,8 +151,8 @@ class _RegisterPageState extends State<RegisterPage> {
             '$no',
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -160,8 +160,8 @@ class _RegisterPageState extends State<RegisterPage> {
         Text(
           judul,
           style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
             color: Colors.black87,
           ),
         ),
@@ -185,8 +185,8 @@ class _RegisterPageState extends State<RegisterPage> {
               child: const Text(
                 'LANGKAH SELANJUTNYA',
                 style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                   color: _hijau,
                 ),
               ),
@@ -225,8 +225,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   'Posyandu Care',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 27,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -237,7 +237,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: _hijauTerang,
-                    fontSize: 14.5,
+                    fontSize: 16.5,
                   ),
                 ),
               ),
@@ -284,8 +284,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   Text(
                     'Khusus Orang Tua / Wali Balita',
                     style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                       color: Colors.white,
                     ),
                   ),
@@ -299,8 +299,8 @@ class _RegisterPageState extends State<RegisterPage> {
               'Daftar Akun Orang Tua',
               style: TextStyle(
                 color: Colors.black87,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+                fontSize: 23,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -322,7 +322,7 @@ class _RegisterPageState extends State<RegisterPage> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.black54,
-                fontSize: 14,
+                fontSize: 16,
                 height: 1.45,
               ),
             ),
@@ -336,11 +336,11 @@ class _RegisterPageState extends State<RegisterPage> {
             value: _posyandu,
             isExpanded: true,
             isDense: true,
-            style: const TextStyle(fontSize: 15, color: Colors.black87),
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
             icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black45),
             hint: const Text(
               'Pilih posyandu',
-              style: TextStyle(color: Colors.black38, fontSize: 14.5),
+              style: TextStyle(color: Colors.black38, fontSize: 16.5),
             ),
             decoration: _dekor('', Icons.place_outlined),
             items: itemPosyandu(),
@@ -353,7 +353,7 @@ class _RegisterPageState extends State<RegisterPage> {
           _label('Nama Lengkap Ibu / Wali'),
           TextFormField(
             controller: _nama,
-            style: const TextStyle(fontSize: 15),
+            style: const TextStyle(fontSize: 16),
             textCapitalization: TextCapitalization.words,
             decoration: _dekor('Sesuai KTP / Kartu KIA', Icons.person_outline),
             validator: (v) =>
@@ -362,7 +362,7 @@ class _RegisterPageState extends State<RegisterPage> {
           _label('NIK Ibu / Wali (16 Digit)'),
           TextFormField(
             controller: _nik,
-            style: const TextStyle(fontSize: 15),
+            style: const TextStyle(fontSize: 16),
             keyboardType: TextInputType.number,
             maxLength: 16,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -378,7 +378,7 @@ class _RegisterPageState extends State<RegisterPage> {
           _label('Nomor WhatsApp Aktif'),
           TextFormField(
             controller: _hp,
-            style: const TextStyle(fontSize: 15),
+            style: const TextStyle(fontSize: 16),
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: _dekor('Contoh: 081234567890', Icons.phone_outlined),
@@ -397,7 +397,7 @@ class _RegisterPageState extends State<RegisterPage> {
           _label('Buat PIN Masuk (6 Digit Angka)'),
           TextFormField(
             controller: _pin,
-            style: const TextStyle(fontSize: 15),
+            style: const TextStyle(fontSize: 16),
             obscureText: _hidePin,
             keyboardType: TextInputType.number,
             maxLength: 6,
@@ -426,7 +426,7 @@ class _RegisterPageState extends State<RegisterPage> {
           _label('Ulangi PIN Masuk'),
           TextFormField(
             controller: _pin2,
-            style: const TextStyle(fontSize: 15),
+            style: const TextStyle(fontSize: 16),
             obscureText: _hidePin2,
             keyboardType: TextInputType.number,
             maxLength: 6,
@@ -475,7 +475,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     padding: EdgeInsets.only(top: 12, bottom: 6),
                     child: Text(
                       'Saya menyatakan dengan sadar bahwa data yang diisi adalah benar dan sah sesuai KTP / Kartu Keluarga (KK).',
-                      style: TextStyle(fontSize: 13.5, height: 1.4),
+                      style: TextStyle(fontSize: 16, height: 1.4),
                     ),
                   ),
                 ),
@@ -525,8 +525,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 'Memproses...',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18,
                                 ),
                               ),
                             ],
@@ -538,8 +538,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 'Buat Akun',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18,
                                 ),
                               ),
                               SizedBox(width: 8),
@@ -559,7 +559,7 @@ class _RegisterPageState extends State<RegisterPage> {
           const Center(
             child: Text(
               'Sudah memiliki akun terdaftar sebelumnya?',
-              style: TextStyle(fontSize: 14.5, color: Colors.black54),
+              style: TextStyle(fontSize: 16.5, color: Colors.black54),
             ),
           ),
           const SizedBox(height: 4),
@@ -569,8 +569,8 @@ class _RegisterPageState extends State<RegisterPage> {
               child: const Text(
                 'Masuk di sini',
                 style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                   color: Colors.black87,
                 ),
               ),
@@ -585,7 +585,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 SizedBox(width: 6),
                 Text(
                   'Mendukung pencatatan luring & sinkronisasi otomatis',
-                  style: TextStyle(fontSize: 12, color: Colors.black45),
+                  style: TextStyle(fontSize: 14.5, color: Colors.black45),
                 ),
               ],
             ),

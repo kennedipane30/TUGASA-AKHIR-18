@@ -74,7 +74,7 @@ class _LoginPageState extends State<LoginPage> {
       hintText: hint,
       hintStyle: const TextStyle(
         color: Colors.black38,
-        fontSize: 14.5,
+        fontSize: 16.5,
       ),
       prefixIcon: Icon(ikon, color: Colors.black45, size: 20),
       prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 40),
@@ -101,8 +101,8 @@ class _LoginPageState extends State<LoginPage> {
           teks,
           textAlign: TextAlign.left,
           style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 14.5,
+            fontWeight: FontWeight.w500,
+            fontSize: 16.5,
           ),
         ),
       ),
@@ -135,8 +135,8 @@ class _LoginPageState extends State<LoginPage> {
               'Posyandu Care',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 27,
-                fontWeight: FontWeight.w800,
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -147,7 +147,7 @@ class _LoginPageState extends State<LoginPage> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: _hijauTerang,
-                fontSize: 14.5,
+                fontSize: 16.5,
               ),
             ),
           ),
@@ -174,8 +174,8 @@ class _LoginPageState extends State<LoginPage> {
               'Masuk ke Akun Anda',
               style: TextStyle(
                 color: Colors.black87,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+                fontSize: 23,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -194,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
           _label('No. HP atau Username'),
           TextField(
             controller: _idf,
-            style: const TextStyle(fontSize: 15),
+            style: const TextStyle(fontSize: 16),
             keyboardType: TextInputType.text,
             textCapitalization: TextCapitalization.none,
             autocorrect: false,
@@ -209,7 +209,7 @@ class _LoginPageState extends State<LoginPage> {
           _label('PIN (6 Digit Angka)'),
           TextField(
             controller: _pin,
-            style: const TextStyle(fontSize: 15, letterSpacing: 4),
+            style: const TextStyle(fontSize: 16, letterSpacing: 4),
             obscureText: _hide,
             keyboardType: TextInputType.number,
             maxLength: 6,
@@ -251,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(width: 6),
               const Text(
                 'Ingat akun',
-                style: TextStyle(fontSize: 15),
+                style: TextStyle(fontSize: 16),
               ),
               const Spacer(),
               TextButton(
@@ -267,8 +267,8 @@ class _LoginPageState extends State<LoginPage> {
                   'Lupa PIN?',
                   style: TextStyle(
                     color: _oranye,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
               ),
@@ -315,8 +315,8 @@ class _LoginPageState extends State<LoginPage> {
                                 'Masuk Sekarang',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18,
                                 ),
                               ),
                               SizedBox(width: 8),
@@ -337,7 +337,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Text(
               'Belum memiliki akun Posyandu?',
               style: TextStyle(
-                fontSize: 14.5,
+                fontSize: 16.5,
                 color: Colors.black54,
               ),
             ),
@@ -354,8 +354,8 @@ class _LoginPageState extends State<LoginPage> {
               child: const Text(
                 'Daftar Akun Baru',
                 style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                   color: Colors.black87,
                 ),
               ),
@@ -371,7 +371,7 @@ class _LoginPageState extends State<LoginPage> {
                 Text(
                   'Mendukung pencatatan luring & sinkronisasi otomatis',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14.5,
                     color: Colors.black45,
                   ),
                 ),

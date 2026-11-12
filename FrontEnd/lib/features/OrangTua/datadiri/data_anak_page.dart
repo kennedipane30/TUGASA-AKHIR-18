@@ -25,13 +25,13 @@ InputDecoration _dekor(
 
   return InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(fontSize: 13, color: Colors.black38),
+    hintStyle: const TextStyle(fontSize: 15.5, color: Colors.black38),
     prefixIcon: icon == null
         ? null
         : Icon(icon, size: 20, color: AppColors.hijau),
     suffixText: suffix,
     suffixStyle: const TextStyle(
-      fontWeight: FontWeight.w800,
+      fontWeight: FontWeight.w600,
       color: AppColors.hijau,
     ),
     filled: true,
@@ -57,15 +57,15 @@ Widget _label(String teks, {bool wajib = false, String? ket}) => Padding(
             TextSpan(
               text: teks,
               style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
               ),
             ),
             if (ket != null)
               TextSpan(
                 text: ' $ket',
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 14.5,
                   color: AppColors.teksRedup,
                 ),
               ),
@@ -74,7 +74,7 @@ Widget _label(String teks, {bool wajib = false, String? ket}) => Padding(
                 text: ' *',
                 style: TextStyle(
                   color: AppColors.merah,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
           ],
@@ -255,8 +255,8 @@ class _DataAnakPageState extends State<DataAnakPage> {
                               anak.nama,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
                                 color: _hijauTua,
                               ),
                             ),
@@ -274,8 +274,8 @@ class _DataAnakPageState extends State<DataAnakPage> {
                             child: const Text(
                               'Aktif',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w600,
                                 color: _hijauTua,
                               ),
                             ),
@@ -287,14 +287,14 @@ class _DataAnakPageState extends State<DataAnakPage> {
                         '${anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'} • '
                         '${_usiaDetail(anak.tglLahir)}',
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 15.5,
                           color: AppColors.teksRedup,
                         ),
                       ),
                       Text(
                         'lahir ${anak.tglLahir}',
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 15.5,
                           color: AppColors.teksRedup,
                         ),
                       ),
@@ -330,8 +330,8 @@ class _DataAnakPageState extends State<DataAnakPage> {
                   child: Text(
                     'Riwayat vaksin: ${StatusRiwayatVaksin.label(anak.statusRiwayatVaksin)}',
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w500,
                       color: anak.statusRiwayatVaksin == StatusRiwayatVaksin.belumDitanya
                           ? AppColors.kuning
                           : _hijauTua,
@@ -346,8 +346,8 @@ class _DataAnakPageState extends State<DataAnakPage> {
                         Text(
                           anak.statusRiwayatVaksin == StatusRiwayatVaksin.belumDitanya ? 'Isi' : 'Ubah',
                           style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w600,
                             color: _hijauTua,
                           ),
                         ),
@@ -398,8 +398,8 @@ class _DataAnakPageState extends State<DataAnakPage> {
               const Text(
                 'DAFTAR TERDAFTAR',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: .5,
                   color: AppColors.teksRedup,
                 ),
@@ -418,8 +418,8 @@ class _DataAnakPageState extends State<DataAnakPage> {
                   '${_anak.length}',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -433,7 +433,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
               const Text(
                 'Posyandu Mawar I',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 15.5,
                   fontWeight: FontWeight.w600,
                   color: _hijauTua,
                 ),
@@ -451,7 +451,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                       'untuk menambah data anak balita.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 15.5,
                         color: AppColors.teksRedup,
                       ),
                     ),
@@ -472,7 +472,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
               'untuk menambah data adik atau kakak.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15.5,
                 color: AppColors.teksRedup,
               ),
             ),
@@ -503,8 +503,8 @@ class _DataAnakPageState extends State<DataAnakPage> {
                 label: const Text(
                   'Tambah Anak',
                   style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15.5,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16.5,
                   ),
                 ),
               ),
@@ -659,8 +659,8 @@ class _FormAnakState extends State<_FormAnak> {
           label: Text(
             teks,
             style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
             ),
           ),
         ),
@@ -694,8 +694,8 @@ class _FormAnakState extends State<_FormAnak> {
                                 ? 'Tambah Data Anak'
                                 : 'Ubah Data Anak',
                             style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 21,
+                              fontWeight: FontWeight.w600,
                               color: _hijauTua,
                             ),
                           ),
@@ -703,7 +703,7 @@ class _FormAnakState extends State<_FormAnak> {
                           const Text(
                             'Lengkapi biodata balita',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 15.5,
                               color: AppColors.teksRedup,
                             ),
                           ),
@@ -766,7 +766,7 @@ class _FormAnakState extends State<_FormAnak> {
                       'Pilih jenis kelamin',
                       style: TextStyle(
                         color: AppColors.merah,
-                        fontSize: 12,
+                        fontSize: 14.5,
                       ),
                     ),
                   ),
@@ -835,7 +835,7 @@ class _FormAnakState extends State<_FormAnak> {
                       _error!,
                       style: const TextStyle(
                         color: AppColors.merah,
-                        fontSize: 12.5,
+                        fontSize: 15,
                       ),
                     ),
                   ),
@@ -860,8 +860,8 @@ class _FormAnakState extends State<_FormAnak> {
                           child: const Text(
                             'Batal',
                             style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15.5,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16.5,
                             ),
                           ),
                         ),
@@ -884,8 +884,8 @@ class _FormAnakState extends State<_FormAnak> {
                           label: Text(
                             _menyimpan ? 'Menyimpan...' : 'Simpan Data',
                             style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15.5,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16.5,
                             ),
                           ),
                         ),
@@ -913,7 +913,7 @@ class _FormAnakState extends State<_FormAnak> {
                         child: Text(
                           'Data tersimpan dengan aman dan dapat disinkronkan '
                           'otomatis ke sistem Posyandu.',
-                          style: TextStyle(fontSize: 13),
+                          style: TextStyle(fontSize: 15.5),
                         ),
                       ),
                     ],
@@ -1122,8 +1122,8 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(judul, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5)),
-                    Text(ket, style: const TextStyle(fontSize: 12.5, color: AppColors.teksRedup)),
+                    Text(judul, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
+                    Text(ket, style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
@@ -1151,8 +1151,8 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
             dense: true,
             activeColor: _hijauTua,
             controlAffinity: ListTileControlAffinity.leading,
-            title: Text(j.namaDosis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-            subtitle: Text('Biasanya usia ${j.labelUsia}', style: const TextStyle(fontSize: 12.5)),
+            title: Text(j.namaDosis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            subtitle: Text('Biasanya usia ${j.labelUsia}', style: const TextStyle(fontSize: 15)),
             onChanged: (v) => setState(() {
               if (v == true) {
                 _dipilih[j.kunci] = _DosisDipilih();
@@ -1185,7 +1185,7 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
                           Text(
                             d.tanggal == null ? 'Tanggal diberikan *' : fmtTgl(d.tanggal!),
                             style: TextStyle(
-                              fontSize: 13.5,
+                              fontSize: 16,
                               color: d.tanggal == null ? Colors.black45 : Colors.black87,
                             ),
                           ),
@@ -1231,13 +1231,13 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
           children: [
             const Text(
               'Riwayat Vaksin',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _hijauTua),
+              style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: _hijauTua),
             ),
             const SizedBox(height: 2),
             Text(
               'Apakah ${widget.nama} sudah pernah menerima vaksin sebelum ke posyandu '
               '(di rumah sakit, puskesmas, klinik, atau bidan praktik)?',
-              style: const TextStyle(fontSize: 13.5, color: AppColors.teksRedup, height: 1.4),
+              style: const TextStyle(fontSize: 16, color: AppColors.teksRedup, height: 1.4),
             ),
             const SizedBox(height: 14),
             _opsi('belum_pernah', 'Belum pernah', 'Anak belum pernah divaksin', Icons.block_outlined),
@@ -1256,7 +1256,7 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Text(_error!, style: const TextStyle(color: AppColors.merah, fontSize: 12.5)),
+                child: Text(_error!, style: const TextStyle(color: AppColors.merah, fontSize: 15)),
               ),
             const SizedBox(height: 12),
             Container(
@@ -1268,7 +1268,7 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
               child: const Text(
                 'Vaksin yang Anda isi tidak akan diberikan lagi di posyandu. '
                 'Bidan akan mengonfirmasi data ini saat kunjungan pertama.',
-                style: TextStyle(fontSize: 12.5, height: 1.4),
+                style: TextStyle(fontSize: 15, height: 1.4),
               ),
             ),
             const SizedBox(height: 14),
@@ -1284,7 +1284,7 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Nanti saja', style: TextStyle(fontWeight: FontWeight.w800)),
+                      child: const Text('Nanti saja', style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ),
@@ -1300,7 +1300,7 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
                       ),
                       onPressed: _menyimpan ? null : _simpan,
                       child: Text(_menyimpan ? 'Menyimpan...' : 'Simpan',
-                          style: const TextStyle(fontWeight: FontWeight.w800)),
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ),

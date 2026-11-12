@@ -103,8 +103,8 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                               label[i],
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w600,
                                 color: _tab == i ? Colors.white : Colors.black87,
                               ),
                             ),
@@ -167,8 +167,8 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 130, child: Text(l, style: const TextStyle(fontSize: 13, color: AppColors.teksRedup))),
-          Expanded(child: Text(v, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700))),
+          SizedBox(width: 130, child: Text(l, style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup))),
+          Expanded(child: Text(v, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500))),
         ],
       ),
     );
@@ -229,7 +229,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
           icon: Icons.monitor_weight_outlined,
           child: r.terakhir == null
               ? const Text('Belum pernah ditimbang di posyandu.',
-                  style: TextStyle(fontSize: 13, color: AppColors.teksRedup))
+                  style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup))
               : _ringkasTimbang(r.terakhir!, r.tanggalLahir),
         ),
         SectionCard(
@@ -252,7 +252,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
               Text(
                 '${r.vaksin.sudah} dari ${r.vaksin.totalDosis} dosis · '
                 '${r.vaksin.jatuhTempo} saatnya diberikan · ${r.vaksin.terlambat} terlambat',
-                style: const TextStyle(fontSize: 13),
+                style: const TextStyle(fontSize: 15.5),
               ),
               const SizedBox(height: 8),
               Align(
@@ -295,7 +295,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         const SizedBox(height: 10),
         Text(
           '${t.tanggal == null ? '-' : formatTanggal(t.tanggal!)} · usia ${_usiaUkur(lahir, t)}',
-          style: const TextStyle(fontSize: 13, color: AppColors.teksRedup),
+          style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup),
         ),
         const SizedBox(height: 8),
         Wrap(spacing: 6, runSpacing: 6, children: _pill(t)),
@@ -383,9 +383,9 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(t.tanggal == null ? '-' : formatTanggal(t.tanggal!),
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                     ),
-                    Text('usia ${_usiaUkur(lahir, t)}', style: const TextStyle(fontSize: 13, color: AppColors.teksRedup)),
+                    Text('usia ${_usiaUkur(lahir, t)}', style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -393,7 +393,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                   'BB ${t.bbKg} kg · TB ${t.tbCm} cm'
                   '${t.lkCm == null ? '' : ' · LK ${t.lkCm} cm'}'
                   '${t.lilaCm == null ? '' : ' · LiLA ${t.lilaCm} cm'}',
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(fontSize: 15.5),
                 ),
                 const SizedBox(height: 8),
                 Wrap(spacing: 6, runSpacing: 6, children: [
@@ -414,7 +414,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                       Text(
                         buka ? 'Tutup detail kunjungan' : 'Lihat detail kunjungan',
                         style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.hijau),
+                            fontSize: 15.5, fontWeight: FontWeight.w500, color: AppColors.hijau),
                       ),
                       Icon(buka ? Icons.expand_less : Icons.expand_more, size: 18, color: AppColors.hijau),
                     ],
@@ -439,7 +439,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
           children: [
             Icon(ikon, size: 16, color: AppColors.hijau),
             const SizedBox(width: 6),
-            Text(teks, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+            Text(teks, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15.5)),
           ],
         ),
       );
@@ -454,9 +454,9 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(judul, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+          Text(judul, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15.5)),
           const SizedBox(height: 2),
-          Text(isi, style: const TextStyle(fontSize: 13, height: 1.35)),
+          Text(isi, style: const TextStyle(fontSize: 15.5, height: 1.35)),
         ],
       ),
     );
@@ -482,7 +482,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         _subjudul('Catatan Bidan', Icons.medical_information_outlined),
         if (c == null)
           const Text('Catatan bidan belum diisi.',
-              style: TextStyle(fontSize: 13, color: AppColors.teksRedup))
+              style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup))
         else ...[
           _blok('Keluhan', c.keluhan, bg: AppColors.hijauMuda),
           _blok('Catatan untuk orang tua', c.catatanEvaluasi, bg: AppColors.hijauMuda),
@@ -493,14 +493,14 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
               c.saranGizi.isEmpty &&
               c.kunjunganUlang == null)
             const Text('Tidak ada keluhan atau catatan khusus.',
-                style: TextStyle(fontSize: 13, color: AppColors.teksRedup)),
+                style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
         ],
 
         // ------------------------------------------------ diberikan
         _subjudul('Diberikan Saat Kunjungan', Icons.vaccines_outlined),
         if (k.imunisasi.isEmpty && k.suplemen.isEmpty)
           const Text('Tidak ada imunisasi atau suplemen.',
-              style: TextStyle(fontSize: 13, color: AppColors.teksRedup))
+              style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup))
         else
           Wrap(
             spacing: 6,

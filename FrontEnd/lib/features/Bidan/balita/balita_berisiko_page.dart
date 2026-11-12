@@ -119,7 +119,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
                             Text(
                               _error!,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 16),
+                              style: const TextStyle(fontSize: 17),
                             ),
                             const SizedBox(height: 12),
                             AppButton('Coba Lagi', icon: Icons.refresh, onPressed: _muat),
@@ -177,7 +177,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
             const SizedBox(height: 10),
             const Text(
               'Dinilai dari penimbangan terakhir setiap balita aktif, sesuai Permenkes No. 2 Tahun 2020 dan KBM Buku KIA.',
-              style: TextStyle(fontSize: 13.5, color: AppColors.teksRedup),
+              style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
             ),
           ],
         ),
@@ -196,8 +196,8 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
                   backgroundColor: Colors.white,
                   showCheckmark: false,
                   labelStyle: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                     color: _aktif == f ? Colors.white : Colors.black87,
                   ),
                   onSelected: (_) => setState(() => _aktif = f),
@@ -217,7 +217,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
                 const SizedBox(height: 8),
                 Text(
                   d.anak.isEmpty ? 'Tidak ada anak berisiko di posyandu ini' : 'Tidak ada anak pada filter ini',
-                  style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup),
+                  style: const TextStyle(fontSize: 16.5, color: AppColors.teksRedup),
                 ),
               ],
             ),
@@ -259,20 +259,20 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
                       Row(
                         children: [
                           Expanded(
-                            child: Text(b.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                            child: Text(b.nama, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
                           ),
                           Pill(a.tinggi ? 'Risiko tinggi' : 'Risiko sedang', bg: latar, fg: warna),
                         ],
                       ),
                       const SizedBox(height: 2),
                       Text('${b.jkTeks} · ${b.usiaTeks}',
-                          style: const TextStyle(fontSize: 14, color: AppColors.teksRedup)),
+                          style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
                       if (t != null) ...[
                         const SizedBox(height: 6),
                         Text(
                           'Ditimbang ${t.tanggal == null ? '-' : formatTanggal(t.tanggal!)} · '
                           'BB ${t.bbKg} kg · TB ${t.tbCm} cm',
-                          style: const TextStyle(fontSize: 14.5),
+                          style: const TextStyle(fontSize: 16.5),
                         ),
                       ],
                       const SizedBox(height: 8),
@@ -286,7 +286,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
                       if (b.bulanTidakDatang >= 2) ...[
                         const SizedBox(height: 6),
                         Text('Tidak ditimbang ${b.bulanTidakDatang} bulan, perlu kunjungan rumah.',
-                            style: const TextStyle(fontSize: 14, color: AppColors.merah)),
+                            style: const TextStyle(fontSize: 16, color: AppColors.merah)),
                       ],
                     ],
                   ),

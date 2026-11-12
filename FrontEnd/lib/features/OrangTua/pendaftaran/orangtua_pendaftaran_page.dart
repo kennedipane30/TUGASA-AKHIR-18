@@ -233,52 +233,19 @@ String _tglPanjang(DateTime d) =>
 String _jamMenit(DateTime d) =>
     '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
-/// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
-
-  return Stack(
-    children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      // Lapis atas: isi huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -589,9 +556,9 @@ class _OrangTuaPendaftaranPageState
             'TANGGAL & SESI PELAKSANAAN',
             style: TextStyle(
               color: _mintLabel,
-              fontSize: 13.5,
+              fontSize: 16,
               letterSpacing: 0.6,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 6),
@@ -599,8 +566,8 @@ class _OrangTuaPendaftaranPageState
             _tglPanjang(j.tanggal),
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 25,
-              fontWeight: FontWeight.w800,
+              fontSize: 26,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 14),
@@ -619,8 +586,8 @@ class _OrangTuaPendaftaranPageState
                           const TextSpan(
                             text: ' WIB',
                             style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
                               color: Color(0xCCFFFFFF),
                             ),
                           ),
@@ -630,8 +597,8 @@ class _OrangTuaPendaftaranPageState
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -647,8 +614,8 @@ class _OrangTuaPendaftaranPageState
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -690,9 +657,9 @@ class _OrangTuaPendaftaranPageState
                         'INFORMASI PENTING',
                         style: TextStyle(
                           color: _mintLabel,
-                          fontSize: 13.5,
+                          fontSize: 16,
                           letterSpacing: 0.5,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -700,7 +667,7 @@ class _OrangTuaPendaftaranPageState
                         infoTeks,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 14.5,
+                          fontSize: 16.5,
                           height: 1.45,
                         ),
                       ),
@@ -744,7 +711,7 @@ class _OrangTuaPendaftaranPageState
                   label,
                   style: const TextStyle(
                     color: _mintLabel,
-                    fontSize: 13,
+                    fontSize: 15.5,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -777,8 +744,8 @@ class _OrangTuaPendaftaranPageState
           child: Text(
             'Profil Balita Terpilih',
             style: TextStyle(
-              fontSize: 17.5,
-              fontWeight: FontWeight.w800,
+              fontSize: 18.5,
+              fontWeight: FontWeight.w600,
               color: Color(0xFF111827),
             ),
           ),
@@ -792,8 +759,8 @@ class _OrangTuaPendaftaranPageState
             child: Text(
               '+ Anak Baru',
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
                 color: _oranye2,
               ),
             ),
@@ -833,8 +800,8 @@ class _OrangTuaPendaftaranPageState
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF111827),
                   ),
                 ),
@@ -848,8 +815,8 @@ class _OrangTuaPendaftaranPageState
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                       color: a.status == 'belum_daftar' ? const Color(0xFF374151) : fg,
                     ),
                   ),
@@ -859,8 +826,8 @@ class _OrangTuaPendaftaranPageState
                   Text(
                     'Nomor antrean #${a.nomorAntrean}',
                     style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14.5,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16.5,
                       color: _hijauHeader,
                     ),
                   ),
@@ -890,7 +857,7 @@ class _OrangTuaPendaftaranPageState
               child: const Text(
                 'Ganti',
                 style: TextStyle(
-                  fontSize: 15.5,
+                  fontSize: 16.5,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF1F2937),
                 ),
@@ -930,8 +897,8 @@ class _OrangTuaPendaftaranPageState
                 child: Text(
                   'Rencana Pelayanan',
                   style: TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF111827),
                   ),
                 ),
@@ -942,7 +909,7 @@ class _OrangTuaPendaftaranPageState
           if (r == null || r.kosong)
             Text(
               'Tidak ada imunisasi, Vitamin A, atau obat cacing untuk ${a.nama} pada jadwal ini. Tetap datang untuk penimbangan, ya.',
-              style: const TextStyle(fontSize: 14, height: 1.45, color: Color(0xFF4B5563)),
+              style: const TextStyle(fontSize: 16, height: 1.45, color: Color(0xFF4B5563)),
             )
           else ...[
             if (r.imunisasi.isNotEmpty)
@@ -972,7 +939,7 @@ class _OrangTuaPendaftaranPageState
             const SizedBox(height: 2),
             const Text(
               'Pastikan anak dalam keadaan sehat dan bawa buku KIA.',
-              style: TextStyle(fontSize: 12.5, color: Color(0xFF6B7280)),
+              style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
             ),
           ],
         ],
@@ -1004,7 +971,7 @@ class _OrangTuaPendaftaranPageState
               const SizedBox(width: 6),
               Text(
                 judul,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: warna),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: warna),
               ),
             ],
           ),
@@ -1034,8 +1001,8 @@ class _OrangTuaPendaftaranPageState
                               child: Text(
                                 it.nama,
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
                                   color: Color(0xFF111827),
                                 ),
                               ),
@@ -1051,8 +1018,8 @@ class _OrangTuaPendaftaranPageState
                                 child: const Text(
                                   'Terlambat',
                                   style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
                                     color: Color(0xFFDC2626),
                                   ),
                                 ),
@@ -1063,7 +1030,7 @@ class _OrangTuaPendaftaranPageState
                         if (it.keterangan.isNotEmpty)
                           Text(
                             it.keterangan,
-                            style: const TextStyle(fontSize: 12.5, height: 1.35, color: Color(0xFF4B5563)),
+                            style: const TextStyle(fontSize: 15, height: 1.35, color: Color(0xFF4B5563)),
                           ),
                       ],
                     ),
@@ -1090,8 +1057,8 @@ class _OrangTuaPendaftaranPageState
           Text(
             'Petunjuk Check-in Mandiri',
             style: TextStyle(
-              fontSize: 15.5,
-              fontWeight: FontWeight.w800,
+              fontSize: 16.5,
+              fontWeight: FontWeight.w600,
               color: Color(0xFF111827),
             ),
           ),
@@ -1099,7 +1066,7 @@ class _OrangTuaPendaftaranPageState
           Text(
             'Kartu antrean muncul setelah pendaftaran. Scan QR di posyandu untuk check-in, lalu data anak masuk ke antrean pendataan kader.',
             style: TextStyle(
-              fontSize: 14.5,
+              fontSize: 16.5,
               height: 1.5,
               color: Color(0xFF374151),
             ),
@@ -1120,8 +1087,8 @@ class _OrangTuaPendaftaranPageState
           Text(
             'Bisa Dibuka Tanpa Sinyal',
             style: TextStyle(
-              fontSize: 15.5,
-              fontWeight: FontWeight.w800,
+              fontSize: 16.5,
+              fontWeight: FontWeight.w600,
               color: Color(0xFF111827),
             ),
           ),
@@ -1129,7 +1096,7 @@ class _OrangTuaPendaftaranPageState
           Text(
             'Kartu antrean dapat dibuka kembali kapan saja. Data otomatis tersinkronisasi ke server pada saat sinyal tersedia.',
             style: TextStyle(
-              fontSize: 14.5,
+              fontSize: 16.5,
               height: 1.5,
               color: Color(0xFF374151),
             ),
@@ -1161,8 +1128,8 @@ class _OrangTuaPendaftaranPageState
             child: Text(
               teks,
               style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
                 height: 1.4,
               ),
             ),
@@ -1212,8 +1179,8 @@ class _OrangTuaPendaftaranPageState
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

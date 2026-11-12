@@ -72,55 +72,19 @@ class AkunPage extends StatelessWidget {
     );
   }
 
-  /// Judul header yang dibuat ekstra tebal.
-  /// Teks ditumpuk dua lapis: lapis bawah berupa garis tepi (stroke) putih
-  /// sehingga huruf terlihat lebih gemuk, lapis atas berupa isi putih biasa.
-  /// Cara ini tetap terlihat tebal walaupun font aplikasi tidak punya
-  /// varian w900.
+  /// Judul header (gaya teks sama dengan halaman lain).
   Widget _judulTebal(String teks) {
-    const ukuran = 20.0;
-    const jarak = 1.2; // jarak antar huruf
-
-    return Stack(
-      children: [
-        // Lapis bawah: garis tepi untuk menebalkan huruf
-        Text(
-          teks,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: ukuran,
-            fontWeight: FontWeight.w900,
-            letterSpacing: jarak,
-            foreground: Paint()
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 1.0
-              ..strokeJoin = StrokeJoin.round
-              ..color = Colors.white,
-          ),
-        ),
-        // Lapis atas: isi huruf
-        Text(
-          teks,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: ukuran,
-            fontWeight: FontWeight.w900,
-            letterSpacing: jarak,
-            color: Colors.white,
-            shadows: [
-              Shadow(
-                color: Color(0x40000000),
-                offset: Offset(0, 1),
-                blurRadius: 2,
-              ),
-            ],
-          ),
-        ),
-      ],
+    return Text(
+      teks,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        fontSize: 21,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.3,
+        color: Colors.white,
+      ),
     );
   }
 
@@ -156,8 +120,8 @@ class AkunPage extends StatelessWidget {
                             inisial,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 23,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -169,8 +133,8 @@ class AkunPage extends StatelessWidget {
                               Text(
                                 nama,
                                 style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -207,7 +171,7 @@ class AkunPage extends StatelessWidget {
                           ),
                           title: const Text(
                             'Profil Saya',
-                            style: TextStyle(fontSize: 15),
+                            style: TextStyle(fontSize: 16),
                           ),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => soon(context, 'Profil'),
@@ -220,7 +184,7 @@ class AkunPage extends StatelessWidget {
                           ),
                           title: const Text(
                             'Ubah PIN',
-                            style: TextStyle(fontSize: 15),
+                            style: TextStyle(fontSize: 16),
                           ),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => Navigator.push(
@@ -238,7 +202,7 @@ class AkunPage extends StatelessWidget {
                           ),
                           title: const Text(
                             'Notifikasi',
-                            style: TextStyle(fontSize: 15),
+                            style: TextStyle(fontSize: 16),
                           ),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => soon(context, 'Pengaturan notifikasi'),

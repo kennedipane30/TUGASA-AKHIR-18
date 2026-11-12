@@ -56,7 +56,7 @@ class _UbahPinPageState extends State<UbahPinPage> {
 
   InputDecoration _dekor(String label) => InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(fontSize: 16.5),
+        labelStyle: const TextStyle(fontSize: 17.5),
         counterText: '',
         filled: true,
         fillColor: AppColors.isiField,
@@ -73,7 +73,7 @@ class _UbahPinPageState extends State<UbahPinPage> {
   TextFormField _isian(TextEditingController c, String label, String? Function(String?) cek) {
     return TextFormField(
       controller: c,
-      style: const TextStyle(fontSize: 16.5, letterSpacing: 4),
+      style: const TextStyle(fontSize: 17.5, letterSpacing: 4),
       obscureText: _hide,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -90,7 +90,7 @@ class _UbahPinPageState extends State<UbahPinPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         automaticallyImplyLeading: !widget.wajib,
-        title: const Text('Ubah PIN', style: TextStyle(fontSize: 19)),
+        title: const Text('Ubah PIN', style: TextStyle(fontSize: 20)),
         actions: [
           if (widget.wajib)
             TextButton(
@@ -114,7 +114,7 @@ class _UbahPinPageState extends State<UbahPinPage> {
                 ),
                 child: const Text(
                   'PIN Anda dibuat oleh petugas. Demi keamanan, buat PIN baru sebelum melanjutkan.',
-                  style: TextStyle(fontSize: 14, height: 1.4),
+                  style: TextStyle(fontSize: 16, height: 1.4),
                 ),
               ),
             _isian(_lama, widget.wajib ? 'PIN dari petugas' : 'PIN lama',
@@ -131,7 +131,7 @@ class _UbahPinPageState extends State<UbahPinPage> {
             const SizedBox(height: 6),
             const Text(
               'PIN 6 digit angka, tidak boleh kembar (111111), berurutan (123456), atau berulang (121212).',
-              style: TextStyle(fontSize: 12.5, color: AppColors.teksRedup, height: 1.4),
+              style: TextStyle(fontSize: 15, color: AppColors.teksRedup, height: 1.4),
             ),
             const SizedBox(height: 22),
             SizedBox(
@@ -144,7 +144,7 @@ class _UbahPinPageState extends State<UbahPinPage> {
                 ),
                 onPressed: _loading ? null : _simpan,
                 child: Text(_loading ? 'Menyimpan...' : 'Simpan PIN baru',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16.5)),
+                    style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 17.5)),
               ),
             ),
           ],

@@ -7,52 +7,19 @@ const _teksAbu = Color(0xFF64748B);
 const _hijauTua = Color(0xFF065F46);
 const _hijauHero = Color(0xFF0A5A43);
 
-/// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
-
-  return Stack(
-    children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      // Lapis atas: isi huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -126,8 +93,8 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
       child: Text(
         teks,
         style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
+          fontSize: 14.5,
+          fontWeight: FontWeight.w600,
           color: fg,
         ),
       ),
@@ -171,8 +138,8 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                 child: Text(
                   judul,
                   style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                     color: _teksGelap,
                   ),
                 ),
@@ -187,7 +154,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
             child: Text(
               isi,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 15.5,
                 height: 1.45,
                 color: _teksAbu,
               ),
@@ -239,8 +206,8 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                       child: Text(
                         judul,
                         style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                           color: _teksGelap,
                         ),
                       ),
@@ -259,7 +226,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                 Text(
                   isi,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 15.5,
                     height: 1.45,
                     color: _teksAbu,
                   ),
@@ -289,8 +256,8 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
             child: Text(
               '$no',
               style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
                 color: _teksGelap,
               ),
             ),
@@ -303,8 +270,8 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                 Text(
                   judul,
                   style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                     color: _teksGelap,
                   ),
                 ),
@@ -312,7 +279,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                 Text(
                   isi,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 15.5,
                     height: 1.45,
                     color: _teksAbu,
                   ),
@@ -346,7 +313,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                     padding: EdgeInsets.fromLTRB(4, 0, 4, 14),
                     child: Text(
                       'Edukasi Tumbuh Kembang Posyandu',
-                      style: TextStyle(fontSize: 13, color: _teksAbu),
+                      style: TextStyle(fontSize: 15.5, color: _teksAbu),
                     ),
                   ),
 
@@ -404,8 +371,8 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                                         'Standar WHO & Kemenkes RI',
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
                                     ],
@@ -416,9 +383,9 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                                   'Memahami Kurva Pertumbuhan Anak',
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 20,
+                                    fontSize: 21,
                                     height: 1.2,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: 10),
@@ -426,7 +393,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                                   'Grafik kurva pertumbuhan digunakan untuk menilai apakah perkembangan fisik anak sesuai dengan acuan populasi sehat internasional (Z-Score), disesuaikan berdasarkan usia dan jenis kelamin.',
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 13,
+                                    fontSize: 15.5,
                                     height: 1.55,
                                   ),
                                 ),
@@ -450,10 +417,10 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                               child: Text(
                                 'ARTI GARIS PITA STANDAR DEVIASI (SD)',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14.5,
                                   height: 1.3,
                                   letterSpacing: 0.3,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w600,
                                   color: _teksAbu,
                                 ),
                               ),
@@ -472,9 +439,9 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                                 'Z-Score\nAcuan',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14.5,
                                   height: 1.2,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w600,
                                   color: _hijauTua,
                                 ),
                               ),
@@ -551,8 +518,8 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                               child: const Text(
                                 'LK',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w600,
                                   color: _hijauTua,
                                 ),
                               ),
@@ -565,15 +532,15 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                                   Text(
                                     'Panduan Khusus: Lingkar Kepala',
                                     style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
                                       color: _teksGelap,
                                     ),
                                   ),
                                   Text(
                                     'Pemantauan rutin usia 0 - 24 bulan',
                                     style: TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 15.5,
                                       color: _teksAbu,
                                     ),
                                   ),
@@ -586,7 +553,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                         const Text(
                           'Pengukuran Lingkar Kepala (LK) sangat penting di 2 tahun pertama karena kehidupan kepala mencerminkan perkembangan volume otak dan penutupan ubun-ubun anak secara optimal.',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 15.5,
                             height: 1.5,
                             color: _teksAbu,
                           ),
@@ -632,9 +599,9 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                         const Text(
                           'LANGKAH TINDAKAN UNTUK ORANG TUA',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14.5,
                             letterSpacing: 0.3,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             color: _teksAbu,
                           ),
                         ),
@@ -678,8 +645,8 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                       label: const Text(
                         'Kembali ke Grafik Anak',
                         style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15.5,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.5,
                         ),
                       ),
                     ),
@@ -689,7 +656,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                     child: Text(
                       'Kementerian Kesehatan Republik Indonesia • Standar Baku Antropometri',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: _teksAbu),
+                      style: TextStyle(fontSize: 14.5, color: _teksAbu),
                     ),
                   ),
                 ],

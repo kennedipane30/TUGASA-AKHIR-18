@@ -74,8 +74,8 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
             Expanded(
               child: Text('Data keluarga sudah lengkap',
                   style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                       color: kHijauTua)),
             ),
           ],
@@ -92,8 +92,8 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
             color: Colors.white, borderRadius: BorderRadius.circular(20)),
         child: Text('$selesai/2',
             style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
                 color: AppColors.kuning)),
       ),
       child: Column(
@@ -101,7 +101,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
         children: [
           const Text(
             'Lengkapi data diri ibu dan data suami/ayah agar jadwal, kartu digital, dan grafik pertumbuhan dapat digunakan.',
-            style: TextStyle(fontSize: 12.5),
+            style: TextStyle(fontSize: 15),
           ),
           const SizedBox(height: 10),
           ClipRRect(
@@ -157,11 +157,11 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
                 children: [
                   Text(judul,
                       style: TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 15, color: fg)),
+                          fontWeight: FontWeight.w600, fontSize: 16, color: fg)),
                   const SizedBox(height: 2),
                   Text(sub,
                       style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 15.5,
                           fontWeight: FontWeight.w600,
                           color: terisi
                               ? const Color(0xFFA8F0C6)
@@ -200,7 +200,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
             const SizedBox(width: 10),
             const Expanded(
               child: Text('Gagal memuat data keluarga',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15.5)),
             ),
             TextButton(onPressed: _muat, child: const Text('Coba lagi')),
           ],
@@ -225,12 +225,12 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
                     children: [
                       Text('Kelola Data Keluarga',
                           style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
                               color: kHijauTua)),
                       Text('Pilih berkas profil yang ingin diperbarui',
                           style: TextStyle(
-                              fontSize: 13, color: AppColors.teksRedup)),
+                              fontSize: 15.5, color: AppColors.teksRedup)),
                     ],
                   ),
                 ],
@@ -270,7 +270,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
               Expanded(
                 child: Text(
                   'Data keluarga tersimpan aman secara terenkripsi di perangkat Anda dan otomatis disinkronkan ke server Posyandu Care saat terhubung internet.',
-                  style: TextStyle(fontSize: 13, color: kHijauGelap),
+                  style: TextStyle(fontSize: 15.5, color: kHijauGelap),
                 ),
               ),
             ],

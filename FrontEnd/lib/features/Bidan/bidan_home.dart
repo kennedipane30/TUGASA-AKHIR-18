@@ -112,10 +112,10 @@ class _BidanHomeState extends State<BidanHome> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
-          fontSize: 20,
+          fontSize: 21,
           height: 1.2,
           color: Color(0xFF0F172A),
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -166,7 +166,7 @@ class _BidanHomeState extends State<BidanHome> {
               onTap: () => soon(context, 'Pencarian anak'),
               decoration: const InputDecoration(
                 hintText: 'Cari data balita, NIK, atau nama ibu...',
-                hintStyle: TextStyle(fontSize: 15, color: _teksAbu),
+                hintStyle: TextStyle(fontSize: 16, color: _teksAbu),
                 border: InputBorder.none,
               ),
             ),
@@ -230,8 +230,8 @@ class _BidanHomeState extends State<BidanHome> {
                           badge > 99 ? '99+' : '$badge',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -243,10 +243,10 @@ class _BidanHomeState extends State<BidanHome> {
                 judul,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 14,
                   height: 1.2,
                   color: Color(0xFF0F2547),
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -287,10 +287,10 @@ class _BidanHomeState extends State<BidanHome> {
                   child: Text(
                     judul,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 21,
                       height: 1.2,
                       color: Color(0xFF0F172A),
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -299,8 +299,8 @@ class _BidanHomeState extends State<BidanHome> {
                   child: Text(
                     'Layanan Utama',
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.teksRedup,
                     ),
                   ),
@@ -313,7 +313,7 @@ class _BidanHomeState extends State<BidanHome> {
             child: Text(
               sub,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 14.5,
                 fontWeight: FontWeight.w500,
                 color: AppColors.teksRedup,
               ),

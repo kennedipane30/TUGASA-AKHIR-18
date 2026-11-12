@@ -232,8 +232,8 @@ Future<void> _bukaNomorAntrean(NavigatorState nav) async {
             const Text(
               'Pilih Nomor Antrean Anak',
               style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
                 color: _teksGelap,
               ),
             ),
@@ -252,7 +252,7 @@ Future<void> _bukaNomorAntrean(NavigatorState nav) async {
                 ),
                 title: Text(
                   a.nama,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
                 ),
                 subtitle: Text(
                   a.nomorAntrean == null
@@ -416,14 +416,14 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
         title: Text(
           judul,
           style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
+            fontSize: 19,
+            fontWeight: FontWeight.w600,
             color: _teksGelap,
           ),
         ),
         content: Text(
           isi,
-          style: const TextStyle(fontSize: 15, height: 1.5, color: _teksGelap),
+          style: const TextStyle(fontSize: 16, height: 1.5, color: _teksGelap),
         ),
         actions: [
           TextButton(
@@ -580,8 +580,8 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                     child: Text(
                       n.judul,
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
                         color: _teksGelap,
                       ),
                     ),
@@ -592,7 +592,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
               Text(
                 n.isi,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 16,
                   height: 1.5,
                   color: _teksGelap,
                 ),
@@ -601,7 +601,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
               Text(
                 '${formatTanggal(n.dibuat)} pukul ${formatJam(n.dibuat)} WIB',
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 15.5,
                   color: AppColors.teksRedup,
                 ),
               ),
@@ -639,7 +639,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                   icon: const Icon(Icons.delete_outline),
                   label: const Text(
                     'Hapus Notifikasi',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
@@ -676,6 +676,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
       foregroundColor: Colors.white,
       elevation: 0,
       titleSpacing: 0,
+      centerTitle: true,
       systemOverlayStyle: const SystemUiOverlayStyle(
         statusBarColor: _hijauHeader,
         statusBarIconBrightness: Brightness.light,
@@ -685,8 +686,8 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
         'Notifikasi',
         style: TextStyle(
           color: Colors.white,
-          fontWeight: FontWeight.w900,
-          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          fontSize: 21,
         ),
       ),
       actions: [
@@ -746,7 +747,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
         const SizedBox(width: 12),
         Text(
           label,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: warna),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: warna),
         ),
       ],
     );
@@ -760,6 +761,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
       foregroundColor: Colors.white,
       elevation: 0,
       titleSpacing: 0,
+      centerTitle: true,
       systemOverlayStyle: const SystemUiOverlayStyle(
         statusBarColor: _hijauHeader,
         statusBarIconBrightness: Brightness.light,
@@ -774,8 +776,8 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
         adaPilihan ? '${_terpilih.length} dipilih' : 'Pilih notifikasi',
         style: const TextStyle(
           color: Colors.white,
-          fontWeight: FontWeight.w900,
-          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          fontSize: 21,
         ),
       ),
       actions: [
@@ -861,8 +863,8 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
+            fontSize: 15.5,
+            fontWeight: FontWeight.w500,
             color: aktif ? Colors.white : _teksGelap,
           ),
         ),
@@ -903,8 +905,8 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                   child: Text(
                     _gagal!,
                     style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
                     ),
                   ),
                 ),
@@ -950,8 +952,8 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                 : 'Belum ada notifikasi.',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
               color: _teksGelap,
             ),
           ),
@@ -959,7 +961,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
           const Text(
             'Pengingat jadwal posyandu, check-in, imunisasi, Vitamin A, obat cacing, dan peringatan pertumbuhan anak akan muncul di sini.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: AppColors.teksRedup),
+            style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup),
           ),
         ],
       );
@@ -1066,10 +1068,10 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: 16,
                                   fontWeight: n.sudahDibaca
-                                      ? FontWeight.w700
-                                      : FontWeight.w900,
+                                      ? FontWeight.w500
+                                      : FontWeight.w700,
                                   color: _teksGelap,
                                 ),
                               ),
@@ -1092,7 +1094,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 15.5,
                             height: 1.4,
                             color: Color(0xFF4B5563),
                           ),
@@ -1101,7 +1103,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                         Text(
                           waktuNotifikasi(n.dibuat),
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 15.5,
                             color: AppColors.teksRedup,
                           ),
                         ),

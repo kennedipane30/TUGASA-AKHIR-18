@@ -54,6 +54,44 @@ Widget _nav({
   );
 }
 
+// Gaya teks seluruh aplikasi: font bawaan HP, ketebalan normal,
+// ukuran mudah dibaca, dan jarak antarhuruf sedikit renggang.
+const _warnaTeks = Color(0xFF1F2937);
+
+TextTheme _gayaTeks(TextTheme t) {
+  TextStyle? atur(TextStyle? s, double ukuran, FontWeight tebal) => s?.copyWith(
+        fontSize: ukuran,
+        fontWeight: tebal,
+        letterSpacing: 0.3,
+        height: 1.4,
+      );
+
+  return t
+      .copyWith(
+        headlineSmall: atur(t.headlineSmall, 23, FontWeight.w600),
+        titleLarge: atur(t.titleLarge, 21, FontWeight.w600),
+        titleMedium: atur(t.titleMedium, 17, FontWeight.w500),
+        titleSmall: atur(t.titleSmall, 16, FontWeight.w500),
+        bodyLarge: atur(t.bodyLarge, 17, FontWeight.w400),
+        bodyMedium: atur(t.bodyMedium, 16, FontWeight.w400),
+        bodySmall: atur(t.bodySmall, 14, FontWeight.w400),
+        labelLarge: atur(t.labelLarge, 16, FontWeight.w600),
+        labelMedium: atur(t.labelMedium, 14, FontWeight.w500),
+        labelSmall: atur(t.labelSmall, 13, FontWeight.w500),
+      )
+      .apply(bodyColor: _warnaTeks, displayColor: _warnaTeks);
+}
+
+ThemeData _temaAplikasi() {
+  final dasar = ThemeData(
+    colorSchemeSeed: Colors.teal,
+    useMaterial3: true,
+  );
+  return dasar.copyWith(
+    textTheme: _gayaTeks(dasar.textTheme),
+  );
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -133,10 +171,7 @@ class MyApp extends StatelessWidget {
       title: 'Posyandu',
       debugShowCheckedModeBanner: false,
       navigatorKey: navigatorKey,
-      theme: ThemeData(
-        colorSchemeSeed: Colors.teal,
-        useMaterial3: true,
-      ),
+      theme: _temaAplikasi(),
       home: _PemantauSesi(
         aktif: sesiAktif,
         role: auth.role?.toString(),

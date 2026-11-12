@@ -165,7 +165,7 @@ class _KaderHomeState extends State<KaderHome> {
         Expanded(
           child: Text(judul,
               style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w800, color: _teksGelap)),
+                  fontSize: 17, fontWeight: FontWeight.w600, color: _teksGelap)),
         ),
         if (trailing != null) trailing,
       ],
@@ -181,7 +181,7 @@ class _KaderHomeState extends State<KaderHome> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(_gagal!,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15.5)),
+                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16.5)),
           ),
           TextButton(
             onPressed: () {
@@ -221,7 +221,7 @@ class _KaderHomeState extends State<KaderHome> {
               onChanged: (v) => setState(() => _kata = v.trim()),
               decoration: const InputDecoration(
                 hintText: 'Cari nama balita...',
-                hintStyle: TextStyle(fontSize: 15, color: _teksAbu),
+                hintStyle: TextStyle(fontSize: 16, color: _teksAbu),
                 border: InputBorder.none,
               ),
             ),
@@ -275,7 +275,7 @@ class _KaderHomeState extends State<KaderHome> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 15.5, fontWeight: FontWeight.w800, color: _teksGelap)),
+                        fontSize: 16.5, fontWeight: FontWeight.w600, color: _teksGelap)),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -285,7 +285,7 @@ class _KaderHomeState extends State<KaderHome> {
                 ),
                 child: Text('${hasil.length} anak',
                     style: const TextStyle(
-                        fontSize: 12.5, fontWeight: FontWeight.w800, color: _hijauTua)),
+                        fontSize: 15, fontWeight: FontWeight.w600, color: _hijauTua)),
               ),
             ],
           ),
@@ -299,7 +299,7 @@ class _KaderHomeState extends State<KaderHome> {
             )
           else if (hasil.isEmpty)
             const Text('Tidak ditemukan di antrean hari ini.',
-                style: TextStyle(fontSize: 14.5, height: 1.4, color: _teksBiru))
+                style: TextStyle(fontSize: 16.5, height: 1.4, color: _teksBiru))
           else
             for (final a in hasil) _barisHasil(a),
           const SizedBox(height: 6),
@@ -315,7 +315,7 @@ class _KaderHomeState extends State<KaderHome> {
               onPressed: _bukaBalita,
               icon: const Icon(Icons.child_care, size: 20),
               label: const Text('Cari di Semua Balita',
-                  style: TextStyle(fontWeight: FontWeight.w800)),
+                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -344,7 +344,7 @@ class _KaderHomeState extends State<KaderHome> {
               radius: 18,
               backgroundColor: const Color(0xFFE6F8EF),
               child: Text(a.nomor?.toString() ?? '-',
-                  style: const TextStyle(color: _hijauTua, fontWeight: FontWeight.w800)),
+                  style: const TextStyle(color: _hijauTua, fontWeight: FontWeight.w600)),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -353,10 +353,10 @@ class _KaderHomeState extends State<KaderHome> {
                 children: [
                   Text(a.nama,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 15, color: _teksGelap)),
+                          fontWeight: FontWeight.w600, fontSize: 16, color: _teksGelap)),
                   const SizedBox(height: 2),
                   Text('${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · $usia',
-                      style: const TextStyle(fontSize: 13, color: _teksAbu)),
+                      style: const TextStyle(fontSize: 15.5, color: _teksAbu)),
                 ],
               ),
             ),
@@ -368,8 +368,8 @@ class _KaderHomeState extends State<KaderHome> {
               ),
               child: Text(a.sudahDiukur ? 'Sudah diukur' : 'Menunggu',
                   style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
                       color: a.sudahDiukur ? _hijauTua : const Color(0xFFB45309))),
             ),
           ],
@@ -393,10 +393,10 @@ class _KaderHomeState extends State<KaderHome> {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
-          fontSize: 20,
+          fontSize: 21,
           height: 1.2,
           color: Color(0xFF0F172A),
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -440,7 +440,7 @@ class _KaderHomeState extends State<KaderHome> {
                 const SizedBox(height: 10),
                 const Text(
                   'Belum ada jadwal aktif untuk posyandu Anda. Antrean pendataan muncul setelah admin menerbitkan jadwal.',
-                  style: TextStyle(fontSize: 15, color: _teksAbu, height: 1.4),
+                  style: TextStyle(fontSize: 16, color: _teksAbu, height: 1.4),
                 ),
               ],
             ),
@@ -490,17 +490,17 @@ class _KaderHomeState extends State<KaderHome> {
               children: [
                 const Text('SESI POSYANDU TERDEKAT',
                     style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: 15,
                         letterSpacing: 0.4,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: _hijauTua)),
                 const SizedBox(height: 2),
                 Text(formatTanggal(j.tanggal),
                     style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w800, color: _teksGelap)),
+                        fontSize: 18, fontWeight: FontWeight.w600, color: _teksGelap)),
                 if (j.lokasi.isNotEmpty)
                   Text(j.lokasi,
-                      style: const TextStyle(fontSize: 13.5, color: _teksAbu)),
+                      style: const TextStyle(fontSize: 16, color: _teksAbu)),
               ],
             ),
           ),
@@ -514,9 +514,9 @@ class _KaderHomeState extends State<KaderHome> {
             child: Text(j.jam.replaceAll(' - ', ' -\n'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     height: 1.25,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: _teksGelap)),
           ),
         ],
@@ -570,8 +570,8 @@ class _KaderHomeState extends State<KaderHome> {
                           badge > 99 ? '99+' : '$badge',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -583,10 +583,10 @@ class _KaderHomeState extends State<KaderHome> {
                 judul,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 14,
                   height: 1.2,
                   color: Color(0xFF0F2547),
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -627,10 +627,10 @@ class _KaderHomeState extends State<KaderHome> {
                   child: Text(
                     judul,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 21,
                       height: 1.2,
                       color: Color(0xFF0F172A),
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -639,8 +639,8 @@ class _KaderHomeState extends State<KaderHome> {
                   child: Text(
                     'Layanan Utama',
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.teksRedup,
                     ),
                   ),
@@ -653,7 +653,7 @@ class _KaderHomeState extends State<KaderHome> {
             child: Text(
               sub,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 14.5,
                 fontWeight: FontWeight.w500,
                 color: AppColors.teksRedup,
               ),

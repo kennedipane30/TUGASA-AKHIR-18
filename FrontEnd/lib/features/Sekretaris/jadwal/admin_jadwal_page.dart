@@ -141,52 +141,19 @@ InputDecoration _dekor(String label, {String? hint}) {
   );
 }
 
-/// Judul header ekstra tebal (sama seperti halaman Akun).
-/// Lapis bawah: garis tepi putih agar huruf lebih gemuk; lapis atas: isi putih.
+/// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
-  const ukuran = 20.0;
-  const jarak = 1.2; // jarak antar huruf
-
-  return Stack(
-    children: [
-      // Lapis bawah: garis tepi untuk menebalkan huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0
-            ..strokeJoin = StrokeJoin.round
-            ..color = Colors.white,
-        ),
-      ),
-      // Lapis atas: isi huruf
-      Text(
-        teks,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: ukuran,
-          fontWeight: FontWeight.w900,
-          letterSpacing: jarak,
-          color: Colors.white,
-          shadows: [
-            Shadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-      ),
-    ],
+  return Text(
+    teks,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    textAlign: TextAlign.center,
+    style: const TextStyle(
+      fontSize: 21,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      color: Colors.white,
+    ),
   );
 }
 
@@ -350,7 +317,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
               ),
               onPressed: () => _form(),
               child: const Text('Tambah Jadwal Posyandu',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
             ),
           ),
         ),
@@ -390,7 +357,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                             Expanded(
                               child: Text(_gagal!,
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.w700, fontSize: 15.5)),
+                                      fontWeight: FontWeight.w500, fontSize: 16.5)),
                             ),
                             TextButton(
                               onPressed: () {
@@ -418,8 +385,8 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                                 const Expanded(
                                   child: Text('Jadwal Mendatang',
                                       style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w800,
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w600,
                                           color: _teksGelap)),
                                 ),
                                 Pill('${mendatang.length} jadwal',
@@ -433,7 +400,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                                     child: Text(
                                       'Belum ada jadwal. Tekan "Tambah Jadwal Posyandu" untuk membuat jadwal baru. Jadwal yang sudah lewat ada di Riwayat Jadwal.',
                                       style: TextStyle(
-                                          fontSize: 15, color: AppColors.teksRedup),
+                                          fontSize: 16, color: AppColors.teksRedup),
                                     ),
                                   )
                                 : Column(children: [for (final j in mendatang) _kartu(j)]),
@@ -468,7 +435,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
       ),
       child: const Text(
         'Jadwal otomatis milik posyandu Anda dan hanya terlihat oleh orang tua, kader, dan bidan posyandu ini. Satu jadwal per tanggal. Check-in dibuka 1 jam sebelum mulai. Jadwal yang sudah lewat pindah ke Riwayat Jadwal dan tidak dapat diubah.',
-        style: TextStyle(fontSize: 14, height: 1.4, color: _hijauGelap),
+        style: TextStyle(fontSize: 16, height: 1.4, color: _hijauGelap),
       ),
     );
   }
@@ -494,11 +461,11 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                   children: [
                     Text(_tglPanjang(j.tanggal),
                         style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 16, color: _teksGelap)),
+                            fontWeight: FontWeight.w600, fontSize: 17, color: _teksGelap)),
                     const SizedBox(height: 2),
                     Text('$jam WIB',
                         style: const TextStyle(
-                            fontSize: 13.5, color: AppColors.teksRedup)),
+                            fontSize: 16, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
@@ -510,8 +477,8 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                 ),
                 child: const Text('Terjadwal',
                     style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.hijau)),
               ),
             ],
@@ -521,7 +488,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
             child: Divider(height: 1, color: Color(0xFFE6ECE8)),
           ),
           Text(j.lokasi.isEmpty ? 'Lokasi belum diisi' : j.lokasi,
-              style: const TextStyle(fontSize: 14, height: 1.3, color: _teksGelap)),
+              style: const TextStyle(fontSize: 16, height: 1.3, color: _teksGelap)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -545,7 +512,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                     ),
                     onPressed: () => _form(awal: j),
                     child: const Text('Ubah',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
                   ),
                 ),
               ),
@@ -561,7 +528,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                     ),
                     onPressed: () => _batalkan(j),
                     child: const Text('Batalkan',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
                   ),
                 ),
               ),
@@ -577,7 +544,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
       child: Text(teks,
-          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: fg)),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: fg)),
     );
   }
 }
@@ -612,11 +579,11 @@ class _DialogBatalState extends State<_DialogBatal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(widget.tanggal,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 17)),
           const SizedBox(height: 6),
           const Text(
             'Orang tua yang sudah mendaftar akan menerima pemberitahuan bahwa jadwal diperbarui.',
-            style: TextStyle(fontSize: 14, color: AppColors.teksRedup),
+            style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
           ),
           const SizedBox(height: 10),
           TextField(
@@ -770,7 +737,7 @@ class _FormJadwalState extends State<_FormJadwal> {
             children: [
               Text(ubah ? 'Ubah Jadwal Posyandu' : 'Tambah Jadwal Posyandu',
                   style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w800, color: _teksGelap)),
+                      fontSize: 18, fontWeight: FontWeight.w600, color: _teksGelap)),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _tgl,
@@ -822,14 +789,14 @@ class _FormJadwalState extends State<_FormJadwal> {
                 ),
                 child: const Text(
                   'Jadwal otomatis milik posyandu Anda. Check-in dibuka 1 jam sebelum mulai.',
-                  style: TextStyle(fontSize: 13.5),
+                  style: TextStyle(fontSize: 16),
                 ),
               ),
               if (_error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(_error!,
-                      style: const TextStyle(color: AppColors.merah, fontSize: 15)),
+                      style: const TextStyle(color: AppColors.merah, fontSize: 16)),
                 ),
               const SizedBox(height: 16),
               Row(
