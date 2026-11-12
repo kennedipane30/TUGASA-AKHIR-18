@@ -15,10 +15,6 @@ import 'vaksin/kader_vaksin_page.dart';
 
 // Warna tampilan
 const _hijauTua = Color(0xFF065F46);
-const _hijauGelap = Color(0xFF054D3A);
-const _hijauAtas = Color(0xFF07654A);
-const _mint = Color(0xFF8CF0CB);
-const _oranye = Color(0xFFFF7A00);
 const _teksGelap = Color(0xFF0F172A);
 const _teksAbu = Color(0xFF64748B);
 const _teksBiru = Color(0xFF7C8DA6);
@@ -415,10 +411,6 @@ class _KaderHomeState extends State<KaderHome> {
         : 'Posyandu ${labelPosyandu(pos)}';
 
     final j = _jadwal;
-    final hadir = _antrean.length;
-    final diukur = _antrean.where((a) => a.sudahDiukur).length;
-    final menunggu = hadir - diukur;
-    final belumDiukur = _antrean.where((a) => !a.sudahDiukur).toList();
 
     return HomeShell(
       peran: 'Kader',
@@ -453,17 +445,11 @@ class _KaderHomeState extends State<KaderHome> {
               ],
             ),
           )
-        else ...[
+        else
           _sesiTerdekat(j),
-          _kehadiran(hadir, diukur, menunggu),
-          _antreanPendataan(),
-        ],
 
         // Layanan utama kader
         _layananUtama(),
-
-        // Menunggu pengukuran
-        if (!_memuat && _gagal == null && j != null) _menungguPengukuran(belumDiukur),
       ],
     );
   }
@@ -534,189 +520,6 @@ class _KaderHomeState extends State<KaderHome> {
                     color: _teksGelap)),
           ),
         ],
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // Kehadiran balita
-  // -------------------------------------------------------------------------
-  Widget _kotakAngka(String nilai, String label, Color bg, Color fg) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          children: [
-            Text(nilai,
-                style: TextStyle(
-                    fontSize: 30, height: 1.1, fontWeight: FontWeight.w800, color: fg)),
-            const SizedBox(height: 6),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 13.5,
-                    height: 1.25,
-                    fontWeight: FontWeight.w700,
-                    color: _teksGelap)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _kehadiran(int hadir, int diukur, int menunggu) {
-    return _kartuPutih(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _kepalaKartu(
-            Icons.groups_2_outlined,
-            'Kehadiran Balita',
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE6F8EF),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text('Hari Ini',
-                  style: TextStyle(
-                      fontSize: 13.5, fontWeight: FontWeight.w800, color: _hijauTua)),
-            ),
-          ),
-          const SizedBox(height: 16),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _kotakAngka('$hadir', 'Sudah\ncheck-in', const Color(0xFFE7F1FD),
-                    _teksGelap),
-                const SizedBox(width: 10),
-                _kotakAngka('$diukur', 'Sudah\ndiukur', const Color(0xFFE6F5EC),
-                    _hijauTua),
-                const SizedBox(width: 10),
-                _kotakAngka('$menunggu', 'Menunggu\npengukuran',
-                    const Color(0xFFFFEFDD), const Color(0xFFB45309)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: hadir == 0 ? 0 : diukur / hadir,
-              minHeight: 8,
-              backgroundColor: const Color(0xFFE9EEF3),
-              color: _hijauTua,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Center(
-            child: Text('$diukur dari $hadir balita yang check-in sudah diukur',
-                style: const TextStyle(fontSize: 13.5, color: _teksAbu)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // Antrean pendataan
-  // -------------------------------------------------------------------------
-  Widget _antreanPendataan() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_hijauAtas, _hijauGelap],
-        ),
-        boxShadow: const [
-          BoxShadow(color: Color(0x26054D3A), blurRadius: 14, offset: Offset(0, 6)),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
-        child: Stack(
-          children: [
-            Positioned(
-              right: -40,
-              bottom: -50,
-              child: Container(
-                width: 150,
-                height: 150,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.05),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 9,
-                        height: 9,
-                        decoration: const BoxDecoration(
-                            color: Color(0xFF4ADE80), shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text('Antrean Pendataan',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 21,
-                              fontWeight: FontWeight.w800)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Orang tua check-in dengan scan QR. Balita yang sudah check-in otomatis masuk antrean ini.',
-                    style: TextStyle(color: _mint, fontSize: 15, height: 1.5),
-                  ),
-                  const SizedBox(height: 18),
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Color(0x66FF7A00),
-                            blurRadius: 14,
-                            offset: Offset(0, 6)),
-                      ],
-                    ),
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _oranye,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 17),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18)),
-                      ),
-                      onPressed: _bukaAntrean,
-                      icon: const Icon(Icons.sort_rounded, size: 22),
-                      label: const Text('Antrian Pendaftaran',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 15.5)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -877,125 +680,5 @@ class _KaderHomeState extends State<KaderHome> {
       _itemAset('vaksin_anak.png', Icons.vaccines_outlined, const Color(0xFF0B7FBF),
           'Vaksin\nAnak', _bukaVaksin),
     ]);
-  }
-
-  // -------------------------------------------------------------------------
-  // Menunggu pengukuran
-  // -------------------------------------------------------------------------
-  Widget _menungguPengukuran(List<AntreanKader> belumDiukur) {
-    return _kartuPutih(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.format_list_numbered_rounded,
-                  size: 24, color: _hijauTua),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text('Menunggu Pengukuran',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: _teksGelap)),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6F8EF),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text('${belumDiukur.length} menunggu',
-                    style: const TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w800,
-                        color: _hijauTua)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          if (belumDiukur.isEmpty)
-            const Text('Tidak ada balita yang menunggu pengukuran saat ini.',
-                style: TextStyle(fontSize: 15, height: 1.4, color: _teksBiru))
-          else
-            for (final a in belumDiukur) _barisAntrean(a),
-        ],
-      ),
-    );
-  }
-
-  Widget _barisAntrean(AntreanKader a) {
-    final usia = a.usiaBulan >= 12
-        ? '${a.usiaBulan ~/ 12} th ${a.usiaBulan % 12} bln'
-        : '${a.usiaBulan} bln';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF6F8FB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE9EEF3)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: const Color(0xFFE6F8EF),
-            child: Text(a.nomor?.toString() ?? '-',
-                style: const TextStyle(
-                    color: _hijauTua, fontWeight: FontWeight.w800)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(a.nama,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        color: _teksGelap)),
-                const SizedBox(height: 2),
-                Text('${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · $usia',
-                    style: const TextStyle(fontSize: 13.5, color: _teksAbu)),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE6F8EF),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text('Sudah check-in',
-                      style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: _hijauTua)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 6),
-          SizedBox(
-            width: 92,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _hijauTua,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: _bukaAntrean,
-              child: const Text('Ukur\nSekarang',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 14, height: 1.2)),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
