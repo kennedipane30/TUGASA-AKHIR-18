@@ -150,6 +150,67 @@ type JadwalRiwayat struct {
 	JumlahTidakHadir int `json:"jumlah_tidak_hadir"`
 }
 
+// JadwalKelola: jadwal beserta jumlah pendaftar dan hak kelola sekretaris.
+// Field jadwal tetap di tingkat atas JSON (embedded), jadi role lain tidak terpengaruh.
+type JadwalKelola struct {
+	models.JadwalPosyandu
+	JumlahTerdaftar int    `json:"jumlah_terdaftar"` // terdaftar + sudah check-in
+	JumlahCheckin   int    `json:"jumlah_checkin"`
+	BolehUbah       bool   `json:"boleh_ubah"`
+	BolehBatal      bool   `json:"boleh_batal"`
+	BolehHapus      bool   `json:"boleh_hapus"`
+	AlasanKunci     string `json:"alasan_kunci"` // alasan jadwal tidak dapat diubah/dibatalkan
+}
+
+// ---------------------------------------------------------------- aturan kunci jadwal
+//
+// Menjaga integritas data pemeriksaan (prinsip CIA, Permenkes 24/2022 Pasal 29):
+//   - belum mulai, belum ada pendaftar : boleh ubah, batalkan, hapus
+//   - belum mulai, sudah ada pendaftar : boleh ubah & batalkan (orang tua diberi notifikasi),
+//                                        tidak boleh dihapus
+//   - sesi sudah dimulai / ada check-in : terkunci
+//   - sudah lewat                       : terkunci permanen (hanya dilihat)
+//   - dibatalkan                        : tidak dapat diubah; boleh dihapus bila tanpa pendaftar
+
+type izinJadwal struct {
+	ubah, batal, hapus bool
+	alasan             string
+}
+
+func totalPendaftar(r repository.RingkasanKehadiran) int {
+	return r.Terdaftar + r.Checkin + r.Batal + r.TidakHadir
+}
+
+func hitungIzin(j *models.JadwalPosyandu, r repository.RingkasanKehadiran) izinJadwal {
+	kosong := totalPendaftar(r) == 0
+	switch {
+	case jadwalSelesai(j):
+		return izinJadwal{alasan: "Jadwal sudah selesai. Data pemeriksaan dikunci dan hanya dapat dilihat."}
+	case j.Status == "dibatalkan":
+		return izinJadwal{hapus: kosong, alasan: "Jadwal sudah dibatalkan."}
+	case j.Status != "terjadwal":
+		return izinJadwal{alasan: fmt.Sprintf("Jadwal berstatus %s tidak dapat dikelola.", j.Status)}
+	case r.Checkin > 0 || r.TidakHadir > 0:
+		return izinJadwal{alasan: "Sesi sudah berjalan dan memiliki data pemeriksaan, jadwal dikunci."}
+	case !time.Now().Before(mulaiJadwal(j)):
+		return izinJadwal{alasan: "Sesi sudah dimulai, jadwal dikunci."}
+	}
+	iz := izinJadwal{ubah: true, batal: true, hapus: kosong}
+	if !kosong {
+		iz.alasan = "Sudah ada orang tua yang mendaftar. Gunakan Batalkan bila jadwal tidak jadi dilaksanakan."
+	}
+	return iz
+}
+
+// izin: menghitung hak kelola satu jadwal dari jumlah pendaftarannya.
+func (s *JadwalService) izin(j *models.JadwalPosyandu) (izinJadwal, error) {
+	ring, err := s.repo.RingkasanPendaftaran([]uuid.UUID{j.ID})
+	if err != nil {
+		return izinJadwal{}, err
+	}
+	return hitungIzin(j, ring[j.ID]), nil
+}
+
 func cekJadwal(in JadwalInput, baru bool) (time.Time, *string, error) {
 	var kosong time.Time
 	tgl, err := time.Parse("2006-01-02", strings.TrimSpace(in.Tanggal))
@@ -236,7 +297,7 @@ func (s *JadwalService) Buat(sekretarisID uint, pos string, in JadwalInput) (*mo
 	return j, nil
 }
 
-// Ubah: hanya jadwal milik posyandu sekretaris dan belum lewat.
+// Ubah: hanya jadwal milik posyandu sekretaris yang belum dimulai dan belum ada check-in.
 func (s *JadwalService) Ubah(id uuid.UUID, pos string, in JadwalInput) (*models.JadwalPosyandu, error) {
 	if err := wajibPosyandu(pos); err != nil {
 		return nil, err
@@ -251,13 +312,14 @@ func (s *JadwalService) Ubah(id uuid.UUID, pos string, in JadwalInput) (*models.
 	if err := jadwalMilik(j, pos); err != nil {
 		return nil, err
 	}
-	if j.Status != "terjadwal" {
-		return nil, konflik("jadwal berstatus %s tidak dapat diubah", j.Status)
+	iz, err := s.izin(j)
+	if err != nil {
+		return nil, err
 	}
-	if jadwalSelesai(j) {
-		return nil, konflik("jadwal sudah lewat dan tidak dapat diubah")
+	if !iz.ubah {
+		return nil, konflik("%s", iz.alasan)
 	}
-	tgl, selesai, err := cekJadwal(in, false)
+	tgl, selesai, err := cekJadwal(in, true) // tanggal baru juga tidak boleh sebelum hari ini
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +338,8 @@ func (s *JadwalService) Ubah(id uuid.UUID, pos string, in JadwalInput) (*models.
 	return j, nil
 }
 
-// Batalkan: hanya jadwal milik posyandu sekretaris dan belum lewat.
+// Batalkan: hanya jadwal milik posyandu sekretaris yang belum dimulai dan belum ada check-in.
+// Jadwal tidak dihapus; status menjadi "dibatalkan" beserta alasannya (jejak tetap ada).
 func (s *JadwalService) Batalkan(id uuid.UUID, pos, alasan string) (*models.JadwalPosyandu, error) {
 	if err := wajibPosyandu(pos); err != nil {
 		return nil, err
@@ -295,11 +358,12 @@ func (s *JadwalService) Batalkan(id uuid.UUID, pos, alasan string) (*models.Jadw
 	if err := jadwalMilik(j, pos); err != nil {
 		return nil, err
 	}
-	if j.Status == "dibatalkan" {
-		return nil, konflik("jadwal sudah dibatalkan")
+	iz, err := s.izin(j)
+	if err != nil {
+		return nil, err
 	}
-	if jadwalSelesai(j) {
-		return nil, konflik("jadwal sudah lewat dan tidak dapat dibatalkan")
+	if !iz.batal {
+		return nil, konflik("%s", iz.alasan)
 	}
 	j.Status = "dibatalkan"
 	j.AlasanBatal = alasan
@@ -310,8 +374,9 @@ func (s *JadwalService) Batalkan(id uuid.UUID, pos, alasan string) (*models.Jadw
 	return j, nil
 }
 
-// List: hanya jadwal posyandu akun yang masih terjadwal dan belum lewat.
-func (s *JadwalService) List(pos string) ([]models.JadwalPosyandu, error) {
+// List: jadwal posyandu akun yang masih terjadwal dan belum lewat,
+// beserta jumlah pendaftar dan hak kelola (ubah / batalkan / hapus).
+func (s *JadwalService) List(pos string) ([]JadwalKelola, error) {
 	if err := wajibPosyandu(pos); err != nil {
 		return nil, err
 	}
@@ -319,11 +384,32 @@ func (s *JadwalService) List(pos string) ([]models.JadwalPosyandu, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := make([]models.JadwalPosyandu, 0, len(semua))
+	aktif := []models.JadwalPosyandu{}
+	ids := []uuid.UUID{}
 	for i := range semua {
 		if semua[i].Status == "terjadwal" && !jadwalSelesai(&semua[i]) {
-			out = append(out, semua[i])
+			aktif = append(aktif, semua[i])
+			ids = append(ids, semua[i].ID)
 		}
+	}
+	ring, err := s.repo.RingkasanPendaftaran(ids)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]JadwalKelola, 0, len(aktif))
+	for i := range aktif {
+		j := aktif[i]
+		r := ring[j.ID]
+		iz := hitungIzin(&j, r)
+		out = append(out, JadwalKelola{
+			JadwalPosyandu:  j,
+			JumlahTerdaftar: r.Terdaftar + r.Checkin,
+			JumlahCheckin:   r.Checkin,
+			BolehUbah:       iz.ubah,
+			BolehBatal:      iz.batal,
+			BolehHapus:      iz.hapus,
+			AlasanKunci:     iz.alasan,
+		})
 	}
 	return out, nil
 }
@@ -363,7 +449,9 @@ func (s *JadwalService) Riwayat(pos string) ([]JadwalRiwayat, error) {
 	return out, nil
 }
 
-// Hapus: hanya jadwal milik posyandu sekretaris yang sudah lewat atau dibatalkan.
+// Hapus: hanya jadwal yang belum dimulai DAN belum pernah memiliki pendaftar.
+// Jadwal yang sudah lewat atau memiliki data tidak pernah dihapus (data tetap tersedia
+// untuk riwayat anak, grafik pertumbuhan, dan laporan SKDN).
 func (s *JadwalService) Hapus(id uuid.UUID, pos string) error {
 	if err := wajibPosyandu(pos); err != nil {
 		return err
@@ -378,8 +466,15 @@ func (s *JadwalService) Hapus(id uuid.UUID, pos string) error {
 	if err := jadwalMilik(j, pos); err != nil {
 		return err
 	}
-	if j.Status == "terjadwal" && !jadwalSelesai(j) {
-		return konflik("jadwal belum lewat, gunakan Batalkan")
+	iz, err := s.izin(j)
+	if err != nil {
+		return err
+	}
+	if !iz.hapus {
+		if iz.alasan == "" {
+			return konflik("jadwal tidak dapat dihapus")
+		}
+		return konflik("%s", iz.alasan)
 	}
 	return s.repo.DeleteJadwal(j.ID)
 }

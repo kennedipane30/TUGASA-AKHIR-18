@@ -67,6 +67,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	rekapH := handler.NewRekapHandler(service.NewRekapService(rekapRepo))
 	balitaH := handler.NewBalitaHandler(service.NewBalitaService(balitaRepo, vaksinRepo))
 	skdnH := handler.NewSkdnHandler(service.NewSkdnService(rekapRepo, skdnRepo))
+	kaderKeluargaH := handler.NewKaderKeluargaHandler(service.NewKaderKeluargaService(userRepo, keluargaRepo))
 
 	api := r.Group("/api/v1")
 	api.GET("/posyandu", authH.ListPosyandu) // publik, untuk registrasi
@@ -165,6 +166,17 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kader.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
 	kader.GET("/balita", balitaH.Daftar)
 	kader.GET("/balita/:anak_id", balitaH.Detail)
+	// Tambahkan Akun & Data Keluarga oleh kader (orang tua tanpa akun / tanpa HP)
+	kader.GET("/cek-akun", kaderKeluargaH.CekAkun) // ?nik=&no_hp= : cek langsung saat diisi
+	kader.GET("/keluarga", kaderKeluargaH.Cari)    // ?cari= nama ibu / NIK / No. HP / nama anak
+	kader.POST("/keluarga", kaderKeluargaH.Tambah) // akun + data keluarga + satu/lebih anak
+	kader.GET("/keluarga/:id", kaderKeluargaH.Detail)
+	kader.PUT("/keluarga/:id", kaderKeluargaH.UbahProfil)
+	kader.POST("/keluarga/:id/anak", kaderKeluargaH.TambahAnak)
+	kader.PUT("/keluarga/:id/anak/:anak_id", kaderKeluargaH.UbahAnak)
+	// Daftarkan anak ke sesi posyandu hari ini (walk-in)
+	kader.GET("/daftar-anak", jadwalH.CariAnakSesi) // ?cari= nama anak / nama orang tua
+	kader.POST("/daftar-anak/:anak_id", jadwalH.DaftarkanAnak)
 
 	// bidan
 	bidan := protected.Group("/bidan", middleware.RoleRequired("bidan"))

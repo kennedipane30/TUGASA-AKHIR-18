@@ -12,6 +12,8 @@ import 'pendataan/pendataan_page.dart';
 import 'riwayat/riwayat_page.dart';
 import 'rekap/balita_tidak_hadir_page.dart';
 import 'vaksin/vaksin_page.dart';
+import 'keluarga/keluarga_page.dart';
+import 'daftarkan_anak/daftarkan_anak_page.dart';
 
 // Warna tampilan
 const _hijauTua = Color(0xFF065F46);
@@ -122,6 +124,22 @@ class _KaderHomeState extends State<KaderHome> {
       context,
       MaterialPageRoute(builder: (_) => const KaderTidakHadirPage()),
     );
+  }
+
+  Future<void> _bukaKeluarga() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const KeluargaPage()),
+    );
+    _muat();
+  }
+
+  Future<void> _bukaDaftarkanAnak() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const DaftarkanAnakPage()),
+    );
+    _muat();
   }
 
   void _bukaRiwayat() {
@@ -687,6 +705,10 @@ class _KaderHomeState extends State<KaderHome> {
           const Color(0xFFB45309), 'Balita\nTidak Hadir', _bukaTidakHadir),
       _itemAset('vaksin_anak.png', Icons.vaccines_outlined, const Color(0xFF0B7FBF),
           'Vaksin\nAnak', _bukaVaksin),
+      _itemAset('data_keluarga.png', Icons.family_restroom_outlined,
+          const Color(0xFF7C3AED), 'Data\nKeluarga', _bukaKeluarga),
+      _itemAset('daftarkan_anak.png', Icons.how_to_reg_outlined, const Color(0xFF0E7490),
+          'Daftarkan\nAnak', _bukaDaftarkanAnak),
     ]);
   }
 }

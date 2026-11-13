@@ -209,6 +209,9 @@ class KaderPendataanPage extends StatefulWidget {
 class _KaderPendataanPageState extends State<KaderPendataanPage> {
   JadwalTerdekatData? _jadwal;
   List<AntreanKader> _antrean = [];
+
+  /// Filter daftar: false = Belum Dicatat, true = Sudah Dicatat.
+  bool _lihatSudah = false;
   bool _memuat = true;
   String? _gagal;
   Timer? _jam;
@@ -270,14 +273,30 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
       ..showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  /// Antrean berikutnya yang harus diukur: nomor terkecil yang belum diukur.
+  AntreanKader? get _giliran {
+    AntreanKader? g;
+    for (final a in _antrean) {
+      if (a.sudahDiukur || a.nomor == null) continue;
+      if (g == null || a.nomor! < g.nomor!) g = a;
+    }
+    return g;
+  }
+
   Future<void> _ukur(AntreanKader a) async {
     final mulai = _mulaiNanti;
     if (mulai != null) {
       _snack('Sesi belum dimulai. Pendataan dapat dilakukan mulai pukul ${_jamMenit(mulai)} WIB');
       return;
     }
+    // Pengukuran harus berurutan sesuai nomor antrean.
+    final g = _giliran;
+    if (!a.sudahDiukur && g != null && g.pendaftaranId != a.pendaftaranId) {
+      _snack('Catat sesuai urutan. Selesaikan antrean ${g.kodeNomor} terlebih dahulu.');
+      return;
+    }
     if (a.sudahDicatatBidan) {
-      _snack('Data ${a.nama} sudah dicatat bidan dan tidak dapat diubah');
+      _snack('Antrean ${a.kodeNomor} sudah dicatat bidan dan tidak dapat diubah');
       return;
     }
 
@@ -310,7 +329,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: Text('Hasil penimbangan ${a.nama}'),
+          title: Text('Hasil Penimbangan · ${a.kodeNomor}'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -382,7 +401,6 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
   @override
   Widget build(BuildContext context) {
     final j = _jadwal;
-    final diukur = _antrean.where((a) => a.sudahDiukur).length;
     final mulaiNanti = _mulaiNanti;
 
     return Scaffold(
@@ -454,89 +472,38 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                     else ...[
                       SectionCard(
                         title: 'Sesi Posyandu',
-                        icon: Icons.event_note,
-                        trailing: Pill(
-                          '${_antrean.length} check-in',
-                          bg: AppColors.hijauMuda,
-                          fg: AppColors.hijau,
-                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '${formatTanggal(j.tanggal)} · ${j.jam} WIB',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 17,
-                              ),
-                            ),
-                            if (j.lokasi.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                j.lokasi,
-                                style: const TextStyle(
-                                  fontSize: 16.5,
-                                  color: AppColors.teksRedup,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: StatBox(
-                                    nilai: '${_antrean.length}',
-                                    label: 'Sudah\ncheck-in',
-                                    bg: AppColors.biruMuda,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: StatBox(
-                                    nilai: '$diukur',
-                                    label: 'Sudah\ndiukur',
-                                    bg: AppColors.hijauMuda,
-                                    fg: AppColors.hijau,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: StatBox(
-                                    nilai: '${_antrean.length - diukur}',
-                                    label: 'Menunggu\npengukuran',
-                                    bg: AppColors.kuningMuda,
-                                    fg: AppColors.kuning,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            _barisSesi('Tanggal', formatTanggal(j.tanggal)),
+                            const SizedBox(height: 4),
+                            _barisSesi('Pukul', '${j.jam} WIB'),
                           ],
                         ),
                       ),
-                      SectionCard(
-                        title: 'Antrean Pendataan',
-                        icon: Icons.format_list_numbered,
-                        trailing: const Text(
-                          'Ketuk untuk mendata',
-                          style: TextStyle(
-                            fontSize: 15.5,
-                            color: AppColors.teksRedup,
+                      if (_antrean.isEmpty)
+                        const SectionCard(
+                          child: Text(
+                            'Belum ada anak. Data anak masuk ke sini setelah orang tua melakukan check-in dengan scan QR.',
+                            style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
                           ),
+                        )
+                      else ...[
+                        _filterCatat(
+                          sudah: _lihatSudah,
+                          jumlahBelum: _antrean.where((a) => !a.sudahDiukur).length,
+                          jumlahSudah: _antrean.where((a) => a.sudahDiukur).length,
+                          onPilih: (v) => setState(() => _lihatSudah = v),
                         ),
-                        child: _antrean.isEmpty
-                            ? const Text(
-                                'Belum ada anak. Data anak masuk ke sini setelah orang tua melakukan check-in dengan scan QR.',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: AppColors.teksRedup,
-                                ),
-                              )
-                            : Column(
-                                children: [
-                                  for (final a in _antrean) _baris(a),
-                                ],
-                              ),
-                      ),
+                        if (!_antrean.any((a) => a.sudahDiukur == _lihatSudah))
+                          SectionCard(
+                            child: Text(
+                              _lihatSudah ? 'Belum ada anak yang dicatat.' : 'Semua anak sudah dicatat.',
+                              style: const TextStyle(fontSize: 16, color: AppColors.teksRedup),
+                            ),
+                          ),
+                        for (final a in _antrean.where((a) => a.sudahDiukur == _lihatSudah)) _baris(a),
+                      ],
                     ],
                   ],
                 ),
@@ -548,93 +515,47 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
     );
   }
 
+  /// Kartu antrean: hanya nomor antrean dan status (nama anak tidak
+  /// ditampilkan di daftar; tetap tampil di halaman Catat / Edit).
   Widget _baris(AntreanKader a) {
+    final belumMulai = _mulaiNanti != null;
+    final selesai = a.sudahDiukur;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: AppColors.latar,
-        borderRadius: BorderRadius.circular(12),
+        color: selesai ? AppColors.hijauMuda : Colors.white,
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           onTap: () => _ukur(a),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: selesai ? const Color(0xFFBFE5D0) : const Color(0xFFE6ECE8)),
+            ),
             child: Row(
               children: [
-                Container(
-                  width: 62,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.hijauMuda,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    a.kodeNomor,
-                    style: const TextStyle(
-                      color: AppColors.hijau,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        a.nama,
+                        a.kodeNomor,
                         style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 17,
+                          fontSize: 30,
+                          height: 1.15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
                         ),
                       ),
-                      Text(
-                        '${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${a.usia}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: AppColors.teksRedup,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          a.sudahDiukur
-                              ? const Pill(
-                                  'Sudah diukur',
-                                  icon: Icons.check,
-                                )
-                              : const Pill(
-                                  'Belum diukur',
-                                  bg: AppColors.kuningMuda,
-                                  fg: AppColors.kuning,
-                                ),
-                          ...pillPenilaian(a.penilaian, ringkas: true),
-                          if (a.sudahDicatatBidan)
-                            const Pill(
-                              'Dicatat bidan',
-                              bg: AppColors.biruMuda,
-                              fg: AppColors.biru,
-                            )
-                          else if (a.sudahDiukur)
-                            const Pill(
-                              'Menunggu bidan',
-                              bg: AppColors.biruMuda,
-                              fg: AppColors.biru,
-                            ),
-                        ],
-                      ),
+                      if (!a.sudahDiukur && !belumMulai && _giliran?.pendaftaranId == a.pendaftaranId) ...[
+                        const SizedBox(height: 4),
+                        const Text('Catat sekarang', style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500, color: Color(0xFF0F172A))),
+                      ],
                     ],
                   ),
-                ),
-                Icon(
-                  a.sudahDicatatBidan || _mulaiNanti != null
-                      ? Icons.lock_outline
-                      : Icons.chevron_right,
-                  color: AppColors.teksRedup,
                 ),
               ],
             ),
@@ -643,4 +564,61 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
       ),
     );
   }
+}
+
+/// Satu baris keterangan sesi: "Tanggal : 13 November 2026" (titik dua sejajar).
+Widget _barisSesi(String label, String nilai) => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 78,
+          child: Text(label, style: const TextStyle(fontSize: 17, color: AppColors.teksRedup)),
+        ),
+        const Text(': ', style: TextStyle(fontSize: 17, color: AppColors.teksRedup)),
+        Expanded(
+          child: Text(nilai, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+        ),
+      ],
+    );
+
+/// Filter daftar: "Belum Dicatat (n)" | "Sudah Dicatat (n)".
+Widget _filterCatat({
+  required bool sudah,
+  required int jumlahBelum,
+  required int jumlahSudah,
+  required ValueChanged<bool> onPilih,
+}) {
+  Widget chip(String label, bool nilai) {
+    final aktif = sudah == nilai;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: aktif,
+        showCheckmark: false,
+        selectedColor: const Color(0xFF065F46),
+        backgroundColor: Colors.white,
+        side: BorderSide(color: aktif ? const Color(0xFF065F46) : const Color(0xFFE6ECE8)),
+        labelStyle: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: aktif ? Colors.white : const Color(0xFF0F172A),
+        ),
+        onSelected: (_) => onPilih(nilai),
+      ),
+    );
+  }
+
+  return Padding(
+    padding: const EdgeInsets.only(top: 2, bottom: 12),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          chip('Belum Dicatat ($jumlahBelum)', false),
+          chip('Sudah Dicatat ($jumlahSudah)', true),
+        ],
+      ),
+    ),
+  );
 }

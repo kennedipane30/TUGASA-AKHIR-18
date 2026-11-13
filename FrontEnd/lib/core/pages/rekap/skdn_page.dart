@@ -368,8 +368,7 @@ class _SkdnViewState extends State<SkdnView> {
 
   // ------------------------------------------------------------ persentase
 
-  Widget _barisPersen(String judul, String rumus, double nilai, Color warna, {double? target}) {
-    final capai = target == null || nilai >= target;
+  Widget _barisPersen(String judul, String rumus, double nilai, Color warna) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -394,21 +393,7 @@ class _SkdnViewState extends State<SkdnView> {
             ),
           ),
           const SizedBox(height: 4),
-          Row(
-            children: [
-              Text(rumus, style: const TextStyle(fontSize: 14.5, color: AppColors.teksRedup)),
-              const Spacer(),
-              if (target != null)
-                Text(
-                  capai ? 'Target ${_persen(target)} tercapai' : 'Belum mencapai target ${_persen(target)}',
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w500,
-                    color: capai ? AppColors.hijau : AppColors.merah,
-                  ),
-                ),
-            ],
-          ),
+          Text(rumus, style: const TextStyle(fontSize: 14.5, color: AppColors.teksRedup)),
         ],
       ),
     );
@@ -426,8 +411,7 @@ class _SkdnViewState extends State<SkdnView> {
       child: Column(
         children: [
           _barisPersen('Tingkat kehadiran balita', 'Datang ditimbang ÷ seluruh balita (D/S)', b.persenDS,
-              d.capaiTarget ? AppColors.hijau : AppColors.merah,
-              target: d.targetDS),
+              d.capaiTarget ? AppColors.hijau : AppColors.merah),
           _barisPersen('Balita yang tumbuh baik dari yang ditimbang', 'Berat badan naik ÷ datang ditimbang (N/D)',
               b.persenND, AppColors.biru),
           _barisPersen('Balita yang punya Buku KIA', 'Punya Buku KIA ÷ seluruh balita (K/S)', b.persenKS, _abu),

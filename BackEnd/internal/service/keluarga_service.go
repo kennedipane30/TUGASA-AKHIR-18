@@ -88,7 +88,9 @@ func strPtr(s string) *string {
 	return &s
 }
 
-type KeluargaService struct{ repo *repository.KeluargaRepository }
+type KeluargaService struct {
+	repo *repository.KeluargaRepository
+}
 
 func NewKeluargaService(r *repository.KeluargaRepository) *KeluargaService {
 	return &KeluargaService{r}
@@ -112,23 +114,26 @@ func (s *KeluargaService) Get(uid uint) (*KeluargaResponse, error) {
 	}, nil
 }
 
-func (s *KeluargaService) SimpanProfil(uid uint, in ProfilInput) (*KeluargaResponse, error) {
+// profilData: validasi dan konversi isian profil keluarga.
+// Dipakai bersama oleh orang tua (Data Orang Tua) dan kader (Tambahkan Akun / Edit Keluarga).
+func profilData(in ProfilInput) (repository.ProfilData, error) {
+	var kosong repository.ProfilData
 	tglIbu, err := parseTgl(in.TglLahirIbu)
 	if err != nil {
-		return nil, err
+		return kosong, err
 	}
 	if len(in.RT) > 3 || len(in.RW) > 3 || !reAngka.MatchString(in.RT) || !reAngka.MatchString(in.RW) {
-		return nil, invalid("RT/RW harus angka maksimal 3 digit")
+		return kosong, invalid("RT/RW harus angka maksimal 3 digit")
 	}
 
 	var ayah *models.OrangTua
 	if !in.TanpaAyah && in.Ayah != nil && strings.TrimSpace(in.Ayah.Nama) != "" {
 		if err := cekNIK(in.Ayah.NIK); err != nil {
-			return nil, err
+			return kosong, err
 		}
 		tglAyah, err := parseTgl(in.Ayah.TglLahir)
 		if err != nil {
-			return nil, err
+			return kosong, err
 		}
 		ayah = &models.OrangTua{
 			PeranKeluarga: "ayah",
@@ -140,7 +145,7 @@ func (s *KeluargaService) SimpanProfil(uid uint, in ProfilInput) (*KeluargaRespo
 		}
 	}
 
-	err = s.repo.SimpanProfil(uid, repository.ProfilData{
+	return repository.ProfilData{
 		Alamat:       strings.TrimSpace(in.Alamat),
 		RT:           in.RT,
 		RW:           in.RW,
@@ -148,8 +153,15 @@ func (s *KeluargaService) SimpanProfil(uid uint, in ProfilInput) (*KeluargaRespo
 		TglLahirIbu:  tglIbu,
 		PekerjaanIbu: strings.TrimSpace(in.PekerjaanIbu),
 		Ayah:         ayah,
-	})
+	}, nil
+}
+
+func (s *KeluargaService) SimpanProfil(uid uint, in ProfilInput) (*KeluargaResponse, error) {
+	p, err := profilData(in)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.repo.SimpanProfil(uid, p); err != nil {
 		return nil, err
 	}
 	return s.Get(uid)

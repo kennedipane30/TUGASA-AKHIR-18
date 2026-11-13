@@ -22,6 +22,14 @@ class JadwalItem {
   final String status;
   final String alasanBatal;
 
+  /// Hak kelola dari server (aturan kunci jadwal ada di backend).
+  final int jumlahTerdaftar;
+  final int jumlahCheckin;
+  final bool bolehUbah;
+  final bool bolehBatal;
+  final bool bolehHapus;
+  final String alasanKunci;
+
   JadwalItem({
     required this.id,
     required this.posyandu,
@@ -31,6 +39,12 @@ class JadwalItem {
     required this.lokasi,
     required this.status,
     required this.alasanBatal,
+    this.jumlahTerdaftar = 0,
+    this.jumlahCheckin = 0,
+    this.bolehUbah = true,
+    this.bolehBatal = true,
+    this.bolehHapus = false,
+    this.alasanKunci = '',
   });
 
   factory JadwalItem.fromApi(Map<String, dynamic> j) {
@@ -50,8 +64,17 @@ class JadwalItem {
       lokasi: j['lokasi']?.toString() ?? '',
       status: j['status']?.toString() ?? 'terjadwal',
       alasanBatal: j['alasan_batal']?.toString() ?? '',
+      jumlahTerdaftar: int.tryParse(j['jumlah_terdaftar']?.toString() ?? '') ?? 0,
+      jumlahCheckin: int.tryParse(j['jumlah_checkin']?.toString() ?? '') ?? 0,
+      bolehUbah: j['boleh_ubah'] != false,
+      bolehBatal: j['boleh_batal'] != false,
+      bolehHapus: j['boleh_hapus'] == true,
+      alasanKunci: j['alasan_kunci']?.toString() ?? '',
     );
   }
+
+  /// Tidak ada aksi yang boleh dilakukan (sesi berjalan / sudah ada check-in).
+  bool get terkunci => !bolehUbah && !bolehBatal && !bolehHapus;
 
   bool get aktif => status == 'terjadwal';
 
@@ -232,6 +255,35 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
       await ApiClient.dio.post('/sekretaris/jadwal/${j.id}/batalkan',
           data: {'alasan': alasan}, options: opsiJadwal);
       _snack('Jadwal dibatalkan');
+      _muat();
+    } catch (e) {
+      _snack(pesanErrorJadwal(e));
+    }
+  }
+
+  Future<void> _hapus(JadwalItem j) async {
+    final ya = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus jadwal?'),
+        content: Text(
+          '${tglPanjangJadwal(j.tanggal)}\n\nJadwal ini belum memiliki pendaftar, sehingga dapat dihapus.',
+          style: const TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Kembali')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.merah, foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Hapus Jadwal'),
+          ),
+        ],
+      ),
+    );
+    if (ya != true) return;
+    try {
+      await ApiClient.dio.delete('/sekretaris/jadwal/${j.id}', options: opsiJadwal);
+      _snack('Jadwal dihapus');
       _muat();
     } catch (e) {
       _snack(pesanErrorJadwal(e));
@@ -454,14 +506,14 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.hijauMuda,
+                  color: j.terkunci ? AppColors.kuningMuda : AppColors.hijauMuda,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text('Terjadwal',
+                child: Text(j.terkunci ? 'Terkunci' : 'Terjadwal',
                     style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.hijau)),
+                        color: j.terkunci ? AppColors.kuning : AppColors.hijau)),
               ),
             ],
           ),
@@ -476,47 +528,54 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
             spacing: 8,
             runSpacing: 6,
             children: [
-              _chip('Balita Terdaftar', _biru, const Color(0xFFEAF4FB)),
+              _chip('${j.jumlahTerdaftar} balita terdaftar', _biru, const Color(0xFFEAF4FB)),
               _chip('Imunisasi & Gizi', _oranye, const Color(0xFFFFF1E6)),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: hijauTombolJadwal,
-                      side: const BorderSide(color: hijauTombolJadwal),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    ),
-                    onPressed: () => _form(awal: j),
-                    child: const Text('Edit',
-                        style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
-                  ),
-                ),
+          if (j.alasanKunci.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE3F2FD),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFBFDFF7)),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.merah,
-                      side: const BorderSide(color: AppColors.merah),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    ),
-                    onPressed: () => _batalkan(j),
-                    child: const Text('Batalkan',
-                        style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
-                  ),
-                ),
-              ),
-            ],
-          ),
+              child: Text(j.alasanKunci,
+                  style: const TextStyle(fontSize: 15, height: 1.35, color: Color(0xFF2563EB))),
+            ),
+          ],
+          if (!j.terkunci) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (j.bolehUbah)
+                  Expanded(child: _tombol('Edit', hijauTombolJadwal, () => _form(awal: j))),
+                if (j.bolehUbah && (j.bolehBatal || j.bolehHapus)) const SizedBox(width: 8),
+                if (j.bolehHapus)
+                  Expanded(child: _tombol('Hapus', AppColors.merah, () => _hapus(j)))
+                else if (j.bolehBatal)
+                  Expanded(child: _tombol('Batalkan', AppColors.merah, () => _batalkan(j))),
+              ],
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _tombol(String teks, Color warna, VoidCallback onTap) {
+    return SizedBox(
+      height: 40,
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: warna,
+          side: BorderSide(color: warna),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        onPressed: onTap,
+        child: Text(teks, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
       ),
     );
   }
@@ -593,4 +652,4 @@ class _DialogBatalState extends State<_DialogBatal> {
       ],
     );
   }
-}
+} 
