@@ -1,6 +1,6 @@
 // lib/features/auth/auth_service.dart
 import 'package:dio/dio.dart';
-import '../../core/api_client.dart';
+import '../../core/config/api_client.dart';
 import '../../core/token_storage.dart';
 
 /// Autentikasi: semua role masuk dengan identitas (No. HP / NIK / username) + PIN 6 digit.

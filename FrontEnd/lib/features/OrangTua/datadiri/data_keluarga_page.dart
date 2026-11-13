@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 import 'data_anak_page.dart';
 import 'data_orang_tua_page.dart';
 
@@ -63,29 +63,11 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
     widget.onKembali?.call();
   }
 
-  Widget _status(int selesai) {
-    if (_lengkap) {
-      return const KartuKeluarga(
-        color: Color(0xFFE3F6EC),
-        child: Row(
-          children: [
-            Icon(Icons.check_circle, color: kHijauGelap),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text('Data keluarga sudah lengkap',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      color: kHijauTua)),
-            ),
-          ],
-        ),
-      );
-    }
+  /// Kartu kuning bila data orang tua belum lengkap.
+  Widget _belumLengkap(int selesai) {
     return KartuKeluarga(
       color: AppColors.kuningMuda,
       title: 'Data Keluarga',
-      icon: Icons.assignment_ind_outlined,
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
@@ -121,7 +103,6 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
   Widget _tombol({
     required String judul,
     required String sub,
-    required IconData icon,
     required bool terisi,
     required VoidCallback onTap,
   }) {
@@ -131,55 +112,26 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
       borderRadius: BorderRadius.circular(18),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: terisi ? kHijauTua : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: kHijauTua, width: 1.4),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(9),
-              decoration: BoxDecoration(
-                color: terisi
-                    ? Colors.white.withOpacity(.15)
-                    : const Color(0xFFD7F0E3),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon,
-                  size: 22, color: terisi ? Colors.white : kHijauTua),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(judul,
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 16, color: fg)),
-                  const SizedBox(height: 2),
-                  Text(sub,
-                      style: TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w600,
-                          color: terisi
-                              ? const Color(0xFFA8F0C6)
-                              : AppColors.teksRedup)),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: terisi
-                    ? Colors.white.withOpacity(.15)
-                    : const Color(0xFFD7F0E3),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.chevron_right,
-                  size: 18, color: terisi ? Colors.white : kHijauTua),
-            ),
+            Text(judul,
+                style: TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: 16, color: fg)),
+            const SizedBox(height: 2),
+            Text(sub,
+                style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w600,
+                    color: terisi
+                        ? const Color(0xFFA8F0C6)
+                        : AppColors.teksRedup)),
           ],
         ),
       ),
@@ -196,8 +148,6 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
         color: AppColors.kuningMuda,
         child: Row(
           children: [
-            const Icon(Icons.cloud_off, color: AppColors.kuning),
-            const SizedBox(width: 10),
             const Expanded(
               child: Text('Gagal memuat data keluarga',
                   style: TextStyle(fontWeight: FontWeight.w500, fontSize: 15.5)),
@@ -211,35 +161,42 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _status(selesai),
+        if (!_lengkap) _belumLengkap(selesai),
         KartuKeluarga(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.people_outline, size: 22, color: kHijauTua),
-                  SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Kelola Data Keluarga',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                              color: kHijauTua)),
-                      Text('Pilih berkas profil yang ingin diperbarui',
-                          style: TextStyle(
-                              fontSize: 15.5, color: AppColors.teksRedup)),
-                    ],
+              const Text('Kelola Data Keluarga',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: kHijauTua)),
+              const SizedBox(height: 2),
+              const Text('Pilih berkas profil yang ingin diperbarui',
+                  style:
+                      TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
+              if (_lengkap) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE3F6EC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFBFE5D0)),
                   ),
-                ],
-              ),
+                  child: const Text('Data keluarga sudah lengkap',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15.5,
+                          color: kHijauTua)),
+                ),
+              ],
               const SizedBox(height: 14),
               _tombol(
                 judul: 'Data Orang Tua',
                 sub: 'Ibu & Ayah / Wali',
-                icon: Icons.person_add_alt_1_outlined,
                 terisi: true,
                 onTap: _bukaOrtu,
               ),
@@ -248,30 +205,8 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
                 judul:
                     _jumlahAnak > 0 ? 'Data Anak ($_jumlahAnak)' : 'Data Anak',
                 sub: 'Balita & Tumbuh Kembang',
-                icon: Icons.sentiment_satisfied_alt_outlined,
                 terisi: false,
                 onTap: _bukaAnak,
-              ),
-            ],
-          ),
-        ),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE3F6EC),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFBFE5D0)),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.lock_outline, size: 18, color: kHijauGelap),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Data keluarga tersimpan aman secara terenkripsi di perangkat Anda dan otomatis disinkronkan ke server Posyandu Care saat terhubung internet.',
-                  style: TextStyle(fontSize: 15.5, color: kHijauGelap),
-                ),
               ),
             ],
           ),

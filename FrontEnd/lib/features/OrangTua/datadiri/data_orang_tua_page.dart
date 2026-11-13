@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/api_client.dart';
-import '../../../core/app_colors.dart';
+import '../../../core/config/api_client.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../auth/auth_provider.dart';
 
 // ---------------------------------------------------------------------------

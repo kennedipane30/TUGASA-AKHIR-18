@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../core/app_colors.dart';
-import '../../../core/balita_detail_page.dart';
-import '../../../core/common_widgets.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/pages/balita/balita_detail_page.dart';
+import '../../../core/widgets/common_widgets.dart';
 import '../../../service/balita_service.dart';
-import '../../Sekretaris/rekap/admin_rekap_page.dart';
+import '../../../core/pages/rekap/rekap_posyandu_page.dart';
 
 /// Bidan: daftar anak berisiko (deteksi dini) berdasarkan penimbangan terakhir.
 /// Risiko tinggi: gizi buruk, BGM, 2T, sangat pendek.

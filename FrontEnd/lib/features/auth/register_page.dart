@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/pin_util.dart';
-import '../../core/posyandu.dart';
+import '../../core/utils/posyandu.dart';
 import 'auth_service.dart';
 
 const _hijau = Color(0xFF0B6B4D);
@@ -98,8 +98,8 @@ class _RegisterPageState extends State<RegisterPage> {
       filled: true,
       fillColor: _isiField,
       contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-      border: _garis(_teal.withOpacity(0.55)),
-      enabledBorder: _garis(_teal.withOpacity(0.55)),
+      border: _garis(_teal.withValues(alpha: 0.55)),
+      enabledBorder: _garis(_teal.withValues(alpha: 0.55)),
       focusedBorder: _garis(_teal, lebar: 1.8),
       errorBorder: _garis(Colors.red.shade300),
       focusedErrorBorder: _garis(Colors.red.shade400, lebar: 1.8),
@@ -157,13 +157,15 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ),
         const SizedBox(width: 10),
-        Text(
+        Flexible(
+          child: Text(
           judul,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 18,
             color: Colors.black87,
           ),
+        ),
         ),
       ],
     );
@@ -178,9 +180,9 @@ class _RegisterPageState extends State<RegisterPage> {
               margin: const EdgeInsets.symmetric(horizontal: 10),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: _teal.withOpacity(0.12),
+                color: _teal.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _teal.withOpacity(0.3)),
+                border: Border.all(color: _teal.withValues(alpha: 0.3)),
               ),
               child: const Text(
                 'LANGKAH SELANJUTNYA',
@@ -281,12 +283,14 @@ class _RegisterPageState extends State<RegisterPage> {
                 children: [
                   Icon(Icons.verified_user, color: Colors.white, size: 18),
                   SizedBox(width: 8),
-                  Text(
-                    'Khusus Orang Tua / Wali Balita',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      color: Colors.white,
+                  Flexible(
+                    child: Text(
+                      'Khusus Orang Tua / Wali Balita',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -496,7 +500,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: _oranye.withOpacity(0.4),
+                    color: _oranye.withValues(alpha: 0.4),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -583,9 +587,12 @@ class _RegisterPageState extends State<RegisterPage> {
               children: [
                 CircleAvatar(radius: 3, backgroundColor: _teal),
                 SizedBox(width: 6),
-                Text(
-                  'Mendukung pencatatan luring & sinkronisasi otomatis',
-                  style: TextStyle(fontSize: 14.5, color: Colors.black45),
+                Flexible(
+                  child: Text(
+                    'Mendukung pencatatan luring & sinkronisasi otomatis',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14.5, color: Colors.black45),
+                  ),
                 ),
               ],
             ),

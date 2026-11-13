@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../core/app_colors.dart';
-import '../core/common_widgets.dart';
+import '../core/theme/app_colors.dart';
+import '../core/widgets/common_widgets.dart';
 
 // ============================================================================
 // PENILAIAN PENIMBANGAN (KBM): N / T / O / B, 2T, BGM

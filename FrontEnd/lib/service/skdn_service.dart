@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import '../core/api_client.dart';
+import '../core/config/api_client.dart';
 
 // ============================================================================
 // MODEL RINGKASAN PENIMBANGAN (SKDN)

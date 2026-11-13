@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/app_colors.dart';
+import '../../core/theme/app_colors.dart';
 
 /// Papan angka PIN: 6 titik indikator dan tombol 0-9 serta hapus.
 class PinPad extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
-import '../../core/api_client.dart';
-import '../../core/posyandu.dart';
+import '../../core/config/api_client.dart';
+import '../../core/utils/posyandu.dart';
 
 class StaffAkun {
   final int id;
@@ -10,6 +10,7 @@ class StaffAkun {
   final String role; // kader | bidan
   final String posyandu;
   final bool aktif;
+  final String noHp;
 
   const StaffAkun({
     required this.id,
@@ -18,6 +19,7 @@ class StaffAkun {
     required this.role,
     required this.posyandu,
     required this.aktif,
+    this.noHp = '',
   });
 
   String get labelPeran => role == 'bidan' ? 'Bidan' : 'Kader';
@@ -30,6 +32,7 @@ class StaffAkun {
         role: (j['role'] ?? '').toString(),
         posyandu: (j['posyandu'] ?? '').toString(),
         aktif: j['is_active'] == true,
+        noHp: (j['no_hp'] ?? '').toString(),
       );
 }
 
@@ -59,6 +62,7 @@ class AdminService {
   Future<void> tambah({
     required String nama,
     required String username,
+    required String noHp,
     required String pin,
     required String role,
   }) async {
@@ -66,6 +70,7 @@ class AdminService {
       await ApiClient.dio.post('/sekretaris/users', data: {
         'nama': nama,
         'username': username,
+        'no_hp': noHp,
         'pin': pin,
         'role': role,
       });
@@ -78,6 +83,7 @@ class AdminService {
     int id, {
     required String nama,
     required String username,
+    required String noHp,
     required String role,
     String? pin,
   }) async {
@@ -85,6 +91,7 @@ class AdminService {
       await ApiClient.dio.put('/sekretaris/users/$id', data: {
         'nama': nama,
         'username': username,
+        'no_hp': noHp,
         'role': role,
         if (pin != null && pin.isNotEmpty) 'pin': pin,
       });

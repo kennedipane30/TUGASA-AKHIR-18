@@ -14,6 +14,7 @@ type staffResponse struct {
 	ID       uint   `json:"id"`
 	Nama     string `json:"nama"`
 	Username string `json:"username"`
+	NoHP     string `json:"no_hp"`
 	Role     string `json:"role"`
 	Posyandu string `json:"posyandu"`
 	IsActive bool   `json:"is_active"`
@@ -24,10 +25,15 @@ func toStaff(u *models.User) staffResponse {
 	if u.Username != nil {
 		username = *u.Username
 	}
+	noHP := ""
+	if u.NoHP != nil {
+		noHP = *u.NoHP
+	}
 	return staffResponse{
 		ID:       u.ID,
 		Nama:     u.Nama,
 		Username: username,
+		NoHP:     noHP,
 		Role:     string(u.Role),
 		Posyandu: u.Posyandu,
 		IsActive: u.IsActive,
@@ -84,7 +90,7 @@ func (h *AuthHandler) UpdateStaff(c *gin.Context) {
 	}
 	var in service.UpdateStaffInput
 	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "nama, username (min. 4 karakter), dan No. HP (10-15 digit angka) wajib diisi dengan benar"})
 		return
 	}
 	u, err := h.svc.UpdateStaff(id, pos, in)

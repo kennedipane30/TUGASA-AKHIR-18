@@ -86,8 +86,8 @@ class _LoginPageState extends State<LoginPage> {
         horizontal: 14,
         vertical: 12,
       ),
-      border: garis(_teal.withOpacity(0.55), 1.4),
-      enabledBorder: garis(_teal.withOpacity(0.55), 1.4),
+      border: garis(_teal.withValues(alpha: 0.55), 1.4),
+      enabledBorder: garis(_teal.withValues(alpha: 0.55), 1.4),
       focusedBorder: garis(_teal, 1.8),
     );
   }
@@ -160,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _kartu(bool loading) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+      padding: EdgeInsets.fromLTRB(20, 14, 20, 24 + MediaQuery.of(context).padding.bottom),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -287,7 +287,7 @@ class _LoginPageState extends State<LoginPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: _oranye.withOpacity(0.4),
+                    color: _oranye.withValues(alpha: 0.4),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -368,17 +368,16 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 CircleAvatar(radius: 3, backgroundColor: _teal),
                 SizedBox(width: 6),
-                Text(
-                  'Mendukung pencatatan luring & sinkronisasi otomatis',
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    color: Colors.black45,
+                Flexible(
+                  child: Text(
+                    'Mendukung pencatatan luring & sinkronisasi otomatis',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14.5, color: Colors.black45),
                   ),
                 ),
               ],
             ),
           ),
-          const Spacer(),
         ],
       ),
     );
@@ -402,14 +401,14 @@ class _LoginPageState extends State<LoginPage> {
           bottom: false,
           child: CustomScrollView(
             slivers: [
-              SliverFillRemaining(
+              SliverToBoxAdapter(child: _kepala()),
+              SliverToBoxAdapter(child: _kartu(loading)),
+              // Sisa layar di bawah kartu diisi putih, agar kartu tampak
+              // menyambung sampai bawah. Tingginya 0 bila layar sudah penuh,
+              // jadi tidak pernah overflow.
+              const SliverFillRemaining(
                 hasScrollBody: false,
-                child: Column(
-                  children: [
-                    _kepala(),
-                    Expanded(child: _kartu(loading)),
-                  ],
-                ),
+                child: ColoredBox(color: Colors.white),
               ),
             ],
           ),

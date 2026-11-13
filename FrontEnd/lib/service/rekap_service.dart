@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import '../core/api_client.dart';
+import '../core/config/api_client.dart';
 
 // ============================================================================
 // MODEL REKAP POSYANDU
@@ -366,14 +366,17 @@ class RekapService {
   }
 
   /// Sekretaris: rekap status gizi satu bulan.
-  Future<RekapGizi> gizi(DateTime bulan) async =>
-      RekapGizi.fromJson(await _get('/sekretaris/rekap/gizi', {'bulan': bulanApi(bulan)}));
+  /// Rekap status gizi. [prefix] '/sekretaris' atau '/bidan'.
+  Future<RekapGizi> gizi(DateTime bulan, {String prefix = '/sekretaris'}) async =>
+      RekapGizi.fromJson(await _get('$prefix/rekap/gizi', {'bulan': bulanApi(bulan)}));
 
   /// Sekretaris: rekap Vitamin A dan obat cacing. [periode] 1 = Februari, 2 = Agustus.
-  Future<RekapSuplemen> suplemen(int tahun, int periode) async => RekapSuplemen.fromJson(
-      await _get('/sekretaris/rekap/suplemen', {'tahun': tahun, 'periode': periode}));
+  /// Rekap Vitamin A & obat cacing. [prefix] '/sekretaris' atau '/bidan'.
+  Future<RekapSuplemen> suplemen(int tahun, int periode, {String prefix = '/sekretaris'}) async =>
+      RekapSuplemen.fromJson(
+          await _get('$prefix/rekap/suplemen', {'tahun': tahun, 'periode': periode}));
 
-  /// Balita tidak hadir. [prefix] '/sekretaris' atau '/kader'.
+  /// Balita tidak hadir. [prefix] '/sekretaris', '/bidan', atau '/kader'.
   Future<RekapTidakHadir> tidakHadir(String prefix, DateTime bulan) async =>
       RekapTidakHadir.fromJson(await _get('$prefix/rekap/tidak-hadir', {'bulan': bulanApi(bulan)}));
 }

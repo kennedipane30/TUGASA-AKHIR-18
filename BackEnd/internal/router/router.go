@@ -91,7 +91,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	protected.POST("/notifikasi/baca-semua", notifH.BacaSemua)
 	protected.PATCH("/notifikasi/:id/baca", notifH.Baca)
 	protected.DELETE("/notifikasi/:id", notifH.Hapus)
-	protected.POST("/notifikasi/hapus", notifH.HapusBanyak)       // hapus notifikasi terpilih
+	protected.POST("/notifikasi/hapus", notifH.HapusBanyak)      // hapus notifikasi terpilih
 	protected.POST("/notifikasi/hapus-semua", notifH.HapusSemua) // ?sudah_dibaca=true: hanya yang sudah dibaca
 	protected.POST("/perangkat/token", notifH.SimpanToken)
 	protected.DELETE("/perangkat/token", notifH.HapusToken)
@@ -186,6 +186,11 @@ func Setup(db *gorm.DB) *gin.Engine {
 	bidan.GET("/balita/:anak_id", balitaH.Detail)
 	// ringkasan penimbangan (SKDN)
 	bidan.GET("/skdn", skdnH.Hitung)
+	// rekap posyandu: status gizi, Vitamin A & obat cacing, balita tidak hadir
+	// (sama dengan sekretaris; data dibatasi ke posyandu akun bidan)
+	bidan.GET("/rekap/gizi", rekapH.Gizi)
+	bidan.GET("/rekap/suplemen", rekapH.Suplemen)
+	bidan.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
 
 	return r
 }

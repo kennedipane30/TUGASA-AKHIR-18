@@ -1,6 +1,9 @@
 package repository
 
 import (
+	"fmt"
+	"time"
+
 	"posyandu-api/internal/models"
 
 	"gorm.io/gorm"
@@ -54,10 +57,10 @@ func (r *UserRepository) ExistsExcept(field, value string, exceptID uint) bool {
 	return n > 0
 }
 
-// FindByRoles: akun dengan role tertentu pada satu posyandu.
+// FindByRoles: akun dengan role tertentu pada satu posyandu (akun yang diarsipkan tidak ikut).
 func (r *UserRepository) FindByRoles(roles []string, posyandu string) ([]models.User, error) {
 	var list []models.User
-	err := r.db.Where("role IN ? AND posyandu = ?", roles, posyandu).
+	err := r.db.Where("role IN ? AND posyandu = ? AND diarsipkan_pada IS NULL", roles, posyandu).
 		Order("nama ASC").Find(&list).Error
 	return list, err
 }
@@ -85,4 +88,25 @@ func (r *UserRepository) SimpanPIN(u *models.User) error {
 
 func (r *UserRepository) Delete(id uint) error {
 	return r.db.Delete(&models.User{}, id).Error
+}
+
+// Arsipkan: "hapus" akun petugas tanpa menghapus barisnya.
+// Baris user tetap ada karena dirujuk data pelayanan (pengukuran, imunisasi,
+// suplemen, notifikasi) sebagai pencatat. Akun dinonaktifkan, disembunyikan
+// dari daftar, dan username/No. HP dibebaskan agar dapat dipakai akun baru.
+func (r *UserRepository) Arsipkan(u *models.User) error {
+	lama := ""
+	if u.Username != nil {
+		lama = *u.Username
+	}
+	baru := fmt.Sprintf("arsip_%d_%s", u.ID, lama)
+	if len(baru) > 50 {
+		baru = baru[:50]
+	}
+	return r.db.Model(&models.User{}).Where("id = ?", u.ID).Updates(map[string]any{
+		"is_active":       false,
+		"diarsipkan_pada": time.Now(),
+		"username":        baru,
+		"no_hp":           nil,
+	}).Error
 }

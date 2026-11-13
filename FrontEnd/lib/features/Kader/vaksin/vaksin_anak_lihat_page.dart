@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../core/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../Bidan/vaksin/vaksin_lihat_body.dart';
 
 const _hijauHeader = Color(0xFF065F46);

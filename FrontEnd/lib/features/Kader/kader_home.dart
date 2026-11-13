@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
-import '../../core/posyandu.dart';
-import '../../core/qr_checkin_page.dart';
-import '../OrangTua/pendaftaran/orangtua_pendaftaran_page.dart';
-import '../../core/semua_balita_page.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/common_widgets.dart';
+import '../../core/utils/posyandu.dart';
+import '../../core/pages/checkin/qr_checkin_page.dart';
+import '../OrangTua/pendaftaran/pendaftaran_page.dart';
+import '../../core/pages/balita/semua_balita_page.dart';
 import '../auth/auth_provider.dart';
-import 'pendataan/kader_pendataan_page.dart';
-import 'riwayat/kader_riwayat_page.dart';
-import 'rekap/kader_tidak_hadir_page.dart';
-import 'vaksin/kader_vaksin_page.dart';
+import 'pendataan/pendataan_page.dart';
+import 'riwayat/riwayat_page.dart';
+import 'rekap/balita_tidak_hadir_page.dart';
+import 'vaksin/vaksin_page.dart';
 
 // Warna tampilan
 const _hijauTua = Color(0xFF065F46);
@@ -542,15 +542,15 @@ class _KaderHomeState extends State<KaderHome> {
                 clipBehavior: Clip.none,
                 children: [
                   SizedBox(
-                    width: 60,
-                    height: 60,
+                    width: 52,
+                    height: 52,
                     child: Image.asset(
                       aset,
-                      width: 60,
-                      height: 60,
+                      width: 52,
+                      height: 52,
                       fit: BoxFit.contain,
                       filterQuality: FilterQuality.high,
-                      errorBuilder: (_, __, ___) => Icon(cadangan, color: warna, size: 38),
+                      errorBuilder: (_, __, ___) => Icon(cadangan, color: warna, size: 32),
                     ),
                   ),
                   if (badge != null && badge > 0)
@@ -578,15 +578,23 @@ class _KaderHomeState extends State<KaderHome> {
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                judul,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.2,
-                  color: Color(0xFF0F2547),
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    judul,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    softWrap: false,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.2,
+                      color: Color(0xFF0F2547),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],

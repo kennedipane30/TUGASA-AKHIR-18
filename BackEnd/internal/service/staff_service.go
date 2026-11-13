@@ -15,6 +15,7 @@ var (
 type UpdateStaffInput struct {
 	Nama     string      `json:"nama" binding:"required"`
 	Username string      `json:"username" binding:"required,min=4"`
+	NoHP     string      `json:"no_hp" binding:"omitempty,min=10,max=15,numeric"`
 	Pin      string      `json:"pin" binding:"omitempty,len=6,numeric"` // PIN baru (opsional)
 	Role     models.Role `json:"role" binding:"required"`
 }
@@ -40,6 +41,10 @@ func (s *AuthService) staffByID(id uint, posyandu string) (*models.User, error) 
 	if u.Role != models.RoleKader && u.Role != models.RoleBidan {
 		return nil, ErrNotStaff
 	}
+	// Akun yang sudah dihapus (diarsipkan) tidak dapat diubah lagi.
+	if u.DiarsipkanPada != nil {
+		return nil, ErrNotFound
+	}
 	return u, nil
 }
 
@@ -59,8 +64,14 @@ func (s *AuthService) UpdateStaff(id uint, posyandu string, in UpdateStaffInput)
 	if s.repo.ExistsExcept("username", in.Username, u.ID) {
 		return nil, ErrDuplicate
 	}
+	if in.NoHP != "" && s.repo.ExistsExcept("no_hp", in.NoHP, u.ID) {
+		return nil, ErrDuplicate
+	}
 	u.Nama = in.Nama
 	u.Username = &in.Username
+	if in.NoHP != "" {
+		u.NoHP = &in.NoHP
+	}
 	u.Role = in.Role
 	if in.Pin != "" {
 		hash, err := utils.HashPIN(in.Pin)
@@ -84,10 +95,13 @@ func (s *AuthService) SetStaffActive(id uint, posyandu string, aktif bool) (*mod
 	return u, s.repo.Save(u)
 }
 
+// DeleteStaff: akun petugas diarsipkan, bukan dihapus permanen, karena
+// namanya tercatat pada data pemeriksaan, imunisasi, suplemen, dan notifikasi.
+// Akun tidak bisa login lagi dan hilang dari daftar Kelola Akun.
 func (s *AuthService) DeleteStaff(id uint, posyandu string) error {
 	u, err := s.staffByID(id, posyandu)
 	if err != nil {
 		return err
 	}
-	return s.repo.Delete(u.ID)
+	return s.repo.Arsipkan(u)
 }

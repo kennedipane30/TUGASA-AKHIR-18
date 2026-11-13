@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/api_client.dart';
-import '../../../core/app_colors.dart';
+import '../../../core/config/api_client.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../service/vaksin_service.dart';
 import 'data_orang_tua_page.dart';
 
@@ -229,21 +229,8 @@ class _DataAnakPageState extends State<DataAnakPage> {
         child: Column(
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD7F0E3),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    anak.jk == 'P' ? Icons.female : Icons.male,
-                    color: kHijauGelap,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,11 +290,17 @@ class _DataAnakPageState extends State<DataAnakPage> {
                 ),
                 IconButton(
                   tooltip: 'Ubah',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 32),
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   onPressed: () => _tambahAtauUbah(awal: anak),
                 ),
                 IconButton(
                   tooltip: 'Hapus',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 32),
                   icon: const Icon(
                     Icons.delete_outline,
                     size: 20,
@@ -320,12 +313,6 @@ class _DataAnakPageState extends State<DataAnakPage> {
             const Divider(height: 22, color: _garis),
             Row(
               children: [
-                const Icon(
-                  Icons.vaccines_outlined,
-                  size: 16,
-                  color: kHijauGelap,
-                ),
-                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     'Riwayat vaksin: ${StatusRiwayatVaksin.label(anak.statusRiwayatVaksin)}',
@@ -391,56 +378,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-          child: Row(
-            children: [
-              const Text(
-                'DAFTAR TERDAFTAR',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: .5,
-                  color: AppColors.teksRedup,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 7,
-                  vertical: 2,
-                ),
-                decoration: const BoxDecoration(
-                  color: _hijauTua,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  '${_anak.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              const Icon(
-                Icons.check_circle_outline,
-                size: 14,
-                color: kHijauGelap,
-              ),
-              const SizedBox(width: 4),
-              const Text(
-                'Posyandu Mawar I',
-                style: TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w600,
-                  color: _hijauTua,
-                ),
-              ),
-            ],
-          ),
-        ),
+        const SizedBox(height: 16),
         Expanded(
           child: _anak.isEmpty
               ? const Center(
@@ -674,7 +612,9 @@ class _FormAnakState extends State<_FormAnak> {
           18,
           18,
           18,
-          16 + MediaQuery.of(context).viewInsets.bottom,
+          32 +
+              MediaQuery.of(context).viewInsets.bottom +
+              MediaQuery.of(context).viewPadding.bottom,
         ),
         child: SingleChildScrollView(
           child: Form(
@@ -709,15 +649,6 @@ class _FormAnakState extends State<_FormAnak> {
                           ),
                         ],
                       ),
-                    ),
-                    const Chip(
-                      avatar: Icon(
-                        Icons.cloud_done_outlined,
-                        size: 14,
-                        color: _hijauTua,
-                      ),
-                      label: Text('Simpan Lokal'),
-                      backgroundColor: Color(0xFFD7F0E3),
                     ),
                   ],
                 ),
@@ -871,7 +802,7 @@ class _FormAnakState extends State<_FormAnak> {
                     Expanded(
                       child: SizedBox(
                         height: 48,
-                        child: ElevatedButton.icon(
+                        child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _hijauTua,
                             foregroundColor: Colors.white,
@@ -880,9 +811,9 @@ class _FormAnakState extends State<_FormAnak> {
                             ),
                           ),
                           onPressed: _menyimpan ? null : _simpan,
-                          icon: const Icon(Icons.check, size: 18),
-                          label: Text(
+                          child: Text(
                             _menyimpan ? 'Menyimpan...' : 'Simpan Data',
+                            maxLines: 1,
                             style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 16.5,
@@ -892,32 +823,6 @@ class _FormAnakState extends State<_FormAnak> {
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3F6EC),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFBFE5D0)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.verified_user_outlined,
-                        size: 20,
-                        color: _hijauTua,
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Data tersimpan dengan aman dan dapat disinkronkan '
-                          'otomatis ke sistem Posyandu.',
-                          style: TextStyle(fontSize: 15.5),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),

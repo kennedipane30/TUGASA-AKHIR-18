@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'core/notifikasi_service.dart';
-import 'core/role_home_scaffold.dart';
+import 'service/notifikasi_service.dart';
+import 'core/widgets/role_home_scaffold.dart';
 import 'features/Sekretaris/admin_home.dart';
-import 'features/Sekretaris/akun/admin_kelola_akun_page.dart';
-import 'features/Bidan/pendattan/bidan_hasil_pendataan_page.dart';
+import 'features/Sekretaris/akun/kelola_akun_page.dart';
+import 'features/Bidan/pendattan/hasil_pendataan_page.dart';
 import 'features/Bidan/bidan_home.dart';
 import 'features/Kader/kader_home.dart';
-import 'features/Kader/pendataan/kader_pendataan_page.dart';
-import 'features/OrangTua/riwayat/orangtua_grafik_page.dart';
+import 'features/Kader/pendataan/pendataan_page.dart';
+import 'features/OrangTua/riwayat/grafik_page.dart';
 import 'features/OrangTua/orangtua_home.dart';
 import 'features/akun/akun_page.dart';
 import 'features/auth/auth_provider.dart';

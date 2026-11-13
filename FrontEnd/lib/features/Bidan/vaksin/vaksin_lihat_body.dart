@@ -2,8 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import '../../../core/app_colors.dart';
-import '../../../core/common_widgets.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/common_widgets.dart';
 import '../../../service/vaksin_service.dart';
 
 /// Tampilkan foto bukti vaksin (diambil lewat API agar memakai sesi login).
@@ -401,35 +401,26 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(color: g.bg, shape: BoxShape.circle),
-              child: Icon(g.ikon, size: 20, color: g.fg),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(e.jadwal.namaDosis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
+              const SizedBox(height: 2),
+              Text(_subJadwal(e), style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
                 children: [
-                  Text(e.jadwal.namaDosis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
-                  const SizedBox(height: 2),
-                  Text(_subJadwal(e), style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-                  if (e.opsional || e.jadwal.lanjutan) ...[
-                    const SizedBox(height: 4),
-                    Wrap(spacing: 4, children: [
-                      if (e.jadwal.lanjutan) const Pill('Lanjutan', bg: AppColors.biruMuda, fg: AppColors.biru),
-                      if (e.opsional) const Pill('Khusus daerah endemis', bg: _abuMuda, fg: _abu),
-                    ]),
-                  ],
+                  if (e.jadwal.lanjutan) const Pill('Lanjutan', bg: AppColors.biruMuda, fg: AppColors.biru),
+                  if (e.opsional) const Pill('Khusus daerah endemis', bg: _abuMuda, fg: _abu),
+                  Pill(_labelPil(e), bg: g.bg, fg: g.fg),
                 ],
               ),
-            ),
-            const SizedBox(width: 6),
-            Pill(_labelPil(e), bg: g.bg, fg: g.fg),
-          ],
+            ],
+          ),
         ),
       ),
     );

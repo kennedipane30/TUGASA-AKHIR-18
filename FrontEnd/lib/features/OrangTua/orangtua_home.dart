@@ -3,17 +3,17 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
-import '../../core/posyandu.dart';
-import '../../core/status_gizi_widget.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/common_widgets.dart';
+import '../../core/utils/posyandu.dart';
+import '../../core/widgets/status_gizi_widget.dart';
 import '../auth/auth_provider.dart';
 import 'bukupanduan/buku_panduan_page.dart';
 import 'datadiri/data_keluarga_page.dart';
-import 'pendaftaran/orangtua_pendaftaran_page.dart';
-import 'riwayat/orangtua_grafik_page.dart';
-import 'riwayat/orangtua_pemeriksaan_page.dart';
-import 'vaksin/orangtua_vaksin_page.dart';
+import 'pendaftaran/pendaftaran_page.dart';
+import 'riwayat/grafik_page.dart';
+import 'riwayat/pemeriksaan_page.dart';
+import 'vaksin/vaksin_page.dart';
 
 const _mint = Color(0xFF8CF0CB);
 const _hijauTeks = Color(0xFF065F46);
@@ -841,30 +841,38 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: 60,
-                  height: 60,
+                  width: 52,
+                  height: 52,
                   child: Image.asset(
                     m.$1,
-                    width: 60,
-                    height: 60,
+                    width: 52,
+                    height: 52,
                     fit: BoxFit.contain,
                     filterQuality: FilterQuality.high,
                     errorBuilder: (_, __, ___) => Icon(
                       m.$2,
                       color: m.$4,
-                      size: 38,
+                      size: 32,
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  m.$3,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.2,
-                    color: Color(0xFF0F2547),
-                    fontWeight: FontWeight.w600,
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: double.infinity,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      m.$3,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      softWrap: false,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.2,
+                        color: Color(0xFF0F2547),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
               ],

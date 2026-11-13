@@ -73,6 +73,7 @@ func (s *AuthService) RegisterOrangTua(in RegisterInput) (*models.User, error) {
 type CreateStaffInput struct {
 	Nama     string      `json:"nama" binding:"required"`
 	Username string      `json:"username" binding:"required,min=4"`
+	NoHP     string      `json:"no_hp" binding:"required,min=10,max=15,numeric"`
 	Pin      string      `json:"pin" binding:"required,len=6,numeric"` // PIN awal
 	Role     models.Role `json:"role" binding:"required"`
 }
@@ -90,14 +91,14 @@ func (s *AuthService) CreateStaff(posyandu string, in CreateStaffInput) (*models
 	if !ok {
 		return nil, ErrPosyandu
 	}
-	if s.repo.Exists("username", in.Username) {
+	if s.repo.Exists("username", in.Username) || s.repo.Exists("no_hp", in.NoHP) {
 		return nil, ErrDuplicate
 	}
 	hash, err := utils.HashPIN(in.Pin)
 	if err != nil {
 		return nil, err
 	}
-	u := &models.User{Nama: in.Nama, Username: &in.Username, PinHash: hash,
+	u := &models.User{Nama: in.Nama, Username: &in.Username, NoHP: &in.NoHP, PinHash: hash,
 		Role: in.Role, Posyandu: pos, IsActive: true, WajibGantiPIN: false}
 	return u, s.repo.Create(u)
 }

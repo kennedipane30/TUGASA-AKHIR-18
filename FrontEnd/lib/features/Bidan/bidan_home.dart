@@ -1,31 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/app_colors.dart';
-import '../../core/common_widgets.dart';
-import '../../core/posyandu.dart';
-import '../../core/semua_balita_page.dart';
-import '../../core/skdn_page.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/common_widgets.dart';
+import '../../core/utils/posyandu.dart';
+import '../../core/pages/balita/semua_balita_page.dart';
+import '../../core/pages/rekap/rekap_posyandu_page.dart';
 import '../../service/balita_service.dart';
-import '../../service/skdn_service.dart';
 import '../auth/auth_provider.dart';
 import 'balita/balita_berisiko_page.dart';
-import 'riwayat/bidan_riwayat_page.dart';
+import 'riwayat/riwayat_page.dart';
 
 // Warna tampilan
-const _hijauTua = Color(0xFF0F5A43);
-const _hijauGelap = Color(0xFF0B4A38);
 const _hijauTeks = Color(0xFF065F46);
-const _mint = Color(0xFF8CF0CB);
-const _oranye = Color(0xFFFF7A1A);
 const _teksGelap = Color(0xFF0F172A);
 const _teksAbu = Color(0xFF64748B);
-const _teksBiru = Color(0xFF94A3B8);
 const _merah = Color(0xFFE11D48);
-const _merahMuda = Color(0xFFFFE9ED);
 const _biru = Color(0xFF2563EB);
-const _biruMuda = Color(0xFFE3EDFF);
-const _hijauMuda = Color(0xFFE3F8EE);
 const _ungu = Color(0xFF9333EA);
 const _kuning = Color(0xFFD97706);
 const _teal = Color(0xFF0F766E);
@@ -38,31 +29,19 @@ class BidanHome extends StatefulWidget {
 }
 
 class _BidanHomeState extends State<BidanHome> {
-  final int _menunggu = 12;
   int? _berisiko;
-  SkdnData? _skdn;
 
   @override
   void initState() {
     super.initState();
     _muatBerisiko();
-    _muatSkdn();
   }
 
-  Future<void> _muatSkdn() async {
-    try {
-      final d = await const SkdnService('/bidan').hitung();
-      if (!mounted) return;
-      setState(() => _skdn = d);
-    } catch (_) {}
-  }
-
-  Future<void> _bukaSkdn() async {
-    await Navigator.push(
+  void _bukaRekap() {
+    Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const SkdnPage(prefix: '/bidan')),
+      MaterialPageRoute(builder: (_) => const RekapPosyanduPage(prefix: '/bidan')),
     );
-    _muatSkdn();
   }
 
   Future<void> _muatBerisiko() async {
@@ -202,15 +181,15 @@ class _BidanHomeState extends State<BidanHome> {
                 clipBehavior: Clip.none,
                 children: [
                   SizedBox(
-                    width: 60,
-                    height: 60,
+                    width: 52,
+                    height: 52,
                     child: Image.asset(
                       aset,
-                      width: 60,
-                      height: 60,
+                      width: 52,
+                      height: 52,
                       fit: BoxFit.contain,
                       filterQuality: FilterQuality.high,
-                      errorBuilder: (_, __, ___) => Icon(cadangan, color: warna, size: 38),
+                      errorBuilder: (_, __, ___) => Icon(cadangan, color: warna, size: 32),
                     ),
                   ),
                   if (badge != null && badge > 0)
@@ -238,15 +217,23 @@ class _BidanHomeState extends State<BidanHome> {
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                judul,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.2,
-                  color: Color(0xFF0F2547),
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    judul,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    softWrap: false,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.2,
+                      color: Color(0xFF0F2547),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -340,7 +327,7 @@ class _BidanHomeState extends State<BidanHome> {
           _bukaRiwayat),
       _itemAset('surat_rujukan.png', Icons.description_outlined, _kuning, 'Surat\nRujukan',
           () => soon(context, 'Surat rujukan')),
-      _itemAset('rekap_skdn.png', Icons.assessment_outlined, _teal, 'Rekap\nSKDN', _bukaSkdn),
+      _itemAset('rekap_skdn.png', Icons.assessment_outlined, _teal, 'Rekap\nPosyandu', _bukaRekap),
     ]);
   }
 }
