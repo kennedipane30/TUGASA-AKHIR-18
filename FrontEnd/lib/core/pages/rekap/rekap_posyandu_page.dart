@@ -141,6 +141,165 @@ class PemilihBulan extends StatelessWidget {
   }
 }
 
+// ----------------------------------------------------------------------------
+// Bantuan membaca rekap (bahasa sehari-hari untuk sekretaris & bidan)
+// ----------------------------------------------------------------------------
+
+enum StatusKesimpulan { baik, perhatian, kosong }
+
+/// Kartu "Kesimpulan" berisi kalimat sederhana di bagian paling atas rekap.
+class KartuKesimpulan extends StatelessWidget {
+  final StatusKesimpulan status;
+  final String judul;
+  final List<String> poin;
+
+  const KartuKesimpulan({super.key, required this.status, required this.judul, required this.poin});
+
+  @override
+  Widget build(BuildContext context) {
+    final (Color bg, Color fg, String label) = switch (status) {
+      StatusKesimpulan.baik => (AppColors.hijauMuda, AppColors.hijau, 'Baik'),
+      StatusKesimpulan.perhatian => (AppColors.kuningMuda, AppColors.kuning, 'Perlu perhatian'),
+      StatusKesimpulan.kosong => (_abuMuda, _abu, 'Belum ada data'),
+    };
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: fg.withAlpha(90), width: 1.4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text('Kesimpulan', style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
+              ),
+              Pill(label, bg: bg, fg: fg),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(judul, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 10),
+          for (final p in poin)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 7, right: 8),
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(color: fg, shape: BoxShape.circle),
+                    ),
+                  ),
+                  Expanded(child: Text(p, style: const TextStyle(fontSize: 16, height: 1.4))),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kartu biru kecil "Ketuk untuk penjelasan".
+class KartuBantuan extends StatelessWidget {
+  final String teks;
+  final VoidCallback onTap;
+
+  const KartuBantuan({super.key, required this.teks, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.biruMuda,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              const Icon(Icons.help_outline, color: AppColors.biru, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(teks,
+                    style: const TextStyle(fontSize: 15.5, color: AppColors.biru, fontWeight: FontWeight.w600)),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.biru),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Lembar penjelasan istilah (bottom sheet).
+void tampilkanPenjelasan(
+  BuildContext context, {
+  required String judul,
+  String? pembuka,
+  required List<(String, String)> poin,
+}) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: _abuMuda, borderRadius: BorderRadius.circular(4)),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(judul, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              if (pembuka != null) ...[
+                const SizedBox(height: 10),
+                Text(pembuka, style: const TextStyle(fontSize: 16, height: 1.45)),
+              ],
+              const SizedBox(height: 14),
+              for (final (istilah, arti) in poin)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(istilah, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 2),
+                      Text(arti, style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup, height: 1.4)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 Widget _kosong(IconData ikon, String teks) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 28),
       child: Column(
@@ -227,9 +386,37 @@ class RekapPosyanduPage extends StatefulWidget {
 class _RekapPosyanduPageState extends State<RekapPosyanduPage> {
   late int _tab = widget.tabAwal;
 
+  /// Satu tombol tab berbentuk kartu sendiri.
+  Widget _kartuTab(int i, String label) {
+    final aktif = _tab == i;
+    return Expanded(
+      child: Material(
+        color: aktif ? AppColors.hijau : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => setState(() => _tab = i),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: aktif ? Colors.white : Colors.black87,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    const label = ['Penimbangan', 'Status Gizi', 'Vitamin A'];
     return Scaffold(
       backgroundColor: AppColors.latar,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -243,39 +430,14 @@ class _RekapPosyanduPageState extends State<RekapPosyanduPage> {
             headerRekap(context, 'Rekap Posyandu'),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-                child: Row(
-                  children: [
-                    for (var i = 0; i < label.length; i++)
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () => setState(() => _tab = i),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(vertical: 11),
-                            decoration: BoxDecoration(
-                              color: _tab == i ? AppColors.hijau : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              label[i],
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: _tab == i ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+              child: Row(
+                children: [
+                  _kartuTab(0, 'Penimbangan'),
+                  const SizedBox(width: 8),
+                  _kartuTab(1, 'Status Gizi'),
+                  const SizedBox(width: 8),
+                  _kartuTab(2, 'Vitamin A'),
+                ],
               ),
             ),
             Expanded(
@@ -382,25 +544,25 @@ class _TidakHadirViewState extends State<TidakHadirView> {
           children: [
             Row(
               children: [
-                Expanded(child: StatBox(nilai: '${d.sasaran}', label: 'S\nSasaran')),
+                Expanded(child: StatBox(nilai: '${d.sasaran}', label: 'Semua\nbalita')),
                 const SizedBox(width: 8),
                 Expanded(
                   child: StatBox(
-                      nilai: '${d.ditimbang}', label: 'D\nDitimbang', bg: AppColors.hijauMuda, fg: AppColors.hijau),
+                      nilai: '${d.ditimbang}', label: 'Datang\nditimbang', bg: AppColors.hijauMuda, fg: AppColors.hijau),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: StatBox(
                       nilai: '${d.tidakHadir}',
-                      label: 'S − D\nTidak hadir',
+                      label: 'Tidak\ndatang',
                       bg: AppColors.merahMuda,
                       fg: AppColors.merah),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _batang('Partisipasi (D/S)', d.ditimbang, d.sasaran, AppColors.hijau, AppColors.hijauMuda,
-                sub: 'Target posyandu ≥ 85%'),
+            _batang('Kehadiran balita', d.ditimbang, d.sasaran, AppColors.hijau, AppColors.hijauMuda,
+                sub: 'Target posyandu minimal 85%'),
             if (d.jumlahJadwal == 0)
               const Text('Belum ada jadwal posyandu pada bulan ini.',
                   style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
@@ -427,6 +589,12 @@ class DaftarTidakHadir extends StatefulWidget {
 
 class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
   static const _filter = ['Semua', '≥ 2 bulan', 'Belum pernah', 'Sudah mendaftar'];
+  static const _ketFilter = {
+    'Semua': 'Semua balita yang tidak datang bulan ini.',
+    '≥ 2 bulan': 'Tidak datang 2 bulan atau lebih. Sebaiknya dikunjungi ke rumah.',
+    'Belum pernah': 'Terdaftar tetapi belum pernah ditimbang sama sekali.',
+    'Sudah mendaftar': 'Sudah mendaftar, tetapi tidak datang/check-in.',
+  };
   String _aktif = 'Semua';
 
   @override
@@ -465,6 +633,8 @@ class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
             ],
           ),
         ),
+        const SizedBox(height: 6),
+        Text(_ketFilter[_aktif] ?? '', style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
         const SizedBox(height: 10),
         if (daftar.isEmpty)
           SectionCard(

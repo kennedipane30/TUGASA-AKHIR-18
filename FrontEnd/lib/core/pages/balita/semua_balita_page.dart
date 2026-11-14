@@ -9,7 +9,12 @@ import '../../../service/balita_service.dart';
 import '../rekap/rekap_posyandu_page.dart';
 import 'balita_detail_page.dart';
 
-const _abuMuda = Color(0xFFF1F5F9);
+const _hijauTua = Color(0xFF065F46);
+const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi kartu, kolom cari & filter: hitam lembut (tidak mencolok).
+const _garisKartu = Color(0xFFB8BEC6);
+const _garisCari = _garisKartu;
 
 /// Teks status penimbangan (tanpa kode huruf).
 String labelTimbang(String s) => const {
@@ -147,6 +152,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
                 onSubmitted: (_) => _muat(),
                 decoration: InputDecoration(
                   hintText: 'Cari nama balita',
+                  prefixIcon: const Icon(Icons.search, color: Colors.black54),
                   suffixIcon: _cari.text.isEmpty
                       ? null
                       : IconButton(
@@ -161,7 +167,15 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
+                    borderSide: const BorderSide(color: _garisCari, width: 1.2),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: _garisCari, width: 1.2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(color: Colors.black54, width: 1.4),
                   ),
                 ),
               ),
@@ -205,12 +219,21 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
     final r = d.ringkas;
     final daftar = _saring(d.balita);
     return [
-      SectionCard(
-        title: 'Ringkasan Balita',
-        trailing: Pill('${r.total} balita', bg: AppColors.hijauMuda, fg: AppColors.hijau),
+      Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: _garisKartu, width: 1.2),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text('Ringkasan Balita',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap)),
+            const SizedBox(height: 12),
             Row(
               children: [
                 _kotak('0-11 bln', '${r.usia0_11}',
@@ -236,11 +259,10 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
                     const Color(0xFFFFF4DC), const Color(0xFFF9E0A8), const Color(0xFFD97706)),
               ],
             ),
-            const SizedBox(height: 10),
-            Text(
-              'Laki-laki ${r.lakiLaki} · Perempuan ${r.perempuan} · Belum pernah ditimbang ${r.belumPernah}',
-              style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup),
-            ),
+            const SizedBox(height: 12),
+            _baris('Laki-laki', '${r.lakiLaki}'),
+            const SizedBox(height: 6),
+            _baris('Perempuan', '${r.perempuan}'),
           ],
         ),
       ),
@@ -254,9 +276,11 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
                 child: ChoiceChip(
                   label: Text(f),
                   selected: _aktif == f,
-                  selectedColor: AppColors.hijau,
+                  selectedColor: _hijauTua,
                   backgroundColor: Colors.white,
                   showCheckmark: false,
+                  side: BorderSide(color: _aktif == f ? _hijauTua : _garisKartu, width: 1.2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   labelStyle: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -270,13 +294,17 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
       ),
       const SizedBox(height: 10),
       if (daftar.isEmpty)
-        const SectionCard(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Text('Tidak ada balita yang sesuai', style: TextStyle(color: AppColors.teksRedup)),
-            ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _garisKartu, width: 1.2),
           ),
+          child: const Text('Tidak ada balita yang sesuai',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
         ),
       for (final b in daftar) _kartu(b),
     ];
@@ -311,16 +339,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
     );
   }
 
-  /// Label status dengan ukuran dan jarak yang seragam.
-  Widget _label(String teks, Color bg, Color fg) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-        child: Text(teks,
-            style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w500, color: fg)),
-      );
-
   Widget _kartu(BalitaItem b) {
-    final t = b.terakhir;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
@@ -329,69 +348,51 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () => _buka(b),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: SizedBox(
-              width: double.infinity,
-              child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _garisKartu, width: 1.2),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _baris('Nama', b.nama),
+                const SizedBox(height: 6),
+                _baris('Usia', b.usiaTeks),
+                const SizedBox(height: 8),
+                const Align(
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(b.nama, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                      const SizedBox(height: 4),
-                      Text(
-                        t == null
-                            ? 'Belum pernah ditimbang'
-                            : 'Terakhir ${t.tanggal == null ? '-' : formatTanggal(t.tanggal!)}',
-                        style: const TextStyle(fontSize: 15.5),
-                      ),
-                      if (t != null)
-                        Text('BB ${t.bbKg} kg · TB ${t.tbCm} cm',
-                            style: const TextStyle(fontSize: 15.5)),
-                      const SizedBox(height: 2),
-                      Text('${b.jkTeks} · ${b.usiaTeks}',
-                          style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
-                      const SizedBox(height: 8),
-                      // Label dibagi rata selebar kartu: pertama menempel kiri,
-                      // terakhir menempel kanan, di antaranya di tengah.
-                      SizedBox(
-                        width: double.infinity,
-                        child: Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if (t != null && t.statusTimbang.isNotEmpty)
-                            _label(
-                              labelTimbang(t.statusTimbang),
-                              t.statusTimbang == 'N'
-                                  ? AppColors.hijauMuda
-                                  : (t.statusTimbang == 'T' ? AppColors.merahMuda : AppColors.biruMuda),
-                              t.statusTimbang == 'N'
-                                  ? AppColors.hijau
-                                  : (t.statusTimbang == 'T' ? AppColors.merah : AppColors.biru),
-                            ),
-                          if (t?.duaT == true) _label('2T', AppColors.merahMuda, AppColors.merah),
-                          if (t?.bgm == true) _label('BGM', AppColors.merahMuda, AppColors.merah),
-                          if (t != null && t.masalah.isEmpty && t.tingkat.isNotEmpty)
-                            _label('Gizi normal', AppColors.hijauMuda, AppColors.hijau),
-                          for (final m in t?.masalah ?? const <String>[])
-                            _label(m, AppColors.kuningMuda, AppColors.kuning),
-                          _label(
-                            'Vaksin ${b.vaksin.persen}%',
-                            b.vaksin.terlambat > 0 ? AppColors.kuningMuda : _abuMuda,
-                            b.vaksin.terlambat > 0 ? AppColors.kuning : Colors.black87,
-                          ),
-                          if (b.bulanTidakDatang >= 2)
-                            _label('${b.bulanTidakDatang} bln tidak datang', AppColors.merahMuda, AppColors.merah),
-                        ],
-                        ),
-                      ),
+                      Text('Lihat detail',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600, color: _hijauTua)),
+                      SizedBox(width: 4),
+                      Icon(Icons.arrow_forward, size: 16, color: _hijauTua),
                     ],
                   ),
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// Baris "Label : nilai" (satu warna hitam).
+  Widget _baris(String label, String nilai) {
+    const gaya = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3, color: _teksGelap);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: 96, child: Text(label, style: gaya)),
+        const Text(': ', style: gaya),
+        Expanded(child: Text(nilai.isEmpty ? '-' : nilai, style: gaya)),
+      ],
     );
   }
 }

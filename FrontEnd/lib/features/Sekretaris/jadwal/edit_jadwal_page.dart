@@ -124,9 +124,9 @@ class _AdminEditJadwalPageState extends State<AdminEditJadwalPage> {
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      border: b(const Color(0xFFD7E6DD), 1.2),
-      enabledBorder: b(const Color(0xFFD7E6DD), 1.2),
-      focusedBorder: b(hijauTombolJadwal, 1.6),
+      border: b(garisKartuJadwal, 1.2),
+      enabledBorder: b(garisKartuJadwal, 1.2),
+      focusedBorder: b(Colors.black54, 1.4),
       errorBorder: b(AppColors.merah, 1.2),
       focusedErrorBorder: b(AppColors.merah, 1.6),
     );
@@ -171,13 +171,11 @@ class _AdminEditJadwalPageState extends State<AdminEditJadwalPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.latar,
+      // Tombol tetap di bawah tanpa kartu/latar putih
       bottomNavigationBar: SafeArea(
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFE6ECE8))),
-          ),
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           child: Row(
             children: [
               Expanded(
@@ -208,8 +206,9 @@ class _AdminEditJadwalPageState extends State<AdminEditJadwalPage> {
                     ),
                     onPressed: _menyimpan ? null : _simpan,
                     child: Text(
-                      _menyimpan ? 'Menyimpan...' : 'Simpan Perubahan',
+                      _menyimpan ? 'Menyimpan...' : 'Simpan',
                       maxLines: 1,
+                      textAlign: TextAlign.center,
                       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5),
                     ),
                   ),
@@ -239,7 +238,7 @@ class _AdminEditJadwalPageState extends State<AdminEditJadwalPage> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE6ECE8)),
+                        border: Border.all(color: garisKartuJadwal, width: 1.2),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

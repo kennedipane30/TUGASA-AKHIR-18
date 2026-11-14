@@ -15,6 +15,11 @@ import 'semua_balita_page.dart' show labelTimbang;
 const _biru = Color(0xFF2563EB);
 const _biruMuda = Color(0xFFE3F2FD);
 const _biruGaris = Color(0xFFBFDFF7);
+const _hijauTua = Color(0xFF065F46);
+const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi tab & kartu halaman detail: hitam lembut (tidak mencolok).
+const _garis = Color(0xFFB8BEC6);
 
 class BalitaDetailPage extends StatefulWidget {
   final String prefix;
@@ -85,39 +90,16 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         child: Column(
           children: [
             headerRekap(context, widget.nama),
+            // Tab dibuat kartu terpisah dengan sedikit celah.
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-                child: Row(
-                  children: [
-                    for (var i = 0; i < label.length; i++)
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () => setState(() => _tab = i),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(vertical: 11),
-                            decoration: BoxDecoration(
-                              color: _tab == i ? AppColors.hijau : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              label[i],
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w600,
-                                color: _tab == i ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+              child: Row(
+                children: [
+                  for (var i = 0; i < label.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 8),
+                    Expanded(child: _tombolTab(label[i], i)),
                   ],
-                ),
+                ],
               ),
             ),
             Expanded(
@@ -150,6 +132,69 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
     );
   }
 
+  Widget _tombolTab(String teks, int i) {
+    final dipilih = _tab == i;
+    return Material(
+      color: dipilih ? _hijauTua : Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => setState(() => _tab = i),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: dipilih ? _hijauTua : _garis, width: 1.2),
+          ),
+          child: Text(
+            teks,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w600,
+              color: dipilih ? Colors.white : _teksGelap,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Kartu putih bergaris tepi hijau muda, dengan judul di atas.
+  Widget _kartu({required String judul, Widget? trailing, required Widget child}) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _garis, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(judul,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap)),
+              ),
+              if (trailing != null) ...[const SizedBox(width: 8), trailing],
+            ],
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
   /// Usia detail saat penimbangan [t]; bila tanggal lahir tidak ada, pakai teks dari server.
   String _usiaUkur(DateTime? lahir, TimbangRingkas t) =>
       (lahir == null || t.tanggal == null) ? t.usiaTeks : usiaDetail(lahir, t.tanggal);
@@ -167,13 +212,15 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
 
   Widget _baris(String l, String v) {
     if (v.isEmpty) return const SizedBox.shrink();
+    const gaya = TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, height: 1.3, color: _teksGelap);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 130, child: Text(l, style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup))),
-          Expanded(child: Text(v, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500))),
+          SizedBox(width: 130, child: Text(l, style: gaya)),
+          const Text(': ', style: gaya),
+          Expanded(child: Text(v, style: gaya)),
         ],
       ),
     );
@@ -208,8 +255,8 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
-        SectionCard(
-          title: r.nama,
+        _kartu(
+          judul: r.nama,
           trailing: Pill(
             r.status == 'aktif' ? 'Aktif' : (r.status.isEmpty ? '-' : r.status),
             bg: r.status == 'aktif' ? AppColors.hijauMuda : AppColors.kuningMuda,
@@ -228,15 +275,15 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
             ],
           ),
         ),
-        SectionCard(
-          title: 'Kondisi Terakhir',
+        _kartu(
+          judul: 'Kondisi Terakhir',
           child: r.terakhir == null
               ? const Text('Belum pernah ditimbang di posyandu.',
                   style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup))
               : _ringkasTimbang(r.terakhir!, r.tanggalLahir),
         ),
-        SectionCard(
-          title: 'Imunisasi',
+        _kartu(
+          judul: 'Imunisasi',
           trailing: Pill('${r.vaksin.persen}%', bg: AppColors.hijauMuda, fg: AppColors.hijau),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,8 +315,8 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
           ),
         ),
         if (keluarga.isNotEmpty)
-          SectionCard(
-            title: 'Data Keluarga',
+          _kartu(
+            judul: 'Data Keluarga',
             child: Column(children: [for (final e in keluarga) _baris(e.key, e.value)]),
           ),
       ],
@@ -393,7 +440,11 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
     final k = t.kunjungan;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _garis, width: 1.2),
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -416,9 +467,11 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                   children: [
                     Expanded(
                       child: Text(t.tanggal == null ? '-' : formatTanggal(t.tanggal!),
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 16.5, color: _teksGelap)),
                     ),
-                    Text('usia ${_usiaUkur(lahir, t)}', style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
+                    Text('usia ${_usiaUkur(lahir, t)}',
+                        style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -426,7 +479,8 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                   'BB ${t.bbKg} kg · TB ${t.tbCm} cm'
                   '${t.lkCm == null ? '' : ' · LK ${t.lkCm} cm'}'
                   '${t.lilaCm == null ? '' : ' · LiLA ${t.lilaCm} cm'}',
-                  style: const TextStyle(fontSize: 15.5),
+                  style: const TextStyle(
+                      fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap),
                 ),
                 const SizedBox(height: 8),
                 Wrap(spacing: 6, runSpacing: 6, children: [
@@ -439,11 +493,20 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                     Pill('${k.suplemen.length} suplemen', bg: AppColors.kuningMuda, fg: AppColors.kuning),
                 ]),
                 if (k != null) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    buka ? 'Tutup detail kunjungan' : 'Lihat detail kunjungan',
-                    style: const TextStyle(
-                        fontSize: 15.5, fontWeight: FontWeight.w500, color: AppColors.hijau),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(buka ? 'Tutup detail' : 'Lihat detail',
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600, color: _hijauTua)),
+                        const SizedBox(width: 4),
+                        Icon(buka ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                            size: 18, color: _hijauTua),
+                      ],
+                    ),
                   ),
                   AnimatedSize(
                     duration: const Duration(milliseconds: 200),
@@ -461,7 +524,8 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
 
   Widget _subjudul(String teks) => Padding(
         padding: const EdgeInsets.only(top: 12, bottom: 8),
-        child: Text(teks, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+        child: Text(teks,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _teksGelap)),
       );
 
   Widget _blok(String judul, String isi, {Color bg = AppColors.latar, Color? garis, Color? warnaJudul}) {
@@ -491,7 +555,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Divider(height: 20),
+        const Divider(height: 20, color: Color(0xFFE5EDE8)),
 
         // ------------------------------------------------ pengukuran kader
         _subjudul('Pengukuran Kader'),

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/pin_util.dart';
 import '../admin_service.dart';
-import 'kelola_akun_page.dart' show HeaderAkun, gayaStatusBarAkun;
+import 'kelola_akun_page.dart' show HeaderAkun, gayaStatusBarAkun, garisKartuAkun;
 
 const _hijauTua = Color(0xFF065F46); // sama dengan warna header
 const _hijauGelap = Color(0xFF14634A);
@@ -64,14 +64,15 @@ class _EditAkunPageState extends State<EditAkunPage> {
       hintText: hint,
       hintStyle: const TextStyle(fontSize: 16, color: Colors.black38),
       counterText: '',
-      prefixIcon: Icon(ikon, size: 19, color: garis == _abuGaris ? Colors.black38 : garis),
+      prefixIcon: Icon(ikon, size: 19, color: Colors.black54),
       suffixIcon: suffix,
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-      border: b(garis, 1.4),
-      enabledBorder: b(garis, 1.4),
-      focusedBorder: b(garis, 1.8),
+      // Semua kolom bergaris hitam lembut; sedikit lebih gelap saat diisi.
+      border: b(garisKartuAkun, 1.2),
+      enabledBorder: b(garisKartuAkun, 1.2),
+      focusedBorder: b(Colors.black54, 1.4),
       errorBorder: b(AppColors.merah, 1.4),
       focusedErrorBorder: b(AppColors.merah, 1.8),
     );
@@ -201,8 +202,8 @@ class _EditAkunPageState extends State<EditAkunPage> {
                       padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE6ECE8)),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: garisKartuAkun, width: 1.2),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

@@ -6,16 +6,15 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../auth/auth_provider.dart';
 import '../admin_service.dart';
-import 'edit_akun_page.dart';
+import 'detail_akun_page.dart';
 import 'tambah_akun_page.dart';
 
 const _hijauTua = Color(0xFF065F46); // sama dengan warna header
-const _hijauGelap = Color(0xFF14634A);
-const _oranyeGaris = Color(0xFFEA580C);
+const _hitam = Color(0xFF1F2937);
 const hijauHeaderAkun = Color(0xFF065F46);
-const _biru = Color(0xFF2563EB);
-const _biruMuda = Color(0xFFE3F2FD);
-const _biruGarisMuda = Color(0xFFBFDFF7);
+
+/// Garis tepi kartu, filter & kolom isian: hitam lembut (tidak mencolok).
+const garisKartuAkun = Color(0xFFB8BEC6);
 
 // ---------------------------------------------------------------------------
 // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
@@ -116,10 +115,10 @@ class AdminKelolaAkunPage extends StatefulWidget {
 }
 
 class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
-  static const _filter = ['Kader', 'Bidan', 'Semua'];
+  static const _filter = ['Semua', 'Kader', 'Bidan'];
   final _service = AdminService();
 
-  String _aktif = 'Kader';
+  String _aktif = 'Semua';
   bool _memuat = true;
   String? _galat;
   List<StaffAkun> _data = [];
@@ -179,52 +178,13 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
     await _muat(tampilLoading: false);
   }
 
-  Future<void> _ubah(StaffAkun a) async {
-    final nama = await Navigator.push<String>(
+  Future<void> _bukaDetail(StaffAkun a) async {
+    final pesan = await Navigator.push<String>(
       context,
-      MaterialPageRoute(builder: (_) => EditAkunPage(akun: a, desa: _desa)),
+      MaterialPageRoute(builder: (_) => DetailAkunPage(akun: a, desa: _desa)),
     );
-    if (nama == null) return;
-    _pesan('Akun $nama diperbarui');
+    if (pesan != null) _pesan(pesan);
     await _muat(tampilLoading: false);
-  }
-
-  Future<void> _hapus(StaffAkun a) async {
-    final ya = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Hapus akun?'),
-        content: Text(
-            'Akun ${a.nama} (${a.labelPeran} $_desa) akan dihapus dan tidak dapat login lagi.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.merah, foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    );
-    if (ya != true) return;
-    try {
-      await _service.hapus(a.id);
-      _pesan('Akun ${a.nama} dihapus');
-      await _muat(tampilLoading: false);
-    } catch (e) {
-      _pesan(_bersih(e));
-    }
-  }
-
-  Future<void> _gantiStatus(StaffAkun a, bool nilai) async {
-    try {
-      await _service.setAktif(a.id, nilai);
-      _pesan('Akun ${a.nama} ${nilai ? 'diaktifkan' : 'dinonaktifkan'}');
-      await _muat(tampilLoading: false);
-    } catch (e) {
-      _pesan(_bersih(e));
-    }
   }
 
   @override
@@ -240,6 +200,27 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
 
     return Scaffold(
       backgroundColor: AppColors.latar,
+      // Tombol tambah akun tetap di bawah (tidak ikut bergulir)
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          child: SizedBox(
+            height: 50,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _hijauTua,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: _tambah,
+              child: const Text('Tambah Akun Petugas',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
+            ),
+          ),
+        ),
+      ),
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: gayaStatusBarAkun,
         child: Column(
@@ -247,20 +228,6 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
             HeaderAkun(
               judul: 'Kelola Akun',
               kembali: widget.denganTombolKembali,
-              actions: [
-                IconButton(
-                  tooltip: 'Muat ulang',
-                  icon: const Icon(Icons.sync, color: Colors.white, size: 22),
-                  onPressed: _memuat ? null : () => _muat(),
-                ),
-                IconButton(
-                  tooltip: 'Tambah akun',
-                  icon: const Icon(Icons.person_add_alt_1_outlined,
-                      color: Colors.white, size: 22),
-                  onPressed: _tambah,
-                ),
-                const SizedBox(width: 4),
-              ],
             ),
             Expanded(
               child: RefreshIndicator(
@@ -269,23 +236,6 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   children: [
-                    SizedBox(
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _hijauTua,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                        ),
-                        onPressed: _tambah,
-                        icon: const Icon(Icons.person_add_alt_1, size: 19),
-                        label: const Text('Tambah Akun Petugas',
-                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -300,9 +250,8 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                                 backgroundColor: Colors.white,
                                 showCheckmark: false,
                                 side: BorderSide(
-                                    color: _aktif == f
-                                        ? _hijauTua
-                                        : const Color(0xFFE3E8E5)),
+                                    color: _aktif == f ? _hijauTua : garisKartuAkun,
+                                    width: 1.2),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20)),
                                 labelStyle: TextStyle(
@@ -317,20 +266,6 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        const Icon(Icons.groups_outlined, size: 18, color: _hijauGelap),
-                        const SizedBox(width: 6),
-                        const Expanded(
-                          child: Text('Daftar Akun',
-                              style:
-                                  TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-                        ),
-                        Pill('${daftar.length} akun terdaftar',
-                            bg: AppColors.hijauMuda, fg: AppColors.hijau),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
                     _isiDaftar(daftar),
                   ],
                 ),
@@ -364,14 +299,17 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
       );
     }
     if (daftar.isEmpty) {
-      return const SectionCard(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('Belum ada akun',
-                style: TextStyle(fontSize: 16.5, color: AppColors.teksRedup)),
-          ),
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: garisKartuAkun, width: 1.2),
         ),
+        child: const Text('Belum ada akun',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16.5, color: AppColors.teksRedup)),
       );
     }
     return Column(
@@ -380,133 +318,63 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
   }
 
   Widget _kartuAkun(StaffAkun a, int i) {
-    const palet = [
-      (Color(0xFFE8F7EF), Color(0xFFBFE5D0)),
-      (Color(0xFFFFF6DD), Color(0xFFF5E1A4)),
-      (Color(0xFFEAF2FD), Color(0xFFCFE1FA)),
-    ];
-    final (bg, garis) = palet[i % palet.length];
-    final bidan = a.role == 'bidan';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: garis),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Role (di tengah)
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              decoration: BoxDecoration(
-                color: bidan ? const Color(0xFFFFE8CC) : _biruMuda,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: bidan ? const Color(0xFFF5C27A) : _biruGarisMuda),
-              ),
-              child: Text(a.labelPeran,
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: bidan ? _oranyeGaris : _biru)),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _bukaDetail(a),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: garisKartuAkun, width: 1.2),
             ),
-          ),
-          const SizedBox(height: 10),
-          _barisInfo('Nama', a.nama),
-          const SizedBox(height: 4),
-          _barisInfo('No. HP', a.noHp.isEmpty ? '-' : a.noHp),
-          const SizedBox(height: 10),
-          // Aktif, Edit, Hapus dengan lebar dan jarak sama
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: garis),
-                  ),
+            child: Column(
+              children: [
+                _baris('Role', a.aktif ? a.labelPeran : '${a.labelPeran} (Nonaktif)'),
+                _baris('Nama', a.nama),
+                _baris('No. HP', a.noHp.isEmpty ? '-' : a.noHp),
+                const SizedBox(height: 2),
+                const Align(
+                  alignment: Alignment.centerRight,
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(a.aktif ? 'Aktif' : 'Nonaktif',
+                      Text('Lihat detail',
                           style: TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w600,
-                              color: a.aktif ? AppColors.hijau : AppColors.teksRedup)),
-                      Transform.scale(
-                        scale: 0.65,
-                        child: Switch(
-                          value: a.aktif,
-                          activeColor: hijauHeaderAkun,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          onChanged: (v) => _gantiStatus(a, v),
-                        ),
-                      ),
+                              fontSize: 14, fontWeight: FontWeight.w600, color: _hijauTua)),
+                      SizedBox(width: 4),
+                      Icon(Icons.arrow_forward, size: 16, color: _hijauTua),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _tombolKecil(Icons.edit_outlined, 'Edit', Colors.black87,
-                    const Color(0xFFD5DBD8), () => _ubah(a)),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _tombolKecil(Icons.delete_outline, 'Hapus', AppColors.merah,
-                    AppColors.merah.withOpacity(0.5), () => _hapus(a)),
-              ),
-            ],
+                const SizedBox(height: 6),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _barisInfo(String label, String nilai) => Row(
+  /// Baris "Label : nilai" (satu warna hitam).
+  Widget _baris(String label, String nilai) {
+    const gaya = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3, color: _hitam);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 70,
-            child: Text(label,
-                style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-          ),
-          const Text(': ', style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
+          SizedBox(width: 72, child: Text(label, style: gaya)),
+          const Text(': ', style: gaya),
           Expanded(
-            child: Text(nilai,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600)),
+            child: Text(nilai, maxLines: 1, overflow: TextOverflow.ellipsis, style: gaya),
           ),
         ],
-      );
-
-  Widget _tombolKecil(IconData ikon, String teks, Color warna, Color garis, VoidCallback onTap) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: onTap,
-      child: Container(
-        height: 36,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: garis),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(ikon, size: 14, color: warna),
-            const SizedBox(width: 4),
-            Text(teks,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: warna)),
-          ],
-        ),
       ),
     );
   }
