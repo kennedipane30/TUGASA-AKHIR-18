@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../auth/auth_provider.dart';
-import '../admin_service.dart';
+import '../../../service/admin_service.dart';
 import 'detail_akun_page.dart';
 import 'tambah_akun_page.dart';
 

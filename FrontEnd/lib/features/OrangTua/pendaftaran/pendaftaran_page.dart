@@ -209,8 +209,10 @@ String _pesanError(Object e) {
 const _hijauHeader = Color(0xFF065F46);
 const _kartuAwal = Color(0xFF0A6B51); // sedikit lebih terang dari heading
 const _mintLabel = Color(0xFF8CF0CB);
-const _oranye1 = Color(0xFFEA580C);
-const _oranye2 = Color(0xFFF97316);
+const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi kartu: hitam lembut (sama dengan halaman lain).
+const _garis = Color(0xFFB8BEC6);
 
 const _namaBulan = [
   'Januari',
@@ -465,7 +467,7 @@ class _OrangTuaPendaftaranPageState
             ? SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   child: _barAksi(
                     j,
                     j.anak[_idx.clamp(0, j.anak.length - 1)],
@@ -635,20 +637,6 @@ class _OrangTuaPendaftaranPageState
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.14),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: const Icon(
-                    Icons.volume_up_outlined,
-                    color: _mintLabel,
-                    size: 17,
-                  ),
-                ),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,7 +749,7 @@ class _OrangTuaPendaftaranPageState
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: _oranye2,
+                color: _hijauHeader,
               ),
             ),
           ),
@@ -772,14 +760,8 @@ class _OrangTuaPendaftaranPageState
 
   BoxDecoration get _dekorPutih => BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _garis, width: 1.2),
       );
 
   Widget _kartuAnak(JadwalTerdekatData j, AnakStatusJadwal a) {
@@ -881,29 +863,9 @@ class _OrangTuaPendaftaranPageState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE7F6F0),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.event_note_rounded, size: 20, color: _hijauHeader),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Rencana Pelayanan',
-                  style: TextStyle(
-                    fontSize: 16.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-              ),
-            ],
+          const Text(
+            'Rencana Pelayanan',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap),
           ),
           const SizedBox(height: 10),
           if (r == null || r.kosong)
@@ -915,7 +877,6 @@ class _OrangTuaPendaftaranPageState
             if (r.imunisasi.isNotEmpty)
               _grupRencana(
                 'Imunisasi',
-                Icons.vaccines_outlined,
                 const Color(0xFF0B7FBF),
                 const Color(0xFFE6F3FB),
                 r.imunisasi,
@@ -923,7 +884,6 @@ class _OrangTuaPendaftaranPageState
             if (r.suplemen.isNotEmpty)
               _grupRencana(
                 'Vitamin A & Obat Cacing',
-                Icons.medication_outlined,
                 const Color(0xFFB45309),
                 const Color(0xFFFFF4E5),
                 r.suplemen,
@@ -931,7 +891,6 @@ class _OrangTuaPendaftaranPageState
             if (r.keFaskes.isNotEmpty)
               _grupRencana(
                 'Segera ke Puskesmas',
-                Icons.local_hospital_outlined,
                 const Color(0xFFDC2626),
                 const Color(0xFFFDECEC),
                 r.keFaskes,
@@ -949,7 +908,6 @@ class _OrangTuaPendaftaranPageState
 
   Widget _grupRencana(
     String judul,
-    IconData ikon,
     Color warna,
     Color latar,
     List<RencanaItemJadwal> items,
@@ -965,15 +923,9 @@ class _OrangTuaPendaftaranPageState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(ikon, size: 18, color: warna),
-              const SizedBox(width: 6),
-              Text(
-                judul,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: warna),
-              ),
-            ],
+          Text(
+            judul,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: warna),
           ),
           const SizedBox(height: 6),
           for (final it in items)
@@ -1056,11 +1008,7 @@ class _OrangTuaPendaftaranPageState
         children: [
           Text(
             'Petunjuk Check-in Mandiri',
-            style: TextStyle(
-              fontSize: 16.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF111827),
-            ),
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap),
           ),
           SizedBox(height: 6),
           Text(
@@ -1086,11 +1034,7 @@ class _OrangTuaPendaftaranPageState
         children: [
           Text(
             'Bisa Dibuka Tanpa Sinyal',
-            style: TextStyle(
-              fontSize: 16.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF111827),
-            ),
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap),
           ),
           SizedBox(height: 6),
           Text(
@@ -1117,8 +1061,8 @@ class _OrangTuaPendaftaranPageState
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: warna,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE6ECE8)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _garis, width: 1.2),
       ),
       child: Row(
         children: [
@@ -1143,55 +1087,49 @@ class _OrangTuaPendaftaranPageState
   // -------------------------------------------------------------------------
   // TOMBOL AKSI BAWAH
   // -------------------------------------------------------------------------
+  /// Tombol utama hijau (sama dengan tombol di halaman lain).
   Widget _tombolUtama({
     required String teks,
-    required IconData ikon,
     required VoidCallback onTap,
     bool aktif = true,
   }) {
-    return Opacity(
-      opacity: aktif ? 1 : 0.6,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
-        child: Container(
-          height: 52,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: const LinearGradient(colors: [_oranye1, _oranye2]),
-            boxShadow: [
-              BoxShadow(
-                color: _oranye1.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(ikon, color: Colors.white, size: 19),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  teks,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              const Icon(
-                Icons.arrow_forward,
-                color: Colors.white,
-                size: 18,
-              ),
-            ],
-          ),
+    return SizedBox(
+      height: 50,
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: aktif ? _hijauHeader : _hijauHeader.withOpacity(0.55),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        onPressed: onTap,
+        child: Text(
+          teks,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5),
+        ),
+      ),
+    );
+  }
+
+  /// Tombol batal: garis merah (sama dengan tombol Hapus di halaman lain).
+  Widget _tombolBatal({required String teks, required VoidCallback onTap}) {
+    return SizedBox(
+      height: 50,
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.merah,
+          side: const BorderSide(color: AppColors.merah, width: 1.4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        onPressed: onTap,
+        child: Text(
+          teks,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5),
         ),
       ),
     );
@@ -1209,12 +1147,10 @@ class _OrangTuaPendaftaranPageState
             'Check-in selesai, menunggu dipanggil kader',
             bg: AppColors.hijauMuda,
             fg: AppColors.hijau,
-            icon: Icons.check_circle,
           ),
           const SizedBox(height: 8),
           _tombolUtama(
             teks: 'Lihat Kartu Antrean',
-            ikon: Icons.confirmation_number_outlined,
             onTap: () => _bukaKartu(j.id, a.anakId),
           ),
         ],
@@ -1225,28 +1161,19 @@ class _OrangTuaPendaftaranPageState
       return Row(
         children: [
           Expanded(
-            flex: 3,
-            child: _tombolUtama(
-              teks: 'Kartu Antrean',
-              ikon: Icons.confirmation_number_outlined,
-              aktif: !lock,
-              onTap: lock ? () {} : () => _bukaKartu(j.id, a.anakId),
+            child: _tombolBatal(
+              teks: proses ? 'Memproses...' : 'Batalkan',
+              onTap: (!a.bolehBatal || lock)
+                  ? () => _snack('Pendaftaran tidak dapat dibatalkan')
+                  : () => _batal(a),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
-            flex: 2,
-            child: SizedBox(
-              height: 52,
-              child: AppButton(
-                proses ? 'Memproses...' : 'Batalkan',
-                filled: false,
-                color: AppColors.merah,
-                icon: Icons.close,
-                onPressed: (!a.bolehBatal || lock)
-                    ? () => _snack('Pendaftaran tidak dapat dibatalkan')
-                    : () => _batal(a),
-              ),
+            child: _tombolUtama(
+              teks: 'Kartu Antrean',
+              aktif: !lock,
+              onTap: lock ? () {} : () => _bukaKartu(j.id, a.anakId),
             ),
           ),
         ],
@@ -1262,8 +1189,7 @@ class _OrangTuaPendaftaranPageState
     }
 
     return _tombolUtama(
-      teks: proses ? 'Memproses...' : 'Daftarkan Balita Ini Sekarang',
-      ikon: Icons.how_to_reg,
+      teks: proses ? 'Memproses...' : 'Daftarkan Balita Ini',
       aktif: a.bolehDaftar && !lock,
       onTap: (!a.bolehDaftar || lock)
           ? () => _snack(

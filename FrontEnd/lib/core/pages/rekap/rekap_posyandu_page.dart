@@ -17,6 +17,56 @@ const _hijauHeader = Color(0xFF065F46);
 const _abu = Color(0xFF64748B);
 const _abuMuda = Color(0xFFF1F5F9);
 
+/// Garis tepi semua kartu rekap: hitam lembut (tidak mencolok).
+const garisKartuRekap = Color(0xFFB8BEC6);
+
+/// Kartu rekap: putih, garis tepi hitam lembut, judul (opsional) di atas.
+class KartuRekap extends StatelessWidget {
+  final String? title;
+  final IconData? icon;
+  final Widget? trailing;
+  final Widget child;
+
+  const KartuRekap({super.key, this.title, this.icon, this.trailing, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: garisKartuRekap, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 20, color: AppColors.hijau),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(title!,
+                      style: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
+                ),
+                if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+          child,
+        ],
+      ),
+    );
+  }
+}
+
 /// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
   return Text(
@@ -83,17 +133,6 @@ Color _warnaTingkat(String t) {
   }
 }
 
-Color _latarTingkat(String t) {
-  switch (t) {
-    case 'risiko':
-      return AppColors.merahMuda;
-    case 'waspada':
-      return AppColors.kuningMuda;
-    default:
-      return AppColors.hijauMuda;
-  }
-}
-
 // ============================================================================
 // KOMPONEN BERSAMA
 // ============================================================================
@@ -111,7 +150,11 @@ class PemilihBulan extends StatelessWidget {
     final bisaMaju = bulan.year < n.year || (bulan.year == n.year && bulan.month < n.month);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: garisKartuRekap, width: 1.2),
+      ),
       child: Row(
         children: [
           IconButton(
@@ -169,7 +212,7 @@ class KartuKesimpulan extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: fg.withAlpha(90), width: 1.4),
+        border: Border.all(color: garisKartuRekap, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,8 +439,12 @@ class _RekapPosyanduPageState extends State<RekapPosyanduPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () => setState(() => _tab = i),
-          child: Padding(
+          child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: aktif ? AppColors.hijau : garisKartuRekap, width: 1.2),
+            ),
             child: Text(
               label,
               textAlign: TextAlign.center,
@@ -536,7 +583,7 @@ class _TidakHadirViewState extends State<TidakHadirView> {
 
   List<Widget> _isi(RekapTidakHadir d) {
     return [
-      SectionCard(
+      KartuRekap(
         title: 'Kehadiran ${d.label}',
         trailing: Pill('${d.jumlahJadwal} jadwal', bg: AppColors.biruMuda, fg: AppColors.biru),
         child: Column(
@@ -637,7 +684,7 @@ class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
         Text(_ketFilter[_aktif] ?? '', style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
         const SizedBox(height: 10),
         if (daftar.isEmpty)
-          SectionCard(
+          KartuRekap(
             child: _kosong(
               Icons.verified_outlined,
               d.anak.isEmpty ? 'Semua balita sasaran sudah ditimbang bulan ini' : 'Tidak ada balita pada filter ini',
@@ -649,58 +696,44 @@ class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
   }
 
   Widget _kartu(AnakTidakHadir a) {
-    final parah = a.belumPernah || a.bulanTidakDatang >= 2;
+    final String status;
+    if (a.belumPernah) {
+      status = 'Belum pernah ditimbang';
+    } else {
+      final terakhir = a.terakhirDitimbang == null ? '' : ', terakhir ${formatTanggal(a.terakhirDitimbang!)}';
+      status = 'Tidak datang ${a.bulanTidakDatang} bulan$terakhir';
+    }
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: garisKartuRekap, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _barisTh('Nama', a.anak.nama),
+          _barisTh('Jenis Kelamin', a.anak.jkTeks),
+          _barisTh('Umur', a.anak.usiaTeks),
+          _barisTh('Status', a.sudahMendaftar ? '$status (sudah mendaftar, tidak check-in)' : status),
+        ],
+      ),
+    );
+  }
+
+  Widget _barisTh(String label, String nilai) {
+    const gaya = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.35, color: Color(0xFF1F2937));
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: parah ? AppColors.merahMuda : AppColors.kuningMuda,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              a.belumPernah ? Icons.person_off_outlined : Icons.event_busy,
-              size: 20,
-              color: parah ? AppColors.merah : AppColors.kuning,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(a.anak.nama, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
-                Text('${a.anak.jkTeks} · ${a.anak.usiaTeks}',
-                    style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-                const SizedBox(height: 6),
-                Text(a.keterangan, style: const TextStyle(fontSize: 16)),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    Pill(
-                      a.terakhirDitimbang == null
-                          ? 'Belum pernah ditimbang'
-                          : 'Terakhir ${formatTanggal(a.terakhirDitimbang!)}',
-                      bg: _abuMuda,
-                      fg: Colors.black87,
-                    ),
-                    if (a.bulanTidakDatang >= 2)
-                      Pill('${a.bulanTidakDatang} bulan', bg: AppColors.merahMuda, fg: AppColors.merah),
-                    if (a.sudahMendaftar)
-                      const Pill('Mendaftar, tidak check-in', bg: AppColors.biruMuda, fg: AppColors.biru),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          SizedBox(width: 120, child: Text(label, style: gaya)),
+          const Text(': ', style: gaya),
+          Expanded(child: Text(nilai, style: gaya)),
         ],
       ),
     );

@@ -11,6 +11,23 @@ import 'rekap_posyandu_page.dart';
 const _abu = Color(0xFF64748B);
 const _abuMuda = Color(0xFFF1F5F9);
 
+
+/// Baris "Label : nilai" (satu warna hitam).
+Widget _barisKet(String label, String nilai, {double lebar = 130}) {
+  const gaya = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.35, color: Color(0xFF1F2937));
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: lebar, child: Text(label, style: gaya)),
+        const Text(': ', style: gaya),
+        Expanded(child: Text(nilai, style: gaya)),
+      ],
+    ),
+  );
+}
+
 String _persen(double v) => '${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1)}%';
 
 /// Penjelasan singkat SKDN untuk sekretaris dan bidan.
@@ -309,7 +326,7 @@ class _SkdnViewState extends State<SkdnView> {
   List<Widget> _bagianTidakHadir() {
     if (_gagalTidakHadir != null) {
       return [
-        SectionCard(
+        KartuRekap(
           title: 'Balita Tidak Hadir',
           child: Text(_gagalTidakHadir!, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
         ),
@@ -318,19 +335,16 @@ class _SkdnViewState extends State<SkdnView> {
     final th = _tidakHadir;
     if (th == null) return const [];
     return [
-      Padding(
-        padding: const EdgeInsets.only(top: 4, bottom: 10),
-        child: Row(
-          children: [
-            const Expanded(
-              child: Text('Balita Tidak Hadir',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            ),
-            Pill('${th.tidakHadir} balita', bg: AppColors.merahMuda, fg: AppColors.merah),
-          ],
-        ),
+      const Padding(
+        padding: EdgeInsets.only(top: 4, bottom: 10),
+        child: Text('Balita Tidak Hadir',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
       ),
       DaftarTidakHadir(data: th),
+      Padding(
+        padding: const EdgeInsets.only(top: 2, left: 2),
+        child: _barisKet('Jumlah balita', '${th.tidakHadir}'),
+      ),
     ];
   }
 
@@ -353,7 +367,7 @@ class _SkdnViewState extends State<SkdnView> {
   }
 
   Widget _kartuRingkasan(SkdnBulan b) {
-    return SectionCard(
+    return KartuRekap(
       title: 'Ringkasan ${b.label}',
       child: Column(
         children: [
@@ -368,9 +382,12 @@ class _SkdnViewState extends State<SkdnView> {
 
   // ------------------------------------------------------------ persentase
 
-  Widget _barisPersen(String judul, String rumus, double nilai, Color warna) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+  Widget _barisPersen(String judul, String rumus, double nilai, Color warna, {String? catatan}) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -394,6 +411,10 @@ class _SkdnViewState extends State<SkdnView> {
           ),
           const SizedBox(height: 4),
           Text(rumus, style: const TextStyle(fontSize: 14.5, color: AppColors.teksRedup)),
+          if (catatan != null) ...[
+            const SizedBox(height: 6),
+            Text(catatan, style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: warna)),
+          ],
         ],
       ),
     );
@@ -401,17 +422,15 @@ class _SkdnViewState extends State<SkdnView> {
 
   Widget _kartuPersentase(SkdnData d) {
     final b = d.bulan;
-    return SectionCard(
+    return KartuRekap(
       title: 'Persentase',
-      trailing: Pill(
-        d.capaiTarget ? 'Kehadiran baik' : 'Kehadiran kurang',
-        bg: d.capaiTarget ? AppColors.hijauMuda : AppColors.merahMuda,
-        fg: d.capaiTarget ? AppColors.hijau : AppColors.merah,
-      ),
       child: Column(
         children: [
           _barisPersen('Tingkat kehadiran balita', 'Datang ditimbang ÷ seluruh balita (D/S)', b.persenDS,
-              d.capaiTarget ? AppColors.hijau : AppColors.merah),
+              d.capaiTarget ? AppColors.hijau : AppColors.merah,
+              catatan: d.capaiTarget
+                  ? 'Kehadiran baik (target minimal 85% tercapai)'
+                  : 'Kehadiran kurang (target minimal 85%)'),
           _barisPersen('Balita yang tumbuh baik dari yang ditimbang', 'Berat badan naik ÷ datang ditimbang (N/D)',
               b.persenND, AppColors.biru),
           _barisPersen('Balita yang punya Buku KIA', 'Punya Buku KIA ÷ seluruh balita (K/S)', b.persenKS, _abu),
@@ -426,42 +445,37 @@ class _SkdnViewState extends State<SkdnView> {
 
   // --------------------------------------------------------------- rincian
 
-  Widget _barisRincian(IconData ikon, String label, int nilai, Color fg, Color bg) {
+  Widget _barisRincian(String label, int nilai) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-            child: Icon(ikon, size: 16, color: fg),
-          ),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 16, color: Color(0xFF1F2937)))),
           const SizedBox(width: 10),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 16))),
-          Text('$nilai', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: fg)),
+          Text('$nilai',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
         ],
       ),
     );
   }
 
   Widget _kartuRincian(SkdnBulan b) {
-    return SectionCard(
+    return KartuRekap(
       title: 'Rincian Balita yang Ditimbang',
-      trailing: Pill('${b.d} balita', bg: AppColors.hijauMuda, fg: AppColors.hijau),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _barisRincian(Icons.trending_up, 'Berat badan naik', b.n, AppColors.hijau, AppColors.hijauMuda),
-          _barisRincian(Icons.trending_flat, 'Berat badan tidak naik', b.t, AppColors.kuning, AppColors.kuningMuda),
-          _barisRincian(Icons.help_outline, 'Bulan lalu tidak ditimbang, belum bisa dinilai', b.o, _abu, _abuMuda),
-          _barisRincian(Icons.fiber_new_outlined, 'Baru pertama kali ditimbang', b.b, AppColors.biru, AppColors.biruMuda),
+          _barisRincian('Berat badan naik', b.n),
+          _barisRincian('Berat badan tidak naik', b.t),
+          _barisRincian('Bulan lalu tidak ditimbang, belum bisa dinilai', b.o),
+          _barisRincian('Baru pertama kali ditimbang', b.b),
           const Divider(height: 18),
-          _barisRincian(Icons.warning_amber_rounded, 'Tidak naik 2 bulan berturut-turut (perlu dirujuk)', b.duaT,
-              AppColors.merah, AppColors.merahMuda),
-          _barisRincian(Icons.warning_amber_rounded, 'Berat badan sangat kurang / bawah garis merah (perlu dirujuk)',
-              b.bgm, AppColors.merah, AppColors.merahMuda),
-          _barisRincian(Icons.person_off_outlined, 'Balita yang tidak datang ditimbang', b.tidakDatang, _abu, _abuMuda),
+          _barisRincian('Tidak naik 2 bulan berturut-turut (perlu dirujuk)', b.duaT),
+          _barisRincian('Berat badan sangat kurang / bawah garis merah (perlu dirujuk)', b.bgm),
+          _barisRincian('Balita yang tidak datang ditimbang', b.tidakDatang),
+          const Divider(height: 18),
+          _barisKet('Jumlah balita', '${b.d}'),
         ],
       ),
     );
@@ -470,7 +484,7 @@ class _SkdnViewState extends State<SkdnView> {
   // ------------------------------------------------------------------ tren
 
   Widget _kartuTren(SkdnData d) {
-    return SectionCard(
+    return KartuRekap(
       title: 'Perkembangan 6 Bulan',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -559,12 +573,19 @@ class _SkdnViewState extends State<SkdnView> {
   // ------------------------------------------------------------ daftar anak
 
   Widget _kartuAnak(String judul, IconData ikon, Color fg, Color bg, List<AnakSkdn> list, String kosong) {
-    return SectionCard(
+    return KartuRekap(
       title: judul,
-      trailing: Pill('${list.length} balita', bg: bg, fg: fg),
-      child: list.isEmpty
-          ? Text(kosong, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup))
-          : Column(children: [for (final a in list) _barisAnak(a, fg, bg)]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (list.isEmpty)
+            Text(kosong, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup))
+          else
+            for (final a in list) _barisAnak(a, fg, bg),
+          const SizedBox(height: 6),
+          _barisKet('Jumlah balita', '${list.length}'),
+        ],
+      ),
     );
   }
 

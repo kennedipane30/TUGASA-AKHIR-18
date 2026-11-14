@@ -142,7 +142,7 @@ class _AdminHomeState extends State<AdminHome> {
         _kartuGrafikHadir(),
 
         // Aksi cepat (ikon dari assets)
-        _gridAset('Layanan Sekretaris', 'Kelola data, jadwal, dan laporan posyandu', [
+        _gridAset('Layanan Sekretaris', [
           _itemAset('kelola_akun.png', Icons.manage_accounts, AppColors.hijau,
               'Kelola\nAkun', _bukaAkun),
           _itemAset('jadwal.png', Icons.calendar_month, AppColors.hijau,
@@ -366,7 +366,7 @@ class _AdminHomeState extends State<AdminHome> {
     );
   }
 
-  Widget _gridAset(String judul, String sub, List<Widget> item) {
+  Widget _gridAset(String judul, List<Widget> item) {
     final baris = <Widget>[];
     for (var i = 0; i < item.length; i += 4) {
       final potong = item.sublist(i, i + 4 > item.length ? item.length : i + 4);
@@ -389,43 +389,14 @@ class _AdminHomeState extends State<AdminHome> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    judul,
-                    style: const TextStyle(
-                      fontSize: 21,
-                      height: 1.2,
-                      color: Color(0xFF0F172A),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Layanan Utama',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.teksRedup,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 14),
             child: Text(
-              sub,
+              judul,
               style: const TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w500,
-                color: AppColors.teksRedup,
+                fontSize: 21,
+                height: 1.2,
+                color: Color(0xFF0F172A),
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),

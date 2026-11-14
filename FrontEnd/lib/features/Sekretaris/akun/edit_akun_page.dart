@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/pin_util.dart';
-import '../admin_service.dart';
+import '../../../service/admin_service.dart';
 import 'kelola_akun_page.dart' show HeaderAkun, gayaStatusBarAkun, garisKartuAkun;
 
 const _hijauTua = Color(0xFF065F46); // sama dengan warna header

@@ -256,8 +256,9 @@ func buatKartu(j *models.JadwalPosyandu, a *models.Anak, p *models.Pendaftaran) 
 		MulaiPada:         mulai,
 		CheckinDibukaPada: checkinDibuka(j),
 		WaktuCheckin:      p.WaktuCheckin,
-		BolehBatal:        aktif && terdaftar && now.Before(mulai),
-		BolehCheckin:      aktif && terdaftar && !now.Before(checkinDibuka(j)) && now.Before(selesaiJadwal(j)),
+		// Orang tua boleh membatalkan antrean sampai sesi posyandu selesai (termasuk saat sudah dimulai).
+		BolehBatal:   aktif && terdaftar && now.Before(selesaiJadwal(j)),
+		BolehCheckin: aktif && terdaftar && !now.Before(checkinDibuka(j)) && now.Before(selesaiJadwal(j)),
 	}
 }
 
@@ -654,6 +655,9 @@ func (s *JadwalService) Daftar(userID uint, jadwalID, anakID uuid.UUID) (*KartuA
 			if p.StatusKehadiran != "batal" {
 				return konflik("anak sudah terdaftar pada jadwal ini")
 			}
+			// Nomor lama yang sudah dibatalkan dilewati: daftar ulang mendapat nomor berikutnya.
+			n := r.NomorAntreanBerikut(j.ID)
+			p.NomorAntrean = &n
 			p.StatusKehadiran = "terdaftar"
 			p.Sumber = "mandiri"
 			p.WaktuBatal = nil
@@ -708,8 +712,10 @@ func (s *JadwalService) BatalDaftar(userID uint, jadwalID, anakID uuid.UUID) (*K
 		return nil, konflik("pendaftaran berstatus %s tidak dapat dibatalkan", p.StatusKehadiran)
 	}
 	now := time.Now()
-	if !now.Before(mulaiJadwal(j)) {
-		return nil, konflik("jadwal sudah dimulai, pendaftaran tidak dapat dibatalkan")
+	// Pembatalan tetap diizinkan setelah sesi dimulai, selama sesi belum selesai.
+	// Nomor antrean yang dibatalkan tidak dipakai ulang (antrean lanjut ke nomor berikutnya).
+	if !now.Before(selesaiJadwal(j)) {
+		return nil, konflik("jadwal sudah selesai, pendaftaran tidak dapat dibatalkan")
 	}
 	p.StatusKehadiran = "batal"
 	p.WaktuBatal = &now
@@ -842,6 +848,11 @@ func (s *JadwalService) WalkIn(kaderID uint, pos string, jadwalID, anakID uuid.U
 		case err == nil:
 			if p.StatusKehadiran == "sudah_checkin" {
 				return konflik("anak sudah check-in")
+			}
+			if p.StatusKehadiran == "batal" {
+				// Nomor yang sudah dibatalkan dilewati, anak mendapat nomor berikutnya.
+				n := r.NomorAntreanBerikut(j.ID)
+				p.NomorAntrean = &n
 			}
 			p.Version++
 		case errors.Is(err, gorm.ErrRecordNotFound):

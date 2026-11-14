@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
-import '../../core/config/api_client.dart';
-import '../../core/utils/posyandu.dart';
+import '../core/config/api_client.dart';
+import '../core/utils/posyandu.dart';
 
 class StaffAkun {
   final int id;

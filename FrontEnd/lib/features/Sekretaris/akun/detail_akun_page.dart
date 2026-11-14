@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../admin_service.dart';
+import '../../../service/admin_service.dart';
 import 'edit_akun_page.dart';
 import 'kelola_akun_page.dart';
 

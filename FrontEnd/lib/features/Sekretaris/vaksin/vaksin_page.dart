@@ -3,10 +3,60 @@ import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
-import '../../../core/utils/posyandu.dart';
 import '../../../service/vaksin_service.dart';
 
 const _hijauHeader = Color(0xFF065F46);
+const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi kartu: hitam lembut (tidak mencolok).
+const _garis = Color(0xFFB8BEC6);
+
+/// Kartu putih bergaris tepi hitam lembut, dengan judul di atas.
+Widget _kartu({required String judul, Widget? trailing, required Widget child}) {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: _garis, width: 1.2),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(judul,
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap)),
+            ),
+            if (trailing != null) ...[const SizedBox(width: 8), trailing],
+          ],
+        ),
+        const SizedBox(height: 12),
+        child,
+      ],
+    ),
+  );
+}
+
+/// Baris "Label : nilai" (satu warna hitam).
+Widget _baris(String label, String nilai, {double lebar = 150}) {
+  const gaya = TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, height: 1.35, color: _teksGelap);
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: lebar, child: Text(label, style: gaya)),
+        const Text(': ', style: gaya),
+        Expanded(child: Text(nilai, style: gaya)),
+      ],
+    ),
+  );
+}
 
 /// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
@@ -156,14 +206,11 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
   }
 
   Widget _isi(StatistikVaksin d) {
-    final maks = d.jenis.fold<int>(0, (m, e) => e.jumlahDosis > m ? e.jumlahDosis : m);
-
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        SectionCard(
-          title: 'Cakupan Imunisasi',
-          trailing: Pill(labelPosyandu(d.posyandu), bg: AppColors.hijauMuda, fg: AppColors.hijau),
+        _kartu(
+          judul: 'Cakupan Imunisasi',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -218,8 +265,8 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
             ],
           ),
         ),
-        SectionCard(
-          title: 'Jumlah Pemberian per Vaksin',
+        _kartu(
+          judul: 'Jumlah Pemberian per Vaksin',
           trailing: Pill('${d.jenis.length} jenis', bg: AppColors.biruMuda, fg: AppColors.biru),
           child: d.jenis.isEmpty
               ? const Padding(
@@ -229,10 +276,10 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                         style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
                   ),
                 )
-              : Column(children: [for (final e in d.jenis) _barisJenis(e, maks)]),
+              : Column(children: [for (final e in d.jenis) _barisJenis(e, d.jumlahBalita)]),
         ),
-        SectionCard(
-          title: 'Jadwal Imunisasi Rutin',
+        _kartu(
+          judul: 'Jadwal Imunisasi Rutin',
           child: _jadwalMaster(),
         ),
       ],
@@ -268,51 +315,34 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
     );
   }
 
-  Widget _barisJenis(StatistikJenisVaksin e, int maks) {
-    final nilai = maks == 0 ? 0.0 : e.jumlahDosis / maks;
+  Widget _barisJenis(StatistikJenisVaksin e, int jumlahBalita) {
+    final belum = (jumlahBalita - e.jumlahAnak) < 0 ? 0 : jumlahBalita - e.jumlahAnak;
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _garis, width: 1.2),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(e.jenis.nama,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
-                    if (e.jenis.penyakit.isNotEmpty)
-                      Text(e.jenis.penyakit,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Pill('${e.jumlahDosis} dosis', bg: AppColors.hijauMuda, fg: AppColors.hijau),
-            ],
-          ),
+          Text(e.jenis.nama,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17, color: _teksGelap)),
+          if (e.jenis.penyakit.isNotEmpty)
+            Text(e.jenis.penyakit,
+                style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
           const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: nilai,
-              minHeight: 8,
-              backgroundColor: Colors.white,
-              color: AppColors.hijau,
-            ),
+          Text(
+            'Satu anak hanya bisa menerima ${e.dosisPerAnak} dosis'
+            '${e.jenis.khususDaerah ? ' (khusus daerah endemis)' : ''}',
+            style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap),
           ),
           const SizedBox(height: 6),
-          Text(
-            '${e.jumlahAnak} anak sudah menerima · ${e.dosisPerAnak} dosis per anak'
-            '${e.jenis.khususDaerah ? ' · khusus daerah endemis' : ''}',
-            style: const TextStyle(fontSize: 16, color: AppColors.teksRedup),
-          ),
+          _baris('Anak yang sudah menerima', '${e.jumlahAnak} anak', lebar: 200),
+          _baris('Anak yang belum', '$belum anak', lebar: 200),
         ],
       ),
     );
@@ -339,23 +369,16 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _garis, width: 1.2),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(g.key,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    for (final j in g.value)
-                      Pill(j.namaDosis,
-                          bg: j.lanjutan ? AppColors.biruMuda : Colors.white,
-                          fg: j.lanjutan ? AppColors.biru : Colors.black87),
-                  ],
-                ),
+                _baris('Usia', g.key, lebar: 108),
+                _baris('Jenis vaksin', g.value.map((j) => j.namaDosis).join(', '), lebar: 108),
               ],
             ),
           ),

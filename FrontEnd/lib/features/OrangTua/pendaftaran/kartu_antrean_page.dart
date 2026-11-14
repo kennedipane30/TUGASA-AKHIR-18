@@ -13,9 +13,10 @@ const _hijauHeader = Color(0xFF065F46);
 const _hijauTua = Color(0xFF0B3D2E);
 const _kartuAwal = Color(0xFF0A6B51); // senada dengan heading
 const _mintLabel = Color(0xFF8CF0CB);
-const _oranyeTombol = Color(0xFFF0793E);
-const _oranye2 = Color(0xFFF97316);
-const _biruTombol = Color(0xFF2B7BB9);
+const _oranye2 = Color(0xFFF97316); // titik status "belum check-in"
+
+/// Garis tepi kartu: hitam lembut (sama dengan halaman lain).
+const _garis = Color(0xFFB8BEC6);
 
 const _bulan = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli',
@@ -623,70 +624,55 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
     final aktifCheckin = k.bolehCheckin && !_sibuk;
     return Column(
       children: [
-        Opacity(
-          opacity: aktifCheckin ? 1 : 0.65,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: _checkin,
-            child: Container(
-              height: 54,
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: _oranyeTombol,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                      color: _oranyeTombol.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 5)),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      _sibuk ? 'Memproses...' : 'Cek in Sekarang (Scan QR di Posyandu)',
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 50,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.merah,
+                    side: BorderSide(
+                        color: AppColors.merah.withOpacity((k.bolehBatal && !_sibuk) ? 1 : 0.5),
+                        width: 1.4),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                ],
+                  onPressed: _batal,
+                  child: const Text('Batalkan',
+                      maxLines: 1,
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
+                ),
               ),
             ),
-          ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: SizedBox(
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: aktifCheckin ? _hijauHeader : _hijauHeader.withOpacity(0.55),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  onPressed: _checkin,
+                  child: Text(
+                    _sibuk ? 'Memproses...' : 'Check-in',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         if (!k.bolehCheckin && k.checkinBuka != null) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text('Check-in dibuka pukul ${formatJam(k.checkinBuka!)} WIB (1 jam sebelum jadwal dimulai)',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 14, color: AppColors.teksRedup)),
         ],
-        const SizedBox(height: 12),
-        Opacity(
-          opacity: (k.bolehBatal && !_sibuk) ? 1 : 0.6,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: _batal,
-            child: Container(
-              height: 50,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF4FB),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _biruTombol.withOpacity(0.35)),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Batalkan Antrean',
-                      style: TextStyle(
-                          color: _biruTombol, fontSize: 16, fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -724,14 +710,8 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE6ECE8)),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _garis, width: 1.2),
       ),
       child: Column(
         children: [

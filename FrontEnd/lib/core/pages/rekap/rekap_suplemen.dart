@@ -1,8 +1,37 @@
 part of 'rekap_posyandu_page.dart';
 
+const _teksRekap = Color(0xFF1F2937);
+
 // ============================================================================
-// TAB 2: VITAMIN A & OBAT CACING
+// TAB 2: VITAMIN A & OBAT CACING (REKAP TAHUNAN / TUTUP BUKU)
+// Data dua semester dalam satu tahun digabung menjadi satu rekap tahunan.
 // ============================================================================
+
+/// Gabungan satu kelompok sasaran selama satu tahun (dihitung per dosis).
+class _KelompokTahun {
+  final String label;
+  final String keterangan;
+  int sasaran = 0;
+  int sudah = 0;
+
+  _KelompokTahun(this.label, this.keterangan);
+
+  int get belum => (sasaran - sudah) < 0 ? 0 : sasaran - sudah;
+  double get persen => sasaran == 0 ? 0 : sudah * 100 / sasaran;
+
+  void tambah(KelompokSuplemen k) {
+    sasaran += k.sasaran;
+    sudah += k.sudah;
+  }
+}
+
+/// Satu anak yang belum menerima (gabungan dua semester).
+class _BelumTahun {
+  final String nama, jk, umur, kelompok;
+  final List<String> belum = [];
+
+  _BelumTahun(this.nama, this.jk, this.umur, this.kelompok);
+}
 
 class _TabSuplemen extends StatefulWidget {
   final String prefix;
@@ -16,8 +45,7 @@ class _TabSuplemen extends StatefulWidget {
 class _TabSuplemenState extends State<_TabSuplemen> {
   final _svc = RekapService();
   int _tahun = DateTime.now().year;
-  int _periode = DateTime.now().month >= 7 ? 2 : 1;
-  RekapSuplemen? _data;
+  List<RekapSuplemen> _data = [];
   bool _loading = true;
   String? _error;
 
@@ -27,16 +55,25 @@ class _TabSuplemenState extends State<_TabSuplemen> {
     _muat();
   }
 
+  /// Semester 2 (Juli-Desember) tahun berjalan belum ada bila sekarang masih Januari-Juni.
+  bool get _adaSemester2 {
+    final n = DateTime.now();
+    return !(_tahun == n.year && n.month < 7);
+  }
+
   Future<void> _muat() async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final d = await _svc.suplemen(_tahun, _periode, prefix: widget.prefix);
+      final hasil = await Future.wait([
+        _svc.suplemen(_tahun, 1, prefix: widget.prefix),
+        if (_adaSemester2) _svc.suplemen(_tahun, 2, prefix: widget.prefix),
+      ]);
       if (!mounted) return;
       setState(() {
-        _data = d;
+        _data = hasil;
         _loading = false;
       });
     } catch (e) {
@@ -48,70 +85,36 @@ class _TabSuplemenState extends State<_TabSuplemen> {
     }
   }
 
-  void _ubah({int? tahun, int? periode}) {
-    setState(() {
-      _tahun = tahun ?? _tahun;
-      _periode = periode ?? _periode;
-    });
+  void _ubahTahun(int tahun) {
+    setState(() => _tahun = tahun);
     _muat();
   }
 
   Widget _pemilih() {
     final n = DateTime.now();
-    Widget chip(int p, String l) {
-      final aktif = _periode == p;
-      final masaDepan = _tahun == n.year && p == 2 && n.month < 7;
-      return Expanded(
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: masaDepan ? null : () => _ubah(periode: p),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: aktif ? AppColors.hijau : AppColors.latar,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(l,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  color: aktif ? Colors.white : (masaDepan ? _abu : Colors.black87),
-                )),
-          ),
-        ),
-      );
-    }
-
     return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: garisKartuRekap, width: 1.2),
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              IconButton(
-                tooltip: 'Tahun sebelumnya',
-                onPressed: () => _ubah(tahun: _tahun - 1),
-                icon: const Icon(Icons.chevron_left),
-              ),
-              Expanded(
-                child: Text('Tahun $_tahun',
-                    textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
-              ),
-              IconButton(
-                tooltip: 'Tahun berikutnya',
-                onPressed: _tahun < n.year ? () => _ubah(tahun: _tahun + 1) : null,
-                icon: const Icon(Icons.chevron_right),
-              ),
-            ],
+          IconButton(
+            tooltip: 'Tahun sebelumnya',
+            onPressed: () => _ubahTahun(_tahun - 1),
+            icon: const Icon(Icons.chevron_left),
           ),
-          Row(
-            children: [
-              chip(1, 'Februari'),
-              const SizedBox(width: 8),
-              chip(2, 'Agustus'),
-            ],
+          Expanded(
+            child: Text('Tahun $_tahun',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17, color: _teksRekap)),
+          ),
+          IconButton(
+            tooltip: 'Tahun berikutnya',
+            onPressed: _tahun < n.year ? () => _ubahTahun(_tahun + 1) : null,
+            icon: const Icon(Icons.chevron_right),
           ),
         ],
       ),
@@ -133,40 +136,38 @@ class _TabSuplemenState extends State<_TabSuplemen> {
           else if (_error != null)
             _gagal(_error!, _muat)
           else
-            ..._isi(_data!),
+            ..._isi(),
         ],
       ),
     );
   }
 
-  Widget _kelompok(KelompokSuplemen k, Color warna, Color latar, IconData ikon) {
+  /// Kartu kecil satu kelompok sasaran (latar abu muda, tanpa garis tepi).
+  Widget _kelompok(_KelompokTahun k, Color warna) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(color: latar, shape: BoxShape.circle),
-                child: Icon(ikon, size: 18, color: warna),
-              ),
-              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(k.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
-                    Text(k.keterangan, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
+                    Text(k.label,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5, color: _teksRekap)),
+                    if (k.keterangan.isNotEmpty)
+                      Text(k.keterangan, style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
                   ],
                 ),
               ),
               Text('${_angka(k.persen)}%',
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: warna)),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: warna)),
             ],
           ),
           const SizedBox(height: 8),
@@ -179,96 +180,126 @@ class _TabSuplemenState extends State<_TabSuplemen> {
               color: warna,
             ),
           ),
-          const SizedBox(height: 6),
-          Text('${k.sudah} dari ${k.sasaran} sasaran sudah menerima · ${k.belum} belum',
-              style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 8),
+          _barisSup('Sasaran', '${k.sasaran} pemberian'),
+          _barisSup('Sudah diberikan', '${k.sudah} pemberian'),
+          _barisSup('Belum diberikan', '${k.belum} pemberian'),
         ],
       ),
     );
   }
 
-  List<Widget> _isi(RekapSuplemen d) {
-    KelompokSuplemen? cari(String kode) {
-      for (final e in d.vitaminA) {
-        if (e.kode == kode) return e;
+  /// Baris "Label : nilai" (satu warna hitam).
+  Widget _barisSup(String label, String nilai, {double lebar = 140}) {
+    const gaya = TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, height: 1.35, color: _teksRekap);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: lebar, child: Text(label, style: gaya)),
+          const Text(': ', style: gaya),
+          Expanded(child: Text(nilai, style: gaya)),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _isi() {
+    // Gabungkan kelompok Vitamin A dari semua semester berdasarkan kodenya.
+    final vitA = <String, _KelompokTahun>{};
+    final urutan = <String>[];
+    _KelompokTahun? cacing;
+    final belum = <String, _BelumTahun>{};
+
+    for (var i = 0; i < _data.length; i++) {
+      final d = _data[i];
+      final semester = i == 0 ? 'Januari-Juni' : 'Juli-Desember';
+      for (final k in d.vitaminA) {
+        vitA.putIfAbsent(k.kode, () {
+          urutan.add(k.kode);
+          return _KelompokTahun(k.label, k.keterangan);
+        }).tambah(k);
       }
-      return null;
+      (cacing ??= _KelompokTahun(d.obatCacing.label, d.obatCacing.keterangan)).tambah(d.obatCacing);
+      for (final a in d.belumMenerima) {
+        final kunci = '${a.anak.nama}|${a.anak.jkTeks}';
+        final b = belum.putIfAbsent(
+            kunci, () => _BelumTahun(a.anak.nama, a.anak.jkTeks, a.anak.usiaTeks, a.kelompok));
+        for (final x in a.belum) {
+          b.belum.add('$x ($semester)');
+        }
+      }
     }
 
-    final biru = cari('biru');
-    final merah = cari('merah');
-    final total = cari('total');
-    final rentang = (d.rentangDari == null || d.rentangSampai == null)
-        ? ''
-        : 'Dihitung dari pemberian ${formatTanggal(d.rentangDari!)} s.d. ${formatTanggal(d.rentangSampai!)}';
+    Color warna(String kode) => switch (kode) {
+          'biru' => AppColors.biru,
+          'merah' => AppColors.merah,
+          _ => AppColors.hijau,
+        };
+
+    final daftarBelum = belum.values.toList();
+
     return [
-      SectionCard(
-        title: 'Vitamin A · ${d.label}',
-        icon: Icons.medication_outlined,
-        trailing: total == null
-            ? null
-            : Pill('${_angka(total.persen)}% cakupan', bg: AppColors.hijauMuda, fg: AppColors.hijau),
+      KartuRekap(
+        title: 'Vitamin A · Tahun $_tahun',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (biru != null) _kelompok(biru, AppColors.biru, AppColors.biruMuda, Icons.circle),
-            if (merah != null) _kelompok(merah, AppColors.merah, AppColors.merahMuda, Icons.circle),
-            if (total != null) _kelompok(total, AppColors.hijau, AppColors.hijauMuda, Icons.summarize_outlined),
-            if (rentang.isNotEmpty)
-              Text(rentang, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
+            if (urutan.isEmpty)
+              const Text('Belum ada data pada tahun ini',
+                  style: TextStyle(fontSize: 16, color: AppColors.teksRedup))
+            else
+              for (final kode in urutan) _kelompok(vitA[kode]!, warna(kode)),
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                _adaSemester2
+                    ? 'Rekap 1 tahun (Januari-Desember $_tahun). Setiap anak mendapat vitamin A 2 kali setahun.'
+                    : 'Rekap tahun berjalan (Januari-Juni $_tahun). Data Juli-Desember belum tersedia.',
+                style: const TextStyle(fontSize: 15, color: AppColors.teksRedup),
+              ),
+            ),
           ],
         ),
       ),
-      SectionCard(
-        title: 'Obat Cacing · Semester ${d.periode}',
-        icon: Icons.healing_outlined,
-        child: _kelompok(d.obatCacing, AppColors.kuning, AppColors.kuningMuda, Icons.medication),
+      KartuRekap(
+        title: 'Obat Cacing · Tahun $_tahun',
+        child: cacing == null
+            ? const Text('Belum ada data pada tahun ini',
+                style: TextStyle(fontSize: 16, color: AppColors.teksRedup))
+            : _kelompok(cacing, AppColors.kuning),
       ),
-      SectionCard(
+      KartuRekap(
         title: 'Belum Menerima',
-        icon: Icons.person_search_outlined,
-        trailing: Pill('${d.belumMenerima.length} anak', bg: AppColors.kuningMuda, fg: AppColors.kuning),
-        child: d.belumMenerima.isEmpty
-            ? _kosong(Icons.verified_outlined, 'Semua sasaran sudah menerima')
-            : Column(
-                children: [
-                  for (final a in d.belumMenerima)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(14)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(a.anak.nama,
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
-                              ),
-                              Pill(a.kelompok, bg: Colors.white, fg: Colors.black87),
-                            ],
-                          ),
-                          Text('${a.anak.jkTeks} · ${a.anak.usiaTeks}',
-                              style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              for (final b in a.belum)
-                                Pill(
-                                  b,
-                                  bg: b.startsWith('Obat') ? AppColors.kuningMuda : AppColors.merahMuda,
-                                  fg: b.startsWith('Obat') ? AppColors.kuning : AppColors.merah,
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (daftarBelum.isEmpty)
+              const Text('Semua sasaran sudah menerima',
+                  style: TextStyle(fontSize: 16, color: AppColors.teksRedup))
+            else
+              for (final a in daftarBelum)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _barisSup('Nama', a.nama, lebar: 130),
+                      _barisSup('Jenis Kelamin', a.jk, lebar: 130),
+                      _barisSup('Umur', a.umur, lebar: 130),
+                      _barisSup('Kelompok', a.kelompok, lebar: 130),
+                      _barisSup('Belum menerima', a.belum.join(', '), lebar: 130),
+                    ],
+                  ),
+                ),
+            const SizedBox(height: 6),
+            _barisSup('Total balita', '${daftarBelum.length}', lebar: 110),
+          ],
+        ),
       ),
     ];
   }

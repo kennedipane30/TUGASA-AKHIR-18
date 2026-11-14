@@ -76,7 +76,7 @@ class _TabGiziState extends State<_TabGizi> {
 
   List<Widget> _isi(RekapGizi d) {
     return [
-      SectionCard(
+      KartuRekap(
         title: 'Ringkasan ${d.label}',
         icon: Icons.monitor_weight_outlined,
         trailing: Pill('${_angka(d.partisipasi)}% diukur', bg: AppColors.biruMuda, fg: AppColors.biru),
@@ -133,32 +133,44 @@ class _TabGiziState extends State<_TabGizi> {
           ],
         ),
       ),
-      SectionCard(
+      KartuRekap(
         title: 'Kategori Status Gizi',
-        icon: Icons.pie_chart_outline,
-        trailing: const Pill('Permenkes 2/2020', bg: AppColors.hijauMuda, fg: AppColors.hijau),
         child: d.diukur == 0
-            ? _kosong(Icons.scale_outlined, 'Belum ada balita yang diukur pada bulan ini')
+            ? const Text('Belum ada balita yang diukur pada bulan ini',
+                style: TextStyle(fontSize: 16, color: AppColors.teksRedup))
             : Column(
                 children: [
                   for (final k in d.kategori)
-                    _batang(k.label, k.jumlah, d.diukur, _warnaTingkat(k.tingkat), _latarTingkat(k.tingkat),
-                        sub: k.indeks),
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
+                      child: _batang(k.label, k.jumlah, d.diukur, _warnaTingkat(k.tingkat), Colors.white,
+                          sub: k.indeks),
+                    ),
                 ],
               ),
       ),
-      SectionCard(
+      KartuRekap(
         title: 'Tren 6 Bulan',
         icon: Icons.show_chart,
         child: _TrenGizi(tren: d.tren),
       ),
-      SectionCard(
+      KartuRekap(
         title: 'Balita Prioritas',
-        icon: Icons.priority_high,
-        trailing: Pill('${d.prioritas.length} anak', bg: AppColors.merahMuda, fg: AppColors.merah),
-        child: d.prioritas.isEmpty
-            ? _kosong(Icons.verified_outlined, 'Tidak ada balita dengan masalah gizi pada bulan ini')
-            : Column(children: [for (final a in d.prioritas) _kartuPrioritas(a)]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (d.prioritas.isEmpty)
+              const Text('Tidak ada balita dengan masalah gizi pada bulan ini',
+                  style: TextStyle(fontSize: 16, color: AppColors.teksRedup))
+            else
+              for (final a in d.prioritas) _kartuPrioritas(a),
+            const SizedBox(height: 8),
+            _barisTotal('Total balita', '${d.prioritas.length}'),
+          ],
+        ),
       ),
     ];
   }
@@ -209,6 +221,18 @@ class _TabGiziState extends State<_TabGizi> {
       ),
     );
   }
+}
+
+/// Baris "Label : nilai" (satu warna hitam).
+Widget _barisTotal(String label, String nilai) {
+  const gaya = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1F2937));
+  return Row(
+    children: [
+      SizedBox(width: 110, child: Text(label, style: gaya)),
+      const Text(': ', style: gaya),
+      Text(nilai, style: gaya),
+    ],
+  );
 }
 
 /// Grafik batang sederhana: jumlah stunting, wasting, BB kurang per bulan.
