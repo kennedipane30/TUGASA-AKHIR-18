@@ -17,13 +17,33 @@ const _hijauHeader = Color(0xFF065F46);
 const _abu = Color(0xFF64748B);
 const _abuMuda = Color(0xFFF1F5F9);
 
-/// Garis tepi semua kartu rekap: hitam lembut (tidak mencolok).
+/// Garis tepi tombol tab: hitam lembut (tidak mencolok).
 const garisKartuRekap = Color(0xFFB8BEC6);
 
-/// Kartu rekap: putih, garis tepi hitam lembut, judul (opsional) di atas.
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const bayanganKartuRekap = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+/// Warna aksen kartu: hijau lembut senada header.
+const aksenKartuRekap = Color(0xFF5E9C84);
+
+/// Dekorasi kartu putih berbayangan.
+BoxDecoration dekorKartuRekap() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: bayanganKartuRekap,
+    );
+
+/// Teks kecil di kanan judul kartu.
+Widget teksKananRekap(String teks) => Text(teks,
+    style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: Color(0xFF1F2937)));
+
+/// Kartu rekap: judul tebal kapital, keterangan di kanan, garis aksen hijau lembut,
+/// lalu isi. Tanpa judul: kartu putih berbayangan biasa.
 class KartuRekap extends StatelessWidget {
   final String? title;
-  final IconData? icon;
+  final IconData? icon; // tidak ditampilkan (gaya kartu tanpa ikon)
   final Widget? trailing;
   final Widget child;
 
@@ -33,34 +53,40 @@ class KartuRekap extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: garisKartuRekap, width: 1.2),
-      ),
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
+      decoration: dekorKartuRekap(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (title != null) ...[
-            Row(
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 20, color: AppColors.hijau),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: Text(title!,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title!.toUpperCase(),
                       style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
-                ),
-                if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-              ],
+                        fontSize: 16.5,
+                        height: 1.3,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                  ),
+                  if (trailing != null) ...[const SizedBox(width: 10), trailing!],
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
+            Container(height: 3, color: aksenKartuRekap),
           ],
-          child,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: child,
+          ),
         ],
       ),
     );
@@ -153,7 +179,7 @@ class PemilihBulan extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: garisKartuRekap, width: 1.2),
+        boxShadow: bayanganKartuRekap,
       ),
       child: Row(
         children: [
@@ -207,13 +233,9 @@ class KartuKesimpulan extends StatelessWidget {
     };
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: garisKartuRekap, width: 1.2),
-      ),
+      decoration: dekorKartuRekap(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -585,7 +607,7 @@ class _TidakHadirViewState extends State<TidakHadirView> {
     return [
       KartuRekap(
         title: 'Kehadiran ${d.label}',
-        trailing: Pill('${d.jumlahJadwal} jadwal', bg: AppColors.biruMuda, fg: AppColors.biru),
+        trailing: teksKananRekap('${d.jumlahJadwal} jadwal'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -669,6 +691,8 @@ class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
                     selectedColor: AppColors.hijau,
                     backgroundColor: Colors.white,
                     showCheckmark: false,
+                    side: BorderSide(color: _aktif == f ? AppColors.hijau : garisKartuRekap, width: 1.2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     labelStyle: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -705,13 +729,9 @@ class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
     }
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: garisKartuRekap, width: 1.2),
-      ),
+      decoration: dekorKartuRekap(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

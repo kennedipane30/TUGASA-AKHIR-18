@@ -5,9 +5,6 @@ import '../../../core/theme/app_colors.dart';
 import 'jadwal_page.dart';
 import 'riwayat_jadwal_page.dart';
 
-/// Garis tepi kartu halaman detail: hitam lembut (tidak mencolok).
-const _garisDetail = Color(0xFFB8BEC6);
-
 /// Detail satu jadwal yang sudah selesai (hanya dilihat).
 class RiwayatJadwalDetailPage extends StatelessWidget {
   final RiwayatJadwal jadwal;
@@ -81,31 +78,46 @@ class RiwayatJadwalDetailPage extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _garisDetail, width: 1.2),
-                    ),
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    clipBehavior: Clip.antiAlias,
+                    decoration: dekorKartuJadwal(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _baris('Hari/Tanggal', tglPanjangJadwal(j.tanggal)),
-                        const SizedBox(height: 6),
-                        _baris('Waktu', '${j.jam} WIB'),
-                        const SizedBox(height: 6),
-                        _baris('Lokasi', j.lokasi.isEmpty ? '-' : j.lokasi),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 10),
-                          child: Divider(height: 1, thickness: 1, color: Color(0xFFEDF1EF)),
+                        kepalaKartuJadwal(tglPanjangJadwal(j.tanggal), kanan: '${j.jam} WIB'),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                          child: bagianKartuJadwal(Icons.location_on_outlined, 'Lokasi',
+                              j.lokasi.isEmpty ? '-' : j.lokasi),
                         ),
-                        _baris('Terdaftar', '${j.totalDaftar} anak'),
-                        const SizedBox(height: 6),
-                        _baris('Check-in', '${j.checkin} anak'),
-                        const SizedBox(height: 6),
-                        _baris('Tidak hadir', '${j.tidakDatang} anak'),
-                        const SizedBox(height: 6),
-                        _baris('Batal', '${j.batal} anak'),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    clipBehavior: Clip.antiAlias,
+                    decoration: dekorKartuJadwal(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        kepalaKartuJadwal('Kehadiran Balita'),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _baris('Terdaftar', '${j.totalDaftar} anak'),
+                              const SizedBox(height: 6),
+                              _baris('Check-in', '${j.checkin} anak'),
+                              const SizedBox(height: 6),
+                              _baris('Tidak hadir', '${j.tidakDatang} anak'),
+                              const SizedBox(height: 6),
+                              _baris('Batal', '${j.batal} anak'),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),

@@ -21,6 +21,70 @@ const _teksGelap = Color(0xFF1F2937);
 /// Garis tepi tab & kartu halaman detail: hitam lembut (tidak mencolok).
 const _garis = Color(0xFFB8BEC6);
 
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+BoxDecoration _dekorKartu() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
+    );
+
+/// Kepala kartu: judul tebal kapital di kiri, keterangan di kanan, garis aksen di bawah.
+Widget _kepala(String judul, {String? kanan}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: _teksGelap,
+                ),
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: const TextStyle(
+                      fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+            ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
+}
+
+/// Tautan kecil hijau lembut bergaris bawah.
+Widget _tautan(String teks) => Text(
+      teks,
+      style: const TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w600,
+        color: _aksen,
+        decoration: TextDecoration.underline,
+        decorationColor: _aksen,
+      ),
+    );
+
 class BalitaDetailPage extends StatefulWidget {
   final String prefix;
   final String anakId;
@@ -162,34 +226,21 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
     );
   }
 
-  /// Kartu putih bergaris tepi hijau muda, dengan judul di atas.
-  Widget _kartu({required String judul, Widget? trailing, required Widget child}) {
+  /// Kartu putih berbayangan: kepala (judul + keterangan kanan + garis aksen), lalu isi.
+  Widget _kartu({required String judul, String? kanan, required Widget child}) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _garis, width: 1.2),
-      ),
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
+      decoration: _dekorKartu(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(judul,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap)),
-              ),
-              if (trailing != null) ...[const SizedBox(width: 8), trailing],
-            ],
+          _kepala(judul, kanan: kanan),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: child,
           ),
-          const SizedBox(height: 12),
-          child,
         ],
       ),
     );
@@ -257,11 +308,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
       children: [
         _kartu(
           judul: r.nama,
-          trailing: Pill(
-            r.status == 'aktif' ? 'Aktif' : (r.status.isEmpty ? '-' : r.status),
-            bg: r.status == 'aktif' ? AppColors.hijauMuda : AppColors.kuningMuda,
-            fg: r.status == 'aktif' ? AppColors.hijau : AppColors.kuning,
-          ),
+          kanan: r.status == 'aktif' ? 'Aktif' : (r.status.isEmpty ? '-' : r.status),
           child: Column(
             children: [
               _baris('Jenis kelamin', r.jkTeks),
@@ -284,7 +331,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         ),
         _kartu(
           judul: 'Imunisasi',
-          trailing: Pill('${r.vaksin.persen}%', bg: AppColors.hijauMuda, fg: AppColors.hijau),
+          kanan: '${r.vaksin.persen}%',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -305,10 +352,13 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
               ),
               const SizedBox(height: 8),
               Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () => setState(() => _tab = 2),
-                  child: const Text('Lihat jadwal & riwayat vaksin'),
+                alignment: Alignment.centerRight,
+                child: InkWell(
+                  onTap: () => setState(() => _tab = 2),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: _tautan('Lihat jadwal & riwayat vaksin'),
+                  ),
                 ),
               ),
             ],
@@ -439,16 +489,12 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
     final buka = _terbuka.contains(i);
     final k = t.kunjungan;
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _garis, width: 1.2),
-      ),
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
+      decoration: _dekorKartu(),
       child: Material(
-        color: Colors.transparent,
+        color: Colors.white,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
           onTap: k == null
               ? null
               : () => setState(() {
@@ -458,64 +504,51 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                       _terbuka.add(i);
                     }
                   }),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _kepala(t.tanggal == null ? '-' : formatTanggal(t.tanggal!),
+                  kanan: 'usia ${_usiaUkur(lahir, t)}'),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(t.tanggal == null ? '-' : formatTanggal(t.tanggal!),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 16.5, color: _teksGelap)),
+                    Text(
+                      'BB ${t.bbKg} kg · TB ${t.tbCm} cm'
+                      '${t.lkCm == null ? '' : ' · LK ${t.lkCm} cm'}'
+                      '${t.lilaCm == null ? '' : ' · LiLA ${t.lilaCm} cm'}',
+                      style: const TextStyle(
+                          fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap),
                     ),
-                    Text('usia ${_usiaUkur(lahir, t)}',
-                        style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
+                    const SizedBox(height: 8),
+                    Wrap(spacing: 6, runSpacing: 6, children: [
+                      ..._pill(t),
+                      if (k?.catatanBidan != null)
+                        const Pill('Catatan bidan', bg: AppColors.biruMuda, fg: AppColors.biru),
+                      if (k != null && k.imunisasi.isNotEmpty)
+                        Pill('${k.imunisasi.length} imunisasi',
+                            bg: AppColors.biruMuda, fg: AppColors.biru),
+                      if (k != null && k.suplemen.isNotEmpty)
+                        Pill('${k.suplemen.length} suplemen',
+                            bg: AppColors.kuningMuda, fg: AppColors.kuning),
+                    ]),
+                    if (k != null) ...[
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: _tautan(buka ? 'Tutup detail' : 'Lihat detail'),
+                      ),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 200),
+                        alignment: Alignment.topCenter,
+                        child: buka ? _detailKunjungan(t, k) : const SizedBox(width: double.infinity),
+                      ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'BB ${t.bbKg} kg · TB ${t.tbCm} cm'
-                  '${t.lkCm == null ? '' : ' · LK ${t.lkCm} cm'}'
-                  '${t.lilaCm == null ? '' : ' · LiLA ${t.lilaCm} cm'}',
-                  style: const TextStyle(
-                      fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap),
-                ),
-                const SizedBox(height: 8),
-                Wrap(spacing: 6, runSpacing: 6, children: [
-                  ..._pill(t),
-                  if (k?.catatanBidan != null)
-                    const Pill('Catatan bidan', bg: AppColors.biruMuda, fg: AppColors.biru),
-                  if (k != null && k.imunisasi.isNotEmpty)
-                    Pill('${k.imunisasi.length} imunisasi', bg: AppColors.biruMuda, fg: AppColors.biru),
-                  if (k != null && k.suplemen.isNotEmpty)
-                    Pill('${k.suplemen.length} suplemen', bg: AppColors.kuningMuda, fg: AppColors.kuning),
-                ]),
-                if (k != null) ...[
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(buka ? 'Tutup detail' : 'Lihat detail',
-                            style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: _hijauTua)),
-                        const SizedBox(width: 4),
-                        Icon(buka ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                            size: 18, color: _hijauTua),
-                      ],
-                    ),
-                  ),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 200),
-                    alignment: Alignment.topCenter,
-                    child: buka ? _detailKunjungan(t, k) : const SizedBox(width: double.infinity),
-                  ),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

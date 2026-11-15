@@ -4,24 +4,43 @@ import 'package:flutter/services.dart';
 // ---------------------------------------------------------------------------
 // WARNA
 // ---------------------------------------------------------------------------
-const _hijauTua = Color(0xFF0F5B45);
-const _hijau = Color(0xFF138A63);
-const _hijauMuda = Color(0xFFE9F6EF);
-const _hijauGaris = Color(0xFFD5EBDF);
 const _hijauHeader = Color(0xFF065F46);
 const _latar = Color(0xFFF7FAF8);
 const _teks = Color(0xFF1F2A37);
 const _teksRedup = Color(0xFF6B7280);
-const _teksBiru = Color(0xFF5B7C99);
 const _merah = Color(0xFFD64545);
-const _merahMuda = Color(0xFFFDECEC);
-const _merahKartu = Color(0xFFFFF6F6);
-const _merahGaris = Color(0xFFF3C9C9);
 const _biru = Color(0xFF2F63D8);
-const _biruMuda = Color(0xFFEAF0FD);
-const _biruGaris = Color(0xFFA9C0F2);
 const _oranyeMuda = Color(0xFFFFE9C7);
 const _oranye = Color(0xFFB45309);
+
+/// Garis tepi kolom cari & kotak di dalam kartu: hitam lembut.
+const _garis = Color(0xFFB8BEC6);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+BoxDecoration _dekorKartu() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
+    );
+
+/// Tautan kecil hijau lembut bergaris bawah.
+Widget _tautan(String teks) => Text(
+      teks,
+      style: const TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w600,
+        color: _aksen,
+        decoration: TextDecoration.underline,
+        decorationColor: _aksen,
+      ),
+    );
 
 /// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
@@ -1245,7 +1264,6 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
   final _cari = TextEditingController();
   String _kata = '';
   int _filter = 0;
-  bool _hanyaTersimpan = false;
 
   @override
   void dispose() {
@@ -1259,7 +1277,6 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
     final hasil = <int>[
       for (var i = 0; i < _daftarBab.length; i++)
         if ((_filter == 0 || _kategoriDari(i) == _filter) &&
-            (!_hanyaTersimpan || _tersimpan.contains(i)) &&
             (q.isEmpty || _daftarBab[i].teksCari.contains(q)))
           i,
     ];
@@ -1268,80 +1285,21 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
       backgroundColor: _latar,
       body: Column(
         children: [
-          _headerAtas(
-            context,
-            'Buku Panduan',
-            aksi: [
-              _tombolHeader(
-                _hanyaTersimpan ? Icons.bookmark : Icons.bookmark_border,
-                () => setState(() => _hanyaTersimpan = !_hanyaTersimpan),
-                tooltip: 'Materi tersimpan',
-              ),
-              _tombolHeader(
-                Icons.file_download_outlined,
-                () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text(
-                          'Seluruh materi sudah tersimpan di perangkat dan dapat dibaca offline.')),
-                ),
-                tooltip: 'Tersedia offline',
-              ),
-            ],
-          ),
+          _headerAtas(context, 'Buku Panduan'),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _hijauMuda,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _hijauGaris),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.menu_book_outlined,
-                            color: _hijauTua, size: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text.rich(
-                          TextSpan(
-                            style: TextStyle(fontSize: 16, height: 1.4, color: _teks),
-                            children: [
-                              TextSpan(text: 'Materi mengacu pada '),
-                              TextSpan(
-                                  text: 'Buku KIA 2024 resmi',
-                                  style: TextStyle(fontWeight: FontWeight.w600)),
-                              TextSpan(
-                                  text:
-                                      ' Kementerian Kesehatan. Dapat dibaca lengkap tanpa koneksi internet.'),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
                 TextField(
                   controller: _cari,
                   onChanged: (v) => setState(() => _kata = v),
                   style: const TextStyle(fontSize: 16.5),
                   decoration: InputDecoration(
                     hintText: 'Cari materi atau keluhan kesehatan...',
-                    hintStyle: const TextStyle(fontSize: 16.5, color: _teksRedup),
-                    prefixIcon: const Icon(Icons.search, color: _teksRedup),
+                    hintStyle: const TextStyle(fontSize: 16, color: _teksRedup),
+                    prefixIcon: const Icon(Icons.search, color: Colors.black54),
                     suffixIcon: _kata.isEmpty
-                        ? const Icon(Icons.tune, color: _teksRedup, size: 20)
+                        ? null
                         : IconButton(
                             icon: const Icon(Icons.close, color: _teksRedup),
                             onPressed: () {
@@ -1351,14 +1309,18 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                           ),
                     filled: true,
                     fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: _garis, width: 1.2),
+                    ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE6EAE8)),
+                      borderSide: const BorderSide(color: _garis, width: 1.2),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: _hijau),
+                      borderSide: const BorderSide(color: Colors.black54, width: 1.4),
                     ),
                   ),
                 ),
@@ -1377,16 +1339,16 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: aktif ? _hijauTua : Colors.white,
+                            color: aktif ? _hijauHeader : Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                                color: aktif ? _hijauTua : const Color(0xFFE6EAE8)),
+                                color: aktif ? _hijauHeader : _garis, width: 1.2),
                           ),
                           child: Text(
                             _kategori[k],
                             style: TextStyle(
-                              fontSize: 16.5,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                               color: aktif ? Colors.white : _teks,
                             ),
                           ),
@@ -1397,12 +1359,13 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
                 ),
                 const SizedBox(height: 16),
                 if (hasil.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32),
-                    child: Center(
-                      child: Text('Materi tidak ditemukan',
-                          style: TextStyle(color: _teksRedup)),
-                    ),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+                    decoration: _dekorKartu(),
+                    child: const Text('Materi tidak ditemukan',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, color: _teksRedup)),
                   )
                 else
                   for (final i in hasil) _kartuBab(i),
@@ -1417,90 +1380,80 @@ class _BukuPanduanPageState extends State<BukuPanduanPage> {
   Widget _kartuBab(int i) {
     final b = _daftarBab[i];
     final darurat = b.darurat;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: darurat ? _merahKartu : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: darurat ? _merahGaris : const Color(0xFFE6EDE9)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
+    final kanan = darurat ? 'Penting' : (_tersimpan.contains(i) ? 'Tersimpan' : '');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DecoratedBox(
+        decoration: _dekorKartu(),
+        child: Material(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          onTap: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => BacaBabPage(indeks: i)),
-            );
-            if (mounted) setState(() {});
-          },
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
-            child: Row(
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => BacaBabPage(indeks: i)),
+              );
+              if (mounted) setState(() {});
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: darurat ? _merahMuda : _hijauMuda,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(b.ikon, color: darurat ? _merah : _hijau, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
+                // Kepala: nomor bab + judul, keterangan di kanan
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Text('BAB ${i + 1}',
-                              style: const TextStyle(
-                                  fontSize: 14.5,
-                                  letterSpacing: 0.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: _teksRedup)),
-                          if (darurat) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 7, vertical: 1.5),
-                              decoration: BoxDecoration(
-                                color: _merahMuda,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text('Penting',
-                                  style: TextStyle(
-                                      fontSize: 14.5,
-                                      fontWeight: FontWeight.w500,
-                                      color: _merah)),
-                            ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('BAB ${i + 1}',
+                                style: TextStyle(
+                                    fontSize: 13.5,
+                                    letterSpacing: 0.8,
+                                    fontWeight: FontWeight.w700,
+                                    color: darurat ? _merah : _aksen)),
+                            const SizedBox(height: 2),
+                            Text(b.judul.toUpperCase(),
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    height: 1.3,
+                                    letterSpacing: 0.3,
+                                    fontWeight: FontWeight.w700,
+                                    color: _teks)),
                           ],
-                          if (_tersimpan.contains(i)) ...[
-                            const SizedBox(width: 6),
-                            const Icon(Icons.bookmark, size: 12, color: _hijau),
-                          ],
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(b.judul,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16.5,
-                              color: _teks)),
-                      const SizedBox(height: 2),
-                      Text(b.ringkasan,
-                          style: const TextStyle(
-                              fontSize: 16, height: 1.3, color: _teksBiru)),
+                      if (kanan.isNotEmpty) ...[
+                        const SizedBox(width: 10),
+                        Text(kanan,
+                            style: TextStyle(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w700,
+                                color: darurat ? _merah : _hijauHeader)),
+                      ],
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Color(0xFFC3CBD2)),
+                Container(height: 3, color: darurat ? _merah.withValues(alpha: 0.6) : _aksen),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Text(b.ringkasan,
+                            style: const TextStyle(
+                                fontSize: 15.5, height: 1.4, color: Color(0xFF374151))),
+                      ),
+                      const SizedBox(width: 10),
+                      _tautan('Baca'),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -1544,14 +1497,12 @@ class _BacaBabPageState extends State<BacaBabPage> {
     final simpan = _tersimpan.contains(_i);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _latar,
+      // Tombol berdiri sendiri, tanpa latar footer.
       bottomNavigationBar: SafeArea(
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xFFEDF0EE))),
-          ),
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           child: Row(
             children: [
               Expanded(
@@ -1559,12 +1510,14 @@ class _BacaBabPageState extends State<BacaBabPage> {
                   onPressed: ada ? () => _pindah(_i - 1) : null,
                   icon: const Icon(Icons.chevron_left, size: 20),
                   label: const Text('Sebelumnya',
-                      style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16.5)),
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: _teks,
-                    minimumSize: const Size.fromHeight(46),
-                    side: const BorderSide(color: Color(0xFFD9DFDB)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    foregroundColor: _hijauHeader,
+                    backgroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(50),
+                    side: BorderSide(
+                        color: ada ? _hijauHeader : _garis, width: 1.4),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ),
@@ -1573,18 +1526,18 @@ class _BacaBabPageState extends State<BacaBabPage> {
                 child: ElevatedButton(
                   onPressed: lanjut ? () => _pindah(_i + 1) : () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _hijauTua,
+                    backgroundColor: _hijauHeader,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    minimumSize: const Size.fromHeight(46),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(lanjut ? 'Berikutnya' : 'Selesai',
                           style: const TextStyle(
-                              fontWeight: FontWeight.w500, fontSize: 16.5)),
+                              fontWeight: FontWeight.w600, fontSize: 16.5)),
                       const SizedBox(width: 4),
                       Icon(lanjut ? Icons.chevron_right : Icons.check, size: 20),
                     ],
@@ -1636,74 +1589,51 @@ class _BacaBabPageState extends State<BacaBabPage> {
   }
 
   Widget _header(_Bab b) {
+    final warna = b.darurat ? _merah : _aksen;
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: b.darurat ? const Color(0xFF9F2D2D) : _hijauTua,
-        borderRadius: BorderRadius.circular(18),
-      ),
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: _dekorKartu(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(b.ikon, color: b.darurat ? _merah : _hijauTua, size: 26),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(b.judul,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 19,
-                            height: 1.25)),
-                    const SizedBox(height: 4),
-                    Text(b.ringkasan,
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 16, height: 1.3)),
-                  ],
-                ),
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(b.darurat ? 'BAB ${_i + 1} · PERHATIAN' : 'BAB ${_i + 1}',
+                    style: TextStyle(
+                        fontSize: 13.5,
+                        letterSpacing: 0.8,
+                        fontWeight: FontWeight.w700,
+                        color: warna)),
+                const SizedBox(height: 4),
+                Text(b.judul.toUpperCase(),
+                    style: const TextStyle(
+                        fontSize: 18,
+                        height: 1.25,
+                        letterSpacing: 0.3,
+                        fontWeight: FontWeight.w700,
+                        color: _teks)),
+              ],
+            ),
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _lencana(Icons.schedule, '${b.menitBaca} Menit Baca'),
-              const SizedBox(width: 8),
-              _lencana(Icons.offline_pin_outlined, 'Offline Ready'),
-            ],
+          Container(height: 3, color: b.darurat ? _merah.withValues(alpha: 0.6) : _aksen),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(b.ringkasan,
+                    style: const TextStyle(fontSize: 16, height: 1.45, color: Color(0xFF374151))),
+                const SizedBox(height: 10),
+                Text('${b.menitBaca} menit baca  ·  Dapat dibaca tanpa internet',
+                    style: const TextStyle(
+                        fontSize: 14.5, fontWeight: FontWeight.w600, color: _teksRedup)),
+              ],
+            ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _lencana(IconData ikon, String teks) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(ikon, size: 13, color: Colors.white),
-          const SizedBox(width: 5),
-          Text(teks,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 15.5, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -1776,7 +1706,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
                     width: 4,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: _hijau,
+                      color: _aksen,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1784,7 +1714,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
                   Expanded(
                     child: Text(judul,
                         style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 17.5, color: _teks)),
+                            fontWeight: FontWeight.w700, fontSize: 17, color: _teks)),
                   ),
                 ],
               ),
@@ -1797,7 +1727,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
                 children: [
                   const Padding(
                     padding: EdgeInsets.only(top: 7, right: 9, left: 2),
-                    child: Icon(Icons.circle, size: 6, color: _hijau),
+                    child: Icon(Icons.circle, size: 6, color: _aksen),
                   ),
                   Expanded(
                     child: Text.rich(
@@ -1818,27 +1748,21 @@ class _BacaBabPageState extends State<BacaBabPage> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1FAF5),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFB9E1C9)),
+        border: Border.all(color: _garis, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.check_box, color: _hijau, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(judul.toUpperCase(),
-                    style: const TextStyle(
-                        fontSize: 16.5,
-                        letterSpacing: 0.4,
-                        fontWeight: FontWeight.w600,
-                        color: _hijauTua)),
-              ),
-            ],
-          ),
+          Text(judul.toUpperCase(),
+              style: const TextStyle(
+                  fontSize: 16,
+                  letterSpacing: 0.4,
+                  fontWeight: FontWeight.w700,
+                  color: _teks)),
+          const SizedBox(height: 8),
+          Container(height: 2, color: _aksen),
           const SizedBox(height: 10),
           for (final t in items)
             Padding(
@@ -1848,7 +1772,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
                 children: [
                   const Padding(
                     padding: EdgeInsets.only(top: 1, right: 8),
-                    child: Icon(Icons.check_box, size: 17, color: _hijau),
+                    child: Icon(Icons.check_box_outlined, size: 18, color: _aksen),
                   ),
                   Expanded(
                     child: Text.rich(
@@ -1865,8 +1789,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
 
   Widget _pesan(String teks, bool darurat) {
     final warna = darurat ? _merah : _biru;
-    final muda = darurat ? _merahMuda : _biruMuda;
-    final garis = darurat ? const Color(0xFFF1B5B5) : _biruGaris;
+    final garis = darurat ? const Color(0xFFF1B5B5) : _garis;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
@@ -1874,7 +1797,7 @@ class _BacaBabPageState extends State<BacaBabPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: garis),
+        border: Border.all(color: garis, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1889,18 +1812,11 @@ class _BacaBabPageState extends State<BacaBabPage> {
                     style: TextStyle(
                         fontSize: 16,
                         letterSpacing: 0.4,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: warna)),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: muda,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text('Standar Kemenkes RI',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: warna)),
-              ),
+              const Text('Standar Kemenkes RI',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _teksRedup)),
             ],
           ),
           const SizedBox(height: 10),

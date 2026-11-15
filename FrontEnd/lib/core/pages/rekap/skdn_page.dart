@@ -351,10 +351,8 @@ class _SkdnViewState extends State<SkdnView> {
   // ------------------------------------------------------------- ringkasan
 
   Widget _barisJumlah(String huruf, String label, int nilai, {Color bg = AppColors.hijauMuda, Color fg = AppColors.hijau}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           _hurufBulat(huruf, bg: bg, fg: fg),
@@ -372,8 +370,11 @@ class _SkdnViewState extends State<SkdnView> {
       child: Column(
         children: [
           _barisJumlah('S', 'Jumlah seluruh balita', b.s, bg: _abuMuda, fg: Colors.black87),
+          const Divider(height: 4, color: Color(0xFFE5E7EB)),
           _barisJumlah('K', 'Balita yang punya Buku KIA', b.k, bg: _abuMuda, fg: Colors.black87),
+          const Divider(height: 4, color: Color(0xFFE5E7EB)),
           _barisJumlah('D', 'Balita yang datang ditimbang', b.d),
+          const Divider(height: 4, color: Color(0xFFE5E7EB)),
           _barisJumlah('N', 'Balita yang berat badannya naik', b.n, bg: AppColors.biruMuda, fg: AppColors.biru),
         ],
       ),
@@ -387,7 +388,11 @@ class _SkdnViewState extends State<SkdnView> {
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: garisKartuRekap, width: 1.2),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

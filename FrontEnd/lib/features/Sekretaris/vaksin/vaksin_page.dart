@@ -8,39 +8,70 @@ import '../../../service/vaksin_service.dart';
 const _hijauHeader = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
 
-/// Garis tepi kartu: hitam lembut (tidak mencolok).
-const _garis = Color(0xFFB8BEC6);
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
 
-/// Kartu putih bergaris tepi hitam lembut, dengan judul di atas.
-Widget _kartu({required String judul, Widget? trailing, required Widget child}) {
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Kartu putih berbayangan: judul tebal kapital, keterangan kanan, garis aksen, lalu isi.
+Widget _kartu({required String judul, String? kanan, required Widget child}) {
   return Container(
     width: double.infinity,
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(14),
+    margin: const EdgeInsets.only(bottom: 14),
+    clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: _garis, width: 1.2),
+      boxShadow: _bayangan,
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(judul,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  judul.toUpperCase(),
                   style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap)),
-            ),
-            if (trailing != null) ...[const SizedBox(width: 8), trailing],
-          ],
+                    fontSize: 16.5,
+                    height: 1.3,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                    color: _teksGelap,
+                  ),
+                ),
+              ),
+              if (kanan != null) ...[
+                const SizedBox(width: 10),
+                Text(kanan,
+                    style: const TextStyle(
+                        fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+              ],
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        child,
+        Container(height: 3, color: _aksen),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: child,
+        ),
       ],
     ),
   );
 }
+
+/// Kotak kecil di dalam kartu: putih dengan garis tepi hitam lembut.
+BoxDecoration _dekorDalam() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFFB8BEC6), width: 1.2),
+    );
 
 /// Baris "Label : nilai" (satu warna hitam).
 Widget _baris(String label, String nilai, {double lebar = 150}) {
@@ -267,7 +298,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
         ),
         _kartu(
           judul: 'Jumlah Pemberian per Vaksin',
-          trailing: Pill('${d.jenis.length} jenis', bg: AppColors.biruMuda, fg: AppColors.biru),
+          kanan: '${d.jenis.length} jenis',
           child: d.jenis.isEmpty
               ? const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
@@ -321,11 +352,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _garis, width: 1.2),
-      ),
+      decoration: _dekorDalam(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -369,11 +396,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _garis, width: 1.2),
-            ),
+            decoration: _dekorDalam(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

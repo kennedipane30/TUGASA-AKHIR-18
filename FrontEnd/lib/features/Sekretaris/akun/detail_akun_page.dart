@@ -6,8 +6,6 @@ import 'edit_akun_page.dart';
 import 'kelola_akun_page.dart';
 
 const _teksGelap = Color(0xFF1F2937);
-/// Garis tepi kartu halaman detail: hitam lembut (tidak mencolok).
-const _garis = Color(0xFFB8BEC6);
 
 /// Detail satu akun petugas (kader / bidan).
 /// Mengembalikan pesan (String) ke halaman Kelola Akun bila ada perubahan.
@@ -117,23 +115,24 @@ class _DetailAkunPageState extends State<DetailAkunPage> {
     );
   }
 
-  Widget _kartu({required String judul, required Widget child}) {
+  Widget _kartu({required String judul, Widget? kanan, required Widget child}) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _garis, width: 1.2),
+        boxShadow: bayanganKartuAkun,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(judul,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap)),
-          const SizedBox(height: 12),
-          child,
+          kepalaKartuAkun(judul, kanan: kanan),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+            child: child,
+          ),
         ],
       ),
     );
@@ -201,6 +200,9 @@ class _DetailAkunPageState extends State<DetailAkunPage> {
                   children: [
                     _kartu(
                       judul: 'Data Akun',
+                      kanan: Text(a.labelPeran,
+                          style: const TextStyle(
+                              fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
                       child: Column(
                         children: [
                           _baris('Nama', a.nama),
@@ -225,7 +227,7 @@ class _DetailAkunPageState extends State<DetailAkunPage> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: _garis, width: 1.2),
+                        boxShadow: bayanganKartuAkun,
                       ),
                       child: Row(
                         children: [

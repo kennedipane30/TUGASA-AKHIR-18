@@ -79,7 +79,7 @@ class _TabGiziState extends State<_TabGizi> {
       KartuRekap(
         title: 'Ringkasan ${d.label}',
         icon: Icons.monitor_weight_outlined,
-        trailing: Pill('${_angka(d.partisipasi)}% diukur', bg: AppColors.biruMuda, fg: AppColors.biru),
+        trailing: teksKananRekap('${_angka(d.partisipasi)}% diukur'),
         child: Column(
           children: [
             Row(
@@ -145,8 +145,12 @@ class _TabGiziState extends State<_TabGizi> {
                       width: double.infinity,
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                      decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
-                      child: _batang(k.label, k.jumlah, d.diukur, _warnaTingkat(k.tingkat), Colors.white,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: garisKartuRekap, width: 1.2),
+                      ),
+                      child: _batang(k.label, k.jumlah, d.diukur, _warnaTingkat(k.tingkat), AppColors.latar,
                           sub: k.indeks),
                     ),
                 ],

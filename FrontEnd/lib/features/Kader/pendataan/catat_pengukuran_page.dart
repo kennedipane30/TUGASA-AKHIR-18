@@ -4,8 +4,231 @@ import 'package:flutter/services.dart';
 
 import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/common_widgets.dart';
 import 'pendataan_page.dart';
+
+const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi field & kotak di dalam kartu: hitam lembut.
+const _garis = Color(0xFFB8BEC6);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+BoxDecoration _dekorKartu({Color warna = Colors.white}) => BoxDecoration(
+      color: warna,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
+    );
+
+/// Kepala kartu: judul kapital tebal di kiri, keterangan di kanan, garis aksen di bawah.
+Widget _kepala(String judul, {String? kanan}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: _teksGelap,
+                ),
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(
+                kanan,
+                style: const TextStyle(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w600,
+                  color: _teksGelap,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
+}
+
+/// Kartu putih berbayang; [judul] opsional.
+Widget _kartu({
+  String? judul,
+  String? kanan,
+  Color warna = Colors.white,
+  required Widget child,
+}) {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 14),
+    clipBehavior: Clip.antiAlias,
+    decoration: _dekorKartu(warna: warna),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (judul != null) _kepala(judul, kanan: kanan),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: child,
+        ),
+      ],
+    ),
+  );
+}
+
+/// Baris "Label : nilai" (hitam tebal, nilai lanjut ke samping).
+Widget _barisInfo(String label, String nilai, {double lebar = 120}) {
+  const gaya = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    height: 1.35,
+    color: _teksGelap,
+  );
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: lebar, child: Text(label, style: gaya)),
+        const Text(': ', style: gaya),
+        Expanded(child: Text(nilai.isEmpty ? '-' : nilai, style: gaya)),
+      ],
+    ),
+  );
+}
+
+/// Dekorasi field form: putih, garis tepi hitam lembut, ikon di depan.
+InputDecoration _dekorForm(String label, IconData ikon) {
+  OutlineInputBorder garis(Color c, double w) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: c, width: w),
+      );
+  return InputDecoration(
+    labelText: label,
+    labelStyle: const TextStyle(fontSize: 15.5),
+    filled: true,
+    fillColor: Colors.white,
+    prefixIcon: Icon(ikon, color: _aksen),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+    border: garis(_garis, 1.2),
+    enabledBorder: garis(_garis, 1.2),
+    focusedBorder: garis(hijauHeaderPendataan, 1.6),
+  );
+}
+
+/// Pilihan ya/tidak (Sedang sakit, ASI eksklusif) dalam kotak bergaris lembut.
+Widget _pilihan(IconData ikon, String label, bool nilai, ValueChanged<bool> ubah) {
+  return Container(
+    margin: const EdgeInsets.only(top: 10),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: nilai ? hijauHeaderPendataan : _garis,
+        width: 1.2,
+      ),
+    ),
+    child: SwitchListTile(
+      contentPadding: const EdgeInsets.only(left: 12, right: 6),
+      secondary: Icon(ikon, color: _aksen),
+      activeTrackColor: hijauHeaderPendataan,
+      title: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: _teksGelap,
+        ),
+      ),
+      value: nilai,
+      onChanged: ubah,
+    ),
+  );
+}
+
+/// Tombol bawah tanpa latar footer: Batal (merah bergaris) + Simpan (hijau).
+Widget _tombolBawah({
+  required String labelSimpan,
+  required bool kirim,
+  required VoidCallback onBatal,
+  required VoidCallback onSimpan,
+}) {
+  return SafeArea(
+    top: false,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: SizedBox(
+              height: 50,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.merah,
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: AppColors.merah, width: 1.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: kirim ? null : onBatal,
+                child: const Text(
+                  'Batal',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 3,
+            child: SizedBox(
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: hijauHeaderPendataan,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFF7FAF9F),
+                  disabledForegroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: kirim ? null : onSimpan,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    kirim ? 'Menyimpan...' : labelSimpan,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
 // ---------------------------------------------------------------------------
 // HALAMAN CATAT PENGUKURAN (halaman penuh)
@@ -106,7 +329,8 @@ class _CatatPengukuranPageState extends State<CatatPengukuranPage> {
 
   Widget _kolom(
     TextEditingController c,
-    String label, {
+    String label,
+    IconData ikon, {
     bool angka = true,
     int baris = 1,
   }) {
@@ -117,16 +341,8 @@ class _CatatPengukuranPageState extends State<CatatPengukuranPage> {
       keyboardType: angka
           ? const TextInputType.numberWithOptions(decimal: true)
           : null,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(fontSize: 16),
-        filled: true,
-        fillColor: AppColors.latar,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-      ),
+      textCapitalization: angka ? TextCapitalization.none : TextCapitalization.sentences,
+      decoration: _dekorForm(label, ikon),
     );
   }
 
@@ -171,60 +387,11 @@ class _CatatPengukuranPageState extends State<CatatPengukuranPage> {
       backgroundColor: AppColors.latar,
       bottomNavigationBar: _memuat
           ? null
-          : SafeArea(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: Color(0xFFE6ECE8))),
-                ),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: SizedBox(
-                        height: 50,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: hijauHeaderPendataan,
-                            side: const BorderSide(color: hijauHeaderPendataan, width: 1.4),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
-                          ),
-                          onPressed: _kirim ? null : () => Navigator.pop(context),
-                          child: const Text('Batal',
-                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 3,
-                      child: SizedBox(
-                        height: 50,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: hijauHeaderPendataan,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
-                          ),
-                          onPressed: _kirim ? null : _simpan,
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              _kirim ? 'Menyimpan...' : 'Simpan & Teruskan ke Bidan',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 16.5),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          : _tombolBawah(
+              labelSimpan: 'Simpan & Teruskan ke Bidan',
+              kirim: _kirim,
+              onBatal: () => Navigator.pop(context),
+              onSimpan: _simpan,
             ),
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
@@ -241,98 +408,68 @@ class _CatatPengukuranPageState extends State<CatatPengukuranPage> {
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                       children: [
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFFE6ECE8)),
+                        _kartu(
+                          judul: widget.anak.nama,
+                          kanan: 'Antrean ${widget.anak.kodeNomor}',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _barisInfo('Jenis Kelamin',
+                                  widget.anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'),
+                              _barisInfo('Umur', widget.anak.usia),
+                            ],
                           ),
+                        ),
+                        _kartu(
+                          judul: 'Hasil Pengukuran',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Text(
-                                      widget.anak.nama,
-                                      style: const TextStyle(
-                                          fontSize: 19, fontWeight: FontWeight.w600),
-                                    ),
+                                    child: _kolom(_bb, 'BB (kg)', Icons.monitor_weight_outlined),
                                   ),
-                                  Pill('Antrean ${widget.anak.kodeNomor}'),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _kolom(_tb, 'TB/PB (cm)', Icons.height),
+                                  ),
                                 ],
                               ),
-                              Text(
-                                '${widget.anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · ${widget.anak.usia}',
-                                style: const TextStyle(
-                                    fontSize: 16.5, color: AppColors.teksRedup),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _kolom(_lk, 'LK (cm)', Icons.face_outlined),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _kolom(_lila, 'LiLA (cm)', Icons.straighten),
+                                  ),
+                                ],
                               ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _kolom(_bb, 'Berat badan (kg)'),
+                            ],
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _kolom(_tb, 'Tinggi/panjang (cm)'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _kolom(_lk, 'Lingkar kepala (cm)'),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _kolom(_lila, 'LiLA (cm)'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      _kolom(
-                        _keluhan,
-                        'Keluhan',
-                        angka: false,
-                      ),
-                      const SizedBox(height: 10),
-                      _kolom(
-                        _catatan,
-                        'Catatan',
-                        angka: false,
-                        baris: 2,
-                      ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text(
-                          'Sedang sakit',
-                          style: TextStyle(fontSize: 16.5),
                         ),
-                        value: _sakit,
-                        onChanged: (v) {
-                          setState(() => _sakit = v);
-                        },
-                      ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text(
-                          'ASI eksklusif',
-                          style: TextStyle(fontSize: 16.5),
-                        ),
-                        value: _asi,
-                        onChanged: (v) {
-                          setState(() => _asi = v);
-                        },
-                      ),
+                        _kartu(
+                          judul: 'Kondisi Anak',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _kolom(_keluhan, 'Keluhan', Icons.sick_outlined, angka: false),
+                              const SizedBox(height: 10),
+                              _kolom(_catatan, 'Catatan', Icons.notes_outlined,
+                                  angka: false, baris: 2),
+                              _pilihan(Icons.thermostat_outlined, 'Sedang sakit', _sakit,
+                                  (v) => setState(() => _sakit = v)),
+                              _pilihan(Icons.child_friendly_outlined, 'ASI eksklusif', _asi,
+                                  (v) => setState(() => _asi = v)),
                             ],
                           ),
                         ),
                         if (_galat != null)
                           Padding(
-                            padding: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.only(top: 2),
                             child: Text(
                               _galat!,
                               style: const TextStyle(color: AppColors.merah, fontSize: 16),

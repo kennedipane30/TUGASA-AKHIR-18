@@ -2,11 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/common_widgets.dart';
 import '../../../service/vaksin_service.dart';
 import '../../Bidan/vaksin/vaksin_lihat_body.dart';
 
 const _hijauHeader = Color(0xFF065F46);
+const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi chip: hitam lembut.
+const _garis = Color(0xFFB8BEC6);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+BoxDecoration _dekorKartu() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
+    );
 
 /// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
@@ -108,42 +125,106 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
     );
   }
 
+  /// Pesan (kosong / gagal) di dalam kartu.
+  Widget _pesan(String teks, {Widget? aksi}) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+          decoration: _dekorKartu(),
+          child: Text(teks,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, height: 1.4, color: AppColors.teksRedup)),
+        ),
+        if (aksi != null) ...[const SizedBox(height: 14), aksi],
+      ],
+    );
+  }
+
+  /// Kartu anak terpilih: nama (kapital) di kiri, usia di kanan, garis aksen di bawah.
+  Widget _kartuAnak(AnakRingkas a) {
+    return Container(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: _dekorKartu(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    a.nama.toUpperCase(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16.5,
+                      height: 1.3,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                      color: _teksGelap,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(a.usia.isEmpty ? '-' : a.usia,
+                    style: const TextStyle(
+                        fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+              ],
+            ),
+          ),
+          Container(height: 3, color: _aksen),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(14, 10, 14, 12),
+            child: Text(
+              'Jadwal imunisasi, riwayat vaksin, dan suplemen anak.',
+              style: TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFF374151)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _isi() {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(_error!, textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              AppButton('Coba Lagi', onPressed: _muat),
-            ],
+      return _pesan(
+        _error!,
+        aksi: SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton.icon(
+            onPressed: _muat,
+            icon: const Icon(Icons.refresh, size: 20),
+            label: const Text('Coba Lagi'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _hijauHeader,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              textStyle: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
+            ),
           ),
         ),
       );
     }
     if (_anak.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('Belum ada data anak. Tambahkan data anak terlebih dahulu.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.teksRedup)),
-        ),
-      );
+      return _pesan('Belum ada data anak. Tambahkan data anak terlebih dahulu.');
     }
+    final dipilih = _dipilih!;
     return Column(
       children: [
         if (_anak.length > 1)
-          Container(
-            width: double.infinity,
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -153,15 +234,16 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
                         label: Text(a.nama),
-                        selected: _dipilih?.id == a.id,
-                        selectedColor: AppColors.hijau,
-                        backgroundColor: AppColors.latar,
+                        selected: dipilih.id == a.id,
+                        showCheckmark: false,
+                        selectedColor: _hijauHeader,
+                        backgroundColor: Colors.white,
+                        side: BorderSide(
+                            color: dipilih.id == a.id ? _hijauHeader : _garis, width: 1.2),
                         labelStyle: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: _dipilih?.id == a.id
-                                ? Colors.white
-                                : Colors.black87),
+                            fontWeight: FontWeight.w600,
+                            color: dipilih.id == a.id ? Colors.white : _teksGelap),
                         onSelected: (_) => setState(() => _dipilih = a),
                       ),
                     ),
@@ -170,29 +252,13 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
             ),
           ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: SectionCard(
-            child: SizedBox(
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(_dipilih!.nama,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 16)),
-                  const SizedBox(height: 2),
-                  Text('Usia ${_dipilih!.usia}',
-                      style: const TextStyle(
-                          fontSize: 15.5, color: AppColors.teksRedup)),
-                ],
-              ),
-            ),
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+          child: _kartuAnak(dipilih),
         ),
         Expanded(
           child: VaksinLihatBody(
-            key: ValueKey(_dipilih!.id),
-            anakId: _dipilih!.id,
+            key: ValueKey(dipilih.id),
+            anakId: dipilih.id,
             bisaLaporKipi: true,
           ),
         ),

@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 
 import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/common_widgets.dart';
 import 'kartu_antrean_page.dart';
 
 // ---------------------------------------------------------------------------
@@ -207,12 +206,133 @@ String _pesanError(Object e) {
 // KONSTANTA TAMPILAN
 // ---------------------------------------------------------------------------
 const _hijauHeader = Color(0xFF065F46);
-const _kartuAwal = Color(0xFF0A6B51); // sedikit lebih terang dari heading
-const _mintLabel = Color(0xFF8CF0CB);
 const _teksGelap = Color(0xFF1F2937);
 
-/// Garis tepi kartu: hitam lembut (sama dengan halaman lain).
-const _garis = Color(0xFFB8BEC6);
+
+// ---------------------------------------------------------------------------
+// KOMPONEN TAMPILAN JADWAL (putih berbayang, simpel dan rapi)
+// ---------------------------------------------------------------------------
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Garis pemisah lembut.
+const _garisLembut = Color(0xFFE5E7EB);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+const _hariPekan = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+
+/// Keterangan hitung mundur: "Hari ini", "Besok", "H-3", atau "Selesai".
+String _hitungMundur(DateTime t) {
+  final n = DateTime.now();
+  final s = DateTime(t.year, t.month, t.day).difference(DateTime(n.year, n.month, n.day)).inDays;
+  if (s == 0) return 'Hari ini';
+  if (s == 1) return 'Besok';
+  if (s > 1) return 'H-$s';
+  return 'Selesai';
+}
+
+/// Kepala jadwal: label kecil, hari (kapital), tanggal; keterangan di kanan; garis aksen.
+Widget _kepalaJadwal(String label, DateTime t, String tanggal, {String? kanan}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: const TextStyle(
+                          fontSize: 13.5,
+                          letterSpacing: 0.8,
+                          fontWeight: FontWeight.w700,
+                          color: _aksen)),
+                  const SizedBox(height: 4),
+                  Text(_hariPekan[t.weekday - 1].toUpperCase(),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          height: 1.2,
+                          letterSpacing: 0.3,
+                          fontWeight: FontWeight.w700,
+                          color: _teksGelap)),
+                  Text(tanggal,
+                      style: const TextStyle(
+                          fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+                ],
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: const TextStyle(
+                      fontSize: 15.5, fontWeight: FontWeight.w700, color: _hijauHeader)),
+            ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
+}
+
+/// Baris keterangan: ikon kecil + "Label : nilai" (nilai lanjut ke samping).
+Widget _barisKet(IconData ikon, String label, String nilai) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(ikon, size: 18, color: _aksen),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$label : ',
+                  style: const TextStyle(fontWeight: FontWeight.w700, color: _teksGelap),
+                ),
+                TextSpan(
+                  text: nilai.isEmpty ? '-' : nilai,
+                  style: const TextStyle(fontWeight: FontWeight.w500, color: Color(0xFF374151)),
+                ),
+              ],
+            ),
+            style: const TextStyle(fontSize: 15.5, height: 1.35),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Kotak pesan status (teks biasa dalam kartu putih berbayang).
+Widget _kotakStatus(String teks, Color warna) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      boxShadow: _bayangan,
+    ),
+    child: Text(teks,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: warna)),
+  );
+}
 
 const _namaBulan = [
   'Januari',
@@ -431,32 +551,9 @@ class _OrangTuaPendaftaranPageState
                         teks:
                             'Belum ada jadwal posyandu mendatang. Pendaftaran dapat dilakukan setelah admin menerbitkan jadwal.',
                       )
-                    else ...[
-                      _kartuJadwal(j),
-                      const SizedBox(height: 22),
-                      if (j.anak.isEmpty)
-                        _kartuPesan(
-                          warna: Colors.white,
-                          ikon: Icons.child_care,
-                          ikonWarna: AppColors.teksRedup,
-                          teks:
-                              'Belum ada data anak. Lengkapi data keluarga di beranda terlebih dahulu.',
-                        )
-                      else ...[
-                        _judulProfil(),
-                        const SizedBox(height: 10),
-                        _kartuAnak(
-                          j,
-                          j.anak[_idx.clamp(0, j.anak.length - 1)],
-                        ),
-                        const SizedBox(height: 14),
-                        _kartuRencana(j.anak[_idx.clamp(0, j.anak.length - 1)]),
-                        const SizedBox(height: 14),
-                        _kartuPetunjuk(),
-                        const SizedBox(height: 12),
-                        _kartuOffline(),
-                      ],
-                    ],
+                    else
+                      // Satu kartu: jadwal, balita terpilih, dan informasi penting.
+                      _kartuPendaftaran(j),
                   ],
                 ),
               ),
@@ -524,529 +621,154 @@ class _OrangTuaPendaftaranPageState
   }
 
   // -------------------------------------------------------------------------
-  // KARTU JADWAL (HERO) - warna hijau senada dengan heading
+  // KARTU PENDAFTARAN: satu kartu putih berbayang (jadwal + balita + informasi)
   // -------------------------------------------------------------------------
-  Widget _kartuJadwal(JadwalTerdekatData j) {
-    final infoTeks = [
-      'Pendaftaran dapat dilakukan kapan saja.',
-      if (j.checkinBuka != null)
-        'Check-in dengan scan QR di posyandu dibuka 1 jam sebelum mulai (${_jamMenit(j.checkinBuka!)} WIB).',
-    ].join(' ');
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_kartuAwal, _hijauHeader],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _hijauHeader.withOpacity(0.25),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'TANGGAL & SESI PELAKSANAAN',
-            style: TextStyle(
-              color: _mintLabel,
-              fontSize: 16,
-              letterSpacing: 0.6,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _tglPanjang(j.tanggal),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 14),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _tileInfo(
-                    Icons.schedule,
-                    'Waktu',
-                    Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(text: j.jam),
-                          const TextSpan(
-                            text: ' WIB',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xCCFFFFFF),
-                            ),
-                          ),
-                        ],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _tileInfo(
-                    Icons.location_on_outlined,
-                    'Lokasi',
-                    Text(
-                      j.lokasi.isEmpty ? '-' : j.lokasi,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withOpacity(0.14)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'INFORMASI PENTING',
-                        style: TextStyle(
-                          color: _mintLabel,
-                          fontSize: 16,
-                          letterSpacing: 0.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        infoTeks,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.5,
-                          height: 1.45,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tileInfo(IconData ikon, String label, Widget nilai) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.10),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.14)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(ikon, color: _mintLabel, size: 18),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: _mintLabel,
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 1),
-                nilai,
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // PROFIL BALITA
-  // -------------------------------------------------------------------------
-  Widget _judulProfil() {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: const BoxDecoration(
-            color: _hijauHeader,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 10),
-        const Expanded(
-          child: Text(
-            'Profil Balita Terpilih',
-            style: TextStyle(
-              fontSize: 18.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF111827),
-            ),
-          ),
-        ),
-        InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () =>
-              _snack('Tambah anak baru dilakukan melalui data keluarga di beranda'),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Text(
-              '+ Anak Baru',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: _hijauHeader,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  BoxDecoration get _dekorPutih => BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _garis, width: 1.2),
+  Widget _pemisahDalam() => Container(
+        height: 1,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        color: _garisLembut,
       );
 
-  Widget _kartuAnak(JadwalTerdekatData j, AnakStatusJadwal a) {
-    final (label, bg, fg) = labelStatusHadir(a.status);
-    final banyak = j.anak.length > 1;
+  Widget _labelBagian(String teks) => Text(
+        teks,
+        style: const TextStyle(
+          fontSize: 13.5,
+          letterSpacing: 0.8,
+          fontWeight: FontWeight.w700,
+          color: _aksen,
+        ),
+      );
+
+  Widget _kartuPendaftaran(JadwalTerdekatData j) {
+    final ada = j.anak.isNotEmpty;
+    final a = ada ? j.anak[_idx.clamp(0, j.anak.length - 1)] : null;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
-      decoration: _dekorPutih,
-      child: Row(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _bayangan,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          // Jadwal
+          _kepalaJadwal(
+            'JADWAL POSYANDU',
+            j.tanggal,
+            _tglPanjang(j.tanggal),
+            kanan: _hitungMundur(j.tanggal),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  a.nama,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: a.status == 'belum_daftar' ? const Color(0xFFEFF2F5) : bg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: a.status == 'belum_daftar' ? const Color(0xFF374151) : fg,
-                    ),
-                  ),
-                ),
-                if (a.nomorAntrean != null && a.status != 'belum_daftar') ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'Nomor antrean #${a.nomorAntrean}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16.5,
-                      color: _hijauHeader,
-                    ),
-                  ),
-                ],
+                _barisKet(Icons.schedule, 'Waktu', j.jam.isEmpty ? '' : '${j.jam} WIB'),
+                _barisKet(Icons.location_on_outlined, 'Lokasi', j.lokasi),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: _sibuk != null
-                ? null
-                : () {
-                    if (banyak) {
-                      setState(() => _idx = (_idx + 1) % j.anak.length);
-                    } else {
-                      _snack('Hanya ada satu data anak');
-                    }
-                  },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F7FA),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: const Text(
-                'Ganti',
-                style: TextStyle(
-                  fontSize: 16.5,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1F2937),
+          _pemisahDalam(),
+
+          // Balita terpilih
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: a == null
+                ? const Text(
+                    'Belum ada data anak. Lengkapi data keluarga di beranda terlebih dahulu.',
+                    style: TextStyle(fontSize: 15.5, height: 1.4, color: AppColors.teksRedup),
+                  )
+                : _bagianBalita(j, a),
+          ),
+          _pemisahDalam(),
+
+          // Informasi penting
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _labelBagian('INFORMASI PENTING'),
+                const SizedBox(height: 6),
+                Text(
+                  [
+                    'Pendaftaran dapat dilakukan kapan saja.',
+                    if (j.checkinBuka != null)
+                      'Check-in dengan scan QR di posyandu dibuka pukul ${_jamMenit(j.checkinBuka!)} WIB.',
+                  ].join(' '),
+                  style: const TextStyle(fontSize: 15.5, height: 1.45, color: Color(0xFF374151)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bagianBalita(JadwalTerdekatData j, AnakStatusJadwal a) {
+    final (label, _, fg) = labelStatusHadir(a.status);
+    final banyak = j.anak.length > 1;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _labelBagian('BALITA')),
+            if (banyak)
+              InkWell(
+                onTap: _sibuk != null
+                    ? null
+                    : () => setState(() => _idx = (_idx + 1) % j.anak.length),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 2),
+                  child: Text(
+                    'Ganti anak',
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
+                      color: _aksen,
+                      decoration: TextDecoration.underline,
+                      decorationColor: _aksen,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // RENCANA PELAYANAN (imunisasi, Vitamin A, obat cacing)
-  // -------------------------------------------------------------------------
-  Widget _kartuRencana(AnakStatusJadwal a) {
-    final r = a.rencana;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: _dekorPutih,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Rencana Pelayanan',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap),
-          ),
-          const SizedBox(height: 10),
-          if (r == null || r.kosong)
-            Text(
-              'Tidak ada imunisasi, Vitamin A, atau obat cacing untuk ${a.nama} pada jadwal ini. Tetap datang untuk penimbangan, ya.',
-              style: const TextStyle(fontSize: 16, height: 1.45, color: Color(0xFF4B5563)),
-            )
-          else ...[
-            if (r.imunisasi.isNotEmpty)
-              _grupRencana(
-                'Imunisasi',
-                const Color(0xFF0B7FBF),
-                const Color(0xFFE6F3FB),
-                r.imunisasi,
-              ),
-            if (r.suplemen.isNotEmpty)
-              _grupRencana(
-                'Vitamin A & Obat Cacing',
-                const Color(0xFFB45309),
-                const Color(0xFFFFF4E5),
-                r.suplemen,
-              ),
-            if (r.keFaskes.isNotEmpty)
-              _grupRencana(
-                'Segera ke Puskesmas',
-                const Color(0xFFDC2626),
-                const Color(0xFFFDECEC),
-                r.keFaskes,
-              ),
-            const SizedBox(height: 2),
-            const Text(
-              'Pastikan anak dalam keadaan sehat dan bawa buku KIA.',
-              style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
-            ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _grupRencana(
-    String judul,
-    Color warna,
-    Color latar,
-    List<RencanaItemJadwal> items,
-  ) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: BoxDecoration(
-        color: latar,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            judul,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: warna),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          a.nama.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 17,
+            letterSpacing: 0.2,
+            fontWeight: FontWeight.w700,
+            color: _teksGelap,
           ),
-          const SizedBox(height: 6),
-          for (final it in items)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(color: warna, shape: BoxShape.circle),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                it.nama,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF111827),
-                                ),
-                              ),
-                            ),
-                            if (it.terlambat) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFDECEC),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'Terlambat',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFFDC2626),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        if (it.keterangan.isNotEmpty)
-                          Text(
-                            it.keterangan,
-                            style: const TextStyle(fontSize: 15, height: 1.35, color: Color(0xFF4B5563)),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+        ),
+        const SizedBox(height: 2),
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: label,
+                style: TextStyle(color: a.status == 'belum_daftar' ? AppColors.merah : fg),
               ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // KARTU INFORMASI
-  // -------------------------------------------------------------------------
-  Widget _kartuPetunjuk() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: _dekorPutih,
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Petunjuk Check-in Mandiri',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap),
+              if (a.nomorAntrean != null && a.status != 'belum_daftar')
+                TextSpan(
+                  text: '  ·  Antrean A-${a.nomorAntrean.toString().padLeft(3, '0')}',
+                  style: const TextStyle(color: _hijauHeader),
+                ),
+            ],
           ),
-          SizedBox(height: 6),
-          Text(
-            'Kartu antrean muncul setelah pendaftaran. Scan QR di posyandu untuk check-in, lalu data anak masuk ke antrean pendataan kader.',
-            style: TextStyle(
-              fontSize: 16.5,
-              height: 1.5,
-              color: Color(0xFF374151),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _kartuOffline() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: _dekorPutih,
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Bisa Dibuka Tanpa Sinyal',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: _teksGelap),
-          ),
-          SizedBox(height: 6),
-          Text(
-            'Kartu antrean dapat dibuka kembali kapan saja. Data otomatis tersinkronisasi ke server pada saat sinyal tersedia.',
-            style: TextStyle(
-              fontSize: 16.5,
-              height: 1.5,
-              color: Color(0xFF374151),
-            ),
-          ),
-        ],
-      ),
+          style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700),
+        ),
+      ],
     );
   }
 
@@ -1062,7 +784,7 @@ class _OrangTuaPendaftaranPageState
       decoration: BoxDecoration(
         color: warna,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _garis, width: 1.2),
+        boxShadow: _bayangan,
       ),
       child: Row(
         children: [
@@ -1098,7 +820,7 @@ class _OrangTuaPendaftaranPageState
       width: double.infinity,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: aktif ? _hijauHeader : _hijauHeader.withOpacity(0.55),
+          backgroundColor: aktif ? _hijauHeader : _hijauHeader.withValues(alpha: 0.55),
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -1143,11 +865,7 @@ class _OrangTuaPendaftaranPageState
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Pill(
-            'Check-in selesai, menunggu dipanggil kader',
-            bg: AppColors.hijauMuda,
-            fg: AppColors.hijau,
-          ),
+          _kotakStatus('Check-in selesai, menunggu dipanggil kader', _hijauHeader),
           const SizedBox(height: 8),
           _tombolUtama(
             teks: 'Lihat Kartu Antrean',
@@ -1181,11 +899,7 @@ class _OrangTuaPendaftaranPageState
     }
 
     if (a.status == 'tidak_hadir') {
-      return const Pill(
-        'Anak tidak hadir pada sesi ini',
-        bg: AppColors.merahMuda,
-        fg: AppColors.merah,
-      );
+      return _kotakStatus('Anak tidak hadir pada sesi ini', AppColors.merah);
     }
 
     return _tombolUtama(

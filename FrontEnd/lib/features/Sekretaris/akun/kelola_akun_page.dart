@@ -16,6 +16,75 @@ const hijauHeaderAkun = Color(0xFF065F46);
 /// Garis tepi kartu, filter & kolom isian: hitam lembut (tidak mencolok).
 const garisKartuAkun = Color(0xFFB8BEC6);
 
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const bayanganKartuAkun = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+/// Warna aksen kartu (garis pemisah, ikon kecil, tautan): hijau lembut senada header.
+const aksenKartuAkun = Color(0xFF5E9C84);
+
+/// Kepala kartu: judul tebal kapital di kiri, keterangan di kanan,
+/// lalu garis pemisah berwarna di bawahnya.
+Widget kepalaKartuAkun(String judul, {Widget? kanan}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 17,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ),
+            if (kanan != null) ...[const SizedBox(width: 10), kanan],
+          ],
+        ),
+      ),
+      Container(height: 3, color: aksenKartuAkun),
+    ],
+  );
+}
+
+/// Satu bagian isi kartu: ikon kecil + label tebal, nilai di bawahnya.
+Widget bagianKartuAkun(IconData ikon, String label, String nilai) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(ikon, size: 18, color: aksenKartuAkun),
+            const SizedBox(width: 6),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Padding(
+          padding: const EdgeInsets.only(left: 24),
+          child: Text(nilai,
+              style: const TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFF374151))),
+        ),
+      ],
+    ),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
 // [kembali] menampilkan tombol panah di kiri, [actions] tombol di kanan.
@@ -319,62 +388,66 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
 
   Widget _kartuAkun(StaffAkun a, int i) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: bayanganKartuAkun,
+        ),
+        child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
           onTap: () => _bukaDetail(a),
-          child: Container(
+          child: SizedBox(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: garisKartuAkun, width: 1.2),
-            ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _baris('Role', a.aktif ? a.labelPeran : '${a.labelPeran} (Nonaktif)'),
-                _baris('Nama', a.nama),
-                _baris('No. HP', a.noHp.isEmpty ? '-' : a.noHp),
-                const SizedBox(height: 2),
-                const Align(
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                kepalaKartuAkun(
+                  a.nama,
+                  kanan: Text(a.labelPeran,
+                      style: const TextStyle(
+                          fontSize: 15.5, fontWeight: FontWeight.w600, color: _hitam)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Lihat detail',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600, color: _hijauTua)),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward, size: 16, color: _hijauTua),
+                      bagianKartuAkun(
+                          Icons.phone_outlined, 'No. HP', a.noHp.isEmpty ? '-' : a.noHp),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: bagianKartuAkun(Icons.alternate_email, 'Username',
+                                a.username.isEmpty ? '-' : a.username),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(left: 10, bottom: 8),
+                            child: Text(
+                              'Lihat detail',
+                              style: TextStyle(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w600,
+                                color: aksenKartuAkun,
+                                decoration: TextDecoration.underline,
+                                decorationColor: aksenKartuAkun,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 6),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  /// Baris "Label : nilai" (satu warna hitam).
-  Widget _baris(String label, String nilai) {
-    const gaya = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3, color: _hitam);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(width: 72, child: Text(label, style: gaya)),
-          const Text(': ', style: gaya),
-          Expanded(
-            child: Text(nilai, maxLines: 1, overflow: TextOverflow.ellipsis, style: gaya),
-          ),
-        ],
+        ),
       ),
     );
   }

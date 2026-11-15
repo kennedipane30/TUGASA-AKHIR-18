@@ -14,6 +14,92 @@ import 'catat_pengukuran_page.dart';
 import 'edit_pengukuran_page.dart';
 
 const hijauHeaderPendataan = Color(0xFF065F46);
+const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi field & kotak di dalam kartu: hitam lembut.
+const _garis = Color(0xFFB8BEC6);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+BoxDecoration _dekorKartu({Color warna = Colors.white}) => BoxDecoration(
+      color: warna,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
+    );
+
+/// Kepala kartu: judul kapital tebal di kiri, keterangan di kanan, garis aksen di bawah.
+Widget _kepala(String judul, {String? kanan}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: _teksGelap,
+                ),
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(
+                kanan,
+                style: const TextStyle(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w600,
+                  color: _teksGelap,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
+}
+
+/// Kartu putih berbayang; [judul] opsional.
+Widget _kartu({
+  String? judul,
+  String? kanan,
+  Color warna = Colors.white,
+  required Widget child,
+}) {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 14),
+    clipBehavior: Clip.antiAlias,
+    decoration: _dekorKartu(warna: warna),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (judul != null) _kepala(judul, kanan: kanan),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: child,
+        ),
+      ],
+    ),
+  );
+}
 
 // ---------------------------------------------------------------------------
 // MODEL
@@ -141,11 +227,7 @@ Widget _bannerBelumMulai(DateTime mulai) {
     width: double.infinity,
     margin: const EdgeInsets.only(bottom: 12),
     padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: AppColors.kuningMuda,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.kuning.withValues(alpha: 0.35)),
-    ),
+    decoration: _dekorKartu(warna: AppColors.kuningMuda),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -421,7 +503,8 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   children: [
-                    if (!_memuat && _gagal == null && mulaiNanti != null)
+                    // Pesan "sesi belum dimulai" hanya muncul bila sudah ada anak yang check-in.
+                    if (!_memuat && _gagal == null && mulaiNanti != null && _antrean.isNotEmpty)
                       _bannerBelumMulai(mulaiNanti),
                     if (_memuat)
                       const Padding(
@@ -429,8 +512,8 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                         child: Center(child: CircularProgressIndicator()),
                       )
                     else if (_gagal != null)
-                      SectionCard(
-                        color: AppColors.kuningMuda,
+                      _kartu(
+                        warna: AppColors.kuningMuda,
                         child: Row(
                           children: [
                             const Icon(
@@ -458,9 +541,8 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                         ),
                       )
                     else if (j == null)
-                      SectionCard(
-                        title: 'Jadwal Posyandu',
-                        icon: Icons.event_busy,
+                      _kartu(
+                        judul: 'Jadwal Posyandu',
                         child: const Text(
                           'Belum ada jadwal posyandu aktif. Antrean pendataan muncul setelah admin menerbitkan jadwal.',
                           style: TextStyle(
@@ -470,20 +552,10 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                         ),
                       )
                     else ...[
-                      SectionCard(
-                        title: 'Sesi Posyandu',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _barisSesi('Tanggal', formatTanggal(j.tanggal)),
-                            const SizedBox(height: 4),
-                            _barisSesi('Pukul', '${j.jam} WIB'),
-                          ],
-                        ),
-                      ),
+                      // Kartu Sesi Posyandu disembunyikan.
                       if (_antrean.isEmpty)
-                        const SectionCard(
-                          child: Text(
+                        _kartu(
+                          child: const Text(
                             'Belum ada anak. Data anak masuk ke sini setelah orang tua melakukan check-in dengan scan QR.',
                             style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
                           ),
@@ -496,7 +568,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                           onPilih: (v) => setState(() => _lihatSudah = v),
                         ),
                         if (!_antrean.any((a) => a.sudahDiukur == _lihatSudah))
-                          SectionCard(
+                          _kartu(
                             child: Text(
                               _lihatSudah ? 'Belum ada anak yang dicatat.' : 'Semua anak sudah dicatat.',
                               style: const TextStyle(fontSize: 16, color: AppColors.teksRedup),
@@ -520,44 +592,78 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
   Widget _baris(AntreanKader a) {
     final belumMulai = _mulaiNanti != null;
     final selesai = a.sudahDiukur;
+    final giliran = !selesai && !belumMulai && _giliran?.pendaftaranId == a.pendaftaranId;
+    final status = a.sudahDicatatBidan
+        ? 'Sudah dicatat bidan'
+        : selesai
+            ? 'Sudah diukur'
+            : giliran
+                ? 'Catat sekarang'
+                : 'Menunggu giliran';
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: selesai ? AppColors.hijauMuda : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () => _ukur(a),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: selesai ? const Color(0xFFBFE5D0) : const Color(0xFFE6ECE8)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        a.kodeNomor,
-                        style: const TextStyle(
-                          fontSize: 30,
-                          height: 1.15,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      if (!a.sudahDiukur && !belumMulai && _giliran?.pendaftaranId == a.pendaftaranId) ...[
-                        const SizedBox(height: 4),
-                        const Text('Catat sekarang', style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500, color: Color(0xFF0F172A))),
-                      ],
-                    ],
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DecoratedBox(
+        decoration: _dekorKartu(),
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => _ukur(a),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(
+                    color: giliran
+                        ? hijauHeaderPendataan
+                        : (selesai ? _aksen : Colors.transparent),
+                    width: 4,
                   ),
                 ),
-              ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          a.kodeNomor,
+                          style: const TextStyle(
+                            fontSize: 30,
+                            height: 1.15,
+                            fontWeight: FontWeight.w700,
+                            color: _teksGelap,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          status,
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w600,
+                            color: (selesai || giliran) ? hijauHeaderPendataan : AppColors.teksRedup,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!a.sudahDicatatBidan)
+                    Text(
+                      selesai ? 'Ubah' : 'Catat',
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w600,
+                        color: _aksen,
+                        decoration: TextDecoration.underline,
+                        decorationColor: _aksen,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -565,21 +671,6 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
     );
   }
 }
-
-/// Satu baris keterangan sesi: "Tanggal : 13 November 2026" (titik dua sejajar).
-Widget _barisSesi(String label, String nilai) => Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 78,
-          child: Text(label, style: const TextStyle(fontSize: 17, color: AppColors.teksRedup)),
-        ),
-        const Text(': ', style: TextStyle(fontSize: 17, color: AppColors.teksRedup)),
-        Expanded(
-          child: Text(nilai, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-        ),
-      ],
-    );
 
 /// Filter daftar: "Belum Dicatat (n)" | "Sudah Dicatat (n)".
 Widget _filterCatat({
@@ -598,11 +689,11 @@ Widget _filterCatat({
         showCheckmark: false,
         selectedColor: const Color(0xFF065F46),
         backgroundColor: Colors.white,
-        side: BorderSide(color: aktif ? const Color(0xFF065F46) : const Color(0xFFE6ECE8)),
+        side: BorderSide(color: aktif ? const Color(0xFF065F46) : _garis, width: 1.2),
         labelStyle: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: aktif ? Colors.white : const Color(0xFF0F172A),
+          color: aktif ? Colors.white : _teksGelap,
         ),
         onSelected: (_) => onPilih(nilai),
       ),

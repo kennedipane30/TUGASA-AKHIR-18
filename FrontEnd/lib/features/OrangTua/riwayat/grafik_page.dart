@@ -12,11 +12,72 @@ import '../datadiri/data_orang_tua_page.dart' show KeluargaApi, parseTgl;
 import 'grafik_panduan_page.dart';
 
 // Warna tampilan
-const _latar = Color(0xFFF3F6FB);
-const _teksGelap = Color(0xFF1E293B);
+const _latar = AppColors.latar;
+const _teksGelap = Color(0xFF1F2937);
 const _teksAbu = Color(0xFF64748B);
 const _hijauTua = Color(0xFF065F46);
 const _hijauMuda = Color(0xFFE6F8EF);
+
+/// Garis tepi kotak di dalam kartu: hitam lembut.
+const _garis = Color(0xFFB8BEC6);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+/// Kepala kartu: judul kapital tebal di kiri, keterangan di kanan, garis aksen di bawah.
+Widget _kepala(String judul, {String? kanan, Color warnaKanan = _teksGelap, Widget? aksi}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: _teksGelap,
+                ),
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: warnaKanan)),
+            ],
+            if (aksi != null) ...[const SizedBox(width: 10), aksi],
+          ],
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
+}
+
+/// Tautan kecil hijau lembut bergaris bawah.
+Widget _tautan(String teks) => Text(
+      teks,
+      style: const TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w600,
+        color: _aksen,
+        decoration: TextDecoration.underline,
+        decorationColor: _aksen,
+      ),
+    );
 
 // ---------------------------------------------------------------------------
 // METRIK GRAFIK (kurva dari tabel WHO di assets/standar_antropometri.csv)
@@ -355,23 +416,34 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
     );
   }
 
-  Widget _kartu({required Widget child, Color color = Colors.white}) {
+  /// Kartu putih berbayang; bila [judul] ada: kepala kapital + garis aksen.
+  Widget _kartu({
+    required Widget child,
+    Color color = Colors.white,
+    String? judul,
+    String? kanan,
+    Color warnaKanan = _teksGelap,
+    Widget? aksi,
+  }) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F1E293B),
-            blurRadius: 12,
-            offset: Offset(0, 3),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _bayangan,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (judul != null) _kepala(judul, kanan: kanan, warnaKanan: warnaKanan, aksi: aksi),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: child,
           ),
         ],
       ),
-      child: child,
     );
   }
 
@@ -381,29 +453,29 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
       color: _hijauTua,
       child: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-          child: SizedBox(
-            height: 32,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal('Grafik Perkembangan'),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
                   child: InkWell(
                     onTap: () => Navigator.maybePop(context),
                     child: const Padding(
-                      padding: EdgeInsets.all(6),
+                      padding: EdgeInsets.all(8),
                       child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Center(child: _judulTebal('Grafik Perkembangan')),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -459,23 +531,10 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                       )
                     else if (_anak.isEmpty)
                       _kartu(
-                        child: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Belum ada data anak',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: _teksGelap,
-                              ),
-                            ),
-                            SizedBox(height: 6),
-                            Text(
-                              'Lengkapi data keluarga terlebih dahulu.',
-                              style: TextStyle(fontSize: 15, color: _teksAbu),
-                            ),
-                          ],
+                        judul: 'Belum ada data anak',
+                        child: const Text(
+                          'Lengkapi data keluarga terlebih dahulu.',
+                          style: TextStyle(fontSize: 15.5, color: _teksAbu),
                         ),
                       )
                     else
@@ -503,24 +562,11 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
           decoration: BoxDecoration(
             color: aktif ? _hijauTua : Colors.white,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: aktif ? _hijauTua : const Color(0xFFE2E8F0),
-            ),
+            border: Border.all(color: aktif ? _hijauTua : _garis, width: 1.2),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (aktif) ...[
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.6),
-                  ),
-                ),
-                const SizedBox(width: 7),
-              ],
               Text(
                 _daftarMetrik[i].tab,
                 style: TextStyle(
@@ -602,7 +648,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
         if (tk != 'baik') peringatan = m.peringatan(status, zAkhir);
       }
     }
-    final (sBg, sFg) = tingkat.isEmpty
+    final (_, sFg) = tingkat.isEmpty
         ? (AppColors.isiField, AppColors.teksRedup)
         : _warnaTingkat(tingkat);
     final abnormal = tingkat.isNotEmpty && tingkat != 'baik';
@@ -622,11 +668,11 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                   selected: i == _aktif,
                   selectedColor: _hijauTua,
                   backgroundColor: Colors.white,
-                  side: BorderSide.none,
+                  side: BorderSide(color: i == _aktif ? _hijauTua : _garis, width: 1.2),
                   showCheckmark: false,
                   label: Text(_anak[i].nama),
                   labelStyle: TextStyle(
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: i == _aktif ? Colors.white : _teksGelap,
                   ),
                   onSelected: (_) => setState(() => _aktif = i),
@@ -638,11 +684,12 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
           child: Text(
-            a.nama,
+            a.nama.toUpperCase(),
             style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: _hijauTua,
+              fontSize: 16.5,
+              letterSpacing: 0.3,
+              fontWeight: FontWeight.w700,
+              color: _teksGelap,
             ),
           ),
         ),
@@ -660,46 +707,15 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
 
       // Kartu grafik
       _kartu(
+        judul: m.judul,
+        kanan: a.laki ? 'Laki-laki' : 'Perempuan',
+        warnaKanan: aksen,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: double.infinity,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  m.judul,
-                  maxLines: 1,
-                  softWrap: false,
-                  style: const TextStyle(
-                    fontSize: 16.5,
-                    fontWeight: FontWeight.w600,
-                    color: _teksGelap,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: warna,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                a.laki ? 'Laki-laki' : 'Perempuan',
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
-                  color: aksen,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
-                color: warna.withOpacity(0.6),
+                color: warna.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(16),
               ),
               padding: const EdgeInsets.fromLTRB(4, 10, 8, 4),
@@ -744,27 +760,21 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                 ),
               ),
             const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFE9EEF3)),
+            const Divider(height: 1, color: Color(0xFFE5E7EB)),
             const SizedBox(height: 12),
-            Text(
-              zAkhir == null ? 'Status terakhir:' : 'Status terakhir (Z ${_fmtZ(zAkhir)}):',
-              style: const TextStyle(fontSize: 14.5, color: _teksAbu),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: sBg,
-                borderRadius: BorderRadius.circular(20),
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: zAkhir == null
+                        ? 'Status terakhir : '
+                        : 'Status terakhir (Z ${_fmtZ(zAkhir)}) : ',
+                    style: const TextStyle(color: _teksGelap),
+                  ),
+                  TextSpan(text: status, style: TextStyle(color: sFg)),
+                ],
               ),
-              child: Text(
-                status,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: sFg,
-                ),
-              ),
+              style: const TextStyle(fontSize: 15.5, height: 1.35, fontWeight: FontWeight.w700),
             ),
             if (abnormal)
               Container(
@@ -809,39 +819,19 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
 
       // Riwayat
       _kartu(
+        judul: 'Riwayat Pengukuran',
+        aksi: riwayat.length > 1
+            ? InkWell(
+                onTap: () => setState(() => _semuaRiwayat = !_semuaRiwayat),
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: _tautan(_semuaRiwayat ? 'Ringkas' : 'Lihat semua'),
+                ),
+              )
+            : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Riwayat Pengukuran Tersimpan',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: _teksGelap,
-                    ),
-                  ),
-                ),
-                if (riwayat.length > 1)
-                  InkWell(
-                    onTap: () => setState(() => _semuaRiwayat = !_semuaRiwayat),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Text(
-                        _semuaRiwayat ? 'Ringkas' : 'Lihat Semua',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: _teksGelap,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
             if (riwayat.isEmpty)
               const Text(
                 'Belum ada pengukuran.',
@@ -854,53 +844,19 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
       ),
 
       // Panduan
-      Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEBFBF4),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFCDEFDD)),
-        ),
+      _kartu(
+        judul: 'Panduan Standar WHO',
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Panduan Standar WHO',
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w600,
-                      color: _teksGelap,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Pelajari arti kurva Z-score pada anak Anda',
-                    style: TextStyle(fontSize: 14, color: _teksAbu),
-                  ),
-                ],
+              child: Text(
+                'Pelajari arti kurva Z-score pada grafik anak Anda.',
+                style: TextStyle(fontSize: 15.5, height: 1.4, color: Color(0xFF374151)),
               ),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _hijauTua,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: _bukaPanduan,
-              child: const Text(
-                'Baca',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
-              ),
-            ),
+            const SizedBox(width: 10),
+            InkWell(onTap: _bukaPanduan, child: _tautan('Baca panduan')),
           ],
         ),
       ),
@@ -1068,16 +1024,16 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
           ? 'risiko'
           : (tk.contains('waspada') ? 'waspada' : (tk.isEmpty ? '' : 'baik'));
     }
-    final (bg, fg) = _warnaTingkat(tingkat);
+    final (_, fg) = _warnaTingkat(tingkat);
 
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F8FB),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE9EEF3)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _garis, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1120,33 +1076,28 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
           ),
           if (kategoriTb.isNotEmpty || kategoriBb.isNotEmpty || t.statusNT.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                if (t.statusNT.isNotEmpty)
-                  _chip('${t.statusNT} · ${_gayaNT(t.statusNT).$1}', _gayaNT(t.statusNT).$3, _gayaNT(t.statusNT).$2),
-                if (t.duaT) _chip('2T', const Color(0xFFFFE4E6), const Color(0xFFDC2626)),
-                if (t.bgm) _chip('BGM', const Color(0xFFFFE4E6), const Color(0xFFDC2626)),
-                if (kategoriTb.isNotEmpty) _chip('TB/U: $kategoriTb', bg, fg),
-                if (kategoriBb.isNotEmpty) _chip('BB/TB: $kategoriBb', bg, fg),
-              ],
-            ),
+            if (t.statusNT.isNotEmpty) _chip('Penimbangan', _gayaNT(t.statusNT).$1, _gayaNT(t.statusNT).$2),
+            if (t.duaT || t.bgm)
+              _chip('Perhatian', [if (t.duaT) '2T', if (t.bgm) 'BGM'].join(' · '), const Color(0xFFDC2626)),
+            if (kategoriTb.isNotEmpty) _chip('TB/U', kategoriTb, fg),
+            if (kategoriBb.isNotEmpty) _chip('BB/TB', kategoriBb, fg),
           ],
         ],
       ),
     );
   }
 
-  Widget _chip(String teks, Color bg, Color fg) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          teks,
-          style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: fg),
+  /// Baris "Label : nilai" berwarna (pengganti pil).
+  Widget _chip(String label, String nilai, Color fg) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: '$label : ', style: const TextStyle(color: _teksGelap)),
+              TextSpan(text: nilai, style: TextStyle(color: fg)),
+            ],
+          ),
+          style: const TextStyle(fontSize: 15, height: 1.35, fontWeight: FontWeight.w700),
         ),
       );
 
@@ -1318,7 +1269,7 @@ class _KurvaPainter extends CustomPainter {
 
     canvas.drawRect(
       Rect.fromLTWH(kiri, atas, w, h),
-      Paint()..color = Colors.white.withOpacity(0.6),
+      Paint()..color = Colors.white.withValues(alpha: 0.6),
     );
 
     final tipis = Paint()
@@ -1426,7 +1377,7 @@ class _KurvaPainter extends CustomPainter {
     for (final i in indeks) {
       final t = titik[i];
       final o = Offset(px(t.dx), py(t.dy));
-      canvas.drawCircle(o, 7, Paint()..color = aksen.withOpacity(0.2));
+      canvas.drawCircle(o, 7, Paint()..color = aksen.withValues(alpha: 0.2));
       canvas.drawCircle(o, 5.5, Paint()..color = Colors.white);
       canvas.drawCircle(o, 4, Paint()..color = aksen);
       _teks(canvas, _fmt(t.dy), Offset(o.dx + 14, o.dy - 10), fs: 9, col: aksen);

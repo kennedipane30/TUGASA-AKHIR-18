@@ -81,19 +81,27 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
           height: 48,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: aktif ? kkHijauMuda : kkIsi,
+            color: aktif ? kkHijau : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: aktif ? kkHijau : (_jkSalah ? kkMerah : kkGarisInput),
-              width: aktif ? 1.6 : 1,
+              width: 1.2,
             ),
           ),
-          child: Text(teks,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: aktif ? FontWeight.w700 : FontWeight.w500,
-                color: aktif ? kkHijau : kkTeksGelap,
-              )),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(kode == 'L' ? Icons.male : Icons.female,
+                  size: 20, color: aktif ? Colors.white : kkAksen),
+              const SizedBox(width: 6),
+              Text(teks,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: aktif ? FontWeight.w700 : FontWeight.w500,
+                    color: aktif ? Colors.white : kkTeksGelap,
+                  )),
+            ],
+          ),
         ),
       ),
     );
@@ -132,15 +140,20 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                Text(widget.awal == null ? 'Tambah Data Anak' : 'Ubah Data Anak',
+                Text((widget.awal == null ? 'Tambah Data Anak' : 'Ubah Data Anak').toUpperCase(),
                     style: const TextStyle(
-                        fontSize: 19, fontWeight: FontWeight.w700, color: kkTeksGelap)),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                        color: kkTeksGelap)),
+                const SizedBox(height: 8),
+                Container(height: 3, color: kkAksen),
                 const SizedBox(height: 16),
                 kkLabel('Nama anak', wajib: true),
                 TextFormField(
                   controller: _nama,
                   textCapitalization: TextCapitalization.words,
-                  decoration: kkDekor('Nama lengkap anak'),
+                  decoration: kkDekor('Nama lengkap anak', ikon: Icons.person_outline),
                   validator: (v) =>
                       (v ?? '').trim().isEmpty ? 'Nama anak wajib diisi' : null,
                 ),
@@ -151,7 +164,7 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
                   keyboardType: TextInputType.number,
                   maxLength: 16,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: kkDekor('16 digit, bila sudah ada'),
+                  decoration: kkDekor('16 digit, bila sudah ada', ikon: Icons.badge_outlined),
                   validator: (v) {
                     final t = (v ?? '').trim();
                     if (t.isNotEmpty && t.length != 16) return 'NIK harus 16 digit';
@@ -194,7 +207,7 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
                             controller: _berat,
                             keyboardType:
                                 const TextInputType.numberWithOptions(decimal: true),
-                            decoration: kkDekor('3.1'),
+                            decoration: kkDekor('3.1', ikon: Icons.monitor_weight_outlined),
                             validator: (v) => _cekDesimal(v, 0.5, 7, 'kg'),
                           ),
                         ],
@@ -210,7 +223,7 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
                             controller: _panjang,
                             keyboardType:
                                 const TextInputType.numberWithOptions(decimal: true),
-                            decoration: kkDekor('49'),
+                            decoration: kkDekor('49', ikon: Icons.straighten),
                             validator: (v) => _cekDesimal(v, 30, 65, 'cm'),
                           ),
                         ],
@@ -222,34 +235,11 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: kkHijau,
-                          side: const BorderSide(color: kkHijau),
-                          minimumSize: const Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text('Batal',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      ),
+                      child: kkTombolGaris('Batal',
+                          warna: kkMerah, onPressed: () => Navigator.pop(context)),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _simpan,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kkHijau,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text('Simpan',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      ),
-                    ),
+                    Expanded(child: kkTombolHijau('Simpan', onPressed: _simpan)),
                   ],
                 ),
               ],
@@ -261,7 +251,7 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
   }
 }
 
-/// Satu baris anak di daftar (nama, tgl lahir, JK, usia) + tombol ubah/hapus.
+/// Satu baris anak di daftar (nama, tgl lahir, JK, usia) + tautan ubah/hapus.
 class BarisAnak extends StatelessWidget {
   final IsianAnak anak;
   final VoidCallback? onUbah;
@@ -272,39 +262,46 @@ class BarisAnak extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       decoration: BoxDecoration(
-        color: kkIsi,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kkGarisInput),
+        border: Border.all(color: kkGaris, width: 1.2),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Text(anak.nama.toUpperCase(),
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 0.2, color: kkTeksGelap)),
+          const SizedBox(height: 8),
+          kkInfo('Tanggal Lahir', anak.tglLahir, lebar: 120),
+          kkInfo('Jenis Kelamin', anak.jkTeks, lebar: 120),
+          kkInfo('Usia', kkUsiaTeks(anak.tglLahir), lebar: 120),
+          if (onUbah != null || onHapus != null)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(anak.nama,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700, color: kkTeksGelap)),
-                const SizedBox(height: 4),
-                Text('${anak.tglLahir} · ${anak.jkTeks} · ${kkUsiaTeks(anak.tglLahir)}',
-                    style: const TextStyle(fontSize: 13.5, color: kkTeksAbu)),
+                if (onHapus != null)
+                  InkWell(
+                    onTap: onHapus,
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: kkTautan('Hapus', warna: kkMerah),
+                    ),
+                  ),
+                if (onHapus != null && onUbah != null) const SizedBox(width: 10),
+                if (onUbah != null)
+                  InkWell(
+                    onTap: onUbah,
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: kkTautan('Ubah'),
+                    ),
+                  ),
               ],
-            ),
-          ),
-          if (onUbah != null)
-            TextButton(
-              onPressed: onUbah,
-              style: TextButton.styleFrom(foregroundColor: kkHijau),
-              child: const Text('Ubah', style: TextStyle(fontWeight: FontWeight.w600)),
-            ),
-          if (onHapus != null)
-            TextButton(
-              onPressed: onHapus,
-              style: TextButton.styleFrom(foregroundColor: kkMerah),
-              child: const Text('Hapus', style: TextStyle(fontWeight: FontWeight.w600)),
             ),
         ],
       ),

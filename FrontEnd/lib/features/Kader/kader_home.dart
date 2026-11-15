@@ -12,14 +12,24 @@ import 'pendataan/pendataan_page.dart';
 import 'riwayat/riwayat_page.dart';
 import 'rekap/balita_tidak_hadir_page.dart';
 import 'vaksin/vaksin_page.dart';
-import 'keluarga/keluarga_page.dart';
-import 'daftarkan_anak/daftarkan_anak_page.dart';
 
 // Warna tampilan
 const _hijauTua = Color(0xFF065F46);
-const _teksGelap = Color(0xFF0F172A);
+const _teksGelap = Color(0xFF1F2937);
 const _teksAbu = Color(0xFF64748B);
-const _teksBiru = Color(0xFF7C8DA6);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Garis pemisah lembut.
+const _garisLembut = Color(0xFFE5E7EB);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+const _namaHari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
 class KaderHome extends StatefulWidget {
   const KaderHome({super.key});
@@ -38,25 +48,10 @@ class _KaderHomeState extends State<KaderHome> {
   int _tertunda = 0;
   String _sinkronTerakhir = 'baru saja';
 
-  final _cariCtrl = TextEditingController();
-  String _kata = '';
-
   @override
   void initState() {
     super.initState();
     _muat();
-  }
-
-  @override
-  void dispose() {
-    _cariCtrl.dispose();
-    super.dispose();
-  }
-
-  void _bersihkanCari() {
-    _cariCtrl.clear();
-    FocusScope.of(context).unfocus();
-    setState(() => _kata = '');
   }
 
   Future<void> _muat() async {
@@ -126,22 +121,6 @@ class _KaderHomeState extends State<KaderHome> {
     );
   }
 
-  Future<void> _bukaKeluarga() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const KeluargaPage()),
-    );
-    _muat();
-  }
-
-  Future<void> _bukaDaftarkanAnak() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const DaftarkanAnakPage()),
-    );
-    _muat();
-  }
-
   void _bukaRiwayat() {
     Navigator.push(
       context,
@@ -159,34 +138,11 @@ class _KaderHomeState extends State<KaderHome> {
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color ?? Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         border: border == null ? null : Border.all(color: border),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0F1E293B), blurRadius: 12, offset: Offset(0, 3)),
-        ],
+        boxShadow: _bayangan,
       ),
       child: child,
-    );
-  }
-
-  Widget _kepalaKartu(IconData ikon, String judul, {Widget? trailing}) {
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: const BoxDecoration(
-              color: Color(0xFFE6F8EF), shape: BoxShape.circle),
-          child: Icon(ikon, size: 18, color: _hijauTua),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(judul,
-              style: const TextStyle(
-                  fontSize: 17, fontWeight: FontWeight.w600, color: _teksGelap)),
-        ),
-        if (trailing != null) trailing,
-      ],
     );
   }
 
@@ -213,189 +169,6 @@ class _KaderHomeState extends State<KaderHome> {
     );
   }
 
-  // -------------------------------------------------------------------------
-  // Pencarian
-  // -------------------------------------------------------------------------
-  Widget _pencarian() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE6EAEF)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0A1E293B), blurRadius: 8, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: _teksAbu, size: 22),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _cariCtrl,
-              textInputAction: TextInputAction.search,
-              onChanged: (v) => setState(() => _kata = v.trim()),
-              decoration: const InputDecoration(
-                hintText: 'Cari nama balita...',
-                hintStyle: TextStyle(fontSize: 16, color: _teksAbu),
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-          if (_kata.isNotEmpty)
-            InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: _bersihkanCari,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF2F6),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.close_rounded, size: 18, color: _teksGelap),
-              ),
-            )
-          else
-            InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: _bukaBalita,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF2F6),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.filter_alt_outlined, size: 18, color: _teksGelap),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _hasilPencarian() {
-    final q = _kata.toLowerCase();
-    final hasil = _antrean.where((a) => a.nama.toLowerCase().contains(q)).toList();
-
-    return _kartuPutih(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.manage_search_rounded, size: 22, color: _hijauTua),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text('Hasil pencarian "$_kata"',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 16.5, fontWeight: FontWeight.w600, color: _teksGelap)),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE6F8EF),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text('${hasil.length} anak',
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600, color: _hijauTua)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (_memuat)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(12),
-                child: CircularProgressIndicator(),
-              ),
-            )
-          else if (hasil.isEmpty)
-            const Text('Tidak ditemukan di antrean hari ini.',
-                style: TextStyle(fontSize: 16.5, height: 1.4, color: _teksBiru))
-          else
-            for (final a in hasil) _barisHasil(a),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _hijauTua,
-                side: const BorderSide(color: Color(0xFFB9EBD2)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed: _bukaBalita,
-              icon: const Icon(Icons.child_care, size: 20),
-              label: const Text('Cari di Semua Balita',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _barisHasil(AntreanKader a) {
-    final usia = a.usiaBulan >= 12
-        ? '${a.usiaBulan ~/ 12} th ${a.usiaBulan % 12} bln'
-        : '${a.usiaBulan} bln';
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: _bukaAntrean,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF6F8FB),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE9EEF3)),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: const Color(0xFFE6F8EF),
-              child: Text(a.nomor?.toString() ?? '-',
-                  style: const TextStyle(color: _hijauTua, fontWeight: FontWeight.w600)),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(a.nama,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 16, color: _teksGelap)),
-                  const SizedBox(height: 2),
-                  Text('${a.jk == 'P' ? 'Perempuan' : 'Laki-laki'} · $usia',
-                      style: const TextStyle(fontSize: 15.5, color: _teksAbu)),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-              decoration: BoxDecoration(
-                color: a.sudahDiukur ? const Color(0xFFE6F5EC) : const Color(0xFFFFEFDD),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(a.sudahDiukur ? 'Sudah diukur' : 'Menunggu',
-                  style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w600,
-                      color: a.sudahDiukur ? _hijauTua : const Color(0xFFB45309))),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// Nama depan pengguna yang login, huruf kapital (mis. "KENNEDI").
   String _namaSapaan(Map? user) {
     final nama = (user?['nama'] ?? '').toString().trim();
@@ -413,7 +186,7 @@ class _KaderHomeState extends State<KaderHome> {
         style: const TextStyle(
           fontSize: 21,
           height: 1.2,
-          color: Color(0xFF0F172A),
+          color: _teksGelap,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -438,10 +211,6 @@ class _KaderHomeState extends State<KaderHome> {
         // Sapaan
         _sapaan(_namaSapaan(user)),
 
-        // Pencarian
-        _pencarian(),
-        if (_kata.isNotEmpty) _hasilPencarian(),
-
         if (_memuat)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
@@ -450,19 +219,7 @@ class _KaderHomeState extends State<KaderHome> {
         else if (_gagal != null)
           _kartuGagal()
         else if (j == null)
-          _kartuPutih(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _kepalaKartu(Icons.event_busy, 'Jadwal $lokasi'),
-                const SizedBox(height: 10),
-                const Text(
-                  'Belum ada jadwal aktif untuk posyandu Anda. Antrean pendataan muncul setelah admin menerbitkan jadwal.',
-                  style: TextStyle(fontSize: 16, color: _teksAbu, height: 1.4),
-                ),
-              ],
-            ),
-          )
+          _tanpaJadwal()
         else
           _sesiTerdekat(j),
 
@@ -473,69 +230,216 @@ class _KaderHomeState extends State<KaderHome> {
   }
 
   // -------------------------------------------------------------------------
-  // Sesi terdekat
+  // Sesi posyandu: kartu putih berbayang, ringkas dan rapi
   // -------------------------------------------------------------------------
+
+  /// Keterangan waktu sesi: "Hari ini", "Besok", "3 hari lagi", atau "Selesai".
+  (String, Color) _statusSesi(DateTime tanggal) {
+    final n = DateTime.now();
+    final hari = DateTime(n.year, n.month, n.day);
+    final t = DateTime(tanggal.year, tanggal.month, tanggal.day);
+    final selisih = t.difference(hari).inDays;
+    if (selisih == 0) return ('Hari ini', _hijauTua);
+    if (selisih == 1) return ('Besok', _aksen);
+    if (selisih > 1) return ('$selisih hari lagi', _teksAbu);
+    return ('Selesai', _teksAbu);
+  }
+
+  Widget _barisKet(IconData ikon, String label, String nilai) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(ikon, size: 18, color: _aksen),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$label : ',
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: _teksGelap),
+                  ),
+                  TextSpan(
+                    text: nilai.isEmpty ? '-' : nilai,
+                    style: const TextStyle(fontWeight: FontWeight.w500, color: Color(0xFF374151)),
+                  ),
+                ],
+              ),
+              style: const TextStyle(fontSize: 15.5, height: 1.35),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Satu angka ringkasan antrean (angka besar, label kecil di bawahnya).
+  Widget _angka(String nilai, String label, Color warna) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(nilai,
+              style: TextStyle(fontSize: 22, height: 1.1, fontWeight: FontWeight.w700, color: warna)),
+          const SizedBox(height: 4),
+          Text(label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _teksAbu)),
+        ],
+      ),
+    );
+  }
+
+  Widget _pemisahTegak() => Container(width: 1, height: 36, color: _garisLembut);
+
   Widget _sesiTerdekat(JadwalTerdekatData j) {
+    final (status, warnaStatus) = _statusSesi(j.tanggal);
+    final checkin = _antrean.length;
+    final diukur = _antrean.where((a) => a.sudahDiukur).length;
+    final menunggu = checkin - diukur;
+
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 18),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFE9FBF3), Color(0xFFD7F7E8)],
-        ),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFB9EBD2)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _bayangan,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.calendar_month_outlined,
-                color: _hijauTua, size: 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+          // Kepala: label kecil, hari & tanggal, status di kanan
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('SESI POSYANDU TERDEKAT',
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('SESI POSYANDU',
+                          style: TextStyle(
+                              fontSize: 13.5,
+                              letterSpacing: 0.8,
+                              fontWeight: FontWeight.w700,
+                              color: _aksen)),
+                      const SizedBox(height: 4),
+                      Text(_namaHari[j.tanggal.weekday - 1].toUpperCase(),
+                          style: const TextStyle(
+                              fontSize: 18,
+                              height: 1.2,
+                              letterSpacing: 0.3,
+                              fontWeight: FontWeight.w700,
+                              color: _teksGelap)),
+                      Text(formatTanggal(j.tanggal),
+                          style: const TextStyle(
+                              fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(status,
                     style: TextStyle(
-                        fontSize: 15,
-                        letterSpacing: 0.4,
-                        fontWeight: FontWeight.w600,
-                        color: _hijauTua)),
-                const SizedBox(height: 2),
-                Text(formatTanggal(j.tanggal),
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w600, color: _teksGelap)),
-                if (j.lokasi.isNotEmpty)
-                  Text(j.lokasi,
-                      style: const TextStyle(fontSize: 16, color: _teksAbu)),
+                        fontSize: 15.5, fontWeight: FontWeight.w700, color: warnaStatus)),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
+          Container(height: 3, color: _aksen),
+
+          // Waktu & lokasi
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+            child: Column(
+              children: [
+                _barisKet(Icons.schedule, 'Waktu', j.jam.isEmpty ? '' : '${j.jam} WIB'),
+                _barisKet(Icons.location_on_outlined, 'Lokasi', j.lokasi),
+              ],
             ),
-            child: Text(j.jam.replaceAll(' - ', ' -\n'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 16,
-                    height: 1.25,
-                    fontWeight: FontWeight.w600,
+          ),
+
+          // Ringkasan antrean
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: _garisLembut)),
+            ),
+            child: Row(
+              children: [
+                _angka('$checkin', 'Check-in', _teksGelap),
+                _pemisahTegak(),
+                _angka('$diukur', 'Sudah diukur', _hijauTua),
+                _pemisahTegak(),
+                _angka('$menunggu', 'Menunggu', menunggu > 0 ? AppColors.kuning : _teksAbu),
+              ],
+            ),
+          ),
+
+          // Tautan ke antrean pendataan
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: InkWell(
+                onTap: _bukaAntrean,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    'Lihat antrean',
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
+                      color: _aksen,
+                      decoration: TextDecoration.underline,
+                      decorationColor: _aksen,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Kartu bila belum ada jadwal aktif.
+  Widget _tanpaJadwal() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 18),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _bayangan,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: Text('SESI POSYANDU',
+                style: TextStyle(
+                    fontSize: 16.5,
+                    letterSpacing: 0.3,
+                    fontWeight: FontWeight.w700,
                     color: _teksGelap)),
+          ),
+          Container(height: 3, color: _aksen),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Text(
+              'Belum ada jadwal aktif untuk posyandu Anda. Antrean pendataan muncul setelah admin menerbitkan jadwal.',
+              style: TextStyle(fontSize: 15.5, color: _teksAbu, height: 1.4),
+            ),
           ),
         ],
       ),
@@ -622,7 +526,7 @@ class _KaderHomeState extends State<KaderHome> {
     );
   }
 
-  Widget _gridAset(String judul, String sub, List<Widget> item) {
+  Widget _gridAset(String judul, List<Widget> item) {
     final baris = <Widget>[];
     for (var i = 0; i < item.length; i += 4) {
       final potong = item.sublist(i, i + 4 > item.length ? item.length : i + 4);
@@ -660,31 +564,10 @@ class _KaderHomeState extends State<KaderHome> {
                     ),
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Layanan Utama',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.teksRedup,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
-            child: Text(
-              sub,
-              style: const TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w500,
-                color: AppColors.teksRedup,
-              ),
-            ),
-          ),
+          const SizedBox(height: 14),
           ...baris,
         ],
       ),
@@ -692,7 +575,7 @@ class _KaderHomeState extends State<KaderHome> {
   }
 
   Widget _layananUtama() {
-    return _gridAset('Layanan Kader', 'Pilih menu pendataan balita di posyandu', [
+    return _gridAset('Layanan Kader', [
       _itemAset('qr_chekin.png', Icons.qr_code_2_rounded, const Color(0xFF1D6FD6),
           'QR\nCheck-in', _bukaQr),
       _itemAset('ukur_data.png', Icons.calendar_view_week_rounded, const Color(0xFF0B6B55),
@@ -705,10 +588,6 @@ class _KaderHomeState extends State<KaderHome> {
           const Color(0xFFB45309), 'Balita\nTidak Hadir', _bukaTidakHadir),
       _itemAset('vaksin_anak.png', Icons.vaccines_outlined, const Color(0xFF0B7FBF),
           'Vaksin\nAnak', _bukaVaksin),
-      _itemAset('data_keluarga.png', Icons.family_restroom_outlined,
-          const Color(0xFF7C3AED), 'Data\nKeluarga', _bukaKeluarga),
-      _itemAset('daftarkan_anak.png', Icons.how_to_reg_outlined, const Color(0xFF0E7490),
-          'Daftarkan\nAnak', _bukaDaftarkanAnak),
     ]);
   }
 }

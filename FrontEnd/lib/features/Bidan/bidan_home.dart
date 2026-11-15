@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/theme/app_colors.dart';
 import '../../core/widgets/common_widgets.dart';
 import '../../core/utils/posyandu.dart';
 import '../../core/pages/balita/semua_balita_page.dart';
@@ -13,8 +12,6 @@ import 'riwayat/riwayat_page.dart';
 
 // Warna tampilan
 const _hijauTeks = Color(0xFF065F46);
-const _teksGelap = Color(0xFF0F172A);
-const _teksAbu = Color(0xFF64748B);
 const _merah = Color(0xFFE11D48);
 const _biru = Color(0xFF2563EB);
 const _ungu = Color(0xFF9333EA);
@@ -114,52 +111,8 @@ class _BidanHomeState extends State<BidanHome> {
       notif: 4,
       children: [
         _sapaan(_namaSapaan(user)),
-        _pencarian(),
-        const SizedBox(height: 14),
         _menuGrid(),
       ],
-    );
-  }
-
-  // -------------------------------------------------------------------------
-  // Pencarian
-  // -------------------------------------------------------------------------
-  Widget _pencarian() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE6EAEF)),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0A1E293B), blurRadius: 8, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: _teksAbu, size: 22),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              readOnly: true,
-              onTap: () => soon(context, 'Pencarian anak'),
-              decoration: const InputDecoration(
-                hintText: 'Cari data balita, NIK, atau nama ibu...',
-                hintStyle: TextStyle(fontSize: 16, color: _teksAbu),
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF2F6),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.filter_alt_outlined, size: 18, color: _teksGelap),
-          ),
-        ],
-      ),
     );
   }
 
@@ -243,7 +196,7 @@ class _BidanHomeState extends State<BidanHome> {
     );
   }
 
-  Widget _gridAset(String judul, String sub, List<Widget> item) {
+  Widget _gridAset(String judul, List<Widget> item) {
     final baris = <Widget>[];
     for (var i = 0; i < item.length; i += 4) {
       final potong = item.sublist(i, i + 4 > item.length ? item.length : i + 4);
@@ -266,43 +219,14 @@ class _BidanHomeState extends State<BidanHome> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    judul,
-                    style: const TextStyle(
-                      fontSize: 21,
-                      height: 1.2,
-                      color: Color(0xFF0F172A),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Layanan Utama',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.teksRedup,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 14),
             child: Text(
-              sub,
+              judul,
               style: const TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w500,
-                color: AppColors.teksRedup,
+                fontSize: 21,
+                height: 1.2,
+                color: Color(0xFF0F172A),
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -313,7 +237,7 @@ class _BidanHomeState extends State<BidanHome> {
   }
 
   Widget _menuGrid() {
-    return _gridAset('Layanan Bidan', 'Pilih menu pelayanan dan pemantauan balita', [
+    return _gridAset('Layanan Bidan', [
       _itemAset('deteksi_dini.png', Icons.warning_amber_rounded, _merah, 'Deteksi\nDini',
           _bukaBerisiko, badge: _berisiko, badgeWarna: _merah),
       _itemAset('semua_balita.png', Icons.child_care, _hijauTeks, 'Semua\nBalita', _bukaBalita),

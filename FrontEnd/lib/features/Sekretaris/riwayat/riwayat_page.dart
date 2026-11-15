@@ -14,9 +14,8 @@ const _prefix = '/sekretaris/riwayat';
 const _hijauHeader = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
 
-/// Garis tepi semua kartu (daftar & detail): hitam lembut (tidak mencolok).
+/// Garis tepi kartu anak di dalam daftar: hitam lembut (tidak mencolok).
 const _garisDetail = Color(0xFFB8BEC6);
-const _garisKartu = _garisDetail;
 
 // ---------------------------------------------------------------------------
 // FUNGSI BANTU
@@ -58,8 +57,9 @@ String _fmtTgl(DateTime? t) =>
 
 const _hari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
-/// Contoh: "Sabtu, 14 November 2026".
-String _fmtHariTgl(DateTime? t) => t == null ? '-' : '${_hari[t.weekday - 1]}, ${_fmtTgl(t)}';
+/// Contoh: "Sabtu".
+String _fmtHari(DateTime? t) => t == null ? '-' : _hari[t.weekday - 1];
+
 
 /// Contoh: "08:00 - 11:30 WIB".
 String _fmtWaktu(Map<String, dynamic> j) {
@@ -67,22 +67,6 @@ String _fmtWaktu(Map<String, dynamic> j) {
   final s = _jam(j['jam_selesai']);
   if (m.isEmpty) return '-';
   return s.isEmpty ? '$m WIB' : '$m - $s WIB';
-}
-
-/// Baris "Label : nilai" (huruf hitam, tebal sama).
-Widget _barisInfo(String label, String nilai) {
-  const gaya = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3, color: _teksGelap);
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(width: 108, child: Text(label, style: gaya)),
-        const Text(': ', style: gaya),
-        Expanded(child: Text(nilai.isEmpty ? '-' : nilai, style: gaya)),
-      ],
-    ),
-  );
 }
 
 DateTime _tambahBulan(DateTime d, int n) {
@@ -252,38 +236,129 @@ Widget _halaman({required String judul, required Widget isi}) {
 }
 
 // ---------------------------------------------------------------------------
-// KOMPONEN TAMPILAN (SERAGAM DENGAN HALAMAN BUAT AKUN)
+// KOMPONEN TAMPILAN (SERAGAM DENGAN HALAMAN AKUN & JADWAL)
 // ---------------------------------------------------------------------------
-Widget _kartu({
-  required String title,
-  Widget? trailing,
-  required Widget child,
-}) =>
-    Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _garisDetail, width: 1.2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(title,
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+BoxDecoration _dekorKartu() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
+    );
+
+/// Kepala kartu: judul tebal kapital di kiri, keterangan di kanan, garis aksen di bawah.
+Widget _kepala(String judul, {String? sub, String? kanan}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    judul.toUpperCase(),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w600, color: _teksGelap)),
+                      fontSize: 16.5,
+                      height: 1.3,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                      color: _teksGelap,
+                    ),
+                  ),
+                  if (sub != null && sub.isNotEmpty)
+                    Text(sub,
+                        style: const TextStyle(
+                            fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+                ],
               ),
-              if (trailing != null) ...[const SizedBox(width: 8), trailing],
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: const TextStyle(
+                      fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
             ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
+}
+
+/// Satu bagian isi kartu: ikon kecil + label tebal, nilai di bawahnya.
+Widget _bagian(IconData ikon, String label, String nilai) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(ikon, size: 18, color: _aksen),
+            const SizedBox(width: 6),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: _teksGelap)),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Padding(
+          padding: const EdgeInsets.only(left: 24),
+          child: Text(nilai.isEmpty ? '-' : nilai,
+              style: const TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFF374151))),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Tautan "Lihat detail" (hijau lembut bergaris bawah).
+const _tautanDetail = Text(
+  'Lihat detail',
+  style: TextStyle(
+    fontSize: 14.5,
+    fontWeight: FontWeight.w600,
+    color: _aksen,
+    decoration: TextDecoration.underline,
+    decorationColor: _aksen,
+  ),
+);
+
+/// Kartu berjudul (kepala + isi).
+Widget _kartu({
+  required String title,
+  String? sub,
+  String? kanan,
+  required Widget child,
+}) =>
+    Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
+      decoration: _dekorKartu(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _kepala(title, sub: sub, kanan: kanan),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: child,
           ),
-          const SizedBox(height: 14),
-          child,
         ],
       ),
     );
@@ -377,11 +452,7 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _garisKartu, width: 1.2),
-                ),
+                decoration: _dekorKartu(),
                 child: const Text('Belum ada jadwal posyandu.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
@@ -397,40 +468,34 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
   Widget _baris(Map<String, dynamic> j) {
     final t = _tgl(j['tanggal']);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DecoratedBox(
+        decoration: _dekorKartu(),
+        child: Material(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => _DaftarAnakPage(jadwal: j)),
-          ),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _garisKartu, width: 1.2),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => _DaftarAnakPage(jadwal: j)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_fmtHariTgl(t),
-                    style: const TextStyle(
-                        fontSize: 16.5, fontWeight: FontWeight.w600, color: _teksGelap)),
-                const SizedBox(height: 8),
-                const Align(
-                  alignment: Alignment.centerRight,
+                _kepala(_fmtHari(t), sub: _fmtTgl(t), kanan: _fmtWaktu(j)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('Lihat detail',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600, color: _hijauHeader)),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward, size: 16, color: _hijauHeader),
+                      Expanded(
+                        child: _bagian(Icons.location_on_outlined, 'Lokasi', _teks(j['lokasi'])),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 10, bottom: 8),
+                        child: _tautanDetail,
+                      ),
                     ],
                   ),
                 ),

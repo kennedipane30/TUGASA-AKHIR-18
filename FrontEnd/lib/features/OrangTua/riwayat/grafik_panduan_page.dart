@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const _latar = Color(0xFFF3F6FB);
-const _teksGelap = Color(0xFF1E293B);
-const _teksAbu = Color(0xFF64748B);
+const _latar = Color(0xFFF4F7F5);
+const _teksGelap = Color(0xFF1F2937);
+const _teksAbu = Color(0xFF4B5563);
 const _hijauTua = Color(0xFF065F46);
-const _hijauHero = Color(0xFF0A5A43);
+
+/// Garis tepi kotak di dalam kartu: hitam lembut.
+const _garis = Color(0xFFB8BEC6);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
 
 /// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
@@ -26,36 +36,35 @@ Widget _judulTebal(String teks) {
 class OrangTuaGrafikPanduanPage extends StatelessWidget {
   const OrangTuaGrafikPanduanPage({super.key});
 
-  // Header bagian atas: judul di tengah.
+  // Header hijau polos: tombol kembali di kiri, judul di tengah.
   Widget _header(BuildContext context) {
     return Container(
       width: double.infinity,
       color: _hijauTua,
       child: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-          child: Row(
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              InkWell(
-                onTap: () => Navigator.maybePop(context),
-                child: const Padding(
-                  padding: EdgeInsets.all(6),
-                  child: Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: 22,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal('Panduan Membaca Grafik'),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: _judulTebal('Panduan Membaca Grafik'),
-                ),
-              ),
-              const SizedBox(width: 40),
             ],
           ),
         ),
@@ -63,41 +72,61 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
     );
   }
 
-  Widget _kartu({required Widget child}) {
+  /// Kartu putih berbayang: kepala kapital + garis aksen, lalu isi.
+  Widget _kartu({required String judul, String? kanan, required Widget child}) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F1E293B),
-            blurRadius: 12,
-            offset: Offset(0, 3),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _bayangan,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    judul.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      height: 1.3,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                      color: _teksGelap,
+                    ),
+                  ),
+                ),
+                if (kanan != null) ...[
+                  const SizedBox(width: 10),
+                  Text(kanan,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w600, color: _hijauTua)),
+                ],
+              ],
+            ),
+          ),
+          Container(height: 3, color: _aksen),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: child,
           ),
         ],
       ),
-      child: child,
     );
   }
 
+  /// Keterangan berwarna (pengganti badge).
   Widget _badge(String teks, Color bg, Color fg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        teks,
-        style: TextStyle(
-          fontSize: 14.5,
-          fontWeight: FontWeight.w600,
-          color: fg,
-        ),
-      ),
+    return Text(
+      teks,
+      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: fg),
     );
   }
 
@@ -114,11 +143,11 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: border),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _garis, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,9 +211,9 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: border),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _garis, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +222,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
             judul,
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: warna,
             ),
           ),
@@ -230,15 +259,15 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
             height: 24,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
-              color: Color(0xFFE9EEF3),
+              color: _hijauTua,
               shape: BoxShape.circle,
             ),
             child: Text(
               '$no',
               style: const TextStyle(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w600,
-                color: _teksGelap,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
           ),
@@ -251,7 +280,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                   judul,
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: _teksGelap,
                   ),
                 ),
@@ -289,98 +318,22 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
                 children: [
-                  // Hero
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(
-                      color: _hijauHero,
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(22),
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            right: -30,
-                            bottom: -40,
-                            child: Container(
-                              width: 140,
-                              height: 140,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withOpacity(0.06),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(18),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Memahami Kurva Pertumbuhan Anak',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 21,
-                                    height: 1.2,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                const Text(
-                                  'Grafik kurva pertumbuhan digunakan untuk menilai apakah perkembangan fisik anak sesuai dengan acuan populasi sehat internasional (Z-Score), disesuaikan berdasarkan usia dan jenis kelamin.',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 15.5,
-                                    height: 1.55,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                  // Pengantar
+                  _kartu(
+                    judul: 'Memahami Kurva Pertumbuhan Anak',
+                    child: const Text(
+                      'Grafik kurva pertumbuhan digunakan untuk menilai apakah perkembangan fisik anak sesuai dengan acuan populasi sehat internasional (Z-Score), disesuaikan berdasarkan usia dan jenis kelamin.',
+                      style: TextStyle(fontSize: 15.5, height: 1.5, color: _teksAbu),
                     ),
                   ),
 
                   // Arti garis SD
                   _kartu(
+                    judul: 'Arti Garis Standar Deviasi (SD)',
+                    kanan: 'Z-Score',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'ARTI GARIS PITA STANDAR DEVIASI (SD)',
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            height: 1.3,
-                            letterSpacing: 0.3,
-                            fontWeight: FontWeight.w600,
-                            color: _teksAbu,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFD9F6E8),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'Z-Score Acuan',
-                            style: TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w600,
-                              color: _hijauTua,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Divider(color: Color(0xFFE9EEF3)),
-                        const SizedBox(height: 6),
                         _garisSd(
                           titik: const Color(0xFF16A34A),
                           judul: 'Garis Hijau (Median 0)',
@@ -431,36 +384,11 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
 
                   // Panduan khusus LK
                   _kartu(
+                    judul: 'Panduan Khusus: Lingkar Kepala',
+                    kanan: '0-24 bulan',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Panduan Khusus: Lingkar Kepala',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: _teksGelap,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Pemantauan rutin usia 0 - 24 bulan',
-                                    style: TextStyle(
-                                      fontSize: 15.5,
-                                      color: _teksAbu,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
                         const Text(
                           'Pengukuran Lingkar Kepala (LK) sangat penting di 2 tahun pertama karena kehidupan kepala mencerminkan perkembangan volume otak dan penutupan ubun-ubun anak secara optimal.',
                           style: TextStyle(
@@ -504,21 +432,10 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
 
                   // Langkah tindakan
                   _kartu(
+                    judul: 'Langkah Tindakan untuk Orang Tua',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'LANGKAH TINDAKAN UNTUK ORANG TUA',
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            letterSpacing: 0.3,
-                            fontWeight: FontWeight.w600,
-                            color: _teksAbu,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Divider(color: Color(0xFFE9EEF3)),
-                        const SizedBox(height: 8),
                         _langkah(
                           1,
                           'Tetap Tenang & Hindari Self-Diagnosis',
@@ -541,14 +458,14 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                   // Tombol kembali
                   SizedBox(
                     width: double.infinity,
+                    height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _hijauTua,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       onPressed: () => Navigator.maybePop(context),

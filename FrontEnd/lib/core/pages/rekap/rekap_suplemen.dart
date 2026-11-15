@@ -97,7 +97,7 @@ class _TabSuplemenState extends State<_TabSuplemen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: garisKartuRekap, width: 1.2),
+        boxShadow: bayanganKartuRekap,
       ),
       child: Row(
         children: [
@@ -142,13 +142,17 @@ class _TabSuplemenState extends State<_TabSuplemen> {
     );
   }
 
-  /// Kartu kecil satu kelompok sasaran (latar abu muda, tanpa garis tepi).
+  /// Kartu kecil satu kelompok sasaran (putih, garis tepi hitam lembut).
   Widget _kelompok(_KelompokTahun k, Color warna) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: garisKartuRekap, width: 1.2),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -176,7 +180,7 @@ class _TabSuplemenState extends State<_TabSuplemen> {
             child: LinearProgressIndicator(
               value: k.sasaran == 0 ? 0 : (k.sudah / k.sasaran).clamp(0, 1).toDouble(),
               minHeight: 8,
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.latar,
               color: warna,
             ),
           ),
@@ -284,7 +288,11 @@ class _TabSuplemenState extends State<_TabSuplemen> {
                   width: double.infinity,
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: garisKartuRekap, width: 1.2),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

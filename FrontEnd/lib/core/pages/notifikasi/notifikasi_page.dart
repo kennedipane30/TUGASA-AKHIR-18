@@ -15,8 +15,19 @@ import '../balita/balita_detail_page.dart';
 import '../../widgets/common_widgets.dart';
 import '../../../service/notifikasi_service.dart';
 
-const _hijauHeader = Color(0xFF14634A);
+const _hijauHeader = Color(0xFF065F46); // sama dengan header halaman lain
 const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi tombol filter: hitam lembut (tidak mencolok).
+const _garis = Color(0xFFB8BEC6);
+
+/// Warna aksen: hijau lembut senada header (penanda notifikasi belum dibaca).
+const _aksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
 
 String _pesanError(Object e) {
   if (e is DioException) {
@@ -835,7 +846,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
           if (_menghapus)
             const LinearProgressIndicator(minHeight: 2, color: _hijauHeader)
           else
-            const Divider(height: 1, color: Color(0xFFE6ECE8)),
+            const Divider(height: 1, color: Color(0xFFE5E7EB)),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _muat,
@@ -854,10 +865,11 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: aktif ? _hijauHeader : AppColors.latar,
+          color: aktif ? _hijauHeader : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: aktif ? _hijauHeader : const Color(0xFFE6ECE8),
+            color: aktif ? _hijauHeader : _garis,
+            width: 1.2,
           ),
         ),
         child: Text(
@@ -894,8 +906,8 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AppColors.kuningMuda,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE6ECE8)),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: _bayangan,
             ),
             child: Row(
               children: [
@@ -992,7 +1004,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
       direction: _modePilih ? DismissDirection.none : DismissDirection.endToStart,
       confirmDismiss: (_) => _hapus(n),
       background: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 20),
         alignment: Alignment.centerRight,
         decoration: BoxDecoration(
@@ -1002,30 +1014,31 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
         child: const Icon(Icons.delete_outline, color: AppColors.merah),
       ),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: const EdgeInsets.only(bottom: 12),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: dipilih
               ? const Color(0xFFE3F4EB)
               : (n.sudahDibaca ? Colors.white : const Color(0xFFF0FAF5)),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: dipilih
-                ? _hijauHeader
-                : (n.sudahDibaca
-                    ? const Color(0xFFE6ECE8)
-                    : const Color(0xFFBFE5D0)),
-            width: dipilih ? 1.5 : 1,
-          ),
+          boxShadow: _bayangan,
+          border: dipilih ? Border.all(color: _hijauHeader, width: 1.5) : null,
         ),
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
             onTap: _modePilih ? () => _togglePilih(n) : () => _ketuk(n),
             onLongPress: _modePilih ? null : () => _masukModePilih(n),
-            child: Padding(
+            child: Container(
               padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(
+                    color: n.sudahDibaca || dipilih ? Colors.transparent : _aksen,
+                    width: 4,
+                  ),
+                ),
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

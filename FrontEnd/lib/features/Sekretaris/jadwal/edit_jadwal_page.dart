@@ -113,7 +113,7 @@ class _AdminEditJadwalPageState extends State<AdminEditJadwalPage> {
                 fontSize: 16, fontWeight: FontWeight.w600, color: teksGelapJadwal)),
       );
 
-  InputDecoration _dekorForm(String hint) {
+  InputDecoration _dekorForm(String hint, IconData ikon) {
     OutlineInputBorder b(Color c, double w) => OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: c, width: w),
@@ -121,9 +121,10 @@ class _AdminEditJadwalPageState extends State<AdminEditJadwalPage> {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(fontSize: 16, color: Colors.black38),
+      prefixIcon: Icon(ikon, size: 19, color: Colors.black54),
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       border: b(garisKartuJadwal, 1.2),
       enabledBorder: b(garisKartuJadwal, 1.2),
       focusedBorder: b(Colors.black54, 1.4),
@@ -234,21 +235,23 @@ class _AdminEditJadwalPageState extends State<AdminEditJadwalPage> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                   children: [
                     Container(
-                      padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: garisKartuJadwal, width: 1.2),
-                      ),
+                      clipBehavior: Clip.antiAlias,
+                      decoration: dekorKartuJadwal(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          kepalaKartuJadwal('Ubah Data Jadwal'),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                           _label('Tanggal Pelaksanaan'),
                           TextFormField(
                             controller: _tgl,
                             readOnly: true,
                             onTap: _pilihTanggal,
-                            decoration: _dekorForm('Pilih tanggal'),
+                            decoration: _dekorForm('Pilih tanggal', Icons.calendar_month_outlined),
                             validator: (v) =>
                                 _tanggal == null ? 'Tanggal wajib dipilih' : null,
                           ),
@@ -264,7 +267,7 @@ class _AdminEditJadwalPageState extends State<AdminEditJadwalPage> {
                                       controller: _mulai,
                                       readOnly: true,
                                       onTap: () => _pilihJam(_mulai),
-                                      decoration: _dekorForm('08:00'),
+                                      decoration: _dekorForm('08:00', Icons.schedule),
                                       validator: (v) =>
                                           (v == null || v.isEmpty) ? 'Wajib diisi' : null,
                                     ),
@@ -281,7 +284,7 @@ class _AdminEditJadwalPageState extends State<AdminEditJadwalPage> {
                                       controller: _selesai,
                                       readOnly: true,
                                       onTap: () => _pilihJam(_selesai),
-                                      decoration: _dekorForm('11:30'),
+                                      decoration: _dekorForm('11:30', Icons.timer_outlined),
                                       validator: (v) {
                                         if (v == null || v.isEmpty) return null;
                                         if (v.compareTo(_mulai.text) <= 0) {
@@ -299,7 +302,10 @@ class _AdminEditJadwalPageState extends State<AdminEditJadwalPage> {
                           TextFormField(
                             controller: _lokasi,
                             textCapitalization: TextCapitalization.words,
-                            decoration: _dekorForm('Contoh: Balai Desa'),
+                            decoration: _dekorForm('Contoh: Balai Desa', Icons.location_on_outlined),
+                          ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

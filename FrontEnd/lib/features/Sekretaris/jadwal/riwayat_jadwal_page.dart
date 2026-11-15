@@ -202,11 +202,7 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: garisKartuJadwal, width: 1.2),
-                        ),
+                        decoration: dekorKartuJadwal(),
                         child: const Text('Belum ada jadwal yang sudah selesai.',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
@@ -225,40 +221,35 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
 
   Widget _kartu(RiwayatJadwal j) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DecoratedBox(
+        decoration: dekorKartuJadwal(),
+        child: Material(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => RiwayatJadwalDetailPage(jadwal: j)),
-          ),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: garisKartuJadwal, width: 1.2),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => RiwayatJadwalDetailPage(jadwal: j)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _baris('Hari/Tanggal', tglPanjangJadwal(j.tanggal)),
-                const SizedBox(height: 6),
-                _baris('Lokasi', j.lokasi.isEmpty ? '-' : j.lokasi),
-                const SizedBox(height: 8),
-                const Align(
-                  alignment: Alignment.centerRight,
+                kepalaKartuJadwal(tglPanjangJadwal(j.tanggal), kanan: '${j.jam} WIB'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('Lihat detail',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600, color: _hijauHeader)),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward, size: 16, color: _hijauHeader),
+                      Expanded(
+                        child: bagianKartuJadwal(Icons.location_on_outlined, 'Lokasi',
+                            j.lokasi.isEmpty ? '-' : j.lokasi),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 10, bottom: 8),
+                        child: tautanDetailJadwal,
+                      ),
                     ],
                   ),
                 ),
@@ -267,20 +258,6 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
           ),
         ),
       ),
-    );
-  }
-
-  /// Baris "Label : nilai" (satu warna hitam, sama dengan halaman Jadwal).
-  Widget _baris(String label, String nilai) {
-    const gaya = TextStyle(
-        fontSize: 16, fontWeight: FontWeight.w600, height: 1.3, color: teksGelapRiwayat);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(width: 108, child: Text(label, style: gaya)),
-        const Text(': ', style: gaya),
-        Expanded(child: Text(nilai, style: gaya)),
-      ],
     );
   }
 }

@@ -3,13 +3,30 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/common_widgets.dart';
 import '../../../core/utils/posyandu.dart';
 import '../../../service/vaksin_service.dart';
 import '../../auth/auth_provider.dart';
 import 'vaksin_anak_lihat_page.dart';
 
 const _hijauHeader = Color(0xFF065F46);
+const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi kolom cari: hitam lembut.
+const _garis = Color(0xFFB8BEC6);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+BoxDecoration _dekorKartu() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
+    );
 
 /// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
@@ -26,6 +43,43 @@ Widget _judulTebal(String teks) {
     ),
   );
 }
+
+/// Kepala kartu: judul kapital tebal, lalu garis aksen di bawahnya.
+Widget _kepala(String judul) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Text(
+          judul.toUpperCase(),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 16.5,
+            height: 1.3,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.3,
+            color: _teksGelap,
+          ),
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
+}
+
+/// Tautan "Lihat detail" (hijau lembut bergaris bawah).
+const _tautanDetail = Text(
+  'Lihat detail',
+  style: TextStyle(
+    fontSize: 14.5,
+    fontWeight: FontWeight.w600,
+    color: _aksen,
+    decoration: TextDecoration.underline,
+    decorationColor: _aksen,
+  ),
+);
 
 /// Kader: cari anak (hanya posyandu kader sendiri)
 /// lalu lihat jadwal imunisasi, riwayat vaksin, dan suplemennya.
@@ -101,7 +155,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Vaksin Anak orang tua: polos, judul di tengah)
+  // HEADER (polos, judul di tengah, tombol kembali di kiri)
   // -------------------------------------------------------------------------
   Widget _header() {
     return Container(
@@ -114,12 +168,10 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Judul di tengah
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
                 child: _judulTebal('Vaksin Anak'),
               ),
-              // Tombol kembali di kiri
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
@@ -128,11 +180,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
                     onTap: () => Navigator.maybePop(context),
                     child: const Padding(
                       padding: EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 22,
-                      ),
+                      child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
                     ),
                   ),
                 ),
@@ -144,14 +192,116 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
     );
   }
 
+  /// Kolom cari: putih, garis tepi hitam lembut.
+  Widget _kotakCari() {
+    OutlineInputBorder garis(Color c, double w) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: c, width: w),
+        );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      child: TextField(
+        controller: _cari,
+        style: const TextStyle(fontSize: 16.5),
+        textInputAction: TextInputAction.search,
+        onSubmitted: (_) => _muat(),
+        decoration: InputDecoration(
+          hintText: 'Cari nama anak atau NIK anak',
+          hintStyle: const TextStyle(fontSize: 16),
+          prefixIcon: const Icon(Icons.search, color: Colors.black54),
+          suffixIcon: IconButton(
+            tooltip: 'Cari',
+            icon: const Icon(Icons.arrow_forward, color: _hijauHeader),
+            onPressed: _muat,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          border: garis(_garis, 1.2),
+          enabledBorder: garis(_garis, 1.2),
+          focusedBorder: garis(Colors.black54, 1.4),
+        ),
+      ),
+    );
+  }
+
+  /// Pesan (kosong / gagal) di dalam kartu.
+  Widget _pesan(String teks) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+          decoration: _dekorKartu(),
+          child: Text(
+            teks,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, height: 1.45, color: AppColors.teksRedup),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Kartu anak: nama di kepala, usia lanjut ke samping, "Lihat detail" di kanan bawah.
+  Widget _kartuAnak(AnakRingkas a) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DecoratedBox(
+        decoration: _dekorKartu(),
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => _buka(a),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _kepala(a.nama),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              const TextSpan(
+                                text: 'Usia : ',
+                                style: TextStyle(fontWeight: FontWeight.w700, color: _teksGelap),
+                              ),
+                              TextSpan(
+                                text: a.usia.isEmpty ? '-' : a.usia,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500, color: Color(0xFF374151)),
+                              ),
+                            ],
+                          ),
+                          style: const TextStyle(fontSize: 16, height: 1.35),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      _tautanDetail,
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pos =
-        (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
+    final pos = (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
 
-    final labelPos = pos.isEmpty
-        ? 'Posyandu belum ditetapkan'
-        : 'Posyandu ${labelPosyandu(pos)}';
+    final labelPos =
+        pos.isEmpty ? 'Posyandu belum ditetapkan' : 'Posyandu ${labelPosyandu(pos)}';
 
     return Scaffold(
       backgroundColor: AppColors.latar,
@@ -164,39 +314,18 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
         child: Column(
           children: [
             _header(),
+            _kotakCari(),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: TextField(
-                controller: _cari,
-                style: const TextStyle(fontSize: 17.5),
-                textInputAction: TextInputAction.search,
-                onSubmitted: (_) => _muat(),
-                decoration: InputDecoration(
-                  hintText: 'Cari nama anak atau NIK anak',
-                  hintStyle: const TextStyle(fontSize: 16.5),
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.arrow_forward),
-                    onPressed: _muat,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.fromLTRB(18, 0, 16, 10),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Pill(
+                child: Text(
                   labelPos,
-                  bg: AppColors.biruMuda,
-                  fg: AppColors.biru,
-                  icon: Icons.place_outlined,
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w600,
+                    color: _teksGelap,
+                  ),
                 ),
               ),
             ),
@@ -204,94 +333,15 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                color: AppColors.teksRedup,
-                              ),
-                            ),
-                          ),
-                        )
+                      ? _pesan(_error!)
                       : !_sudahCari
-                          ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(24),
-                                child: Text(
-                                  'Ketik nama atau NIK anak untuk mencari di posyandu Anda.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    color: AppColors.teksRedup,
-                                  ),
-                                ),
-                              ),
-                            )
+                          ? _pesan('Ketik nama atau NIK anak untuk mencari di posyandu Anda.')
                           : _hasil.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                    'Anak tidak ditemukan di posyandu Anda',
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      color: AppColors.teksRedup,
-                                    ),
-                                  ),
-                                )
+                              ? _pesan('Anak tidak ditemukan di posyandu Anda.')
                               : ListView(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                                   children: [
-                                    for (final a in _hasil)
-                                      SectionCard(
-                                        child: InkWell(
-                                          onTap: () => _buka(a),
-                                          child: Row(
-                                            children: [
-                                              const CircleAvatar(
-                                                backgroundColor:
-                                                    AppColors.hijauMuda,
-                                                child: Icon(
-                                                  Icons.child_care,
-                                                  color: AppColors.hijau,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      a.nama,
-                                                      style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        fontSize: 16.5,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      'Usia ${a.usia}',
-                                                      style: const TextStyle(
-                                                        fontSize: 16,
-                                                        color:
-                                                            AppColors.teksRedup,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              const Icon(
-                                                Icons.chevron_right,
-                                                color: AppColors.teksRedup,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
+                                    for (final a in _hasil) _kartuAnak(a),
                                   ],
                                 ),
             ),

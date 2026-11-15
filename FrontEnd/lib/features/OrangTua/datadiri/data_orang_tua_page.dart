@@ -17,8 +17,163 @@ const kHijauAksen = Color(0xFF1F7A5C);
 const kHijauTerang = Color(0xFF2BB59A);
 const kOranye2 = Color(0xFFF97316);
 
-const kGarisKartu = Color(0xFFE6ECE8);
-const kGarisInput = Color(0xFFD7E6DD);
+/// Garis tepi field & kotak di dalam kartu: hitam lembut.
+const kGarisKartu = Color(0xFFB8BEC6);
+const kGarisInput = Color(0xFFB8BEC6);
+
+const kTeksGelap = Color(0xFF1F2937);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const kAksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const kBayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+BoxDecoration dekorKartuKeluarga({Color warna = Colors.white}) => BoxDecoration(
+      color: warna,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: kBayangan,
+    );
+
+/// Kepala kartu: judul kapital tebal di kiri, keterangan di kanan, garis aksen di bawah.
+Widget kepalaKeluarga(String judul, {String? kanan, Color warnaKanan = kTeksGelap, Widget? aksi}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: kTeksGelap,
+                ),
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: warnaKanan)),
+            ],
+            if (aksi != null) aksi,
+          ],
+        ),
+      ),
+      Container(height: 3, color: kAksen),
+    ],
+  );
+}
+
+/// Baris "Label : nilai" (hitam tebal, nilai lanjut ke samping).
+Widget infoKeluarga(String label, String nilai, {double lebar = 120}) {
+  const gaya = TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, height: 1.35, color: kTeksGelap);
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: lebar, child: Text(label, style: gaya)),
+        const Text(': ', style: gaya),
+        Expanded(child: Text(nilai.isEmpty ? '-' : nilai, style: gaya)),
+      ],
+    ),
+  );
+}
+
+/// Tautan kecil bergaris bawah (mis. "Ubah", "Hapus", "Buka").
+Widget tautanKeluarga(String teks, {Color warna = kAksen}) => Text(
+      teks,
+      style: TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w600,
+        color: warna,
+        decoration: TextDecoration.underline,
+        decorationColor: warna,
+      ),
+    );
+
+/// Judul lembar bawah (form): kapital + garis aksen.
+Widget judulLembarKeluarga(String teks, {String? sub}) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(teks.toUpperCase(),
+            style: const TextStyle(
+                fontSize: 17, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: kTeksGelap)),
+        const SizedBox(height: 8),
+        Container(height: 3, color: kAksen),
+        if (sub != null) ...[
+          const SizedBox(height: 8),
+          Text(sub, style: const TextStyle(fontSize: 15.5, height: 1.4, color: AppColors.teksRedup)),
+        ],
+      ],
+    );
+
+Widget _isiTombolKeluarga(String label, IconData? ikon, bool memuat) => memuat
+    ? const SizedBox(
+        width: 22,
+        height: 22,
+        child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
+      )
+    : Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (ikon != null) ...[Icon(ikon, size: 20), const SizedBox(width: 8)],
+          Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+        ],
+      );
+
+/// Tombol hijau penuh (tinggi 50, sudut 14).
+Widget tombolHijauKeluarga(String label,
+    {IconData? ikon, VoidCallback? onPressed, bool memuat = false}) {
+  return SizedBox(
+    width: double.infinity,
+    height: 50,
+    child: ElevatedButton(
+      onPressed: memuat ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: kHijauHeader,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: const Color(0xFF7FAF9F),
+        disabledForegroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
+      ),
+      child: _isiTombolKeluarga(label, ikon, memuat),
+    ),
+  );
+}
+
+/// Tombol bergaris (tinggi 50, sudut 14). Merah untuk Batal / Hapus.
+Widget tombolGarisKeluarga(String label,
+    {IconData? ikon, VoidCallback? onPressed, Color warna = kHijauHeader}) {
+  return SizedBox(
+    width: double.infinity,
+    height: 50,
+    child: OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: warna,
+        backgroundColor: Colors.white,
+        side: BorderSide(color: warna, width: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
+      ),
+      child: _isiTombolKeluarga(label, ikon, false),
+    ),
+  );
+}
 
 /// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
@@ -284,13 +439,21 @@ InputDecoration dekorInput(String label,
     labelText: label,
     hintText: hint,
     counterText: counter,
-    prefixIcon: icon == null ? null : Icon(icon, color: Colors.grey.shade600),
+    prefixIcon: icon == null ? null : Icon(icon, color: kAksen),
     suffixIcon: suffix,
     filled: true,
-    fillColor: AppColors.isiField,
+    fillColor: Colors.white,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
+      borderSide: const BorderSide(color: kGarisInput, width: 1.2),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: kGarisInput, width: 1.2),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: kHijauHeader, width: 1.6),
     ),
   );
 }
@@ -308,21 +471,22 @@ void snackDi(BuildContext context, String msg) {
 // ---------------------------------------------------------------------------
 InputDecoration dekorKeluarga(String hint,
     {IconData? icon, String? counter, bool terkunci = false}) {
-  OutlineInputBorder b(Color c) => OutlineInputBorder(
+  OutlineInputBorder b(Color c, [double w = 1.2]) => OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: c),
+        borderSide: BorderSide(color: c, width: w),
       );
   return InputDecoration(
     hintText: hint,
     hintStyle: const TextStyle(fontSize: 15.5, color: Colors.black38),
-    prefixIcon: icon == null ? null : Icon(icon, size: 20, color: Colors.black45),
+    prefixIcon: icon == null ? null : Icon(icon, size: 22, color: kAksen),
     counterText: counter ?? '',
     filled: true,
     fillColor: terkunci ? const Color(0xFFF1F5F3) : Colors.white,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     border: b(kGarisInput),
-    enabledBorder: b(terkunci ? Colors.transparent : kGarisInput),
-    focusedBorder: b(kHijauTua),
+    enabledBorder: b(kGarisInput),
+    disabledBorder: b(kGarisInput),
+    focusedBorder: b(kHijauHeader, 1.6),
     errorBorder: b(AppColors.merah),
     focusedErrorBorder: b(AppColors.merah),
   );
@@ -333,7 +497,7 @@ Widget labelKeluarga(String teks, {String? ket}) => Padding(
       child: Text.rich(TextSpan(children: [
         TextSpan(
             text: teks,
-            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15)),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15.5, color: kTeksGelap)),
         if (ket != null)
           TextSpan(
               text: ' $ket',
@@ -348,25 +512,22 @@ Widget centangKeluarga(bool nilai, String teks, ValueChanged<bool?> onChanged) =
       contentPadding: EdgeInsets.zero,
       dense: true,
       controlAffinity: ListTileControlAffinity.leading,
-      activeColor: kHijauGelap,
+      activeColor: kHijauHeader,
       value: nilai,
-      title: Text(teks, style: const TextStyle(fontSize: 15.5)),
+      title: Text(teks,
+          style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500, color: kTeksGelap)),
       onChanged: onChanged,
     );
 
-Widget pillStatusKeluarga(bool lengkap) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: lengkap ? AppColors.hijauMuda : AppColors.kuningMuda,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(lengkap ? 'Lengkap' : 'Belum lengkap',
-          style: TextStyle(
-              fontSize: 14.5,
-              fontWeight: FontWeight.w500,
-              color: lengkap ? kHijauTua : AppColors.kuning)),
-    );
+/// Status kelengkapan (teks biasa, tanpa pill).
+Widget pillStatusKeluarga(bool lengkap) => Text(lengkap ? 'Lengkap' : 'Belum lengkap',
+    style: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+        color: lengkap ? kHijauHeader : AppColors.kuning));
 
+/// Kartu putih berbayang. Bila [title] ada: kepala kapital + garis aksen.
+/// [icon] dipertahankan agar pemanggil lama tetap jalan, tetapi tidak ditampilkan.
 class KartuKeluarga extends StatelessWidget {
   final String? title;
   final IconData? icon;
@@ -388,47 +549,16 @@ class KartuKeluarga extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color ?? Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: kGarisKartu),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4)),
-        ],
-      ),
+      clipBehavior: Clip.antiAlias,
+      decoration: dekorKartuKeluarga(warna: color ?? Colors.white),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (title != null) ...[
-            Row(
-              children: [
-                if (icon != null)
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD7F0E3),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(icon, size: 18, color: kHijauGelap),
-                  ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(title!,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: kHijauTua)),
-                ),
-                if (trailing != null) trailing!,
-              ],
-            ),
-            const SizedBox(height: 14),
-          ],
-          child,
+          if (title != null) kepalaKeluarga(title!, aksi: trailing),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: child,
+          ),
         ],
       ),
     );
@@ -447,14 +577,14 @@ class StepperKeluarga extends StatelessWidget {
           color: Colors.white,
           shape: BoxShape.circle,
           border: Border.all(
-              color: selesai ? kHijauGelap : Colors.grey.shade400, width: 1.6),
+              color: selesai ? kHijauHeader : kGarisKartu, width: 1.6),
         ),
         child: selesai
-            ? const Icon(Icons.check, size: 18, color: kHijauGelap)
+            ? const Icon(Icons.check, size: 18, color: kHijauHeader)
             : Text(no,
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: no == '1' ? kHijauGelap : Colors.grey)),
+                    color: no == '1' ? kHijauHeader : Colors.grey)),
       );
 
   @override
@@ -491,8 +621,8 @@ class StepperKeluarga extends StatelessWidget {
           child: LinearProgressIndicator(
             value: d.langkahSelesai / 2,
             minHeight: 7,
-            backgroundColor: const Color(0xFFE6EEEA),
-            color: kHijauGelap,
+            backgroundColor: const Color(0xFFE5E7EB),
+            color: kHijauHeader,
           ),
         ),
         const SizedBox(height: 8),
@@ -532,8 +662,7 @@ class BagianIbu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return KartuKeluarga(
-      title: '1. Data Diri Ibu / Wali',
-      icon: Icons.person_outline,
+      title: 'Data Diri Ibu / Wali',
       trailing: pillStatusKeluarga(data.ibuLengkap),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,7 +691,7 @@ class BagianIbu extends StatelessWidget {
               readOnly: true,
               onTap: onPilihTanggal,
               decoration:
-                  dekorKeluarga('dd/mm/yyyy', icon: Icons.calendar_today_outlined),
+                  dekorKeluarga('dd/mm/yyyy', icon: Icons.calendar_month_outlined),
             ),
             gapKeluarga(),
             labelKeluarga('No. WhatsApp', ket: '(dari akun)'),
@@ -603,7 +732,7 @@ class BagianIbu extends StatelessWidget {
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       maxLength: 3,
-                      decoration: dekorKeluarga('RT'),
+                      decoration: dekorKeluarga('RT', icon: Icons.signpost_outlined),
                     ),
                   ],
                 ),
@@ -619,7 +748,7 @@ class BagianIbu extends StatelessWidget {
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       maxLength: 3,
-                      decoration: dekorKeluarga('RW'),
+                      decoration: dekorKeluarga('RW', icon: Icons.signpost_outlined),
                     ),
                   ],
                 ),
@@ -658,8 +787,7 @@ class BagianAyah extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return KartuKeluarga(
-      title: '2. Data Suami / Ayah',
-      icon: Icons.man_outlined,
+      title: 'Data Suami / Ayah',
       trailing: pillStatusKeluarga(data.ayahLengkap),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -693,7 +821,7 @@ class BagianAyah extends StatelessWidget {
               readOnly: true,
               onTap: onPilihTanggal,
               decoration:
-                  dekorKeluarga('dd/mm/yyyy', icon: Icons.calendar_today_outlined),
+                  dekorKeluarga('dd/mm/yyyy', icon: Icons.calendar_month_outlined),
             ),
             gapKeluarga(),
             labelKeluarga('No. HP', ket: '(opsional)'),
@@ -892,30 +1020,17 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
     }
   }
 
+  /// Tombol simpan berdiri sendiri (tanpa latar footer).
   Widget _tombolSimpan() {
     return SafeArea(
+      top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: SizedBox(
-          height: 54,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kHijauTua,
-              foregroundColor: Colors.white,
-              elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            ),
-            onPressed: _menyimpan ? null : _simpan,
-            icon: _menyimpan
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.save_alt_outlined),
-            label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan Data Keluarga',
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
-          ),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        child: tombolHijauKeluarga(
+          _menyimpan ? 'Menyimpan...' : 'Simpan Data Keluarga',
+          ikon: Icons.save_outlined,
+          memuat: _menyimpan,
+          onPressed: _simpan,
         ),
       ),
     );
@@ -947,17 +1062,14 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
-                      const SizedBox(height: 12),
-                      Text(_gagal!, textAlign: TextAlign.center),
+                      Text(_gagal!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16, color: kTeksGelap)),
                       const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() => _memuat = true);
-                          _muat();
-                        },
-                        child: const Text('Coba lagi'),
-                      ),
+                      tombolHijauKeluarga('Coba Lagi', ikon: Icons.refresh, onPressed: () {
+                        setState(() => _memuat = true);
+                        _muat();
+                      }),
                     ],
                   ),
                 ),

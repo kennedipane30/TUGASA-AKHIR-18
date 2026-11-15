@@ -8,13 +8,25 @@ import '../../../core/widgets/common_widgets.dart';
 import '../../../core/widgets/status_gizi_widget.dart';
 import '../datadiri/data_orang_tua_page.dart' show KeluargaApi, parseTgl;
 
+part 'pemeriksaan_detail_page.dart';
+
 // Warna tampilan
-const _latarHalaman = Color(0xFFF3F5FB);
-const _teksGelap = Color(0xFF1E293B);
-const _teksAbu = Color(0xFF64748B);
-const _hijauTeks = Color(0xFF047857);
-const _hijauPil = Color(0xFFDDF5EA);
 const _hijauHeader = Color(0xFF065F46);
+const _teksGelap = Color(0xFF1F2937);
+const _teksAbu = Color(0xFF64748B);
+
+/// Garis tepi kotak di dalam kartu: hitam lembut.
+const _garis = Color(0xFFB8BEC6);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+const _namaHari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
 // ---------------------------------------------------------------------------
 // MODEL
@@ -264,59 +276,115 @@ class _Pemeriksaan {
 }
 
 // ---------------------------------------------------------------------------
-// KOMPONEN TAMPILAN BERSAMA
+// KOMPONEN TAMPILAN BERSAMA (seragam dengan halaman lain)
 // ---------------------------------------------------------------------------
-class _Kartu extends StatelessWidget {
-  final Widget child;
-  final Color color;
-  final EdgeInsets padding;
-
-  const _Kartu({
-    required this.child,
-    this.color = Colors.white,
-    this.padding = const EdgeInsets.all(16),
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: padding,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F1E293B),
-            blurRadius: 12,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: child,
+BoxDecoration _dekorKartu({Color warna = Colors.white}) => BoxDecoration(
+      color: warna,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
     );
-  }
+
+/// Kepala kartu: judul kapital tebal (dan sub judul) di kiri, keterangan di kanan,
+/// lalu garis aksen di bawahnya.
+Widget _kepala(String judul, {String? sub, String? kanan}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    judul.toUpperCase(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16.5,
+                      height: 1.3,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                      color: _teksGelap,
+                    ),
+                  ),
+                  if (sub != null && sub.isNotEmpty)
+                    Text(sub,
+                        style: const TextStyle(
+                            fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+                ],
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: const TextStyle(
+                      fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+            ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
 }
 
-/// Judul kartu polos (tanpa ikon).
-class _KepalaKartu extends StatelessWidget {
-  final String judul;
-
-  const _KepalaKartu({required this.judul});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      judul,
-      style: const TextStyle(
-        fontSize: 17.5,
-        fontWeight: FontWeight.w700,
-        color: Colors.black,
-      ),
-    );
-  }
+/// Kartu putih berbayang; [judul] opsional.
+Widget _kartu({
+  String? judul,
+  String? sub,
+  String? kanan,
+  Color warna = Colors.white,
+  required Widget child,
+}) {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 14),
+    clipBehavior: Clip.antiAlias,
+    decoration: _dekorKartu(warna: warna),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (judul != null) _kepala(judul, sub: sub, kanan: kanan),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: child,
+        ),
+      ],
+    ),
+  );
 }
+
+/// Baris "Label : nilai" (hitam tebal, nilai lanjut ke samping).
+Widget _barisInfo(String label, String nilai, {double lebar = 130}) {
+  const gaya = TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, height: 1.35, color: _teksGelap);
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: lebar, child: Text(label, style: gaya)),
+        const Text(': ', style: gaya),
+        Expanded(child: Text(nilai.isEmpty ? '-' : nilai, style: gaya)),
+      ],
+    ),
+  );
+}
+
+/// Tautan "Lihat detail" (hijau lembut bergaris bawah).
+const _tautanDetail = Text(
+  'Lihat detail',
+  style: TextStyle(
+    fontSize: 14.5,
+    fontWeight: FontWeight.w600,
+    color: _aksen,
+    decoration: TextDecoration.underline,
+    decorationColor: _aksen,
+  ),
+);
 
 /// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
@@ -334,12 +402,8 @@ Widget _judulTebal(String teks) {
   );
 }
 
-// Header bagian atas: judul di tengah.
-Widget _header(
-  BuildContext context,
-  String judul, {
-  String? sub,
-}) {
+/// Header hijau polos: tombol kembali di kiri, judul di tengah.
+Widget _header(BuildContext context, String judul) {
   return AnnotatedRegion<SystemUiOverlayStyle>(
     value: const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -351,43 +415,28 @@ Widget _header(
       color: _hijauHeader,
       child: SafeArea(
         bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-          child: Row(
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              InkWell(
-                onTap: () => Navigator.maybePop(context),
-                child: const Padding(
-                  padding: EdgeInsets.all(6),
-                  child: Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: 22,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 56),
+                child: _judulTebal(judul),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: InkWell(
+                    onTap: () => Navigator.maybePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _judulTebal(judul),
-                    if (sub != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        sub,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 15.5,
-                          color: Color(0xE6FFFFFF),
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 40),
             ],
           ),
         ),
@@ -397,7 +446,7 @@ Widget _header(
 }
 
 // ---------------------------------------------------------------------------
-// HALAMAN DAFTAR PEMERIKSAAN (BERDASARKAN TANGGAL)
+// HALAMAN 1: RIWAYAT PEMERIKSAAN (DAFTAR KUNJUNGAN)
 // ---------------------------------------------------------------------------
 class OrangTuaPemeriksaanPage extends StatefulWidget {
   final String? anakId;
@@ -536,7 +585,7 @@ class _OrangTuaPemeriksaanPageState
   void _buka(_Pemeriksaan p) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => _DetailPemeriksaanPage(data: p)),
+      MaterialPageRoute(builder: (_) => _DetailRiwayatPage(data: p)),
     );
   }
 
@@ -552,21 +601,16 @@ class _OrangTuaPemeriksaanPageState
         : _data.where((p) => p.anakId == _anakAktif).toList();
 
     return Scaffold(
-      backgroundColor: _latarHalaman,
+      backgroundColor: AppColors.latar,
       body: Column(
         children: [
-          _header(
-            context,
-            _terkunci && _data.isNotEmpty
-                ? 'Riwayat ${_data.first.namaAnak}'
-                : 'Riwayat Pemeriksaan',
-          ),
+          _header(context, 'Riwayat Pemeriksaan'),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _muat,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 children: [
                   if (_memuat)
                     const Padding(
@@ -574,22 +618,15 @@ class _OrangTuaPemeriksaanPageState
                       child: Center(child: CircularProgressIndicator()),
                     )
                   else if (_gagal != null)
-                    _Kartu(
-                      color: AppColors.kuningMuda,
+                    _kartu(
+                      warna: AppColors.kuningMuda,
                       child: Row(
                         children: [
-                          const Icon(
-                            Icons.cloud_off,
-                            color: AppColors.kuning,
-                          ),
-                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               _gagal!,
                               style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16.5,
-                              ),
+                                  fontWeight: FontWeight.w500, fontSize: 16, color: _teksGelap),
                             ),
                           ),
                           TextButton(
@@ -603,20 +640,10 @@ class _OrangTuaPemeriksaanPageState
                       ),
                     )
                   else if (_data.isEmpty)
-                    const _Kartu(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _KepalaKartu(judul: 'Belum ada hasil pemeriksaan'),
-                          SizedBox(height: 10),
-                          Text(
-                            'Hasil pemeriksaan muncul di sini setelah anak Anda ditimbang dan diukur di posyandu.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: _teksAbu,
-                            ),
-                          ),
-                        ],
+                    _kartu(
+                      child: const Text(
+                        'Belum ada riwayat pemeriksaan. Hasil muncul di sini setelah anak Anda ditimbang dan diukur di posyandu.',
+                        style: TextStyle(fontSize: 15.5, height: 1.4, color: _teksAbu),
                       ),
                     )
                   else ...[
@@ -628,13 +655,12 @@ class _OrangTuaPemeriksaanPageState
                           child: Row(
                             children: [
                               _chip('', 'Semua'),
-                              for (final e in anak.entries)
-                                _chip(e.key, e.value),
+                              for (final e in anak.entries) _chip(e.key, e.value),
                             ],
                           ),
                         ),
                       ),
-                    for (final p in daftar) _kartu(p),
+                    for (final p in daftar) _kartuRiwayat(p),
                   ],
                 ],
               ),
@@ -647,19 +673,18 @@ class _OrangTuaPemeriksaanPageState
 
   Widget _chip(String id, String label) {
     final dipilih = _anakAktif == id;
-
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
         label: Text(label),
         selected: dipilih,
-        selectedColor: _hijauTeks,
+        selectedColor: _hijauHeader,
         backgroundColor: Colors.white,
         showCheckmark: false,
-        side: BorderSide.none,
+        side: BorderSide(color: dipilih ? _hijauHeader : _garis, width: 1.2),
         labelStyle: TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: dipilih ? Colors.white : _teksGelap,
         ),
         onSelected: (_) => setState(() => _anakAktif = id),
@@ -667,560 +692,48 @@ class _OrangTuaPemeriksaanPageState
     );
   }
 
-  Widget _kartu(_Pemeriksaan p) {
+  /// Kartu satu kunjungan: hari di atas, tanggal di bawah, jam di kanan.
+  Widget _kartuRiwayat(_Pemeriksaan p) {
     final t = p.tanggal;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F1E293B),
-            blurRadius: 12,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => _buka(p),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 14, 18),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t == null ? '-' : formatTanggal(t),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 19,
-                          color: _teksGelap,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${p.namaAnak}${p.adaUkur ? ' · ${p.usiaTeks}' : ''}',
-                        style: const TextStyle(
-                          fontSize: 16.5,
-                          color: _teksAbu,
-                        ),
-                      ),
-                      BarisPilGizi(p.statusGizi),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// HALAMAN DETAIL PEMERIKSAAN
-// ---------------------------------------------------------------------------
-class _DetailPemeriksaanPage extends StatelessWidget {
-  final _Pemeriksaan data;
-
-  const _DetailPemeriksaanPage({required this.data});
-
-  Widget _blok(String judul, String isi, {IconData icon = Icons.notes}) {
-    if (isi.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE3F2FD),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFBFDFF7)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            judul,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: Color(0xFF2563EB),
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            isi,
-            style: const TextStyle(
-              fontSize: 16,
-              height: 1.4,
-              color: _teksGelap,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _kotakUkur(
-    String nilai,
-    String label,
-    Color bg,
-    Color border,
-    Color fg,
-  ) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14.5,
-                height: 1.25,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF475569),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              nilai,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                color: fg,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _itemSuplemen(String judul, List<String> baris) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E6),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFF5DFA8)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DecoratedBox(
+        decoration: _dekorKartu(),
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => _buka(p),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  judul,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: _teksGelap,
-                  ),
+                _kepala(
+                  t == null ? '-' : _namaHari[t.weekday - 1],
+                  sub: t == null ? null : formatTanggal(t),
+                  kanan: p.jamMulai.isEmpty ? null : '${p.jamMulai} WIB',
                 ),
-                for (final b in baris)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      b,
-                      style: const TextStyle(
-                        fontSize: 15.5,
-                        color: Color(0xFF92400E),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Color(0xFF3B82F6),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final d = data;
-    final t = d.tanggal;
-    final adaIsiCatatan =
-        d.evaluasi.isNotEmpty || d.saranGizi.isNotEmpty || d.keluhan.isNotEmpty;
-
-    return Scaffold(
-      backgroundColor: _latarHalaman,
-      body: Column(
-        children: [
-          _header(context, 'Detail Pemeriksaan'),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-              children: [
-                // Identitas anak
-                _Kartu(
-                  padding: const EdgeInsets.all(14),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              d.namaAnak,
-                              style: const TextStyle(
-                                fontSize: 19,
-                                fontWeight: FontWeight.w600,
-                                color: _teksGelap,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _hijauPil,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: const Color(0xFFBDEBD3),
-                              ),
-                            ),
-                            child: Text(
-                              t == null ? '-' : formatTanggal(t),
-                              style: const TextStyle(
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w500,
-                                color: _hijauTeks,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      _barisInfo('Nama', p.namaAnak, lebar: 70),
+                      if (p.adaUkur) _barisInfo('Usia', p.usiaTeks, lebar: 70),
+                      if (p.adaUkur)
+                        _barisInfo('Hasil',
+                            'BB ${_num(p.bb)} kg · TB ${_num(p.tb)} cm',
+                            lebar: 70),
+                      BarisPilGizi(p.statusGizi),
                       const SizedBox(height: 6),
-                      if (d.adaUkur)
-                        Text.rich(
-                          TextSpan(
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: _teksAbu,
-                            ),
-                            children: [
-                              TextSpan(text: 'Usia ${d.usiaTeks}'),
-                              if (d.caraUkur.isNotEmpty) ...[
-                                const TextSpan(text: '  ·  '),
-                                TextSpan(
-                                  text: 'diukur ${d.caraUkur}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF2B7BB9),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      if (d.jamMulai.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        const Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: Color(0xFFEEF1F6),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Sesi posyandu pukul ${d.jamMulai} WIB',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: _teksAbu,
-                          ),
-                        ),
-                      ],
+                      const Align(alignment: Alignment.centerRight, child: _tautanDetail),
                     ],
                   ),
                 ),
-
-                // Hasil pengukuran
-                if (d.adaUkur)
-                  _Kartu(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _KepalaKartu(judul: 'Hasil Pengukuran'),
-                        const SizedBox(height: 12),
-                        IntrinsicHeight(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _kotakUkur(
-                                _num(d.bb),
-                                'Berat Badan (kg)',
-                                const Color(0xFFE3F2FD),
-                                const Color(0xFFBFDFF7),
-                                const Color(0xFF2563EB),
-                              ),
-                              const SizedBox(width: 10),
-                              _kotakUkur(
-                                _num(d.tb),
-                                'Tinggi/Panjang (cm)',
-                                const Color(0xFFE6F8EF),
-                                const Color(0xFFBDEBD3),
-                                const Color(0xFF059669),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        IntrinsicHeight(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _kotakUkur(
-                                d.lk,
-                                'Lingkar Kepala (cm)',
-                                const Color(0xFFFFF4DC),
-                                const Color(0xFFF9E0A8),
-                                const Color(0xFFD97706),
-                              ),
-                              const SizedBox(width: 10),
-                              _kotakUkur(
-                                d.lila,
-                                'LiLA (cm)',
-                                const Color(0xFFFDEAF1),
-                                const Color(0xFFF6C9D9),
-                                const Color(0xFFE11D48),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // Status gizi
-                if (d.adaUkur && d.statusGizi != null)
-                  _Kartu(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _KepalaKartu(judul: 'Status Gizi Anak'),
-                        const SizedBox(height: 12),
-                        KotakStatusGizi(d.statusGizi, untukOrangTua: true),
-                      ],
-                    ),
-                  ),
-
-                // Catatan bidan
-                _Kartu(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const _KepalaKartu(judul: 'Catatan Bidan'),
-                      const SizedBox(height: 10),
-                      if (!d.adaCatatan || !adaIsiCatatan)
-                        const SizedBox(
-                          width: double.infinity,
-                          child: Text(
-                            'Bidan belum menuliskan catatan untuk kunjungan ini.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF2B7BB9),
-                            ),
-                          ),
-                        )
-                      else ...[
-                        _blok(
-                          'Keluhan',
-                          d.keluhan,
-                          icon: Icons.sick_outlined,
-                        ),
-                        _blok(
-                          'Catatan untuk orang tua',
-                          d.evaluasi,
-                          icon: Icons.fact_check_outlined,
-                        ),
-                        _blok(
-                          'Saran gizi',
-                          d.saranGizi,
-                          icon: Icons.restaurant_outlined,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-
-                // Kunjungan ulang
-                if (d.kunjunganUlang != null)
-                  _Kartu(
-                    color: AppColors.biruMuda,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Kunjungan ulang',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _teksAbu,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                formatTanggal(d.kunjunganUlang!),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 17,
-                                  color: _teksGelap,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // Imunisasi
-                if (d.vaksin.isNotEmpty)
-                  _Kartu(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _KepalaKartu(judul: 'Imunisasi Hari Ini'),
-                        for (final v in d.vaksin)
-                          Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.only(top: 12),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F7FD),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(0xFFDCEAF7),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        v.nama,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 16,
-                                          color: Color(0xFF2B7BB9),
-                                        ),
-                                      ),
-                                      if (v.kondisi.isNotEmpty)
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 2),
-                                          child: Text(
-                                            'Kondisi: ${v.kondisi}',
-                                            style: const TextStyle(
-                                              fontSize: 15.5,
-                                              color: Color(0xFF075985),
-                                            ),
-                                          ),
-                                        ),
-                                      if (v.catatan.isNotEmpty)
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 2),
-                                          child: Text(
-                                            'Catatan: ${v.catatan}',
-                                            style: const TextStyle(
-                                              fontSize: 15.5,
-                                              color: Color(0xFF075985),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFD6E9F8),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    'Dosis ${v.dosis}',
-                                    style: const TextStyle(
-                                      fontSize: 14.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF2B7BB9),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                // Suplemen
-                if (d.suplemen.isNotEmpty)
-                  _Kartu(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const _KepalaKartu(judul: 'Suplemen Hari Ini'),
-                        for (final s in d.suplemen)
-                          _itemSuplemen(s.nama, [
-                            if (s.dosis.isNotEmpty) 'Dosis: ${s.dosis}',
-                            if (s.catatan.isNotEmpty) 'Catatan: ${s.catatan}',
-                          ]),
-                      ],
-                    ),
-                  ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

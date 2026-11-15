@@ -9,18 +9,17 @@ import '../../../core/theme/app_colors.dart';
 import '../../../service/vaksin_service.dart';
 import 'data_orang_tua_page.dart';
 
-const _hijauTua = Color(0xFF0B3D2E);
-const _garis = Color(0xFFE6ECE8);
-const _garisInput = Color(0xFFD7E6DD);
+const _hijauTua = kHijauHeader;
+const _garisInput = kGarisInput;
 
 InputDecoration _dekor(
   String hint, {
   IconData? icon,
   String? suffix,
 }) {
-  OutlineInputBorder border(Color color) => OutlineInputBorder(
+  OutlineInputBorder border(Color color, [double w = 1.2]) => OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: color),
+        borderSide: BorderSide(color: color, width: w),
       );
 
   return InputDecoration(
@@ -28,11 +27,11 @@ InputDecoration _dekor(
     hintStyle: const TextStyle(fontSize: 15.5, color: Colors.black38),
     prefixIcon: icon == null
         ? null
-        : Icon(icon, size: 20, color: AppColors.hijau),
+        : Icon(icon, size: 22, color: kAksen),
     suffixText: suffix,
     suffixStyle: const TextStyle(
       fontWeight: FontWeight.w600,
-      color: AppColors.hijau,
+      color: kTeksGelap,
     ),
     filled: true,
     fillColor: Colors.white,
@@ -43,7 +42,7 @@ InputDecoration _dekor(
     ),
     border: border(_garisInput),
     enabledBorder: border(_garisInput),
-    focusedBorder: border(_hijauTua),
+    focusedBorder: border(_hijauTua, 1.6),
     errorBorder: border(AppColors.merah),
     focusedErrorBorder: border(AppColors.merah),
   );
@@ -57,8 +56,9 @@ Widget _label(String teks, {bool wajib = false, String? ket}) => Padding(
             TextSpan(
               text: teks,
               style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                fontSize: 15.5,
+                color: kTeksGelap,
               ),
             ),
             if (ket != null)
@@ -187,6 +187,8 @@ class _DataAnakPageState extends State<DataAnakPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.merah,
               foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Hapus'),
@@ -211,142 +213,96 @@ class _DataAnakPageState extends State<DataAnakPage> {
     }
   }
 
-  Widget _kartuAnak(DataAnak anak) => Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _garis),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+  /// Tombol hanya garis tepi (tanpa isi warna).
+  Widget _tombolGaris(String label, Color warna, VoidCallback onTap) {
+    return SizedBox(
+      height: 44,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: warna,
+          backgroundColor: Colors.white,
+          side: BorderSide(color: warna, width: 1.4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        child: Column(
-          children: [
-            Row(
+        child: Text(label),
+      ),
+    );
+  }
+
+  Widget _kartuAnak(DataAnak anak) {
+    final belumDitanya = anak.statusRiwayatVaksin == StatusRiwayatVaksin.belumDitanya;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
+      decoration: dekorKartuKeluarga(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          kepalaKeluarga(anak.nama, kanan: 'Aktif', warnaKanan: kHijauHeader),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              anak.nama,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                                color: _hijauTua,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.hijauMuda,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Text(
-                              'Aktif',
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                fontWeight: FontWeight.w600,
-                                color: _hijauTua,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '${anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'} • '
-                        '${_usiaDetail(anak.tglLahir)}',
-                        style: const TextStyle(
-                          fontSize: 15.5,
-                          color: AppColors.teksRedup,
-                        ),
-                      ),
-                      Text(
-                        'lahir ${anak.tglLahir}',
-                        style: const TextStyle(
-                          fontSize: 15.5,
-                          color: AppColors.teksRedup,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Ubah',
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 32),
-                  icon: const Icon(Icons.edit_outlined, size: 20),
-                  onPressed: () => _tambahAtauUbah(awal: anak),
-                ),
-                IconButton(
-                  tooltip: 'Hapus',
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 32),
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    size: 20,
-                    color: AppColors.merah,
-                  ),
-                  onPressed: () => _hapus(anak),
-                ),
-              ],
-            ),
-            const Divider(height: 22, color: _garis),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Riwayat vaksin: ${StatusRiwayatVaksin.label(anak.statusRiwayatVaksin)}',
-                    style: TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w500,
-                      color: anak.statusRiwayatVaksin == StatusRiwayatVaksin.belumDitanya
-                          ? AppColors.kuning
-                          : _hijauTua,
+                infoKeluarga('Jenis Kelamin', anak.jk == 'P' ? 'Perempuan' : 'Laki-laki', lebar: 130),
+                infoKeluarga('Umur', _usiaDetail(anak.tglLahir), lebar: 130),
+                infoKeluarga('Tanggal Lahir', anak.tglLahir, lebar: 130),
+                const Divider(height: 18, color: Color(0xFFE5E7EB)),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(
+                      width: 130,
+                      child: Text('Riwayat Vaksin',
+                          style: TextStyle(
+                              fontSize: 15.5, fontWeight: FontWeight.w600, color: kTeksGelap)),
                     ),
-                  ),
+                    const Text(': ',
+                        style: TextStyle(
+                            fontSize: 15.5, fontWeight: FontWeight.w600, color: kTeksGelap)),
+                    Expanded(
+                      child: Text(
+                        StatusRiwayatVaksin.label(anak.statusRiwayatVaksin),
+                        style: TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w700,
+                          color: belumDitanya ? AppColors.kuning : kHijauHeader,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 if (anak.statusRiwayatVaksin != StatusRiwayatVaksin.dikonfirmasi)
-                  InkWell(
-                    onTap: () => _isiRiwayatVaksin(anak),
-                    child: Row(
-                      children: [
-                        Text(
-                          anak.statusRiwayatVaksin == StatusRiwayatVaksin.belumDitanya ? 'Isi' : 'Ubah',
-                          style: const TextStyle(
-                            fontSize: 15.5,
-                            fontWeight: FontWeight.w600,
-                            color: _hijauTua,
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right, size: 16, color: _hijauTua),
-                      ],
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: InkWell(
+                      onTap: () => _isiRiwayatVaksin(anak),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: tautanKeluarga(belumDitanya ? 'Isi riwayat vaksin' : 'Ubah riwayat vaksin'),
+                      ),
                     ),
                   ),
+                const SizedBox(height: 8),
+                // Tombol bergaris: Hapus di kiri, Ubah di kanan.
+                Row(
+                  children: [
+                    Expanded(child: _tombolGaris('Hapus', AppColors.merah, () => _hapus(anak))),
+                    const SizedBox(width: 10),
+                    Expanded(
+                        child: _tombolGaris('Ubah', kHijauHeader, () => _tambahAtauUbah(awal: anak))),
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _isi() {
     if (_memuat) {
@@ -359,17 +315,14 @@ class _DataAnakPageState extends State<DataAnakPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
-              const SizedBox(height: 12),
-              Text(_gagal!, textAlign: TextAlign.center),
+              Text(_gagal!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, color: kTeksGelap)),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() => _memuat = true);
-                  _muat();
-                },
-                child: const Text('Coba lagi'),
-              ),
+              tombolHijauKeluarga('Coba Lagi', ikon: Icons.refresh, onPressed: () {
+                setState(() => _memuat = true);
+                _muat();
+              }),
             ],
           ),
         ),
@@ -381,19 +334,21 @@ class _DataAnakPageState extends State<DataAnakPage> {
         const SizedBox(height: 16),
         Expanded(
           child: _anak.isEmpty
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Text(
-                      'Belum ada data anak. Tekan tombol hijau di bawah '
-                      'untuk menambah data anak balita.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15.5,
-                        color: AppColors.teksRedup,
+              ? ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+                      decoration: dekorKartuKeluarga(),
+                      child: const Text(
+                        'Belum ada data anak. Tekan tombol hijau di bawah '
+                        'untuk menambah data anak balita.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 15.5, height: 1.4, color: AppColors.teksRedup),
                       ),
                     ),
-                  ),
+                  ],
                 )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -422,31 +377,13 @@ class _DataAnakPageState extends State<DataAnakPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: AppColors.latar,
+        // Tombol berdiri sendiri, tanpa latar footer.
         bottomNavigationBar: SafeArea(
+          top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: SizedBox(
-              height: 54,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _hijauTua,
-                  foregroundColor: Colors.white,
-                  elevation: 3,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-                onPressed: () => _tambahAtauUbah(),
-                icon: const Icon(Icons.add),
-                label: const Text(
-                  'Tambah Anak',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16.5,
-                  ),
-                ),
-              ),
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            child: tombolHijauKeluarga('Tambah Anak',
+                ikon: Icons.add, onPressed: () => _tambahAtauUbah()),
           ),
         ),
         body: Column(
@@ -582,11 +519,12 @@ class _FormAnakState extends State<_FormAnak> {
           style: OutlinedButton.styleFrom(
             backgroundColor: aktif ? _hijauTua : Colors.white,
             side: BorderSide(
-              color: aktif ? _hijauTua : _garisInput,
+              color: aktif ? _hijauTua : (_jkError ? AppColors.merah : _garisInput),
+              width: 1.2,
             ),
-            foregroundColor: aktif ? Colors.white : Colors.black87,
+            foregroundColor: aktif ? Colors.white : kTeksGelap,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           onPressed: () => setState(() {
@@ -623,34 +561,9 @@ class _FormAnakState extends State<_FormAnak> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.awal == null
-                                ? 'Tambah Data Anak'
-                                : 'Ubah Data Anak',
-                            style: const TextStyle(
-                              fontSize: 21,
-                              fontWeight: FontWeight.w600,
-                              color: _hijauTua,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            'Lengkapi biodata balita',
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              color: AppColors.teksRedup,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                judulLembarKeluarga(
+                  widget.awal == null ? 'Tambah Data Anak' : 'Ubah Data Anak',
+                  sub: 'Lengkapi biodata balita',
                 ),
                 const SizedBox(height: 18),
                 _label('Nama Lengkap Anak', wajib: true),
@@ -659,7 +572,7 @@ class _FormAnakState extends State<_FormAnak> {
                   textCapitalization: TextCapitalization.words,
                   decoration: _dekor(
                     'Contoh: Muhammad Sara',
-                    icon: Icons.sentiment_satisfied_alt_outlined,
+                    icon: Icons.person_outline,
                   ),
                   validator: (value) =>
                       value == null || value.trim().isEmpty
@@ -674,7 +587,7 @@ class _FormAnakState extends State<_FormAnak> {
                   onTap: _pilihTanggal,
                   decoration: _dekor(
                     'Pilih tanggal lahir',
-                    icon: Icons.calendar_today_outlined,
+                    icon: Icons.calendar_month_outlined,
                   ),
                   validator: (value) =>
                       value == null || value.isEmpty
@@ -732,7 +645,8 @@ class _FormAnakState extends State<_FormAnak> {
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
-                            decoration: _dekor('Berat (kg)', suffix: 'kg'),
+                            decoration: _dekor('Berat',
+                                icon: Icons.monitor_weight_outlined, suffix: 'kg'),
                             validator: (value) =>
                                 _rentang(value, .5, 7, 'Berat'),
                           ),
@@ -750,7 +664,8 @@ class _FormAnakState extends State<_FormAnak> {
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
-                            decoration: _dekor('Panjang (cm)', suffix: 'cm'),
+                            decoration: _dekor('Panjang',
+                                icon: Icons.straighten, suffix: 'cm'),
                             validator: (value) =>
                                 _rentang(value, 30, 65, 'Panjang'),
                           ),
@@ -774,52 +689,14 @@ class _FormAnakState extends State<_FormAnak> {
                 Row(
                   children: [
                     Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: _hijauTua,
-                            side: const BorderSide(
-                              color: _hijauTua,
-                              width: 1.4,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text(
-                            'Batal',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16.5,
-                            ),
-                          ),
-                        ),
-                      ),
+                      child: tombolGarisKeluarga('Batal',
+                          warna: AppColors.merah, onPressed: () => Navigator.pop(context)),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _hijauTua,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                          ),
-                          onPressed: _menyimpan ? null : _simpan,
-                          child: Text(
-                            _menyimpan ? 'Menyimpan...' : 'Simpan Data',
-                            maxLines: 1,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16.5,
-                            ),
-                          ),
-                        ),
+                      child: tombolHijauKeluarga(
+                        _menyimpan ? 'Menyimpan...' : 'Simpan Data',
+                        onPressed: _menyimpan ? null : _simpan,
                       ),
                     ),
                   ],
@@ -1015,19 +892,21 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: aktif ? const Color(0xFFE3F6EC) : Colors.white,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: aktif ? _hijauTua : _garisInput, width: aktif ? 1.6 : 1),
+            border: Border.all(color: aktif ? _hijauTua : _garisInput, width: aktif ? 1.6 : 1.2),
           ),
           child: Row(
             children: [
-              Icon(ikon, color: _hijauTua),
+              Icon(ikon, color: kAksen),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(judul, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
+                    Text(judul,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 16, color: kTeksGelap)),
                     Text(ket, style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
                   ],
                 ),
@@ -1045,9 +924,9 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: d != null ? const Color(0xFFF0FAF5) : Colors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: d != null ? _hijauTua : _garisInput),
+        border: Border.all(color: d != null ? _hijauTua : _garisInput, width: 1.2),
       ),
       child: Column(
         children: [
@@ -1081,11 +960,11 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _garisInput),
+                        border: Border.all(color: _garisInput, width: 1.2),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_outlined, size: 18, color: AppColors.hijau),
+                          const Icon(Icons.calendar_month_outlined, size: 20, color: kAksen),
                           const SizedBox(width: 8),
                           Text(
                             d.tanggal == null ? 'Tanggal diberikan *' : fmtTgl(d.tanggal!),
@@ -1134,11 +1013,8 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Riwayat Vaksin',
-              style: TextStyle(fontSize: 21, fontWeight: FontWeight.w600, color: _hijauTua),
-            ),
-            const SizedBox(height: 2),
+            judulLembarKeluarga('Riwayat Vaksin'),
+            const SizedBox(height: 8),
             Text(
               'Apakah ${widget.nama} sudah pernah menerima vaksin sebelum ke posyandu '
               '(di rumah sakit, puskesmas, klinik, atau bidan praktik)?',
@@ -1167,8 +1043,9 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFE3F6EC),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _garisInput, width: 1.2),
               ),
               child: const Text(
                 'Vaksin yang Anda isi tidak akan diberikan lagi di posyandu. '
@@ -1180,33 +1057,13 @@ class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
             Row(
               children: [
                 Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _hijauTua,
-                        side: const BorderSide(color: _hijauTua, width: 1.4),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Nanti saja', style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
-                  ),
+                  child: tombolGarisKeluarga('Nanti saja', onPressed: () => Navigator.pop(context)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _hijauTua,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                      ),
-                      onPressed: _menyimpan ? null : _simpan,
-                      child: Text(_menyimpan ? 'Menyimpan...' : 'Simpan',
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
-                    ),
+                  child: tombolHijauKeluarga(
+                    _menyimpan ? 'Menyimpan...' : 'Simpan',
+                    onPressed: _menyimpan ? null : _simpan,
                   ),
                 ),
               ],

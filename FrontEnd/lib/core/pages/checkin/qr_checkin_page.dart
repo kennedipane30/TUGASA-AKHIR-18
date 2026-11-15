@@ -9,7 +9,60 @@ import '../../utils/posyandu.dart';
 
 const Color _hijauHeader = Color(0xFF065F46);
 const Color _hijau = Color(0xFF176A46);
-const Color _biru = Color(0xFF2582C4);
+const Color _teksGelap = Color(0xFF1F2937);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+/// Warna aksen kartu: hijau lembut senada header.
+const Color _aksen = Color(0xFF5E9C84);
+
+BoxDecoration _dekorKartu() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
+    );
+
+/// Kepala kartu: judul tebal kapital di kiri, keterangan di kanan, garis aksen di bawah.
+Widget _kepala(String judul, {String? kanan}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: _teksGelap,
+                ),
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(kanan,
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                        fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+              ),
+            ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
+}
 
 String _pesanError(Object e) {
   if (e is DioException) {
@@ -145,37 +198,6 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
     );
   }
 
-  Widget _badge({
-    required IconData icon,
-    required String label,
-    required Color warna,
-    required Color latar,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-      decoration: BoxDecoration(
-        color: latar,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: warna.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: warna),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: warna,
-              fontSize: 14.5,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _petunjuk(String teks) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -184,7 +206,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 5),
-            child: Icon(Icons.circle, size: 5, color: _biru),
+            child: Icon(Icons.circle, size: 5, color: _aksen),
           ),
           const SizedBox(width: 9),
           Expanded(
@@ -213,90 +235,59 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            namaPosyandu == null
-                ? 'Scan kode QR ini untuk proses check-in kehadiran secara cepat dan akurat.'
-                : 'Scan kode QR ini untuk proses check-in kehadiran di $namaPosyandu secara cepat dan akurat.',
-            style: const TextStyle(
-              color: Color(0xFF25313A),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 14),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE5ECE9)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x08000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
+            clipBehavior: Clip.antiAlias,
+            decoration: _dekorKartu(),
             child: Column(
               children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    if (namaPosyandu != null)
-                      _badge(
-                        icon: Icons.location_on,
-                        label: namaPosyandu,
-                        warna: _biru,
-                        latar: const Color(0xFFF0F8FF),
-                      ),
-                    _badge(
-                      icon: Icons.qr_code_2,
-                      label: 'QR Check-in',
-                      warna: _hijau,
-                      latar: const Color(0xFFEAF8F1),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFAFCFB),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFEDF1EF)),
-                  ),
-                  child: QrImageView(
-                    data: _kode!,
-                    size: 230,
-                    backgroundColor: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4F8F6),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Row(
+                _kepala('QR Check-in', kanan: namaPosyandu),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                  child: Column(
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: _hijau),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFAFCFB),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFB8BEC6), width: 1.2),
+                        ),
+                        child: QrImageView(
+                          data: _kode!,
+                          size: 230,
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF4F8F6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
                           'QR ini tetap untuk setiap pendaftaran.',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Color(0xFF52616B),
                             fontSize: 15.5,
                             fontWeight: FontWeight.w600,
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        namaPosyandu == null
+                            ? 'Scan kode QR ini untuk proses check-in kehadiran secara cepat dan akurat.'
+                            : 'Scan kode QR ini untuk proses check-in kehadiran di $namaPosyandu secara cepat dan akurat.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFF25313A),
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w500,
+                          height: 1.45,
                         ),
                       ),
                     ],
@@ -305,38 +296,24 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F9FE),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFD7EDFB)),
-            ),
+            clipBehavior: Clip.antiAlias,
+            decoration: _dekorKartu(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 17, color: _biru),
-                    SizedBox(width: 8),
-                    Text(
-                      'Petunjuk Pemindaian',
-                      style: TextStyle(
-                        color: Color(0xFF25313A),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _petunjuk(
-                  'Orang tua memindai dari aplikasi untuk check-in.',
-                ),
-                _petunjuk(
-                  'Check-in hanya dibuka 1 jam sebelum jadwal dimulai.',
+                _kepala('Petunjuk Pemindaian'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _petunjuk('Orang tua memindai dari aplikasi untuk check-in.'),
+                      _petunjuk('Check-in hanya dibuka 1 jam sebelum jadwal dimulai.'),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -354,11 +331,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE5ECE9)),
-            ),
+            decoration: _dekorKartu(),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

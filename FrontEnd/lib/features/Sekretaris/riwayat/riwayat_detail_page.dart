@@ -56,22 +56,11 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           children: [
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _garisDetail, width: 1.2),
-              ),
-              child: Column(
-                children: [
-                  _barisInfo('Hari/Tanggal', _fmtHariTgl(_tgl(j['tanggal']))),
-                  _barisInfo('Waktu', _fmtWaktu(j)),
-                  _barisInfo('Lokasi', _teks(j['lokasi'])),
-                ],
-              ),
+            _kartu(
+              title: _fmtHari(_tgl(j['tanggal'])),
+              sub: _fmtTgl(_tgl(j['tanggal'])),
+              kanan: _fmtWaktu(j),
+              child: _bagian(Icons.location_on_outlined, 'Lokasi', _teks(j['lokasi'])),
             ),
             if (_memuat)
               _memuatBox()
@@ -83,8 +72,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
             else
               _kartu(
                 title: 'Daftar Balita',
-                trailing: Pill('${_data.length} anak',
-                    bg: AppColors.hijauMuda, fg: AppColors.hijau),
+                kanan: '${_data.length} anak',
                 child: _data.isEmpty
                     ? const Text('Belum ada anak yang check-in pada jadwal ini.',
                         style: TextStyle(fontSize: 16, color: AppColors.teksRedup))
@@ -331,8 +319,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
     return [
       _kartu(
         title: _teks(anak['nama']).isEmpty ? 'Anak' : _teks(anak['nama']),
-        trailing: Pill(_fmtTgl(_tgl(jadwal['tanggal'])),
-            bg: AppColors.hijauMuda, fg: AppColors.hijau),
+        kanan: _fmtTgl(_tgl(jadwal['tanggal'])),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

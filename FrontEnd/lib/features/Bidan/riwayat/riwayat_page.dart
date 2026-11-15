@@ -7,8 +7,14 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../../core/widgets/status_gizi_widget.dart';
 
+part 'riwayat_detail_page.dart';
+
 const _prefix = '/bidan/riwayat';
 const _hijauHeader = Color(0xFF065F46);
+const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi kotak di dalam kartu: hitam lembut (tidak mencolok).
+const _garis = Color(0xFFB8BEC6);
 
 // ---------------------------------------------------------------------------
 // FUNGSI BANTU
@@ -58,6 +64,19 @@ const _bulan = [
 
 String _fmtTgl(DateTime? t) =>
     t == null ? '-' : '${t.day} ${_bulan[t.month - 1]} ${t.year}';
+
+const _hari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+
+/// Contoh: "Sabtu".
+String _fmtHari(DateTime? t) => t == null ? '-' : _hari[t.weekday - 1];
+
+/// Contoh: "08:00 - 11:30 WIB".
+String _fmtWaktu(Map<String, dynamic> j) {
+  final m = _jam(j['jam_mulai']);
+  final s = _jam(j['jam_selesai']);
+  if (m.isEmpty) return '';
+  return s.isEmpty ? '$m WIB' : '$m - $s WIB';
+}
 
 DateTime _tambahBulan(DateTime d, int n) {
   final total = d.month - 1 + n;
@@ -148,8 +167,14 @@ List<Map<String, dynamic>> _daftarPeta(dynamic d) {
   return list;
 }
 
-Widget _gagalKartu(String pesan, VoidCallback ulang) => SectionCard(
-      color: AppColors.kuningMuda,
+Widget _gagalKartu(String pesan, VoidCallback ulang) => Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.kuningMuda,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _bayangan,
+      ),
       child: Row(
         children: [
           const Icon(Icons.cloud_off, color: AppColors.kuning),
@@ -270,6 +295,157 @@ Widget _memuatBox() => const Padding(
     );
 
 // ---------------------------------------------------------------------------
+// KOMPONEN KARTU (SERAGAM DENGAN HALAMAN LAIN)
+// ---------------------------------------------------------------------------
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+BoxDecoration _dekorKartu() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
+    );
+
+/// Kepala kartu: judul tebal kapital (dan sub judul) di kiri, keterangan di kanan,
+/// lalu garis aksen di bawahnya.
+Widget _kepala(String judul, {String? sub, String? kanan}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    judul.toUpperCase(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16.5,
+                      height: 1.3,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                      color: _teksGelap,
+                    ),
+                  ),
+                  if (sub != null && sub.isNotEmpty)
+                    Text(sub,
+                        style: const TextStyle(
+                            fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+                ],
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: const TextStyle(
+                      fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap)),
+            ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
+}
+
+/// Kartu berjudul (kepala + isi).
+Widget _kartu({required String title, String? sub, String? kanan, required Widget child}) =>
+    Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
+      decoration: _dekorKartu(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _kepala(title, sub: sub, kanan: kanan),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: child,
+          ),
+        ],
+      ),
+    );
+
+/// Satu bagian isi kartu: ikon kecil + label tebal, nilai langsung di sampingnya.
+Widget _bagian(IconData ikon, String label, String nilai) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(ikon, size: 18, color: _aksen),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$label : ',
+                  style: const TextStyle(fontWeight: FontWeight.w700, color: _teksGelap),
+                ),
+                TextSpan(
+                  text: nilai.isEmpty ? '-' : nilai,
+                  style: const TextStyle(fontWeight: FontWeight.w500, color: Color(0xFF374151)),
+                ),
+              ],
+            ),
+            style: const TextStyle(fontSize: 15.5, height: 1.35),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Baris "Label : nilai" (satu warna hitam).
+Widget _barisInfo(String label, String nilai, {double lebar = 130}) {
+  const gaya = TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, height: 1.35, color: _teksGelap);
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: lebar, child: Text(label, style: gaya)),
+        const Text(': ', style: gaya),
+        Expanded(child: Text(nilai.isEmpty ? '-' : nilai, style: gaya)),
+      ],
+    ),
+  );
+}
+
+/// Tautan "Lihat detail" (hijau lembut bergaris bawah).
+const _tautanDetail = Text(
+  'Lihat detail',
+  style: TextStyle(
+    fontSize: 14.5,
+    fontWeight: FontWeight.w600,
+    color: _aksen,
+    decoration: TextDecoration.underline,
+    decorationColor: _aksen,
+  ),
+);
+
+/// Teks abu untuk keadaan kosong.
+Widget _teksKosong(String teks) =>
+    Text(teks, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup));
+
+// ---------------------------------------------------------------------------
 // HALAMAN 1: DAFTAR TANGGAL POSYANDU
 // ---------------------------------------------------------------------------
 
@@ -303,7 +479,6 @@ class _BidanRiwayatPageState extends State<BidanRiwayatPage> {
       });
 
       if (!mounted) return;
-
       setState(() {
         _data = list;
         _gagal = null;
@@ -311,7 +486,6 @@ class _BidanRiwayatPageState extends State<BidanRiwayatPage> {
       });
     } catch (e) {
       if (!mounted) return;
-
       setState(() {
         _gagal = _pesanError(e);
         _memuat = false;
@@ -336,31 +510,17 @@ class _BidanRiwayatPageState extends State<BidanRiwayatPage> {
                 setState(() => _memuat = true);
                 _muat();
               })
+            else if (_data.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+                decoration: _dekorKartu(),
+                child: const Text('Belum ada jadwal posyandu.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
+              )
             else
-              SectionCard(
-                title: 'Tanggal Posyandu',
-                icon: Icons.history,
-                trailing: const Text(
-                  'Ketuk untuk melihat',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: AppColors.teksRedup,
-                  ),
-                ),
-                child: _data.isEmpty
-                    ? const Text(
-                        'Belum ada jadwal posyandu.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppColors.teksRedup,
-                        ),
-                      )
-                    : Column(
-                        children: [
-                          for (final j in _data) _baris(j),
-                        ],
-                      ),
-              ),
+              for (final j in _data) _baris(j),
           ],
         ),
       ),
@@ -369,92 +529,45 @@ class _BidanRiwayatPageState extends State<BidanRiwayatPage> {
 
   Widget _baris(Map<String, dynamic> j) {
     final t = _tgl(j['tanggal']);
-    final jam = _jam(j['jam_mulai']);
-    final lokasi = _teks(j['lokasi']);
     final checkin = int.tryParse(_teks(j['jumlah_checkin'])) ?? 0;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: AppColors.latar,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => _DaftarAnakPage(
-                jadwalId: _teks(j['id']),
-                judul: _fmtTgl(t),
-              ),
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DecoratedBox(
+        decoration: _dekorKartu(),
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => _DaftarAnakPage(jadwal: j)),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 52,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.hijauMuda,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
+                _kepala(_fmtHari(t), sub: _fmtTgl(t), kanan: _fmtWaktu(j)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        t == null ? '-' : t.day.toString().padLeft(2, '0'),
-                        style: const TextStyle(
-                          color: AppColors.hijau,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 21,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _bagian(Icons.location_on_outlined, 'Lokasi', _teks(j['lokasi'])),
+                            _bagian(Icons.how_to_reg_outlined, 'Anak check-in', '$checkin anak'),
+                          ],
                         ),
                       ),
-                      Text(
-                        t == null ? '' : _bulan[t.month - 1].substring(0, 3),
-                        style: const TextStyle(
-                          color: AppColors.hijau,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 15.5,
-                        ),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 10, bottom: 8),
+                        child: _tautanDetail,
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _fmtTgl(t),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 17,
-                        ),
-                      ),
-                      Text(
-                        [
-                          if (jam.isNotEmpty) '$jam WIB',
-                          if (lokasi.isNotEmpty) lokasi,
-                        ].join(' · '),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: AppColors.teksRedup,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Pill(
-                        '$checkin anak check-in',
-                        bg: AppColors.biruMuda,
-                        fg: AppColors.biru,
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: AppColors.teksRedup,
                 ),
               ],
             ),
@@ -462,638 +575,5 @@ class _BidanRiwayatPageState extends State<BidanRiwayatPage> {
         ),
       ),
     );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// HALAMAN 2: DAFTAR ANAK PADA SATU JADWAL
-// ---------------------------------------------------------------------------
-
-class _DaftarAnakPage extends StatefulWidget {
-  final String jadwalId;
-  final String judul;
-
-  const _DaftarAnakPage({
-    required this.jadwalId,
-    required this.judul,
-  });
-
-  @override
-  State<_DaftarAnakPage> createState() => _DaftarAnakPageState();
-}
-
-class _DaftarAnakPageState extends State<_DaftarAnakPage> {
-  List<Map<String, dynamic>> _data = [];
-  bool _memuat = true;
-  String? _gagal;
-
-  @override
-  void initState() {
-    super.initState();
-    _muat();
-  }
-
-  Future<void> _muat() async {
-    try {
-      final d = await _get(
-        '$_prefix/jadwal/${widget.jadwalId}/anak',
-      );
-      final list = _daftarPeta(d);
-
-      list.sort((a, b) {
-        final nomorA =
-            int.tryParse(_teks(a['nomor_antrean'])) ?? (1 << 30);
-        final nomorB =
-            int.tryParse(_teks(b['nomor_antrean'])) ?? (1 << 30);
-        return nomorA.compareTo(nomorB);
-      });
-
-      if (!mounted) return;
-
-      setState(() {
-        _data = list;
-        _gagal = null;
-        _memuat = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _gagal = _pesanError(e);
-        _memuat = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _halaman(
-      judul: widget.judul,
-      isi: RefreshIndicator(
-        onRefresh: _muat,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          children: [
-            if (_memuat)
-              _memuatBox()
-            else if (_gagal != null)
-              _gagalKartu(_gagal!, () {
-                setState(() => _memuat = true);
-                _muat();
-              })
-            else
-              SectionCard(
-                title: 'Daftar Balita',
-                icon: Icons.child_care,
-                trailing: Pill(
-                  '${_data.length} anak',
-                  bg: AppColors.hijauMuda,
-                  fg: AppColors.hijau,
-                ),
-                child: _data.isEmpty
-                    ? const Text(
-                        'Belum ada anak yang check-in pada jadwal ini.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppColors.teksRedup,
-                        ),
-                      )
-                    : Column(
-                        children: [
-                          for (final a in _data) _baris(a),
-                        ],
-                      ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _baris(Map<String, dynamic> a) {
-    final nomor = int.tryParse(_teks(a['nomor_antrean']));
-    final kode =
-        nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
-    final diukur = a['sudah_diukur'] == true;
-    final selesai = _teks(a['status_catatan']) == 'selesai';
-    final usia = int.tryParse(_teks(a['usia_bulan'])) ?? 0;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: AppColors.latar,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => _HasilAnakPage(
-                pendaftaranId: _teks(a['pendaftaran_id']),
-              ),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              children: [
-                Container(
-                  width: 52,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.hijauMuda,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    kode,
-                    style: const TextStyle(
-                      color: AppColors.hijau,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _teks(a['nama']),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 17,
-                        ),
-                      ),
-                      Text(
-                        '${_teks(a['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'} · ${_usia(usia, lahir: a['tanggal_lahir'])}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: AppColors.teksRedup,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          diukur
-                              ? const Pill(
-                                  'Sudah diukur',
-                                  icon: Icons.check,
-                                )
-                              : const Pill(
-                                  'Belum diukur',
-                                  bg: AppColors.kuningMuda,
-                                  fg: AppColors.kuning,
-                                ),
-                          selesai
-                              ? const Pill(
-                                  'Dicatat bidan',
-                                  bg: AppColors.biruMuda,
-                                  fg: AppColors.biru,
-                                )
-                              : const Pill(
-                                  'Belum dicatat bidan',
-                                  bg: AppColors.kuningMuda,
-                                  fg: AppColors.kuning,
-                                ),
-                          ...pilGizi(a['status_gizi']),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: AppColors.teksRedup,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// HALAMAN 3: HASIL PENDATAAN ANAK
-// ---------------------------------------------------------------------------
-
-class _HasilAnakPage extends StatefulWidget {
-  final String pendaftaranId;
-
-  const _HasilAnakPage({
-    required this.pendaftaranId,
-  });
-
-  @override
-  State<_HasilAnakPage> createState() => _HasilAnakPageState();
-}
-
-class _HasilAnakPageState extends State<_HasilAnakPage> {
-  Map<String, dynamic>? _d;
-  Map<String, String> _namaVaksin = {};
-  bool _memuat = true;
-  String? _gagal;
-
-  static const _namaSuplemen = {
-    'vitamin_a': 'Vitamin A',
-    'obat_cacing': 'Obat cacing',
-    'pmt': 'PMT',
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    _muat();
-  }
-
-  Future<void> _muat() async {
-    try {
-      final peta = <String, String>{};
-
-      try {
-        final v = await _get('/vaksin');
-        if (v is List) {
-          for (final e in v) {
-            if (e is Map) {
-              peta[_teks(e['id'])] = _teks(e['nama']);
-            }
-          }
-        }
-      } catch (_) {}
-
-      final d = await _get(
-        '$_prefix/pendaftaran/${widget.pendaftaranId}',
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        _d = d is Map ? Map<String, dynamic>.from(d) : null;
-        _namaVaksin = peta;
-        _gagal = null;
-        _memuat = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _gagal = _pesanError(e);
-        _memuat = false;
-      });
-    }
-  }
-
-  Map<String, dynamic>? _peta(dynamic v) =>
-      v is Map ? Map<String, dynamic>.from(v) : null;
-
-  Widget _baris(String label, String nilai) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 120,
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.teksRedup,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                nilai.isEmpty ? '-' : nilai,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-
-  Widget _kotak(
-    String nilai,
-    String label,
-    Color bg,
-    Color fg,
-  ) =>
-      Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: [
-              Text(
-                nilai,
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w600,
-                  color: fg,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 14.5,
-                  color: AppColors.teksRedup,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    return _halaman(
-      judul: 'Hasil Pendataan',
-      isi: RefreshIndicator(
-        onRefresh: _muat,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          children: [
-            if (_memuat)
-              _memuatBox()
-            else if (_gagal != null)
-              _gagalKartu(_gagal!, () {
-                setState(() => _memuat = true);
-                _muat();
-              })
-            else if (_d == null)
-              const SectionCard(
-                child: Text('Data tidak tersedia.'),
-              )
-            else
-              ..._isi(_d!),
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _isi(Map<String, dynamic> d) {
-    final anak = _peta(d['anak']) ?? {};
-    final jadwal = _peta(d['jadwal']) ?? {};
-    final u = _peta(d['pengukuran']);
-    final prev = _peta(d['pengukuran_sebelumnya']);
-    final c = _peta(d['catatan']);
-    final usia = int.tryParse(_teks(d['usia_bulan'])) ?? 0;
-    final imun =
-        (d['imunisasi'] as List? ?? []).whereType<Map>().toList();
-    final sup =
-        (d['suplemen'] as List? ?? []).whereType<Map>().toList();
-
-    final ulang = _tgl(c?['tanggal_kunjungan_ulang']);
-    final peringatan = _teks(u?['peringatan_validasi']);
-
-    return [
-      SectionCard(
-        title: _teks(anak['nama']).isEmpty ? 'Anak' : _teks(anak['nama']),
-        icon: Icons.child_care,
-        trailing: Pill(
-          _fmtTgl(_tgl(jadwal['tanggal'])),
-          bg: AppColors.hijauMuda,
-          fg: AppColors.hijau,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _baris(
-              'Jenis kelamin',
-              _teks(anak['jenis_kelamin']) == 'P'
-                  ? 'Perempuan'
-                  : 'Laki-laki',
-            ),
-            _baris('Usia', _usia(usia, lahir: anak['tanggal_lahir'], pada: _tgl(jadwal['tanggal']))),
-            if (_jam(jadwal['jam_mulai']).isNotEmpty)
-              _baris(
-                'Sesi posyandu',
-                '${_jam(jadwal['jam_mulai'])} WIB',
-              ),
-          ],
-        ),
-      ),
-      SectionCard(
-        title: 'Hasil Pengukuran (Kader)',
-        icon: Icons.straighten,
-        child: u == null
-            ? const Text(
-                'Kader belum menginput pengukuran.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.teksRedup,
-                ),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _kotak(
-                        _num(u['bb_kg']),
-                        'Berat\n(kg)',
-                        AppColors.biruMuda,
-                        AppColors.biru,
-                      ),
-                      const SizedBox(width: 8),
-                      _kotak(
-                        _num(u['tb_cm']),
-                        'Tinggi/\nPanjang (cm)',
-                        AppColors.hijauMuda,
-                        AppColors.hijau,
-                      ),
-                      const SizedBox(width: 8),
-                      _kotak(
-                        _num(u['lingkar_kepala_cm']),
-                        'Lingkar\nKepala (cm)',
-                        AppColors.kuningMuda,
-                        AppColors.kuning,
-                      ),
-                      const SizedBox(width: 8),
-                      _kotak(
-                        _num(u['lila_cm']),
-                        'LiLA\n(cm)',
-                        AppColors.merahMuda,
-                        AppColors.merah,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _baris('Cara ukur', _teks(u['cara_ukur'])),
-                  _baris(
-                    'Sedang sakit',
-                    u['sedang_sakit'] == true ? 'Ya' : 'Tidak',
-                  ),
-                  _baris(
-                    'ASI eksklusif',
-                    u['asi_eksklusif'] == true ? 'Ya' : 'Tidak',
-                  ),
-                  if (_teks(u['keluhan']).isNotEmpty)
-                    _baris('Keluhan', _teks(u['keluhan'])),
-                  if (_teks(u['catatan']).isNotEmpty)
-                    _baris('Catatan kader', _teks(u['catatan'])),
-                  if (prev != null)
-                    _baris(
-                      'Sebelumnya',
-                      'BB ${_num(prev['bb_kg'])} kg · TB ${_num(prev['tb_cm'])} cm',
-                    ),
-                  if (peringatan.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Perhatian: $peringatan',
-                      style: const TextStyle(
-                        color: AppColors.merah,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-      ),
-      SectionCard(
-        title: 'Status Gizi',
-        icon: Icons.monitor_weight_outlined,
-        child: u == null
-            ? const Text(
-                'Belum ada pengukuran.',
-                style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
-              )
-            : KotakStatusGizi(d['status_gizi']),
-      ),
-      SectionCard(
-        title: 'Catatan Bidan',
-        icon: Icons.assignment_outlined,
-        child: c == null
-            ? const Text(
-                'Bidan belum menuliskan catatan.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.teksRedup,
-                ),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _baris('Keluhan', _teks(c['keluhan'])),
-                  _baris('Catatan untuk orang tua', _teks(c['catatan_evaluasi'])),
-                  _baris('Saran gizi', _teks(c['saran_gizi'])),
-                  _baris(
-                    'Kunjungan ulang',
-                    ulang == null ? '' : _fmtTgl(ulang),
-                  ),
-                ],
-              ),
-      ),
-      if (imun.isNotEmpty)
-        SectionCard(
-          title: 'Imunisasi',
-          icon: Icons.vaccines_outlined,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final v in imun)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${_namaVaksin[_teks(v['jenis_vaksin_id'])] ?? 'Vaksin'} · Dosis ${_teks(v['dosis_ke'])}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 17,
-                        ),
-                      ),
-                      if (_teks(v['kondisi_anak']).isNotEmpty)
-                        Text(
-                          'Kondisi: ${_kondisiTeks(v['kondisi_anak'])}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: AppColors.teksRedup,
-                          ),
-                        ),
-                      if (_teks(v['nomor_batch']).isNotEmpty)
-                        Text('No. batch: ${_teks(v['nomor_batch'])}',
-                            style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-                      if (_teks(v['reaksi_kipi']).isNotEmpty)
-                        Text('Reaksi setelah imunisasi: ${_teks(v['reaksi_kipi'])}',
-                            style: const TextStyle(fontSize: 16, color: AppColors.merah)),
-                      if (_teks(v['tempat']).isNotEmpty)
-                        Text('Tempat: ${_teks(v['tempat'])}',
-                            style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-                      if (_teks(v['catatan']).isNotEmpty)
-                        Text(
-                          'Catatan: ${_teks(v['catatan'])}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: AppColors.teksRedup,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-      if (sup.isNotEmpty)
-        SectionCard(
-          title: 'Suplemen',
-          icon: Icons.medication_outlined,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final s in sup)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _namaSuplemen[_teks(s['jenis'])] ??
-                            _teks(s['jenis']),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 17,
-                        ),
-                      ),
-                      if (_teks(s['keterangan_dosis']).isNotEmpty)
-                        Text(
-                          'Dosis: ${_teks(s['keterangan_dosis'])}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: AppColors.teksRedup,
-                          ),
-                        ),
-                      if (_teks(s['catatan']).isNotEmpty)
-                        Text(
-                          'Catatan: ${_teks(s['catatan'])}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: AppColors.teksRedup,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-    ];
   }
 }

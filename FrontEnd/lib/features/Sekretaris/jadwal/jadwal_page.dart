@@ -102,6 +102,99 @@ const teksGelapJadwal = Color(0xFF1F2937);
 /// Garis tepi kartu & kolom isian: hitam lembut (tidak mencolok).
 const garisKartuJadwal = Color(0xFFB8BEC6);
 
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const bayanganKartuJadwal = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+/// Warna aksen kartu (garis pemisah, ikon kecil, tautan): hijau lembut senada header.
+const aksenKartuJadwal = Color(0xFF5E9C84);
+
+/// Dekorasi kartu putih dengan bayangan lembut.
+BoxDecoration dekorKartuJadwal() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: bayanganKartuJadwal,
+    );
+
+/// Kepala kartu: judul tebal kapital di kiri, keterangan di kanan,
+/// lalu garis pemisah berwarna di bawahnya.
+Widget kepalaKartuJadwal(String judul, {String? kanan}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: teksGelapJadwal,
+                ),
+              ),
+            ),
+            if (kanan != null) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: const TextStyle(
+                      fontSize: 15.5, fontWeight: FontWeight.w600, color: teksGelapJadwal)),
+            ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: aksenKartuJadwal),
+    ],
+  );
+}
+
+/// Satu bagian isi kartu: ikon kecil + label tebal, nilai di bawahnya.
+Widget bagianKartuJadwal(IconData ikon, String label, String nilai) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(ikon, size: 18, color: aksenKartuJadwal),
+            const SizedBox(width: 6),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700, color: teksGelapJadwal)),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Padding(
+          padding: const EdgeInsets.only(left: 24),
+          child: Text(nilai,
+              style: const TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFF374151))),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Tautan "Lihat detail" (biru bergaris bawah).
+const tautanDetailJadwal = Text(
+  'Lihat detail',
+  style: TextStyle(
+    fontSize: 14.5,
+    fontWeight: FontWeight.w600,
+    color: aksenKartuJadwal,
+    decoration: TextDecoration.underline,
+    decorationColor: aksenKartuJadwal,
+  ),
+);
+
 String pesanErrorJadwal(Object e) {
   if (e is DioException) {
     final d = e.response?.data;
@@ -443,11 +536,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: garisKartuJadwal, width: 1.2),
-                          ),
+                          decoration: dekorKartuJadwal(),
                           child: const Text(
                             'Belum ada jadwal posyandu yang akan datang.\nTekan "Tambah" untuk membuat jadwal baru.',
                             textAlign: TextAlign.center,
@@ -470,49 +559,53 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
   Widget _kartu(JadwalItem j) {
     final jam = j.jamSelesai.isEmpty ? j.jamMulai : '${j.jamMulai} - ${j.jamSelesai}';
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: garisKartuJadwal, width: 1.2),
-      ),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
+      decoration: dekorKartuJadwal(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _baris('Hari/Tanggal', tglPanjangJadwal(j.tanggal)),
-          const SizedBox(height: 6),
-          _baris('Waktu', '$jam WIB'),
-          const SizedBox(height: 6),
-          _baris('Lokasi', j.lokasi.isEmpty ? '-' : j.lokasi),
-          if (j.alasanKunci.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE3F2FD),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFBFDFF7)),
-              ),
-              child: Text(j.alasanKunci,
-                  style: const TextStyle(fontSize: 15, height: 1.35, color: Color(0xFF2563EB))),
-            ),
-          ],
-          if (!j.terkunci) ...[
-            const SizedBox(height: 12),
-            Row(
+          kepalaKartuJadwal(tglPanjangJadwal(j.tanggal), kanan: '$jam WIB'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (j.bolehUbah)
-                  Expanded(child: _tombol('Edit', hijauTombolJadwal, () => _form(awal: j))),
-                if (j.bolehUbah && (j.bolehBatal || j.bolehHapus)) const SizedBox(width: 8),
-                if (j.bolehHapus)
-                  Expanded(child: _tombol('Hapus', AppColors.merah, () => _hapus(j)))
-                else if (j.bolehBatal)
-                  Expanded(child: _tombol('Batalkan', AppColors.merah, () => _batalkan(j))),
+                bagianKartuJadwal(
+                    Icons.location_on_outlined, 'Lokasi', j.lokasi.isEmpty ? '-' : j.lokasi),
+                if (j.alasanKunci.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(j.alasanKunci,
+                        style: const TextStyle(
+                            fontSize: 15, height: 1.35, color: Color(0xFF2563EB))),
+                  ),
+                ],
+                if (!j.terkunci) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      if (j.bolehUbah)
+                        Expanded(child: _tombol('Edit', hijauTombolJadwal, () => _form(awal: j))),
+                      if (j.bolehUbah && (j.bolehBatal || j.bolehHapus)) const SizedBox(width: 8),
+                      if (j.bolehHapus)
+                        Expanded(child: _tombol('Hapus', AppColors.merah, () => _hapus(j)))
+                      else if (j.bolehBatal)
+                        Expanded(
+                            child: _tombol('Batalkan', AppColors.merah, () => _batalkan(j))),
+                    ],
+                  ),
+                ],
               ],
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -530,27 +623,6 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
         onPressed: onTap,
         child: Text(teks, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
       ),
-    );
-  }
-
-  Widget _baris(String label, String nilai) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 108,
-          child: Text(label,
-              style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w600, color: teksGelapJadwal)),
-        ),
-        const Text(': ',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: teksGelapJadwal)),
-        Expanded(
-          child: Text(nilai,
-              style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w600, height: 1.3, color: teksGelapJadwal)),
-        ),
-      ],
     );
   }
 }

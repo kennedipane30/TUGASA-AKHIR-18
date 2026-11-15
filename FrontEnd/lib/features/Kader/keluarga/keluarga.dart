@@ -13,13 +13,149 @@ import '../../../core/config/api_client.dart';
 
 const kkHijau = Color(0xFF065F46);
 const kkHijauMuda = Color(0xFFE7F5EF);
-const kkTeksGelap = Color(0xFF0F172A);
+const kkTeksGelap = Color(0xFF1F2937);
 const kkTeksAbu = Color(0xFF64748B);
-const kkGaris = Color(0xFFE6ECE8);
-const kkGarisInput = Color(0xFFD7E6DD);
-const kkIsi = Color(0xFFF7FAF8);
+
+/// Garis tepi field, kolom cari & kotak di dalam kartu: hitam lembut.
+const kkGaris = Color(0xFFB8BEC6);
+const kkGarisInput = kkGaris;
+const kkIsi = Colors.white;
 const kkMerah = Color(0xFFDC2626);
 const kkLatar = Color(0xFFF4F7F5);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const kkAksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const kkBayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+BoxDecoration kkDekorKartu() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: kkBayangan,
+    );
+
+/// Kepala kartu: judul kapital tebal di kiri, keterangan di kanan, garis aksen di bawah.
+Widget kkKepala(String judul, {String? kanan, Widget? aksi}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: kkTeksGelap,
+                ),
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: const TextStyle(
+                      fontSize: 15.5, fontWeight: FontWeight.w600, color: kkTeksGelap)),
+            ],
+            if (aksi != null) aksi,
+          ],
+        ),
+      ),
+      Container(height: 3, color: kkAksen),
+    ],
+  );
+}
+
+/// Tautan kecil hijau lembut bergaris bawah (mis. "Lihat detail").
+Widget kkTautan(String teks, {Color warna = kkAksen}) => Text(
+      teks,
+      style: TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w600,
+        color: warna,
+        decoration: TextDecoration.underline,
+        decorationColor: warna,
+      ),
+    );
+
+/// Kotak pesan (kosong / gagal) di dalam kartu.
+Widget kkKartuPesan(String teks) => Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+      decoration: kkDekorKartu(),
+      child: Text(teks,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16, color: kkTeksAbu, height: 1.45)),
+    );
+
+/// Tombol hijau penuh (tinggi 50, sudut 14).
+Widget kkTombolHijau(String label, {IconData? ikon, VoidCallback? onPressed, bool memuat = false}) {
+  return SizedBox(
+    width: double.infinity,
+    height: 50,
+    child: ElevatedButton(
+      onPressed: memuat ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: kkHijau,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: kkHijau.withValues(alpha: 0.45),
+        disabledForegroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
+      ),
+      child: memuat
+          ? const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
+            )
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (ikon != null) ...[Icon(ikon, size: 20), const SizedBox(width: 8)],
+                Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+              ],
+            ),
+    ),
+  );
+}
+
+/// Tombol bergaris (tinggi 50, sudut 14). Merah untuk Batal / Hapus.
+Widget kkTombolGaris(String label,
+    {IconData? ikon, VoidCallback? onPressed, Color warna = kkHijau}) {
+  return SizedBox(
+    width: double.infinity,
+    height: 50,
+    child: OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: warna,
+        backgroundColor: Colors.white,
+        side: BorderSide(color: warna, width: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (ikon != null) ...[Icon(ikon, size: 20), const SizedBox(width: 8)],
+          Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+        ],
+      ),
+    ),
+  );
+}
 
 final Options _opsi = Options(receiveTimeout: const Duration(seconds: 15));
 
@@ -224,12 +360,32 @@ class KeluargaAkunApi {
 // ---------------------------------------------------------------------------
 // WIDGET UMUM
 // ---------------------------------------------------------------------------
+/// Header hijau polos, judul di tengah (sama dengan halaman lain).
 PreferredSizeWidget kkAppBar(String judul) => AppBar(
       backgroundColor: kkHijau,
       foregroundColor: Colors.white,
       elevation: 0,
-      title: Text(judul,
-          style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600)),
+      scrolledUnderElevation: 0,
+      centerTitle: true,
+      toolbarHeight: 56,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      iconTheme: const IconThemeData(color: Colors.white, size: 22),
+      title: Text(
+        judul,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 21,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.3,
+          color: Colors.white,
+        ),
+      ),
     );
 
 Widget kkLabel(String teks, {bool opsional = false, bool wajib = false}) => Padding(
@@ -237,7 +393,7 @@ Widget kkLabel(String teks, {bool opsional = false, bool wajib = false}) => Padd
       child: Text.rich(TextSpan(
         text: teks,
         style: const TextStyle(
-            fontSize: 14.5, fontWeight: FontWeight.w600, color: kkTeksGelap),
+            fontSize: 15.5, fontWeight: FontWeight.w600, color: kkTeksGelap),
         children: [
           if (wajib) const TextSpan(text: ' *', style: TextStyle(color: kkMerah)),
           if (opsional)
@@ -251,8 +407,9 @@ Widget kkLabel(String teks, {bool opsional = false, bool wajib = false}) => Padd
 
 Widget kkJarak() => const SizedBox(height: 14);
 
-InputDecoration kkDekor(String hint, {Widget? suffix, bool terkunci = false}) {
-  OutlineInputBorder b(Color c, [double w = 1]) => OutlineInputBorder(
+/// Dekorasi field form: putih, garis tepi hitam lembut, [ikon] di depan.
+InputDecoration kkDekor(String hint, {Widget? suffix, bool terkunci = false, IconData? ikon}) {
+  OutlineInputBorder b(Color c, [double w = 1.2]) => OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: c, width: w),
       );
@@ -261,63 +418,68 @@ InputDecoration kkDekor(String hint, {Widget? suffix, bool terkunci = false}) {
     counterText: '',
     isDense: true,
     filled: true,
-    fillColor: terkunci ? const Color(0xFFEFF2F0) : kkIsi,
+    fillColor: terkunci ? const Color(0xFFEFF2F0) : Colors.white,
+    prefixIcon: ikon == null ? null : Icon(ikon, color: kkAksen, size: 22),
     suffixIcon: suffix,
+    hintStyle: const TextStyle(fontSize: 15.5, color: kkTeksAbu),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     enabledBorder: b(kkGarisInput),
     disabledBorder: b(kkGarisInput),
+    border: b(kkGarisInput),
     focusedBorder: b(kkHijau, 1.6),
     errorBorder: b(kkMerah),
     focusedErrorBorder: b(kkMerah, 1.6),
   );
 }
 
-/// Kartu putih berjudul untuk satu bagian form.
+/// Kartu putih berbayang: kepala (judul kapital + garis aksen), lalu isi.
 class KartuBagian extends StatelessWidget {
   final String judul;
   final String? sub;
+  final String? kanan;
   final Widget child;
   final Widget? aksi;
 
-  const KartuBagian({super.key, required this.judul, this.sub, required this.child, this.aksi});
+  const KartuBagian({
+    super.key,
+    required this.judul,
+    this.sub,
+    this.kanan,
+    required this.child,
+    this.aksi,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kkGaris),
-      ),
+      clipBehavior: Clip.antiAlias,
+      decoration: kkDekorKartu(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(judul,
-                    style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w700, color: kkTeksGelap)),
-              ),
-              if (aksi != null) aksi!,
-            ],
+          kkKepala(judul, kanan: kanan, aksi: aksi),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (sub != null) ...[
+                  Text(sub!, style: const TextStyle(fontSize: 14.5, color: kkTeksAbu, height: 1.35)),
+                  const SizedBox(height: 12),
+                ],
+                child,
+              ],
+            ),
           ),
-          if (sub != null) ...[
-            const SizedBox(height: 4),
-            Text(sub!, style: const TextStyle(fontSize: 13.5, color: kkTeksAbu)),
-          ],
-          const SizedBox(height: 14),
-          child,
         ],
       ),
     );
   }
 }
 
-/// Bar tombol bawah: [kiri] [kanan].
+/// Bar tombol bawah: [kiri] [kanan]. Tombol kiri merah bila "Batal".
 class BarAksi extends StatelessWidget {
   final String labelKiri, labelKanan;
   final VoidCallback? onKiri, onKanan;
@@ -334,48 +496,24 @@ class BarAksi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final merah = labelKiri == 'Batal';
     return SafeArea(
       top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: kkGaris)),
-        ),
+      // Tanpa latar footer: tombol berdiri sendiri.
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Row(
           children: [
             Expanded(
-              child: OutlinedButton(
+              child: kkTombolGaris(
+                labelKiri,
                 onPressed: memuat ? null : onKiri,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: kkHijau,
-                  side: const BorderSide(color: kkHijau),
-                  minimumSize: const Size.fromHeight(50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(labelKiri,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                warna: merah ? kkMerah : kkHijau,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: ElevatedButton(
-                onPressed: memuat ? null : onKanan,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kkHijau,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: memuat
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
-                      )
-                    : Text(labelKanan,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              ),
+              child: kkTombolHijau(labelKanan, onPressed: onKanan, memuat: memuat),
             ),
           ],
         ),
@@ -391,6 +529,7 @@ class FieldTanggal extends StatelessWidget {
   final DateTime awal, akhir;
   final DateTime? bawaan;
   final String? Function(String?)? validator;
+  final IconData ikon;
 
   const FieldTanggal({
     super.key,
@@ -400,6 +539,7 @@ class FieldTanggal extends StatelessWidget {
     required this.akhir,
     this.bawaan,
     this.validator,
+    this.ikon = Icons.calendar_month_outlined,
   });
 
   @override
@@ -408,7 +548,7 @@ class FieldTanggal extends StatelessWidget {
       controller: c,
       readOnly: true,
       validator: validator,
-      decoration: kkDekor(hint, suffix: const Icon(Icons.calendar_today_outlined, size: 20)),
+      decoration: kkDekor(hint, ikon: ikon),
       onTap: () async {
         var awalPilih = kkParseTgl(c.text) ?? bawaan ?? akhir;
         if (awalPilih.isBefore(awal)) awalPilih = awal;
@@ -545,7 +685,7 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
               TextFormField(
                 controller: i.pekerjaanIbu,
                 textCapitalization: TextCapitalization.words,
-                decoration: kkDekor('Contoh: Ibu rumah tangga'),
+                decoration: kkDekor('Contoh: Ibu rumah tangga', ikon: Icons.work_outline),
               ),
               kkJarak(),
               kkLabel('Alamat', wajib: true),
@@ -554,7 +694,7 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
                 minLines: 2,
                 maxLines: 3,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: kkDekor('Nama jalan / dusun / desa'),
+                decoration: kkDekor('Nama jalan / dusun / desa', ikon: Icons.home_outlined),
                 validator: (v) =>
                     (v ?? '').trim().isEmpty ? 'Alamat wajib diisi' : null,
               ),
@@ -572,7 +712,7 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
                           keyboardType: TextInputType.number,
                           maxLength: 3,
                           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          decoration: kkDekor('001'),
+                          decoration: kkDekor('001', ikon: Icons.signpost_outlined),
                           validator: (v) => _rtRw(v, 'RT'),
                         ),
                       ],
@@ -589,7 +729,7 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
                           keyboardType: TextInputType.number,
                           maxLength: 3,
                           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          decoration: kkDekor('002'),
+                          decoration: kkDekor('002', ikon: Icons.signpost_outlined),
                           validator: (v) => (v ?? '').trim().isEmpty
                               ? 'RW wajib diisi'
                               : _rtRw(v, 'RW'),
@@ -620,7 +760,8 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
                     ),
                     const Expanded(
                       child: Text('Tidak ada data suami / ayah',
-                          style: TextStyle(fontSize: 14.5, color: kkTeksGelap)),
+                          style: TextStyle(
+                              fontSize: 15.5, fontWeight: FontWeight.w500, color: kkTeksGelap)),
                     ),
                   ],
                 ),
@@ -631,7 +772,7 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
                 TextFormField(
                   controller: i.namaAyah,
                   textCapitalization: TextCapitalization.words,
-                  decoration: kkDekor('Nama lengkap'),
+                  decoration: kkDekor('Nama lengkap', ikon: Icons.person_outline),
                 ),
                 kkJarak(),
                 kkLabel('NIK', opsional: true),
@@ -640,7 +781,7 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
                   keyboardType: TextInputType.number,
                   maxLength: 16,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: kkDekor('16 digit'),
+                  decoration: kkDekor('16 digit', ikon: Icons.badge_outlined),
                   validator: (v) {
                     final t = (v ?? '').trim();
                     if (t.isEmpty) return null;
@@ -668,7 +809,7 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
                   keyboardType: TextInputType.phone,
                   maxLength: 15,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: kkDekor('08xxxxxxxxxx'),
+                  decoration: kkDekor('08xxxxxxxxxx', ikon: Icons.phone_outlined),
                   validator: (v) {
                     final t = (v ?? '').trim();
                     if (t.isNotEmpty && (t.length < 10 || t.length > 15)) {
@@ -682,7 +823,7 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
                 TextFormField(
                   controller: i.pekerjaanAyah,
                   textCapitalization: TextCapitalization.words,
-                  decoration: kkDekor('Contoh: Petani'),
+                  decoration: kkDekor('Contoh: Petani', ikon: Icons.work_outline),
                 ),
               ],
             ],
@@ -693,22 +834,18 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
   }
 }
 
-/// Baris info "Label : nilai" (read-only).
-Widget kkInfo(String label, String nilai) => Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 92,
-            child: Text(label, style: const TextStyle(fontSize: 14.5, color: kkTeksAbu)),
-          ),
-          const Text(': ', style: TextStyle(fontSize: 14.5, color: kkTeksAbu)),
-          Expanded(
-            child: Text(_str(nilai) ?? '-',
-                style: const TextStyle(
-                    fontSize: 14.5, fontWeight: FontWeight.w600, color: kkTeksGelap)),
-          ),
-        ],
-      ),
-    );
+/// Baris info "Label : nilai" (read-only, hitam tebal, nilai lanjut ke samping).
+Widget kkInfo(String label, String nilai, {double lebar = 110}) {
+  const gaya = TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, height: 1.35, color: kkTeksGelap);
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: lebar, child: Text(label, style: gaya)),
+        const Text(': ', style: gaya),
+        Expanded(child: Text(_str(nilai) ?? '-', style: gaya)),
+      ],
+    ),
+  );
+}

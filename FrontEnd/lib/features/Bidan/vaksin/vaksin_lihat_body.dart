@@ -6,6 +6,177 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../../service/vaksin_service.dart';
 
+const _hijauTua = Color(0xFF065F46);
+const _teksGelap = Color(0xFF1F2937);
+
+/// Garis tepi kotak di dalam kartu & field: hitam lembut.
+const _garis = Color(0xFFB8BEC6);
+
+/// Warna aksen kartu: hijau lembut senada header.
+const _aksen = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const _bayangan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+BoxDecoration _dekorKartu() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: _bayangan,
+    );
+
+/// Kepala kartu: judul kapital tebal di kiri, keterangan di kanan, garis aksen di bawah.
+Widget _kepala(String judul, {String? kanan, Color warnaKanan = _teksGelap}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: _teksGelap,
+                ),
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: warnaKanan)),
+            ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: _aksen),
+    ],
+  );
+}
+
+/// Kartu putih berbayang: kepala + isi.
+Widget _kartuIsi({
+  required String judul,
+  String? kanan,
+  Color warnaKanan = _teksGelap,
+  required Widget child,
+}) {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 14),
+    clipBehavior: Clip.antiAlias,
+    decoration: _dekorKartu(),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _kepala(judul, kanan: kanan, warnaKanan: warnaKanan),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: child,
+        ),
+      ],
+    ),
+  );
+}
+
+/// Tautan kecil bergaris bawah.
+Widget _tautan(String teks, {Color warna = _aksen}) => Text(
+      teks,
+      style: TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w600,
+        color: warna,
+        decoration: TextDecoration.underline,
+        decorationColor: warna,
+      ),
+    );
+
+Widget _isiTombol(String label, IconData? ikon) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (ikon != null) ...[Icon(ikon, size: 20), const SizedBox(width: 8)],
+        Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+      ],
+    );
+
+/// Tombol hijau penuh (tinggi 50, sudut 14).
+Widget _tombolHijau(String label, {IconData? ikon, VoidCallback? onPressed}) => SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _hijauTua,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: const Color(0xFF7FAF9F),
+          disabledForegroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
+        ),
+        child: _isiTombol(label, ikon),
+      ),
+    );
+
+/// Tombol bergaris (tinggi 50, sudut 14).
+Widget _tombolGaris(String label, {IconData? ikon, VoidCallback? onPressed, Color warna = _hijauTua}) =>
+    SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: warna,
+          backgroundColor: Colors.white,
+          side: BorderSide(color: warna, width: 1.4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
+        ),
+        child: _isiTombol(label, ikon),
+      ),
+    );
+
+/// Dekorasi field form: putih, garis tepi hitam lembut, ikon di depan.
+InputDecoration _dekorForm(String label, IconData ikon, {String? hint}) {
+  OutlineInputBorder garis(Color c, double w) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: c, width: w),
+      );
+  return InputDecoration(
+    labelText: label,
+    hintText: hint,
+    counterText: '',
+    filled: true,
+    fillColor: Colors.white,
+    prefixIcon: Icon(ikon, color: _aksen),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+    border: garis(_garis, 1.2),
+    enabledBorder: garis(_garis, 1.2),
+    focusedBorder: garis(_hijauTua, 1.6),
+  );
+}
+
+/// Judul lembar bawah: kapital + garis aksen.
+Widget _judulLembar(String teks) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(teks.toUpperCase(),
+            style: const TextStyle(
+                fontSize: 17, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _teksGelap)),
+        const SizedBox(height: 8),
+        Container(height: 3, color: _aksen),
+      ],
+    );
+
 /// Tampilkan foto bukti vaksin (diambil lewat API agar memakai sesi login).
 Future<void> tampilkanBuktiVaksin(BuildContext context, String nama) {
   return showDialog<void>(
@@ -17,7 +188,7 @@ Future<void> tampilkanBuktiVaksin(BuildContext context, String nama) {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Foto Bukti Vaksin', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
+            _judulLembar('Foto Bukti Vaksin'),
             const SizedBox(height: 10),
             FutureBuilder<List<int>>(
               future: VaksinService().ambilBukti(nama),
@@ -37,10 +208,7 @@ Future<void> tampilkanBuktiVaksin(BuildContext context, String nama) {
               },
             ),
             const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: AppButton('Tutup', filled: false, onPressed: () => Navigator.pop(ctx)),
-            ),
+            _tombolGaris('Tutup', onPressed: () => Navigator.pop(ctx)),
           ],
         ),
       ),
@@ -173,12 +341,11 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off, size: 40, color: AppColors.teksRedup),
-              const SizedBox(height: 10),
               Text(_gagal ?? 'Data vaksin tidak dapat dimuat',
-                  textAlign: TextAlign.center, style: const TextStyle(fontSize: 16.5)),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16.5, color: _teksGelap)),
               const SizedBox(height: 12),
-              AppButton('Coba Lagi', icon: Icons.refresh, onPressed: () {
+              _tombolHijau('Coba Lagi', ikon: Icons.refresh, onPressed: () {
                 setState(() => _memuat = true);
                 _muat();
               }),
@@ -195,23 +362,18 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
         children: [
           _ringkasan(k),
           if (!k.anak.riwayatDikonfirmasi) ...[
-            const SizedBox(height: 4),
             _infoRiwayatAwal(k),
-          ],
-          const SizedBox(height: 12),
-          _pilihTab(k),
-          const SizedBox(height: 12),
-          if (widget.bisaKelola && _tab == 1) ...[
-            SizedBox(
-              width: double.infinity,
-              child: AppButton(
-                'Catat Vaksin dari Luar Posyandu',
-                icon: Icons.add_circle_outline,
-                filled: false,
-                onPressed: () => _formLuar(k),
-              ),
-            ),
             const SizedBox(height: 12),
+          ],
+          _pilihTab(k),
+          const SizedBox(height: 14),
+          if (widget.bisaKelola && _tab == 1) ...[
+            _tombolGaris(
+              'Catat Vaksin dari Luar Posyandu',
+              ikon: Icons.add_circle_outline,
+              onPressed: () => _formLuar(k),
+            ),
+            const SizedBox(height: 14),
           ],
           if (_tab == 0) ..._isiJadwal(k),
           if (_tab == 1) ..._isiRiwayat(k),
@@ -223,66 +385,69 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
 
   // ================================================================= ringkasan
 
+  static const _pemisah = Divider(height: 1, color: Color(0xFFE5E7EB));
+
+  /// Baris ringkasan: keterangan di kiri, total di kanan.
+  Widget _barisJumlah(String label, String nilai, {Color warna = _teksGelap, bool redup = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _teksGelap)),
+          ),
+          const SizedBox(width: 10),
+          Text(nilai,
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: redup ? AppColors.teksRedup : warna)),
+        ],
+      ),
+    );
+  }
+
+  /// Status imunisasi: satu kartu, baris keterangan di kiri dan total di kanan.
   Widget _ringkasan(KartuVaksin k) {
     final r = k.ringkasan;
-    return SectionCard(
-      title: 'Status Imunisasi',
-      icon: Icons.verified_user_outlined,
-      trailing: Pill('Usia ${k.anak.usiaTeks}', bg: AppColors.biruMuda, fg: AppColors.biru),
+    return Container(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: _dekorKartu(),
+      margin: const EdgeInsets.only(bottom: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text('${r.persen}%',
-                  style: const TextStyle(fontSize: 27, fontWeight: FontWeight.w700, color: AppColors.hijau)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text('${r.sudah} dari ${r.totalDosis} dosis imunisasi rutin sudah diberikan',
-                    style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: r.totalDosis == 0 ? 0 : r.sudah / r.totalDosis,
-              minHeight: 9,
-              backgroundColor: AppColors.latar,
-              color: AppColors.hijau,
+          _kepala('Status Imunisasi', kanan: '${r.persen}%', warnaKanan: _hijauTua),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 4, 14, 4),
+            child: Column(
+              children: [
+                // Diurutkan dari yang paling perlu diperhatikan.
+                _barisJumlah('Susulan', '${r.terlambat} dosis',
+                    warna: AppColors.merah, redup: r.terlambat == 0),
+                _pemisah,
+                _barisJumlah('Saatnya diberikan', '${r.jatuhTempo} dosis',
+                    warna: AppColors.biru, redup: r.jatuhTempo == 0),
+                _pemisah,
+                if (r.terlewat > 0) ...[
+                  _barisJumlah('Lewat batas usia', '${r.terlewat} dosis', redup: true),
+                  _pemisah,
+                ],
+                _barisJumlah('Imunisasi rutin diberikan', '${r.sudah} / ${r.totalDosis} dosis'),
+                _pemisah,
+                _barisJumlah('Riwayat vaksin', '${k.riwayat.length} vaksin'),
+                _pemisah,
+                _barisJumlah('Imunisasi dasar', r.dasarLengkap ? 'Lengkap' : 'Belum lengkap',
+                    warna: r.dasarLengkap ? _hijauTua : AppColors.kuning),
+                _pemisah,
+                _barisJumlah('Imunisasi lanjutan', r.lanjutanLengkap ? 'Lengkap' : 'Belum lengkap',
+                    warna: r.lanjutanLengkap ? _hijauTua : AppColors.teksRedup),
+                _pemisah,
+                _barisJumlah('Usia anak', k.anak.usiaTeks),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: StatBox(
-                    nilai: '${r.jatuhTempo}', label: 'Saatnya\nDiberikan', bg: AppColors.biruMuda, fg: AppColors.biru),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: StatBox(nilai: '${r.terlambat}', label: 'Susulan', bg: AppColors.merahMuda, fg: AppColors.merah),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: StatBox(
-                    nilai: '${k.riwayat.length}', label: 'Riwayat\nVaksin', bg: AppColors.hijauMuda, fg: AppColors.hijau),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              r.dasarLengkap
-                  ? const Pill('Imunisasi dasar lengkap', bg: AppColors.hijauMuda, fg: AppColors.hijau)
-                  : const Pill('Imunisasi dasar belum lengkap', bg: AppColors.kuningMuda, fg: AppColors.kuning),
-              if (r.lanjutanLengkap)
-                const Pill('Imunisasi lanjutan lengkap', bg: AppColors.hijauMuda, fg: AppColors.hijau),
-              if (r.terlewat > 0) Pill('${r.terlewat} dosis lewat batas usia', bg: _abuMuda, fg: _abu),
-            ],
           ),
         ],
       ),
@@ -296,7 +461,11 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppColors.kuningMuda, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.kuningMuda,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _bayangan,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -312,7 +481,11 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
     final label = ['Jadwal', 'Riwayat (${k.riwayat.length})', 'Suplemen (${k.suplemen.length})'];
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: _bayangan,
+      ),
       child: Row(
         children: [
           for (var i = 0; i < label.length; i++)
@@ -324,7 +497,7 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
                   duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: _tab == i ? AppColors.hijau : Colors.transparent,
+                    color: _tab == i ? _hijauTua : Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -335,7 +508,7 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: _tab == i ? Colors.white : Colors.black87,
+                      color: _tab == i ? Colors.white : _teksGelap,
                     ),
                   ),
                 ),
@@ -346,15 +519,13 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
     );
   }
 
-  Widget _kosong(IconData ikon, String teks) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40),
-        child: Column(
-          children: [
-            Icon(ikon, size: 40, color: AppColors.teksRedup),
-            const SizedBox(height: 8),
-            Text(teks, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-          ],
-        ),
+  Widget _kosong(IconData ikon, String teks) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+        decoration: _dekorKartu(),
+        child: Text(teks,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
       );
 
   // ==================================================================== jadwal
@@ -369,14 +540,10 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
     }
     return [
       for (final g in grup.entries)
-        SectionCard(
-          title: g.key == '< 24 jam' ? 'Baru lahir (< 24 jam)' : 'Usia ${g.key}',
-          icon: Icons.event_note_outlined,
-          trailing: Pill(
-            '${g.value.where((e) => e.sudah).length}/${g.value.length}',
-            bg: g.value.every((e) => e.sudah || e.opsional) ? AppColors.hijauMuda : AppColors.latar,
-            fg: g.value.every((e) => e.sudah || e.opsional) ? AppColors.hijau : Colors.black87,
-          ),
+        _kartuIsi(
+          judul: g.key == '< 24 jam' ? 'Baru lahir (< 24 jam)' : 'Usia ${g.key}',
+          kanan: '${g.value.where((e) => e.sudah).length}/${g.value.length} dosis',
+          warnaKanan: g.value.every((e) => e.sudah || e.opsional) ? _hijauTua : _teksGelap,
           child: Column(children: [for (final e in g.value) _barisJadwal(e)]),
         ),
     ];
@@ -394,50 +561,69 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
 
   Widget _barisJadwal(JadwalVaksinAnak e) {
     final g = _gaya(e);
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () => _detailJadwal(e),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
-        child: SizedBox(
-          width: double.infinity,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(e.jadwal.namaDosis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
-              const SizedBox(height: 2),
-              Text(_subJadwal(e), style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  if (e.jadwal.lanjutan) const Pill('Lanjutan', bg: AppColors.biruMuda, fg: AppColors.biru),
-                  if (e.opsional) const Pill('Khusus daerah endemis', bg: _abuMuda, fg: _abu),
-                  Pill(_labelPil(e), bg: g.bg, fg: g.fg),
+    final tambahan = [
+      if (e.jadwal.lanjutan) 'Lanjutan',
+      if (e.opsional) 'Khusus daerah endemis',
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _detailJadwal(e),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _garis, width: 1.2),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(e.jadwal.namaDosis,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16.5, color: _teksGelap)),
+                const SizedBox(height: 2),
+                Text(_subJadwal(e),
+                    style: const TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFF374151))),
+                if (tambahan.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(tambahan,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _aksen)),
                 ],
-              ),
-            ],
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Text(_labelPil(e),
+                          style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: g.fg)),
+                    ),
+                    _tautan('Lihat detail'),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  /// Baris "Label : nilai" (hitam tebal, nilai lanjut ke samping).
   Widget _info(String label, String nilai) {
     if (nilai.trim().isEmpty) return const SizedBox.shrink();
+    const gaya = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.35, color: _teksGelap);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 130,
-            child: Text(label, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-          ),
-          Expanded(child: Text(nilai, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+          SizedBox(width: 140, child: Text(label, style: gaya)),
+          const Text(': ', style: gaya),
+          Expanded(child: Text(nilai, style: gaya)),
         ],
       ),
     );
@@ -462,20 +648,23 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(color: _abuMuda, borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(color: _garis, borderRadius: BorderRadius.circular(4)),
                 ),
               ),
               const SizedBox(height: 14),
+              _judulLembar(j.namaDosis),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  Icon(g.ikon, color: g.fg),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(j.namaDosis, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700))),
+                  Icon(g.ikon, size: 20, color: g.fg),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(e.labelStatus,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: g.fg)),
+                  ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Pill(e.labelStatus, bg: g.bg, fg: g.fg),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               _info('Mencegah', j.jenis.penyakit),
               _info('Cara pemberian', j.jenis.caraPemberian),
               _info('Usia pemberian', j.labelUsia),
@@ -486,8 +675,8 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
               if (r == null && e.status != StatusVaksin.terlewat) _info('Jadwal', e.teksJadwal),
               _info('Keterangan', j.keterangan),
               if (r != null) ...[
-                const Divider(height: 24),
-                const Text('Riwayat Pemberian', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+                const SizedBox(height: 10),
+                _judulLembar('Riwayat Pemberian'),
                 const SizedBox(height: 10),
                 ..._isiDetailRiwayat(r),
               ],
@@ -524,124 +713,97 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
 
   Widget _kartuRiwayat(RiwayatVaksin r) {
     final adaReaksi = r.reaksiKipi.isNotEmpty;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: r.menungguKonfirmasi ? AppColors.kuning : Colors.transparent),
-      ),
+    return _kartuIsi(
+      judul: r.namaDosis,
+      kanan: r.tanggal == null ? '-' : formatTanggal(r.tanggal!),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(color: AppColors.hijauMuda, shape: BoxShape.circle),
-                child: const Icon(Icons.vaccines, size: 20, color: AppColors.hijau),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(r.namaDosis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
-                    const SizedBox(height: 2),
-                    Text(r.tanggal == null ? '-' : formatTanggal(r.tanggal!),
-                        style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-                  ],
-                ),
-              ),
-              if (widget.bisaKelola && r.dariLuar)
-                IconButton(
-                  tooltip: 'Batalkan catatan',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => _hapus(r),
-                  icon: const Icon(Icons.delete_outline, color: AppColors.merah),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              Pill('Usia ${r.usiaTeks}', bg: AppColors.biruMuda, fg: AppColors.biru),
-              Pill(r.tempat.isEmpty ? r.labelSumber : r.tempat,
-                  bg: r.dariPosyandu ? AppColors.hijauMuda : AppColors.kuningMuda,
-                  fg: r.dariPosyandu ? AppColors.hijau : AppColors.kuning),
-              if (r.menungguKonfirmasi)
-                const Pill('Menunggu konfirmasi bidan', bg: AppColors.kuningMuda, fg: AppColors.kuning),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (r.namaPemberi.isNotEmpty)
-            Text('${r.dariPosyandu ? 'Diberikan oleh' : 'Petugas'}: ${r.namaPemberi}', style: const TextStyle(fontSize: 16)),
-          if (r.nomorBatch.isNotEmpty) Text('Nomor batch: ${r.nomorBatch}', style: const TextStyle(fontSize: 16)),
-          if (r.kondisiAnak.isNotEmpty)
-            Text('Kondisi anak: ${KondisiImunisasi.label(r.kondisiAnak)}', style: const TextStyle(fontSize: 16)),
-          if (r.catatan.isNotEmpty) Text('Catatan: ${r.catatan}', style: const TextStyle(fontSize: 16)),
-          if (r.fotoBukti.isNotEmpty)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => tampilkanBuktiVaksin(context, r.fotoBukti),
-                icon: const Icon(Icons.image_outlined, size: 18),
-                label: const Text('Lihat foto bukti'),
-              ),
+          if (r.menungguKonfirmasi)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 6),
+              child: Text('Menunggu konfirmasi bidan',
+                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: AppColors.kuning)),
             ),
+          _info('Usia', r.usiaTeks),
+          _info('Tempat', r.tempat.isEmpty ? r.labelSumber : r.tempat),
+          _info(r.dariPosyandu ? 'Diberikan oleh' : 'Petugas', r.namaPemberi),
+          _info('Nomor batch', r.nomorBatch),
+          _info('Kondisi anak', r.kondisiAnak.isEmpty ? '' : KondisiImunisasi.label(r.kondisiAnak)),
+          _info('Catatan', r.catatan),
           if (adaReaksi) ...[
             const SizedBox(height: 6),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: AppColors.merahMuda, borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.merah.withValues(alpha: 0.6), width: 1.2),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Reaksi setelah imunisasi',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.merah)),
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.merah)),
                   const SizedBox(height: 2),
-                  Text(r.reaksiKipi, style: const TextStyle(fontSize: 16, height: 1.35)),
+                  Text(r.reaksiKipi,
+                      style: const TextStyle(fontSize: 16, height: 1.35, color: _teksGelap)),
                   const SizedBox(height: 6),
                   Text(
-                    r.kipiTindakLanjut.isEmpty ? 'Menunggu tindak lanjut bidan' : 'Tindak lanjut bidan: ${r.kipiTindakLanjut}',
+                    r.kipiTindakLanjut.isEmpty
+                        ? 'Menunggu tindak lanjut bidan'
+                        : 'Tindak lanjut bidan: ${r.kipiTindakLanjut}',
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: r.kipiTindakLanjut.isEmpty ? AppColors.kuning : AppColors.hijau,
+                      fontWeight: FontWeight.w600,
+                      color: r.kipiTindakLanjut.isEmpty ? AppColors.kuning : _hijauTua,
                     ),
                   ),
                 ],
               ),
             ),
           ],
-          if (widget.bisaLaporKipi && !adaReaksi && _dalam30Hari(r)) ...[
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => _laporKipi(r),
-                icon: const Icon(Icons.report_problem_outlined, size: 18, color: AppColors.merah),
-                label: const Text('Laporkan reaksi setelah imunisasi', style: TextStyle(color: AppColors.merah)),
-              ),
-            ),
-          ],
-          if (widget.bisaKelola && (adaReaksi || _dalam30Hari(r))) ...[
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => _tindakLanjut(r),
-                icon: const Icon(Icons.healing_outlined, size: 18),
-                label: Text(adaReaksi ? 'Isi tindak lanjut reaksi' : 'Catat reaksi setelah imunisasi'),
-              ),
-            ),
-          ],
+          const SizedBox(height: 4),
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 14,
+            runSpacing: 4,
+            children: [
+              if (r.fotoBukti.isNotEmpty)
+                InkWell(
+                  onTap: () => tampilkanBuktiVaksin(context, r.fotoBukti),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: _tautan('Lihat foto bukti'),
+                  ),
+                ),
+              if (widget.bisaLaporKipi && !adaReaksi && _dalam30Hari(r))
+                InkWell(
+                  onTap: () => _laporKipi(r),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: _tautan('Laporkan reaksi', warna: AppColors.merah),
+                  ),
+                ),
+              if (widget.bisaKelola && (adaReaksi || _dalam30Hari(r)))
+                InkWell(
+                  onTap: () => _tindakLanjut(r),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: _tautan(adaReaksi ? 'Isi tindak lanjut' : 'Catat reaksi'),
+                  ),
+                ),
+              if (widget.bisaKelola && r.dariLuar)
+                InkWell(
+                  onTap: () => _hapus(r),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: _tautan('Batalkan catatan', warna: AppColors.merah),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
@@ -695,8 +857,8 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(judul, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 4),
+            _judulLembar(judul),
+            const SizedBox(height: 10),
             Text(keterangan, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup, height: 1.35)),
             const SizedBox(height: 12),
             if (label2 != null) ...[
@@ -704,12 +866,7 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
                 controller: c2,
                 maxLines: 2,
                 maxLength: 500,
-                decoration: InputDecoration(
-                  labelText: label2,
-                  filled: true,
-                  fillColor: AppColors.latar,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                ),
+                decoration: _dekorForm(label2, Icons.sick_outlined),
               ),
               const SizedBox(height: 8),
             ],
@@ -718,22 +875,14 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
               maxLines: 3,
               maxLength: 500,
               autofocus: true,
-              decoration: InputDecoration(
-                labelText: label,
-                filled: true,
-                fillColor: AppColors.latar,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-              ),
+              decoration: _dekorForm(label, Icons.edit_note_outlined),
             ),
             const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: AppButton('Kirim', icon: Icons.send_outlined, onPressed: () {
-                if (c1.text.trim().isEmpty) return;
-                simpanKedua?.call(c2.text.trim());
-                Navigator.pop(ctx, c1.text.trim());
-              }),
-            ),
+            _tombolHijau('Kirim', ikon: Icons.send_outlined, onPressed: () {
+              if (c1.text.trim().isEmpty) return;
+              simpanKedua?.call(c2.text.trim());
+              Navigator.pop(ctx, c1.text.trim());
+            }),
           ],
         ),
       ),
@@ -788,44 +937,16 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
     if (k.suplemen.isEmpty) return [_kosong(Icons.medication_outlined, 'Belum ada riwayat suplemen')];
     return [
       for (final s in k.suplemen)
-        Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-          child: Row(
+        _kartuIsi(
+          judul: s.nama,
+          kanan: s.tanggal == null ? '-' : formatTanggal(s.tanggal!),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(color: AppColors.kuningMuda, shape: BoxShape.circle),
-                child: const Icon(Icons.medication, size: 20, color: AppColors.kuning),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(s.nama, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${s.tanggal == null ? '-' : formatTanggal(s.tanggal!)} · usia ${s.usiaTeks}',
-                      style: const TextStyle(fontSize: 16, color: AppColors.teksRedup),
-                    ),
-                    if (s.ringkasDosis.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Pill(s.ringkasDosis, bg: AppColors.kuningMuda, fg: AppColors.kuning),
-                    ],
-                    if (s.catatan.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text('Catatan: ${s.catatan}', style: const TextStyle(fontSize: 16)),
-                    ],
-                    if (s.namaPemberi.isNotEmpty)
-                      Text('Diberikan oleh: ${s.namaPemberi}',
-                          style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
-                  ],
-                ),
-              ),
+              _info('Usia', s.usiaTeks),
+              _info('Dosis', s.ringkasDosis),
+              _info('Catatan', s.catatan),
+              _info('Diberikan oleh', s.namaPemberi),
             ],
           ),
         ),
@@ -895,14 +1016,8 @@ class _FormLuarState extends State<_FormLuar> {
     return null;
   }
 
-  InputDecoration _dekor(String label, {String? hint}) => InputDecoration(
-        labelText: label,
-        hintText: hint,
-        filled: true,
-        counterText: '',
-        fillColor: AppColors.latar,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-      );
+  InputDecoration _dekor(String label, IconData ikon, {String? hint}) =>
+      _dekorForm(label, ikon, hint: hint);
 
   Future<void> _pilihTanggal() async {
     final n = DateTime.now();
@@ -974,8 +1089,8 @@ class _FormLuarState extends State<_FormLuar> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Catat Vaksin dari Luar Posyandu', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
+              _judulLembar('Catat Vaksin dari Luar Posyandu'),
+              const SizedBox(height: 10),
               const Text(
                 'Isi sesuai keterangan orang tua untuk vaksin yang diberikan di rumah sakit, puskesmas, klinik, atau bidan praktik.',
                 style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
@@ -984,7 +1099,7 @@ class _FormLuarState extends State<_FormLuar> {
               DropdownButtonFormField<String>(
                 value: _kunci,
                 isExpanded: true,
-                decoration: _dekor('Vaksin & dosis'),
+                decoration: _dekor('Vaksin & dosis', Icons.vaccines_outlined),
                 items: [
                   for (final e in widget.opsi)
                     DropdownMenuItem(
@@ -1001,15 +1116,19 @@ class _FormLuarState extends State<_FormLuar> {
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _garis, width: 1.2),
+                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.event, size: 20, color: AppColors.hijau),
-                      const SizedBox(width: 10),
+                      const Icon(Icons.calendar_month_outlined, size: 22, color: _aksen),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           _tanggal == null ? 'Pilih tanggal pemberian' : 'Tanggal pemberian: ${formatTanggal(_tanggal!)}',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: _teksGelap),
                         ),
                       ),
                     ],
@@ -1027,19 +1146,19 @@ class _FormLuarState extends State<_FormLuar> {
                 controller: _tempat,
                 maxLength: 100,
                 textCapitalization: TextCapitalization.words,
-                decoration: _dekor('Tempat pemberian', hint: 'Mis. Puskesmas Balige'),
+                decoration: _dekor('Tempat pemberian', Icons.location_on_outlined, hint: 'Mis. Puskesmas Balige'),
               ),
               const SizedBox(height: 10),
-              TextField(controller: _batch, maxLength: 50, decoration: _dekor('Nomor batch (opsional)')),
+              TextField(controller: _batch, maxLength: 50, decoration: _dekor('Nomor batch (opsional)', Icons.qr_code_2)),
               const SizedBox(height: 10),
               TextField(
                 controller: _pemberi,
                 maxLength: 100,
                 textCapitalization: TextCapitalization.words,
-                decoration: _dekor('Nama petugas pemberi (opsional)'),
+                decoration: _dekor('Nama petugas pemberi (opsional)', Icons.person_outline),
               ),
               const SizedBox(height: 10),
-              TextField(controller: _catatan, maxLines: 2, decoration: _dekor('Catatan (opsional)')),
+              TextField(controller: _catatan, maxLines: 2, decoration: _dekor('Catatan (opsional)', Icons.notes_outlined)),
               if (_gagal != null) ...[
                 const SizedBox(height: 10),
                 Container(
@@ -1050,13 +1169,10 @@ class _FormLuarState extends State<_FormLuar> {
                 ),
               ],
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: AppButton(
-                  _kirim ? 'Menyimpan...' : 'Simpan',
-                  icon: Icons.save_outlined,
-                  onPressed: _kirim ? () {} : _simpan,
-                ),
+              _tombolHijau(
+                _kirim ? 'Menyimpan...' : 'Simpan',
+                ikon: Icons.save_outlined,
+                onPressed: _kirim ? null : _simpan,
               ),
             ],
           ),

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/pin_util.dart';
 import '../../../service/admin_service.dart';
-import 'kelola_akun_page.dart' show HeaderAkun, gayaStatusBarAkun, garisKartuAkun;
+import 'kelola_akun_page.dart' show HeaderAkun, gayaStatusBarAkun, garisKartuAkun, kepalaKartuAkun, bayanganKartuAkun;
 
 const _hijauTua = Color(0xFF065F46); // sama dengan warna header
 const _hijauGelap = Color(0xFF14634A);
@@ -199,23 +199,29 @@ class _EditAkunPageState extends State<EditAkunPage> {
                   padding: const EdgeInsets.all(16),
                   children: [
                     Container(
-                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+                      clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: garisKartuAkun, width: 1.2),
+                        boxShadow: bayanganKartuAkun,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Data Akun Petugas',
-                              style: TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.w600, color: _hijauTua)),
-                          Text(
-                            'Perbarui informasi akun petugas Posyandu ${widget.desa}',
-                            style: const TextStyle(
-                                fontSize: 16, height: 1.3, color: AppColors.teksRedup),
+                          kepalaKartuAkun(
+                            'Data Akun Petugas',
+                            kanan: Text(
+                              widget.desa,
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(
+                                  fontSize: 15.5, fontWeight: FontWeight.w600, color: _hijauTua),
+                            ),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                           _label('ROLE PETUGAS', 'Wajib Pilih', _hijauGelap,
                               AppColors.hijauMuda,
                               wajib: true),
@@ -301,6 +307,9 @@ class _EditAkunPageState extends State<EditAkunPage> {
                               if (t.isEmpty) return null;
                               return validasiPin(t);
                             },
+                          ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

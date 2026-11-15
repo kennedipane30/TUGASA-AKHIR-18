@@ -268,7 +268,7 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
                               children: [
                                 Text(_gagal!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 17)),
                                 const SizedBox(height: 12),
-                                AppButton('Coba Lagi', icon: Icons.refresh, onPressed: () {
+                                tombolHijauBidan('Coba Lagi', ikon: Icons.refresh, onPressed: () {
                                   setState(() => _memuat = true);
                                   _muat();
                                 }),
@@ -294,8 +294,9 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
             : 'Simpan Catatan';
 
     return SafeArea(
+      top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         decoration: const BoxDecoration(
           color: Colors.white,
           boxShadow: [BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, -2))],
@@ -308,9 +309,9 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
                 child: OutlinedButton(
                   onPressed: _kirim ? null : () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: _hijauHeader,
-                    side: const BorderSide(color: _hijauHeader, width: 1.4),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    foregroundColor: AppColors.merah,
+                    side: const BorderSide(color: AppColors.merah, width: 1.4),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
                   ),
                   child: const Text('Batal'),
@@ -330,7 +331,7 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
                     disabledBackgroundColor: _hijauHeader.withValues(alpha: 0.45),
                     disabledForegroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
                   ),
                   child: FittedBox(fit: BoxFit.scaleDown, child: Text(label)),

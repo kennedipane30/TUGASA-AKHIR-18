@@ -123,15 +123,9 @@ class _EditKeluargaPageState extends State<EditKeluargaPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_galat!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 15, color: kkTeksAbu)),
+              kkKartuPesan(_galat!),
               const SizedBox(height: 12),
-              TextButton(
-                onPressed: _muat,
-                child: const Text('Coba lagi',
-                    style: TextStyle(color: kkHijau, fontWeight: FontWeight.w600)),
-              ),
+              TextButton(onPressed: _muat, child: kkTautan('Coba lagi')),
             ],
           ),
         ),
@@ -158,26 +152,12 @@ class _EditKeluargaPageState extends State<EditKeluargaPage> {
           ),
           KartuBagian(
             judul: 'Data Anak',
-            sub: '${_anak.length} anak terdaftar',
+            kanan: '${_anak.length} anak',
             child: Column(
               children: [
                 for (final a in _anak) BarisAnak(anak: a, onUbah: () => _ubahAnak(a)),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _tambahAnak,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Tambah Anak',
-                        style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: kkHijau,
-                      side: const BorderSide(color: kkHijau),
-                      minimumSize: const Size.fromHeight(48),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 4),
+                kkTombolGaris('Tambah Anak', ikon: Icons.add, onPressed: _tambahAnak),
               ],
             ),
           ),

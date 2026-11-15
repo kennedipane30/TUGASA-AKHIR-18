@@ -83,7 +83,7 @@ class _KeluargaPageState extends State<KeluargaPage> {
 
   Widget _kotakCari() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
       child: TextField(
         controller: _cari,
         onChanged: _ketik,
@@ -94,7 +94,7 @@ class _KeluargaPageState extends State<KeluargaPage> {
           isDense: true,
           filled: true,
           fillColor: Colors.white,
-          prefixIcon: const Icon(Icons.search, color: kkTeksAbu),
+          prefixIcon: const Icon(Icons.search, color: Colors.black54),
           suffixIcon: _cari.text.isEmpty
               ? null
               : IconButton(
@@ -105,13 +105,17 @@ class _KeluargaPageState extends State<KeluargaPage> {
                   },
                 ),
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: kkGaris, width: 1.2),
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: kkGarisInput),
+            borderSide: const BorderSide(color: kkGaris, width: 1.2),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: kkHijau, width: 1.6),
+            borderSide: const BorderSide(color: Colors.black54, width: 1.4),
           ),
         ),
       ),
@@ -119,45 +123,39 @@ class _KeluargaPageState extends State<KeluargaPage> {
   }
 
   Widget _kartu(RingkasKeluarga k) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () => _buka(k),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: DecoratedBox(
+        decoration: kkDekorKartu(),
+        child: Material(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: kkGaris),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => _buka(k),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(k.namaIbu,
-                      style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w700, color: kkTeksGelap)),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: kkHijauMuda,
-                    borderRadius: BorderRadius.circular(20),
+                kkKepala(k.namaIbu, kanan: '${k.jumlahAnak} anak'),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      kkInfo('NIK', k.nik, lebar: 80),
+                      kkInfo('No. HP', k.noHp, lebar: 80),
+                      kkInfo('Alamat', k.alamat, lebar: 80),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: kkTautan(k.punyaAkun ? 'Lihat detail' : 'Belum ada akun',
+                            warna: k.punyaAkun ? kkAksen : kkTeksAbu),
+                      ),
+                    ],
                   ),
-                  child: Text('${k.jumlahAnak} anak',
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600, color: kkHijau)),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            kkInfo('NIK', k.nik),
-            kkInfo('No. HP', k.noHp),
-            kkInfo('Alamat', k.alamat),
-          ],
+          ),
         ),
       ),
     );
@@ -169,40 +167,28 @@ class _KeluargaPageState extends State<KeluargaPage> {
     }
     if (_galat != null) {
       return ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          const SizedBox(height: 60),
-          Text(_galat!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: kkTeksAbu)),
+          kkKartuPesan(_galat!),
           const SizedBox(height: 12),
-          Center(
-            child: TextButton(
-              onPressed: _muat,
-              child: const Text('Coba lagi',
-                  style: TextStyle(color: kkHijau, fontWeight: FontWeight.w600)),
-            ),
-          ),
+          Center(child: TextButton(onPressed: _muat, child: kkTautan('Coba lagi'))),
         ],
       );
     }
     if (_data.isEmpty) {
       return ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          const SizedBox(height: 60),
-          Text(
+          kkKartuPesan(
             _cari.text.trim().isEmpty
                 ? 'Belum ada data keluarga.'
                 : 'Keluarga tidak ditemukan.\nTambahkan akun bila orang tua belum terdaftar.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 15, color: kkTeksAbu, height: 1.4),
           ),
         ],
       );
     }
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       itemCount: _data.length,
       itemBuilder: (_, i) => _kartu(_data[i]),
     );
@@ -225,23 +211,10 @@ class _KeluargaPageState extends State<KeluargaPage> {
       ),
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: kkGaris)),
-          ),
-          child: ElevatedButton(
-            onPressed: _tambah,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kkHijau,
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(52),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Tambahkan Akun',
-                style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600)),
-          ),
+        // Tanpa latar footer: hanya tombol.
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          child: kkTombolHijau('Tambahkan Akun', ikon: Icons.person_add_alt_1_outlined, onPressed: _tambah),
         ),
       ),
     );

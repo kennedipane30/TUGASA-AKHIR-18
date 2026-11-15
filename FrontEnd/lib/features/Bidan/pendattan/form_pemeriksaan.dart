@@ -7,6 +7,230 @@ part of 'catat_pemeriksaan_page.dart';
 // ===========================================================================
 
 const _hijauHeader = Color(0xFF065F46);
+const _teksGelap = Color(0xFF1F2937);
+
+// ---------------------------------------------------------------------------
+// KOMPONEN TAMPILAN (seragam dengan halaman lain, dipakai juga Hasil Pendataan)
+// ---------------------------------------------------------------------------
+
+/// Garis tepi kotak di dalam kartu: hitam lembut.
+const garisKartuBidan = Color(0xFFB8BEC6);
+
+/// Aksen kartu: hijau lembut senada header.
+const aksenKartuBidan = Color(0xFF5E9C84);
+
+/// Bayangan lembut di bawah kartu (pengganti garis tepi).
+const bayanganKartuBidan = [
+  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
+];
+
+BoxDecoration dekorKartuBidan({Color warna = Colors.white}) => BoxDecoration(
+      color: warna,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: bayanganKartuBidan,
+    );
+
+/// Kepala kartu: judul kapital tebal di kiri, keterangan di kanan, garis aksen di bawah.
+Widget kepalaKartuBidan(String judul, {String? kanan, Color warnaKanan = _teksGelap}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                judul.toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: _teksGelap,
+                ),
+              ),
+            ),
+            if (kanan != null && kanan.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Text(kanan,
+                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: warnaKanan)),
+            ],
+          ],
+        ),
+      ),
+      Container(height: 3, color: aksenKartuBidan),
+    ],
+  );
+}
+
+/// Kartu putih berbayang; [judul] opsional (kepala + garis aksen).
+Widget kartuBidan({
+  String? judul,
+  String? kanan,
+  Color warnaKanan = _teksGelap,
+  Color warna = Colors.white,
+  required Widget child,
+}) {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 14),
+    clipBehavior: Clip.antiAlias,
+    decoration: dekorKartuBidan(warna: warna),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (judul != null) kepalaKartuBidan(judul, kanan: kanan, warnaKanan: warnaKanan),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: child,
+        ),
+      ],
+    ),
+  );
+}
+
+/// Baris "Label : nilai" (hitam tebal).
+Widget barisInfoBidan(String label, String nilai, {double lebar = 130}) {
+  const gaya = TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.35, color: _teksGelap);
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: lebar, child: Text(label, style: gaya)),
+        const Text(': ', style: gaya),
+        Expanded(child: Text(nilai.isEmpty ? '-' : nilai, style: gaya)),
+      ],
+    ),
+  );
+}
+
+/// Kotak angka pengukuran (BB, TB, LK, LiLA) bergaris tepi hitam lembut.
+Widget kotakUkurBidan(String nilai, String label) {
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: garisKartuBidan, width: 1.2),
+    ),
+    child: Column(
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(nilai,
+              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: _teksGelap)),
+        ),
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(label, style: const TextStyle(fontSize: 14, color: AppColors.teksRedup)),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Dekorasi field form: putih, garis tepi hitam lembut, ikon di depan.
+InputDecoration dekorFormBidan(String label, {String? hint, IconData? ikon}) {
+  OutlineInputBorder garis(Color c, double w) => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: c, width: w),
+      );
+  return InputDecoration(
+    labelText: label,
+    hintText: hint,
+    labelStyle: const TextStyle(fontSize: 16),
+    filled: true,
+    fillColor: Colors.white,
+    prefixIcon: ikon == null ? null : Icon(ikon, color: aksenKartuBidan),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    border: garis(garisKartuBidan, 1.2),
+    enabledBorder: garis(garisKartuBidan, 1.2),
+    disabledBorder: garis(garisKartuBidan, 1.2),
+    focusedBorder: garis(_hijauHeader, 1.6),
+  );
+}
+
+/// Kotak pilih (mis. tanggal) dengan gaya sama seperti field form.
+Widget kotakPilihBidan(IconData ikon, String teks, VoidCallback onTap) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(12),
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: garisKartuBidan, width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Icon(ikon, size: 22, color: aksenKartuBidan),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(teks,
+                style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w500, color: _teksGelap)),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _isiTombol(String label, IconData? ikon) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (ikon != null) ...[Icon(ikon, size: 20), const SizedBox(width: 8)],
+        Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+      ],
+    );
+
+/// Tombol hijau penuh (tinggi 50, sudut 14).
+Widget tombolHijauBidan(String label, {IconData? ikon, VoidCallback? onPressed}) {
+  return SizedBox(
+    width: double.infinity,
+    height: 50,
+    child: ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _hijauHeader,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: _hijauHeader.withValues(alpha: 0.45),
+        disabledForegroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
+      ),
+      child: _isiTombol(label, ikon),
+    ),
+  );
+}
+
+/// Tombol bergaris (tinggi 50, sudut 14).
+Widget tombolGarisBidan(String label,
+    {IconData? ikon, VoidCallback? onPressed, Color warna = _hijauHeader}) {
+  return SizedBox(
+    width: double.infinity,
+    height: 50,
+    child: OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: warna,
+        backgroundColor: Colors.white,
+        side: BorderSide(color: warna, width: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
+      ),
+      child: _isiTombol(label, ikon),
+    ),
+  );
+}
 
 String _pesanError(Object e) {
   if (e is DioException) {
@@ -46,11 +270,7 @@ Widget _bannerBelumMulai(DateTime mulai) {
     width: double.infinity,
     margin: const EdgeInsets.only(bottom: 12),
     padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: AppColors.kuningMuda,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.kuning.withValues(alpha: 0.35)),
-    ),
+    decoration: dekorKartuBidan(warna: AppColors.kuningMuda),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -488,26 +708,17 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
   // -------------------------------------------------------------------------
   // TAMPILAN
   // -------------------------------------------------------------------------
-  InputDecoration _dekor(String label, {String? hint}) => InputDecoration(
-        labelText: label,
-        hintText: hint,
-        labelStyle: const TextStyle(fontSize: 16),
-        filled: true,
-        fillColor: AppColors.latar,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-      );
+  InputDecoration _dekor(String label, {String? hint, IconData? ikon}) =>
+      dekorFormBidan(label, hint: hint, ikon: ikon);
 
-  Widget _teks(TextEditingController c, String label, {int baris = 2, String? hint}) => Padding(
+  Widget _teks(TextEditingController c, String label, {int baris = 2, String? hint, IconData? ikon}) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: TextField(
           controller: c,
           maxLines: baris,
           style: const TextStyle(fontSize: 17.5),
           textCapitalization: TextCapitalization.sentences,
-          decoration: _dekor(label, hint: hint),
+          decoration: _dekor(label, hint: hint, ikon: ikon),
         ),
       );
 
@@ -550,13 +761,8 @@ class _FormVaksinLuarState extends State<_FormVaksinLuar> {
     super.dispose();
   }
 
-  InputDecoration _dekor(String label) => InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: AppColors.latar,
-        counterText: '',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-      );
+  InputDecoration _dekor(String label, IconData ikon) =>
+      dekorFormBidan(label, ikon: ikon).copyWith(counterText: '');
 
   Future<void> _pilihTanggal() async {
     final n = DateTime.now();
@@ -608,7 +814,11 @@ class _FormVaksinLuarState extends State<_FormVaksinLuar> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Vaksin dari Luar Posyandu', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600)),
+            const Text('VAKSIN DARI LUAR POSYANDU',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _teksGelap)),
+            const SizedBox(height: 6),
+            Container(height: 3, color: aksenKartuBidan),
+            const SizedBox(height: 8),
             const SizedBox(height: 4),
             const Text('Isi sesuai keterangan orang tua. Vaksin yang sudah tercatat tidak akan diberikan lagi.',
                 style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
@@ -616,7 +826,7 @@ class _FormVaksinLuarState extends State<_FormVaksinLuar> {
             DropdownButtonFormField<JadwalVaksinAnak>(
               value: _vaksin,
               isExpanded: true,
-              decoration: _dekor('Vaksin'),
+              decoration: _dekor('Vaksin', Icons.vaccines_outlined),
               items: [
                 for (final e in widget.pilihan)
                   DropdownMenuItem(value: e, child: Text(e.jadwal.namaDosis, overflow: TextOverflow.ellipsis)),
@@ -624,50 +834,36 @@ class _FormVaksinLuarState extends State<_FormVaksinLuar> {
               onChanged: (v) => setState(() => _vaksin = v),
             ),
             const SizedBox(height: 10),
-            InkWell(
-              onTap: _pilihTanggal,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: AppColors.latar, borderRadius: BorderRadius.circular(12)),
-                child: Row(
-                  children: [
-                    const Icon(Icons.event, size: 20, color: AppColors.hijau),
-                    const SizedBox(width: 10),
-                    Text(
-                      _tanggal == null ? 'Pilih tanggal pemberian' : formatTanggal(_tanggal!),
-                      style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
-              ),
+            kotakPilihBidan(
+              Icons.calendar_month_outlined,
+              _tanggal == null ? 'Pilih tanggal pemberian' : formatTanggal(_tanggal!),
+              _pilihTanggal,
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _tempat,
               maxLength: 100,
               textCapitalization: TextCapitalization.words,
-              decoration: _dekor('Tempat (mis. RSUD Porsea, Puskesmas Balige)'),
+              decoration: _dekor('Tempat (mis. RSUD Porsea, Puskesmas Balige)', Icons.location_on_outlined),
             ),
             const SizedBox(height: 10),
-            TextField(controller: _batch, maxLength: 50, decoration: _dekor('Nomor batch (opsional)')),
+            TextField(controller: _batch, maxLength: 50, decoration: _dekor('Nomor batch (opsional)', Icons.qr_code_2)),
             const SizedBox(height: 10),
             TextField(
               controller: _pemberi,
               maxLength: 100,
               textCapitalization: TextCapitalization.words,
-              decoration: _dekor('Nama petugas pemberi (opsional)'),
+              decoration: _dekor('Nama petugas pemberi (opsional)', Icons.person_outline),
             ),
             if (_galat != null) ...[
               const SizedBox(height: 8),
               Text(_galat!, style: const TextStyle(color: AppColors.merah, fontSize: 16)),
             ],
             const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: AppButton(_kirim ? 'Menyimpan...' : 'Simpan', icon: Icons.save_outlined,
-                  onPressed: _kirim ? () {} : _simpan),
+            tombolHijauBidan(
+              _kirim ? 'Menyimpan...' : 'Simpan',
+              ikon: Icons.save_outlined,
+              onPressed: _kirim ? null : _simpan,
             ),
           ],
         ),

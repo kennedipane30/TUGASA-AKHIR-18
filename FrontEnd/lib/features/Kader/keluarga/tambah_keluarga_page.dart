@@ -129,7 +129,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
         ),
         child: Text(teks,
             style: const TextStyle(
-                fontSize: 13.5, color: kkMerah, fontWeight: FontWeight.w600)),
+                fontSize: 14.5, color: kkMerah, fontWeight: FontWeight.w600)),
       );
 
   // ---------------------------------------------------------------- navigasi
@@ -249,28 +249,21 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            kkInfo('Nama', _nama.text.trim()),
-            kkInfo('NIK', _nik.text.trim()),
-            kkInfo('No. HP', _hp.text.trim()),
-            kkInfo('Jumlah anak', '${_anak.length}'),
+            kkInfo('Nama', _nama.text.trim(), lebar: 100),
+            kkInfo('NIK', _nik.text.trim(), lebar: 100),
+            kkInfo('No. HP', _hp.text.trim(), lebar: 100),
+            kkInfo('Jumlah anak', '${_anak.length}', lebar: 100),
             const SizedBox(height: 8),
             const Text(
               'Orang tua dapat masuk memakai NIK atau No. HP dan PIN yang mereka sebutkan. '
               'PIN tidak ditampilkan di sistem.',
-              style: TextStyle(fontSize: 13.5, color: kkTeksAbu, height: 1.4),
+              style: TextStyle(fontSize: 14.5, color: kkTeksAbu, height: 1.4),
             ),
           ],
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(c),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kkHijau,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Selesai'),
-          ),
+          kkTombolHijau('Selesai', onPressed: () => Navigator.pop(c)),
         ],
       ),
     );
@@ -289,7 +282,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: selesai || aktif ? kkHijau : Colors.white,
-              border: Border.all(color: selesai || aktif ? kkHijau : kkGarisInput),
+              border: Border.all(color: selesai || aktif ? kkHijau : kkGarisInput, width: 1.2),
             ),
             child: selesai
                 ? const Icon(Icons.check, size: 18, color: Colors.white)
@@ -302,7 +295,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
           const SizedBox(height: 6),
           Text(_judulLangkah[i],
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 color: aktif || selesai ? kkHijau : kkTeksAbu,
                 fontWeight: aktif ? FontWeight.w700 : FontWeight.w500,
               )),
@@ -314,18 +307,14 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
           child: Container(
             height: 2,
             margin: const EdgeInsets.only(bottom: 22, left: 6, right: 6),
-            color: i < _langkah ? kkHijau : kkGarisInput,
+            color: i < _langkah ? kkAksen : kkGarisInput,
           ),
         );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kkGaris),
-      ),
+      decoration: kkDekorKartu(),
       child: Row(children: [bulat(0), garis(0), bulat(1), garis(1), bulat(2)]),
     );
   }
@@ -336,7 +325,6 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: KartuBagian(
         judul: 'Data Akun Ibu / Wali',
-        sub: 'Dipakai orang tua untuk masuk ke aplikasi.',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -344,7 +332,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
             TextFormField(
               controller: _nama,
               textCapitalization: TextCapitalization.words,
-              decoration: kkDekor('Sesuai KTP'),
+              decoration: kkDekor('Sesuai KTP', ikon: Icons.person_outline),
               validator: (v) => (v ?? '').trim().isEmpty ? 'Nama wajib diisi' : null,
             ),
             kkJarak(),
@@ -355,7 +343,8 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
               maxLength: 16,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               onChanged: _ubahNik,
-              decoration: kkDekor('16 digit', suffix: _tandaCek(_cekNik, _nikTerpakai)),
+              decoration: kkDekor('16 digit',
+                  ikon: Icons.badge_outlined, suffix: _tandaCek(_cekNik, _nikTerpakai)),
               validator: (v) {
                 final t = (v ?? '').trim();
                 if (t.length != 16) return 'NIK harus 16 digit';
@@ -373,7 +362,8 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
               maxLength: 15,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               onChanged: _ubahHp,
-              decoration: kkDekor('08xxxxxxxxxx', suffix: _tandaCek(_cekHp, _hpTerpakai)),
+              decoration: kkDekor('08xxxxxxxxxx',
+                  ikon: Icons.phone_outlined, suffix: _tandaCek(_cekHp, _hpTerpakai)),
               validator: (v) {
                 final t = (v ?? '').trim();
                 if (t.length < 10 || t.length > 15) return 'No. HP 10-15 digit';
@@ -392,6 +382,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: kkDekor(
                 'PIN yang disebutkan orang tua',
+                ikon: Icons.lock_outline,
                 suffix: IconButton(
                   icon: Icon(_lihatPin ? Icons.visibility_off : Icons.visibility,
                       color: kkTeksAbu),
@@ -408,14 +399,14 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
               keyboardType: TextInputType.number,
               maxLength: 6,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: kkDekor('Ketik ulang PIN'),
+              decoration: kkDekor('Ketik ulang PIN', ikon: Icons.lock_reset),
               validator: (v) => v != _pin.text ? 'PIN tidak sama' : null,
             ),
             const SizedBox(height: 6),
             const Text(
               'PIN diminta langsung dari orang tua. Hindari PIN yang mudah ditebak '
               '(contoh: 123456, 111111, atau tanggal lahir).',
-              style: TextStyle(fontSize: 13, color: kkTeksAbu, height: 1.4),
+              style: TextStyle(fontSize: 14.5, color: kkTeksAbu, height: 1.4),
             ),
           ],
         ),
@@ -435,6 +426,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
       children: [
         KartuBagian(
           judul: 'Data Anak',
+          kanan: '${_anak.length} anak',
           sub: 'Tambahkan semua balita dalam keluarga ini.',
           child: Column(
             children: [
@@ -442,7 +434,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
                 const Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: Text('Belum ada data anak.',
-                      style: TextStyle(fontSize: 14.5, color: kkTeksAbu)),
+                      style: TextStyle(fontSize: 15.5, color: kkTeksAbu)),
                 ),
               for (var i = 0; i < _anak.length; i++)
                 BarisAnak(
@@ -450,22 +442,8 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
                   onUbah: () => _ubahAnak(i),
                   onHapus: () => setState(() => _anak.removeAt(i)),
                 ),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _tambahAnak,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Tambah Anak',
-                      style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: kkHijau,
-                    side: const BorderSide(color: kkHijau),
-                    minimumSize: const Size.fromHeight(48),
-                    shape:
-                        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ),
+              const SizedBox(height: 4),
+              kkTombolGaris('Tambah Anak', ikon: Icons.add, onPressed: _tambahAnak),
             ],
           ),
         ),
@@ -498,7 +476,8 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
                         child: Text(
                           'Data sudah saya periksa bersama orang tua dan sesuai dokumen '
                           '(KTP / KK / buku KIA).',
-                          style: TextStyle(fontSize: 14, color: kkTeksGelap, height: 1.4),
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w500, color: kkTeksGelap, height: 1.4),
                         ),
                       ),
                     ),
