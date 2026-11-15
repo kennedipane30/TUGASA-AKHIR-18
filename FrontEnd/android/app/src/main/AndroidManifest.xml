@@ -4,13 +4,13 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <application
-        android:label="tugas_akhir"
+        android:label="PosyanduCare"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
-            android:label="tugas_akhir"
+            android:label="PosyanduCare"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""

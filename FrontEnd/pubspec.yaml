@@ -1,5 +1,7 @@
+# "name" tetap tugas_akhir: ini nama paket Dart (dipakai di import package:tugas_akhir/...),
+# bukan nama yang tampil di HP. Nama di HP diatur di AndroidManifest.xml (PosyanduCare).
 name: tugas_akhir
-description: "A new Flutter project."
+description: "PosyanduCare - Aplikasi pemantauan tumbuh kembang balita di Posyandu."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -28,6 +30,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  # Membuat ikon aplikasi (Android, iOS, web) dari logo.png
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   assets:
@@ -56,3 +60,29 @@ flutter:
     - assets/standar_antropometri.csv
 
   uses-material-design: true
+
+# ---------------------------------------------------------------------------
+# IKON APLIKASI POSYANDUCARE (logo sama dengan halaman login)
+# Jalankan: dart run flutter_launcher_icons
+# ---------------------------------------------------------------------------
+flutter_launcher_icons:
+  image_path: "logo.png"
+
+  # Android: menimpa ic_launcher bawaan Flutter.
+  android: true
+  min_sdk_android: 21
+  # Ikon adaptif Android 8+: latar hijau PosyanduCare + logo di depannya.
+  adaptive_icon_background: "#065F46"
+  adaptive_icon_foreground: "logo.png"
+
+  # iOS: ikon tidak boleh transparan, jadi diberi latar hijau.
+  ios: true
+  remove_alpha_ios: true
+  background_color_ios: "#065F46"
+
+  # Web: favicon dan ikon PWA.
+  web:
+    generate: true
+    image_path: "logo.png"
+    background_color: "#065F46"
+    theme_color: "#065F46"
