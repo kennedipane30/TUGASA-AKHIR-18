@@ -1,37 +1,27 @@
 package models
 
-import (
-	"encoding/json"
-	"time"
+import "time"
 
-	"github.com/google/uuid"
-	"gorm.io/gorm"
-)
-
-// LogAktivitas: Log siapa mengubah apa dan kapan (jejak audit).
+// LogAktivitas: satu baris log aktivitas (siapa, melakukan apa, kapan).
+//
+// Posyandu disimpan agar sekretaris hanya dapat melihat log desanya sendiri.
+// Kolom ini tidak dikirim ke aplikasi (json:"-") karena sekretaris sudah
+// pasti berada di posyandu yang sama.
+//
+// PIN, kata sandi, dan isi data kesehatan TIDAK pernah dicatat.
 type LogAktivitas struct {
-	ID uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
-	UserID *uint `gorm:"column:user_id;index" json:"user_id"`
-	PerangkatID *uuid.UUID `gorm:"column:perangkat_id;type:uuid;index" json:"perangkat_id"`
-	Aksi string `gorm:"column:aksi;size:30;not null" json:"aksi"`
-	NamaTabel string `gorm:"column:nama_tabel;size:50" json:"nama_tabel"`
-	IDData *uuid.UUID `gorm:"column:id_data;type:uuid" json:"id_data"`
-	NilaiSebelum json.RawMessage `gorm:"column:nilai_sebelum;type:jsonb" json:"nilai_sebelum"`
-	NilaiSesudah json.RawMessage `gorm:"column:nilai_sesudah;type:jsonb" json:"nilai_sesudah"`
-	Alasan string `gorm:"column:alasan;type:text" json:"alasan"`
-	Waktu time.Time `gorm:"column:waktu;autoCreateTime" json:"waktu"`
-	AlamatIP string `gorm:"column:alamat_ip;size:45" json:"alamat_ip"`
-	User *User `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
-	Perangkat *Perangkat `gorm:"foreignKey:PerangkatID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Posyandu  string    `gorm:"size:20;not null;index" json:"-"`
+	UserID    uint      `gorm:"index" json:"user_id"`
+	NamaUser  string    `gorm:"size:100" json:"nama_user"`
+	Role      string    `gorm:"size:20;index" json:"role"`
+	Aksi      string    `gorm:"size:120;not null" json:"aksi"`
+	Modul     string    `gorm:"size:40;index" json:"modul"`
+	ObjekID   string    `gorm:"size:64" json:"objek_id,omitempty"`
+	Metode    string    `gorm:"size:10" json:"-"`
+	Jalur     string    `gorm:"size:200" json:"-"`
+	IP        string    `gorm:"size:64" json:"-"`
+	CreatedAt time.Time `gorm:"index" json:"waktu"`
 }
 
 func (LogAktivitas) TableName() string { return "log_aktivitas" }
-
-func (m *LogAktivitas) BeforeCreate(*gorm.DB) error {
-	if m.ID == uuid.Nil {
-		m.ID = uuid.New()
-	}
-	return nil
-}

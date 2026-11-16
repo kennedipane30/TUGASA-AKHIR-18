@@ -27,6 +27,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kbmRepo := repository.NewKbmRepository(db)
 	balitaRepo := repository.NewBalitaRepository(db)
 	skdnRepo := repository.NewSkdnRepository(db)
+	logAktivitasRepo := repository.NewLogAktivitasRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
@@ -68,8 +69,11 @@ func Setup(db *gorm.DB) *gin.Engine {
 	balitaH := handler.NewBalitaHandler(service.NewBalitaService(balitaRepo, vaksinRepo))
 	skdnH := handler.NewSkdnHandler(service.NewSkdnService(rekapRepo, skdnRepo))
 	kaderKeluargaH := handler.NewKaderKeluargaHandler(service.NewKaderKeluargaService(userRepo, keluargaRepo))
+	logAktivitasH := handler.NewLogAktivitasHandler(logAktivitasRepo)
 
 	api := r.Group("/api/v1")
+	// log aktivitas: mencatat aksi semua role (POST/PUT/PATCH/DELETE yang berhasil)
+	api.Use(middleware.CatatLogAktivitas(logAktivitasRepo))
 	api.GET("/posyandu", authH.ListPosyandu) // publik, untuk registrasi
 	api.POST("/auth/register", authH.Register)
 	api.POST("/auth/login", pinH.Login) // identitas + PIN 6 digit (semua role)
@@ -126,6 +130,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.GET("/balita/:anak_id", balitaH.Detail)
 	// ringkasan penimbangan (SKDN)
 	sekretaris.GET("/skdn", skdnH.Hitung)
+	// log aktivitas semua role di posyandu sekretaris
+	sekretaris.GET("/log-aktivitas", logAktivitasH.Daftar)
 
 	// orang tua (check-in dengan memindai QR tetap posyandu)
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))

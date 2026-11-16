@@ -14,6 +14,7 @@ import 'akun/kelola_akun_page.dart';
 import '../../core/pages/balita/semua_balita_page.dart';
 import '../../core/pages/rekap/rekap_posyandu_page.dart';
 import 'vaksin/vaksin_page.dart';
+import 'log_aktivitas/log_aktivitas_page.dart';
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});
@@ -116,6 +117,13 @@ class _AdminHomeState extends State<AdminHome> {
     );
   }
 
+  void _bukaLogAktivitas() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const LogAktivitasPage()),
+    );
+  }
+
   void _bukaQr() {
     Navigator.push(
       context,
@@ -161,6 +169,8 @@ class _AdminHomeState extends State<AdminHome> {
               'Data\nMaster', () => soon(context, 'Data master')),
           _itemAset('rekap_posyandu.png', Icons.summarize_outlined, AppColors.hijau,
               'Rekap\nPosyandu', () => _bukaRekap(0)),
+          _itemAset('log_aktivitas.png', Icons.history_edu_outlined, AppColors.hijau,
+              'Log\nAktivitas', _bukaLogAktivitas),
         ]),
       ],
     );
