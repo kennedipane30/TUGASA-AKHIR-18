@@ -38,11 +38,18 @@ class OtpService {
     return 'Tidak dapat terhubung ke server';
   }
 
+  /// Registrasi memakai No. WhatsApp yang diisi. Lupa PIN memakai identitas
+  /// dari halaman login (No. HP / NIK / username); server mengirim kode ke
+  /// No. WhatsApp yang terdaftar di akun tersebut.
+  String _kunci(String tujuan) =>
+      tujuan == TujuanOtp.resetPin ? 'identitas' : 'no_hp';
+
   /// Kirim kode 6 digit ke WhatsApp. [tujuan]: TujuanOtp.registrasi / TujuanOtp.resetPin.
+  /// [noHp]: No. WhatsApp (registrasi) atau identitas akun (lupa PIN).
   Future<InfoKirimOtp> kirim(String noHp, String tujuan) async {
     try {
       final res = await ApiClient.dio.post('/auth/otp/kirim',
-          data: {'no_hp': noHp, 'tujuan': tujuan});
+          data: {_kunci(tujuan): noHp, 'tujuan': tujuan});
       return InfoKirimOtp.fromJson(Map<String, dynamic>.from(res.data['data']));
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
@@ -53,7 +60,7 @@ class OtpService {
   Future<String> verifikasi(String noHp, String tujuan, String kode) async {
     try {
       final res = await ApiClient.dio.post('/auth/otp/verifikasi',
-          data: {'no_hp': noHp, 'tujuan': tujuan, 'kode': kode});
+          data: {_kunci(tujuan): noHp, 'tujuan': tujuan, 'kode': kode});
       return (res.data['data']?['token_otp'] ?? '').toString();
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
@@ -84,14 +91,15 @@ class OtpService {
   }
 
   /// Lupa PIN: atur PIN baru setelah No. WhatsApp terverifikasi.
+  /// [identitas]: No. HP / NIK / username yang diketik di halaman login.
   Future<void> lupaPin({
-    required String noHp,
+    required String identitas,
     required String pinBaru,
     required String tokenOtp,
   }) async {
     try {
       await ApiClient.dio.post('/auth/lupa-pin', data: {
-        'no_hp': noHp,
+        'identitas': identitas,
         'pin_baru': pinBaru,
         'token_otp': tokenOtp,
       });

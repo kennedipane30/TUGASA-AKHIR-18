@@ -39,11 +39,12 @@ func (e ErrOtpTunggu) Error() string { return e.Pesan }
 //	POST /auth/otp/verifikasi  {no_hp, tujuan:"registrasi", kode}  -> token_otp
 //	POST /auth/register-otp    {nama, nik, no_hp, pin, posyandu, token_otp}
 //
-// Alur lupa PIN:
+// Alur lupa PIN (dari halaman login; identitas = No. HP / NIK / username
+// yang diketik di login, kode dikirim ke No. WhatsApp terdaftar di akun):
 //
-//	POST /auth/otp/kirim       {no_hp, tujuan:"reset_pin"}
-//	POST /auth/otp/verifikasi  {no_hp, tujuan:"reset_pin", kode}   -> token_otp
-//	POST /auth/lupa-pin        {no_hp, pin_baru, token_otp}
+//	POST /auth/otp/kirim       {identitas, tujuan:"reset_pin"}
+//	POST /auth/otp/verifikasi  {identitas, tujuan:"reset_pin", kode}   -> token_otp
+//	POST /auth/lupa-pin        {identitas, pin_baru, token_otp}
 type OtpService struct {
 	repo  *repository.OtpRepository
 	users *repository.UserRepository
@@ -70,6 +71,32 @@ func NormalisasiNoHP(s string) (string, bool) {
 		}
 	}
 	return s, true
+}
+
+// NoHPAkun: No. WhatsApp terdaftar milik akun dengan identitas
+// (No. HP / NIK / username) yang diketik di halaman login. Dipakai untuk Lupa PIN.
+func (s *OtpService) NoHPAkun(identitas string) (string, error) {
+	idf := strings.TrimSpace(identitas)
+	if idf == "" {
+		return "", validasi("isi No. HP, NIK, atau username terlebih dahulu")
+	}
+	u, err := s.users.FindByIdentifier(idf)
+	if err != nil {
+		if hp, ok := NormalisasiNoHP(idf); ok {
+			u, err = s.users.FindByIdentifier(hp)
+		}
+	}
+	if err != nil {
+		return "", konflik("akun tidak ditemukan, periksa kembali No. HP, NIK, atau username")
+	}
+	if u.NoHP == nil || strings.TrimSpace(*u.NoHP) == "" {
+		return "", konflik("akun ini belum memiliki No. WhatsApp, hubungi sekretaris posyandu")
+	}
+	hp, ok := NormalisasiNoHP(*u.NoHP)
+	if !ok {
+		return "", konflik("No. WhatsApp akun tidak valid, hubungi sekretaris posyandu")
+	}
+	return hp, nil
 }
 
 // samarkanNoHP: 081234567890 -> 0812****7890 (untuk ditampilkan di aplikasi).

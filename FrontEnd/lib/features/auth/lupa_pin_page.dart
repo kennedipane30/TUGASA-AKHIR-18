@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/pin_util.dart';
-import 'otp_page.dart';
 import 'otp_service.dart';
 
 const _hijau = Color(0xFF0B6B4D);
@@ -15,14 +14,21 @@ const _oranyeGelap = Color(0xFFE8590C);
 const _oranyeTerang = Color(0xFFFFA31A);
 const _isiField = Color(0xFFF3FBF8);
 
-/// Lupa PIN: pemilik akun mengatur PIN baru sendiri lewat kode OTP WhatsApp.
+/// Lupa PIN, langkah terakhir: membuat PIN baru.
 ///
-/// Alur: isi No. WhatsApp + PIN baru -> kode dikirim -> OtpPage -> PIN disimpan.
+/// Alur dari halaman login:
+///   ketuk "Lupa PIN?" -> kode OTP otomatis dikirim ke No. WhatsApp terdaftar
+///   -> OtpPage (kode benar) -> halaman ini -> PIN baru disimpan -> kembali ke login.
+///
+/// Halaman ditutup dengan nilai true bila PIN berhasil disimpan.
 class LupaPinPage extends StatefulWidget {
-  /// Opsional: No. HP yang sudah diketik di halaman login.
-  final String? noHpAwal;
+  /// No. HP / NIK / username yang diketik di halaman login.
+  final String identitas;
 
-  const LupaPinPage({super.key, this.noHpAwal});
+  /// Token sekali pakai dari OtpPage (berlaku 15 menit).
+  final String tokenOtp;
+
+  const LupaPinPage({super.key, required this.identitas, required this.tokenOtp});
 
   @override
   State<LupaPinPage> createState() => _LupaPinPageState();
@@ -31,7 +37,6 @@ class LupaPinPage extends StatefulWidget {
 class _LupaPinPageState extends State<LupaPinPage> {
   final _key = GlobalKey<FormState>();
   final _svc = OtpService();
-  late final TextEditingController _hp;
   final _pin = TextEditingController();
   final _pin2 = TextEditingController();
 
@@ -40,18 +45,7 @@ class _LupaPinPageState extends State<LupaPinPage> {
   bool _loading = false;
 
   @override
-  void initState() {
-    super.initState();
-    final awal = widget.noHpAwal ?? '';
-    // isi otomatis hanya bila yang diketik di login berupa No. HP (bukan username/NIK)
-    _hp = TextEditingController(
-      text: RegExp(r'^(08|62)\d{8,12}$').hasMatch(awal) ? awal : '',
-    );
-  }
-
-  @override
   void dispose() {
-    _hp.dispose();
     _pin.dispose();
     _pin2.dispose();
     super.dispose();
@@ -65,28 +59,16 @@ class _LupaPinPageState extends State<LupaPinPage> {
   Future<void> _submit() async {
     if (!_key.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    final hp = _hp.text.trim();
 
     setState(() => _loading = true);
     try {
-      // 1. kirim kode ke WhatsApp
-      final info = await _svc.kirim(hp, TujuanOtp.resetPin);
-      if (!mounted) return;
-
-      // 2. pengguna memasukkan kode di halaman OTP
-      final token = await Navigator.push<String>(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OtpPage(noHp: hp, tujuan: TujuanOtp.resetPin, info: info),
-        ),
+      await _svc.lupaPin(
+        identitas: widget.identitas,
+        pinBaru: _pin.text,
+        tokenOtp: widget.tokenOtp,
       );
-      if (token == null || !mounted) return; // kembali tanpa verifikasi
-
-      // 3. simpan PIN baru
-      await _svc.lupaPin(noHp: hp, pinBaru: _pin.text, tokenOtp: token);
       if (!mounted) return;
-      _snack('PIN berhasil diatur ulang. Silakan masuk dengan PIN baru.');
-      Navigator.pop(context);
+      Navigator.pop(context, true); // kembali ke halaman login
     } catch (e) {
       _snack(e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -156,7 +138,7 @@ class _LupaPinPageState extends State<LupaPinPage> {
         children: [
           const Center(
             child: Text(
-              'Atur Ulang PIN',
+              'Buat PIN Baru',
               style: TextStyle(
                 color: Colors.black87,
                 fontSize: 23,
@@ -178,23 +160,12 @@ class _LupaPinPageState extends State<LupaPinPage> {
           const SizedBox(height: 10),
           const Center(
             child: Text(
-              'Kami akan mengirim kode verifikasi ke nomor WhatsApp yang terdaftar di akun Anda.',
+              'Nomor WhatsApp Anda sudah terverifikasi. Buat PIN baru untuk masuk ke aplikasi.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.black54, fontSize: 16, height: 1.45),
             ),
           ),
           const SizedBox(height: 8),
-          _label('Nomor WhatsApp Terdaftar'),
-          TextFormField(
-            controller: _hp,
-            style: const TextStyle(fontSize: 16),
-            keyboardType: TextInputType.phone,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: _dekor('Contoh: 081234567890', Icons.phone_outlined),
-            validator: (v) => (v == null || v.trim().length < 10)
-                ? 'No. WhatsApp tidak valid'
-                : null,
-          ),
           _label('PIN Baru (6 Digit Angka)'),
           TextFormField(
             controller: _pin,
@@ -262,10 +233,10 @@ class _LupaPinPageState extends State<LupaPinPage> {
                         : const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.chat_outlined, color: Colors.white, size: 18),
+                              Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
                               SizedBox(width: 8),
                               Text(
-                                'Kirim Kode via WhatsApp',
+                                'Simpan PIN Baru',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -282,7 +253,7 @@ class _LupaPinPageState extends State<LupaPinPage> {
           const SizedBox(height: 16),
           const Center(
             child: Text(
-              'Nomor WhatsApp sudah tidak aktif? Hubungi sekretaris posyandu desa Anda.',
+              'Gunakan 6 angka yang mudah Anda ingat, tetapi tidak mudah ditebak orang lain.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14.5, color: Colors.black45),
             ),
@@ -324,7 +295,7 @@ class _LupaPinPageState extends State<LupaPinPage> {
                       const Icon(Icons.lock_reset, color: Colors.white, size: 72),
                       const SizedBox(height: 10),
                       const Text(
-                        'Lupa PIN?',
+                        'Atur Ulang PIN',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 26,
@@ -335,7 +306,7 @@ class _LupaPinPageState extends State<LupaPinPage> {
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 24),
                         child: Text(
-                          'Buat PIN baru tanpa harus datang ke posyandu',
+                          'Langkah terakhir: buat PIN baru Anda',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: _hijauTerang, fontSize: 16.5),
                         ),

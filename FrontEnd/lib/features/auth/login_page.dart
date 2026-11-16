@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import 'auth_provider.dart';
 import 'lupa_pin_page.dart';
+import 'otp_page.dart';
+import 'otp_service.dart';
 import 'register_page.dart';
 
 const _hijau = Color(0xFF0B6B4D);
@@ -29,6 +31,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _hide = true;
   bool _ingat = true;
+  bool _mengirimOtp = false; // sedang mengirim kode Lupa PIN
 
   @override
   void dispose() {
@@ -60,6 +63,48 @@ class _LoginPageState extends State<LoginPage> {
           .login(_idf.text.trim(), _pin.text);
     } catch (e) {
       _snack(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  /// Lupa PIN: kode OTP langsung dikirim ke No. WhatsApp yang terdaftar di
+  /// akun (dicari dari No. HP / NIK / username yang diketik), lalu
+  /// halaman kode OTP -> halaman buat PIN baru.
+  Future<void> _lupaPin() async {
+    final idf = _idf.text.trim();
+    if (idf.isEmpty) {
+      _snack('Isi No. HP, NIK, atau username terlebih dahulu, lalu ketuk Lupa PIN');
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() => _mengirimOtp = true);
+    try {
+      final svc = OtpService();
+      final info = await svc.kirim(idf, TujuanOtp.resetPin);
+      if (!mounted) return;
+      setState(() => _mengirimOtp = false);
+
+      final token = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OtpPage(noHp: idf, tujuan: TujuanOtp.resetPin, info: info),
+        ),
+      );
+      if (token == null || token.isEmpty || !mounted) return;
+
+      final berhasil = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LupaPinPage(identitas: idf, tokenOtp: token),
+        ),
+      );
+      if (berhasil == true && mounted) {
+        _pin.clear();
+        _snack('PIN berhasil diatur ulang. Silakan masuk dengan PIN baru.');
+      }
+    } catch (e) {
+      _snack(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _mengirimOtp = false);
     }
   }
 
@@ -261,20 +306,38 @@ class _LoginPageState extends State<LoginPage> {
                   minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => LupaPinPage(noHpAwal: _idf.text.trim()),
-                  ),
-                ),
-                child: const Text(
-                  'Lupa PIN?',
-                  style: TextStyle(
-                    color: _oranye,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
+                onPressed: (loading || _mengirimOtp) ? null : _lupaPin,
+                child: _mengirimOtp
+                    ? const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: _oranye,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Mengirim kode...',
+                            style: TextStyle(
+                              color: _oranye,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      )
+                    : const Text(
+                        'Lupa PIN?',
+                        style: TextStyle(
+                          color: _oranye,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ],
           ),
