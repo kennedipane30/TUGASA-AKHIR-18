@@ -16,10 +16,12 @@ import (
 
 // ---------------------------------------------------------------------------
 // LOG AKTIVITAS OTOMATIS
-// Dipasang sekali pada grup /api/v1. Setiap permintaan yang MENGUBAH data
-// (POST, PUT, PATCH, DELETE) dan BERHASIL dicatat: siapa, melakukan apa, kapan.
-// Permintaan membaca data (GET) tidak dicatat. Isi permintaan (PIN, data
-// kesehatan) tidak pernah disimpan.
+// Dipasang sekali pada grup /api/v1. Yang dicatat HANYA perubahan data yang
+// terdaftar di petaAksi (menambah, mengubah, menghapus data) dan berhasil:
+// siapa, melakukan apa, kapan.
+// Tidak dicatat: membaca data (GET), masuk/keluar aplikasi, ganti PIN sendiri,
+// lupa PIN, OTP, dan notifikasi. Isi permintaan (PIN, data kesehatan) tidak
+// pernah disimpan.
 // ---------------------------------------------------------------------------
 
 type infoAksi struct {
@@ -29,11 +31,9 @@ type infoAksi struct {
 
 // Kunci: METODE + jalur tanpa /api/v1; semua parameter ditulis :id.
 var petaAksi = map[string]infoAksi{
-	// akun (semua role)
-	"POST /auth/login":        {"Masuk ke aplikasi", "Akun"},
+	// pendaftaran akun orang tua
 	"POST /auth/register":     {"Mendaftar akun baru", "Akun"},
-	"POST /auth/ubah-pin":     {"Mengganti PIN", "Akun"},
-	"DELETE /perangkat/token": {"Keluar dari aplikasi", "Akun"},
+	"POST /auth/register-otp": {"Mendaftar akun baru", "Akun"},
 
 	// sekretaris: akun petugas
 	"POST /sekretaris/users":               {"Membuat akun", "Akun"},
@@ -49,17 +49,19 @@ var petaAksi = map[string]infoAksi{
 	"POST /sekretaris/jadwal/:id/batalkan": {"Membatalkan jadwal posyandu", "Jadwal"},
 
 	// orang tua
-	"PUT /keluarga/saya":             {"Memperbarui data keluarga", "Keluarga"},
-	"PUT /keluarga":                  {"Memperbarui data keluarga", "Keluarga"},
-	"POST /keluarga/saya/anak":       {"Menambah data anak", "Keluarga"},
-	"POST /keluarga/anak":            {"Menambah data anak", "Keluarga"},
-	"PUT /keluarga/saya/anak/:id":    {"Mengubah data anak", "Keluarga"},
-	"PUT /keluarga/anak/:id":         {"Mengubah data anak", "Keluarga"},
-	"DELETE /keluarga/saya/anak/:id": {"Menghapus data anak", "Keluarga"},
-	"DELETE /keluarga/anak/:id":      {"Menghapus data anak", "Keluarga"},
-	"POST /jadwal/:id/daftar":        {"Mendaftar ke jadwal posyandu", "Pendaftaran"},
-	"POST /jadwal/:id/batal":         {"Membatalkan pendaftaran", "Pendaftaran"},
-	"POST /jadwal/:id/scan":          {"Check-in dengan scan QR", "Pendaftaran"},
+	"PUT /keluarga/saya":                 {"Memperbarui data keluarga", "Keluarga"},
+	"PUT /keluarga":                      {"Memperbarui data keluarga", "Keluarga"},
+	"POST /keluarga/saya/anak":           {"Menambah data anak", "Keluarga"},
+	"POST /keluarga/anak":                {"Menambah data anak", "Keluarga"},
+	"PUT /keluarga/saya/anak/:id":        {"Mengubah data anak", "Keluarga"},
+	"PUT /keluarga/anak/:id":             {"Mengubah data anak", "Keluarga"},
+	"DELETE /keluarga/saya/anak/:id":     {"Menghapus data anak", "Keluarga"},
+	"DELETE /keluarga/anak/:id":          {"Menghapus data anak", "Keluarga"},
+	"POST /jadwal/:id/daftar":            {"Mendaftar ke jadwal posyandu", "Pendaftaran"},
+	"POST /jadwal/:id/batal":             {"Membatalkan pendaftaran", "Pendaftaran"},
+	"POST /jadwal/:id/scan":              {"Check-in dengan scan QR", "Pendaftaran"},
+	"POST /vaksin/anak/:id/riwayat-awal": {"Melaporkan riwayat vaksin anak", "Imunisasi"},
+	"POST /vaksin/riwayat/:id/kipi":      {"Melaporkan reaksi setelah imunisasi", "Imunisasi"},
 
 	// kader
 	"POST /kader/users/:id/reset-pin":       {"Mereset PIN orang tua", "Akun"},
@@ -73,22 +75,17 @@ var petaAksi = map[string]infoAksi{
 	"PUT /kader/keluarga/:id/anak/:id":      {"Mengubah data anak", "Keluarga"},
 
 	// bidan
-	"PUT /bidan/pendaftaran/:id/catatan": {"Menyimpan catatan pemeriksaan", "Pemeriksaan"},
-	"POST /bidan/vaksin/riwayat":         {"Mencatat vaksin dari luar posyandu", "Imunisasi"},
-	"DELETE /bidan/vaksin/riwayat/:id":   {"Membatalkan catatan vaksin", "Imunisasi"},
-}
-
-// Perubahan kecil yang tidak perlu dicatat.
-var abaikanAksi = map[string]bool{
-	"POST /notifikasi/baca-semua": true,
-	"PATCH /notifikasi/:id/baca":  true,
-	"DELETE /notifikasi/:id":      true,
-	"POST /perangkat/token":       true,
+	"PUT /bidan/pendaftaran/:id/catatan":             {"Menyimpan catatan pemeriksaan", "Pemeriksaan"},
+	"POST /bidan/vaksin/riwayat":                     {"Mencatat vaksin dari luar posyandu", "Imunisasi"},
+	"DELETE /bidan/vaksin/riwayat/:id":               {"Membatalkan catatan vaksin", "Imunisasi"},
+	"PUT /bidan/vaksin/riwayat/:id/konfirmasi":       {"Mengonfirmasi riwayat vaksin", "Imunisasi"},
+	"PUT /bidan/vaksin/riwayat/:id/kipi":             {"Menindaklanjuti reaksi imunisasi", "Imunisasi"},
+	"POST /bidan/vaksin/anak/:id/konfirmasi-selesai": {"Menyelesaikan konfirmasi vaksin anak", "Imunisasi"},
 }
 
 var polaParam = regexp.MustCompile(`:[A-Za-z_]+`)
 
-// Penampung isi jawaban (hanya untuk login & daftar, untuk mengetahui id akun).
+// Penampung isi jawaban (hanya untuk pendaftaran akun, untuk mengetahui id akun baru).
 type perekamJawaban struct {
 	gin.ResponseWriter
 	buf *bytes.Buffer
@@ -118,13 +115,14 @@ func CatatLogAktivitas(repo *repository.LogAktivitasRepository) gin.HandlerFunc 
 			return
 		}
 		kunci := metode + " " + polaParam.ReplaceAllString(strings.TrimPrefix(jalur, "/api/v1"), ":id")
-		if abaikanAksi[kunci] {
+		info, ada := petaAksi[kunci]
+		if !ada { // bukan perubahan data yang dicatat
 			c.Next()
 			return
 		}
 
 		var rekam *bytes.Buffer
-		if kunci == "POST /auth/login" || kunci == "POST /auth/register" {
+		if kunci == "POST /auth/register" || kunci == "POST /auth/register-otp" {
 			rekam = &bytes.Buffer{}
 			c.Writer = &perekamJawaban{ResponseWriter: c.Writer, buf: rekam}
 		}
@@ -141,11 +139,6 @@ func CatatLogAktivitas(repo *repository.LogAktivitasRepository) gin.HandlerFunc 
 		}
 		if userID == 0 {
 			return
-		}
-
-		info, ada := petaAksi[kunci]
-		if !ada {
-			info = tebakAksi(metode, kunci)
 		}
 
 		objek := ""
@@ -179,32 +172,7 @@ func CatatLogAktivitas(repo *repository.LogAktivitasRepository) gin.HandlerFunc 
 	}
 }
 
-// tebakAksi: keterangan umum untuk perubahan yang belum ada di petaAksi.
-func tebakAksi(metode, kunci string) infoAksi {
-	modul := "Lainnya"
-	switch {
-	case strings.Contains(kunci, "/vaksin"):
-		modul = "Imunisasi"
-	case strings.Contains(kunci, "/jadwal"):
-		modul = "Jadwal"
-	case strings.Contains(kunci, "/keluarga"):
-		modul = "Keluarga"
-	case strings.Contains(kunci, "/users"):
-		modul = "Akun"
-	case strings.Contains(kunci, "/pendaftaran"):
-		modul = "Pendataan"
-	}
-	switch metode {
-	case http.MethodPost:
-		return infoAksi{"Menambah data " + strings.ToLower(modul), modul}
-	case http.MethodDelete:
-		return infoAksi{"Menghapus data " + strings.ToLower(modul), modul}
-	default:
-		return infoAksi{"Mengubah data " + strings.ToLower(modul), modul}
-	}
-}
-
-// cariUserID mencari {"user": {"id": ...}} di jawaban login / daftar.
+// cariUserID mencari {"user": {"id": ...}} di jawaban pendaftaran akun.
 func cariUserID(isi []byte) uint {
 	var v any
 	if err := json.Unmarshal(isi, &v); err != nil {
