@@ -5,40 +5,33 @@ package models
 // pembuatan tabel sesuai ketergantungan kunci asingnya.
 func AllModels() []any {
 	return []any{
-		&Posyandu{},
+		// akun & keluarga
 		&User{},
-		&PermintaanResetSandi{},
 		&Keluarga{},
 		&OrangTua{},
 		&Anak{},
-		&PengajuanKoreksi{},
+
+		// jadwal & pelayanan posyandu
 		&JadwalPosyandu{},
-		&PetugasJadwal{},
-		&KegiatanKhusus{},
 		&Pendaftaran{},
 		&Pengukuran{},
-		&KoreksiPengukuran{},
-		&VerifikasiPengukuran{},
+		&PemeriksaanBidan{},
+
+		// status gizi & penilaian
 		&StatusGizi{},
 		&PenilaianTimbang{},
-		&PemeriksaanBidan{},
 		&StandarAntropometri{},
+		&PeringatanRisiko{},
+		&SuplemenAnak{},
+
+		// imunisasi
 		&JenisVaksin{},
 		&JadwalImunisasi{},
 		&ImunisasiAnak{},
-		&SuplemenAnak{},
-		&PeringatanRisiko{},
-		&Rujukan{},
-		&Intervensi{},
-		&KunjunganRumah{},
-		&Pengumuman{},
+
+		// notifikasi, perangkat & log aktivitas
 		&Notifikasi{},
-		&KontenEdukasi{},
 		&Perangkat{},
-		&KonflikSinkron{},
 		&LogAktivitas{},
-		&PengaturanSistem{},
-		&BackupData{},
-		&LaporanBulanan{},
 	}
 }

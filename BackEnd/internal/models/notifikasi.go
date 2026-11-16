@@ -47,7 +47,6 @@ type Notifikasi struct {
 	Jenis           string         `gorm:"column:jenis;size:40" json:"jenis"`
 	Judul           string         `gorm:"column:judul;size:150;not null" json:"judul"`
 	Isi             string         `gorm:"column:isi;type:text" json:"isi"`
-	PengumumanID    *uuid.UUID     `gorm:"column:pengumuman_id;type:uuid;index" json:"pengumuman_id"`
 	ObjekTabel      string         `gorm:"column:objek_tabel;size:40" json:"objek_tabel"`
 	ObjekID         *uuid.UUID     `gorm:"column:objek_id;type:uuid" json:"objek_id"`
 	DikirimOleh     *uint          `gorm:"column:dikirim_oleh;index" json:"dikirim_oleh"`
@@ -55,7 +54,6 @@ type Notifikasi struct {
 	SudahDibaca     bool           `gorm:"column:sudah_dibaca" json:"sudah_dibaca"`
 	DibacaPada      *time.Time     `gorm:"column:dibaca_pada" json:"dibaca_pada"`
 	User            *User          `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
-	Pengumuman      *Pengumuman    `gorm:"foreignKey:PengumumanID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
 	DikirimOlehUser *User          `gorm:"foreignKey:DikirimOleh;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
 	Version         int            `gorm:"default:1;column:version" json:"version"`
 	PerangkatAsal   *uuid.UUID     `gorm:"type:uuid;column:perangkat_asal" json:"perangkat_asal,omitempty"`
