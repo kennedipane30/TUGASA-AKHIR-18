@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'auth_provider.dart';
+import 'lupa_pin_page.dart';
 import 'register_page.dart';
 
 const _hijau = Color(0xFF0B6B4D);
@@ -260,8 +261,11 @@ class _LoginPageState extends State<LoginPage> {
                   minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                onPressed: () => _snack(
-                  'Hubungi sekretaris posyandu desa Anda untuk reset PIN',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => LupaPinPage(noHpAwal: _idf.text.trim()),
+                  ),
                 ),
                 child: const Text(
                   'Lupa PIN?',

@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 
 import '../../core/pin_util.dart';
 import '../../core/utils/posyandu.dart';
-import 'auth_service.dart';
+import 'otp_page.dart';
+import 'otp_service.dart';
 
 const _hijau = Color(0xFF0B6B4D);
 const _hijauGelap = Color(0xFF062B20);
@@ -38,6 +39,11 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _setuju = false;
   bool _loading = false;
 
+  // Token verifikasi WhatsApp. Disimpan agar bila registrasi gagal (mis. NIK
+  // sudah terdaftar), pengguna cukup memperbaiki data tanpa kirim kode lagi.
+  String? _tokenOtp;
+  String? _hpTerverifikasi;
+
   @override
   void dispose() {
     _nama.dispose();
@@ -59,20 +65,41 @@ class _RegisterPageState extends State<RegisterPage> {
       _snack('Centang pernyataan kebenaran data terlebih dahulu');
       return;
     }
+    final hp = _hp.text.trim();
     setState(() => _loading = true);
     try {
-      await AuthService().register(
-        _nama.text.trim(),
-        _nik.text.trim(),
-        _hp.text.trim(),
-        _pin.text,
+      // 1. Verifikasi No. WhatsApp lewat kode OTP (dilewati bila nomor ini sudah terverifikasi)
+      if (_tokenOtp == null || _hpTerverifikasi != hp) {
+        final info = await OtpService().kirim(hp, TujuanOtp.registrasi);
+        if (!mounted) return;
+        final token = await Navigator.push<String>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpPage(noHp: hp, tujuan: TujuanOtp.registrasi, info: info),
+          ),
+        );
+        if (token == null || !mounted) return; // kembali tanpa verifikasi
+        _tokenOtp = token;
+        _hpTerverifikasi = hp;
+      }
+
+      // 2. Buat akun
+      await OtpService().registerOtp(
+        nama: _nama.text.trim(),
+        nik: _nik.text.trim(),
+        noHp: hp,
+        pin: _pin.text,
         posyandu: _posyandu ?? '',
+        tokenOtp: _tokenOtp!,
       );
       if (!mounted) return;
       _snack('Akun berhasil dibuat. Silakan masuk, lalu lengkapi data keluarga.');
       Navigator.pop(context);
     } catch (e) {
-      _snack(e.toString().replaceFirst('Exception: ', ''));
+      final pesan = e.toString().replaceFirst('Exception: ', '');
+      // token kedaluwarsa / sudah dipakai: minta kode baru pada percobaan berikutnya
+      if (pesan.contains('verifikasi WhatsApp')) _tokenOtp = null;
+      _snack(pesan);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

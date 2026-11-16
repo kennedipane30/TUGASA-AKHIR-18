@@ -7,6 +7,7 @@ func AllModels() []any {
 	return []any{
 		// akun & keluarga
 		&User{},
+		&KodeOTP{}, // kode OTP WhatsApp (registrasi & lupa PIN)
 		&Keluarga{},
 		&OrangTua{},
 		&Anak{},

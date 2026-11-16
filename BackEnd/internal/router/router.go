@@ -70,6 +70,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	skdnH := handler.NewSkdnHandler(service.NewSkdnService(rekapRepo, skdnRepo))
 	kaderKeluargaH := handler.NewKaderKeluargaHandler(service.NewKaderKeluargaService(userRepo, keluargaRepo))
 	logAktivitasH := handler.NewLogAktivitasHandler(logAktivitasRepo)
+	// OTP WhatsApp: registrasi orang tua & lupa PIN
+	otpH := handler.NewOtpHandler(service.NewOtpService(
+		repository.NewOtpRepository(db), userRepo, service.NewAuthService(userRepo), service.NewWaService()))
 
 	api := r.Group("/api/v1")
 	// log aktivitas: mencatat aksi semua role (POST/PUT/PATCH/DELETE yang berhasil)
@@ -77,6 +80,11 @@ func Setup(db *gorm.DB) *gin.Engine {
 	api.GET("/posyandu", authH.ListPosyandu) // publik, untuk registrasi
 	api.POST("/auth/register", authH.Register)
 	api.POST("/auth/login", pinH.Login) // identitas + PIN 6 digit (semua role)
+	// OTP WhatsApp (publik)
+	api.POST("/auth/otp/kirim", otpH.Kirim)           // {no_hp, tujuan: registrasi | reset_pin}
+	api.POST("/auth/otp/verifikasi", otpH.Verifikasi) // {no_hp, tujuan, kode} -> token_otp
+	api.POST("/auth/register-otp", otpH.Register)     // registrasi + token_otp
+	api.POST("/auth/lupa-pin", otpH.LupaPIN)          // {no_hp, pin_baru, token_otp}
 
 	// semua role (sudah login); posyandu akun dimuat di middleware
 	protected := api.Group("/", middleware.AuthRequired(), middleware.Posyandu(userRepo))
