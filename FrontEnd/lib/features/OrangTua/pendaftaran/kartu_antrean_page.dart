@@ -1,8 +1,15 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:gal/gal.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
@@ -275,6 +282,11 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
   bool _sibuk = false;
   String? _gagal;
 
+  /// Penanda area tiket yang diubah menjadi gambar (Simpan Tiket / Bagikan).
+  final _kunciTiket = GlobalKey();
+  bool _menyimpan = false;
+  bool _membagikan = false;
+
   @override
   void initState() {
     super.initState();
@@ -381,6 +393,101 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
   }
 
   // -------------------------------------------------------------------------
+  // SIMPAN TIKET & BAGIKAN KE WHATSAPP
+  // -------------------------------------------------------------------------
+
+  /// Mengubah tampilan tiket menjadi file PNG (resolusi 3x) di folder sementara.
+  Future<File> _gambarTiket(KartuAntreanData k) async {
+    await WidgetsBinding.instance.endOfFrame;
+    final ro = _kunciTiket.currentContext?.findRenderObject();
+    if (ro is! RenderRepaintBoundary) {
+      throw Exception('Tiket belum siap, coba lagi');
+    }
+    final ui.Image img = await ro.toImage(pixelRatio: 3);
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    img.dispose();
+    if (data == null) throw Exception('Gagal membuat gambar tiket');
+
+    final dir = await getTemporaryDirectory();
+    final nama = 'Antrean_${k.idTiket}_${DateTime.now().millisecondsSinceEpoch}.png';
+    final file = File('${dir.path}/$nama');
+    await file.writeAsBytes(data.buffer.asUint8List(), flush: true);
+    return file;
+  }
+
+  /// Simpan Tiket: gambar tiket disimpan ke Galeri, album "PosyanduCare".
+  Future<void> _simpanTiket() async {
+    final k = _kartu;
+    if (k == null || _menyimpan) return;
+    setState(() => _menyimpan = true);
+    try {
+      if (!await Gal.hasAccess(toAlbum: true)) {
+        final izin = await Gal.requestAccess(toAlbum: true);
+        if (!izin) {
+          _snack('Izin galeri ditolak. Aktifkan di pengaturan HP untuk menyimpan tiket.');
+          return;
+        }
+      }
+      final file = await _gambarTiket(k);
+      await Gal.putImage(file.path, album: 'PosyanduCare');
+      _snack('Tiket tersimpan di Galeri (album PosyanduCare)');
+    } on GalException catch (e) {
+      _snack(e.type == GalExceptionType.accessDenied
+          ? 'Izin galeri ditolak. Aktifkan di pengaturan HP untuk menyimpan tiket.'
+          : e.type == GalExceptionType.notEnoughSpace
+              ? 'Penyimpanan HP penuh, tiket tidak dapat disimpan'
+              : 'Tiket gagal disimpan ke galeri');
+    } catch (e) {
+      _snack(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _menyimpan = false);
+    }
+  }
+
+  /// Teks yang ikut terkirim bersama gambar tiket.
+  String _pesanBagikan(KartuAntreanData k) {
+    final b = StringBuffer()
+      ..writeln('*Bukti Antrean Posyandu*')
+      ..writeln()
+      ..writeln('Nama Balita : ${k.namaAnak}')
+      ..writeln('Nomor Antrean : ${k.kodeNomor}')
+      ..writeln('Tanggal : ${k.tanggalPanjang}');
+    if (k.jam.isNotEmpty) b.writeln('Waktu : ${k.jam} WIB');
+    if (k.lokasi.isNotEmpty) b.writeln('Lokasi : ${k.lokasi}');
+    b
+      ..writeln('ID Tiket : ${k.idTiket}')
+      ..writeln()
+      ..write('Dikirim dari aplikasi PosyanduCare');
+    return b.toString();
+  }
+
+  /// Bagikan ke WhatsApp: gambar tiket + keterangan dikirim lewat menu bagikan HP
+  /// (pilih WhatsApp, lalu kontak atau grup tujuan).
+  Future<void> _bagikanWhatsApp() async {
+    final k = _kartu;
+    if (k == null || _membagikan) return;
+    setState(() => _membagikan = true);
+    try {
+      final file = await _gambarTiket(k);
+      if (!mounted) return;
+      final kotak = context.findRenderObject() as RenderBox?;
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path, mimeType: 'image/png')],
+          text: _pesanBagikan(k),
+          subject: 'Bukti Antrean Posyandu ${k.kodeNomor}',
+          sharePositionOrigin:
+              kotak == null ? null : kotak.localToGlobal(Offset.zero) & kotak.size,
+        ),
+      );
+    } catch (e) {
+      _snack('Tiket gagal dibagikan: ${e.toString().replaceFirst('Exception: ', '')}');
+    } finally {
+      if (mounted) setState(() => _membagikan = false);
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
   // -------------------------------------------------------------------------
   Widget _header() {
@@ -480,7 +587,15 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                       )
                     else if (k != null) ...[
                       const SizedBox(height: 6),
-                      _tiket(k, namaUser),
+                      // Area ini yang menjadi gambar saat disimpan / dibagikan.
+                      RepaintBoundary(
+                        key: _kunciTiket,
+                        child: Container(
+                          color: AppColors.latar,
+                          padding: const EdgeInsets.all(6),
+                          child: _tiket(k, namaUser),
+                        ),
+                      ),
                       const SizedBox(height: 14),
                       _aksiUtama(k),
                       const SizedBox(height: 12),
@@ -750,10 +865,10 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
     );
   }
 
-  Widget _tombolKecil(IconData ikon, String teks, VoidCallback onTap) {
+  Widget _tombolKecil(IconData ikon, String teks, VoidCallback onTap, {bool proses = false}) {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
+      onTap: proses ? null : onTap,
       child: Container(
         height: 40,
         alignment: Alignment.center,
@@ -764,7 +879,14 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(ikon, size: 15, color: _hijauTua),
+            if (proses)
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: _hijauTua),
+              )
+            else
+              Icon(ikon, size: 15, color: _hijauTua),
             const SizedBox(width: 6),
             Flexible(
               child: Text(teks,
@@ -792,7 +914,10 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
             children: [
               Expanded(
                   child: _tombolKecil(
-                      Icons.download_outlined, 'Simpan Tiket', () => soon(context, 'Simpan tiket'))),
+                      Icons.download_outlined,
+                      _menyimpan ? 'Menyimpan...' : 'Simpan Tiket',
+                      _simpanTiket,
+                      proses: _menyimpan)),
               const SizedBox(width: 8),
               Expanded(
                   child: _tombolKecil(
@@ -802,8 +927,11 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
-            child: _tombolKecil(Icons.share_outlined, 'Bagikan Bukti Antrean ke WhatsApp',
-                () => soon(context, 'Bagikan ke WhatsApp')),
+            child: _tombolKecil(
+                Icons.share_outlined,
+                _membagikan ? 'Menyiapkan gambar...' : 'Bagikan Bukti Antrean ke WhatsApp',
+                _bagikanWhatsApp,
+                proses: _membagikan),
           ),
           const SizedBox(height: 8),
           TextButton.icon(
