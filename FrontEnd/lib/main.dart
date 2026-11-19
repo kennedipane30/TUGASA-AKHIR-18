@@ -19,8 +19,18 @@ import 'features/auth/ubah_pin_page.dart';
 const _roleDikenal = {'sekretaris', 'bidan', 'kader', 'orang_tua'};
 
 Future<void> main() async {
+  // Wajib dipanggil paling awal sebelum memakai plugin (notifikasi, Firebase, dll.).
+  // Jika baris ini dihapus, aplikasi error dan debugger berhenti di main().
   WidgetsFlutterBinding.ensureInitialized();
-  await NotifikasiService.instance.init();
+
+  // Notifikasi dijalankan aman: jika gagal (mis. Firebase belum siap),
+  // aplikasi tetap terbuka dan debugger tidak berhenti.
+  try {
+    await NotifikasiService.instance.init();
+  } catch (e, st) {
+    debugPrint('Notifikasi gagal diinisialisasi: $e');
+    debugPrintStack(stackTrace: st);
+  }
 
   runApp(
     ChangeNotifierProvider(

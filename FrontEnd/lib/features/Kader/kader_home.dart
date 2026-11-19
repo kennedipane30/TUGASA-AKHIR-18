@@ -9,6 +9,8 @@ import '../OrangTua/pendaftaran/pendaftaran_page.dart';
 import '../../core/pages/balita/semua_balita_page.dart';
 import '../auth/auth_provider.dart';
 import 'pendataan/pendataan_page.dart';
+import 'keluarga/keluarga_page.dart';
+import 'daftarkan_anak/daftarkan_anak_page.dart';
 import 'riwayat/riwayat_page.dart';
 import 'rekap/balita_tidak_hadir_page.dart';
 import 'vaksin/vaksin_page.dart';
@@ -89,6 +91,23 @@ class _KaderHomeState extends State<KaderHome> {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const KaderPendataanPage()),
+    );
+    _muat();
+  }
+
+  /// Tambahkan akun orang tua & data keluarga (keluarga tanpa akun / tanpa HP).
+  void _bukaKeluarga() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const KeluargaPage()),
+    );
+  }
+
+  /// Daftarkan balita ke sesi posyandu hari ini (walk-in), lalu muat ulang antrean.
+  Future<void> _bukaDaftarkanAnak() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const DaftarkanAnakPage()),
     );
     _muat();
   }
@@ -580,6 +599,10 @@ class _KaderHomeState extends State<KaderHome> {
           'QR\nCheck-in', _bukaQr),
       _itemAset('ukur_data.png', Icons.calendar_view_week_rounded, const Color(0xFF0B6B55),
           'Ukur Data\nBB TB LiLA', _bukaAntrean),
+      _itemAset('data_keluarga.png', Icons.person_add_alt_1_outlined, const Color(0xFF7C3AED),
+          'Tambah Akun\nOrang Tua', _bukaKeluarga),
+      _itemAset('pendaftaran.png', Icons.how_to_reg_outlined, const Color(0xFF0F766E),
+          'Daftarkan\nBalita', _bukaDaftarkanAnak),
       _itemAset('semua_balita.png', Icons.child_care, const Color(0xFFEA580C),
           'Semua\nBalita', _bukaBalita),
       _itemAset('riwatar_pemeriksaan.png', Icons.history, const Color(0xFF0E8F7E),
