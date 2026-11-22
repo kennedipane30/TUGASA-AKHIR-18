@@ -15,6 +15,7 @@ import '../../core/pages/balita/semua_balita_page.dart';
 import '../../core/pages/rekap/rekap_posyandu_page.dart';
 import 'vaksin/vaksin_page.dart';
 import 'log_aktivitas/log_aktivitas_page.dart';
+import 'laporan_bulanan/laporan_bulanan_page.dart';
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});
@@ -117,6 +118,14 @@ class _AdminHomeState extends State<AdminHome> {
     );
   }
 
+  void _bukaLaporanBulanan() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (_) => const AdminLaporanBulananPage()),
+    );
+  }
+
   void _bukaLogAktivitas() {
     Navigator.push(
       context,
@@ -165,8 +174,8 @@ class _AdminHomeState extends State<AdminHome> {
               'Pengumuman', () => soon(context, 'Pengumuman')),
           _itemAset('semua_balita.png', Icons.child_care, AppColors.hijau,
               'Semua\nBalita', _bukaBalita),
-          _itemAset('data_master.png', Icons.dataset_outlined, AppColors.hijau,
-              'Data\nMaster', () => soon(context, 'Data master')),
+          _itemAset('laporan_bulanan.png', Icons.picture_as_pdf_outlined, AppColors.hijau,
+              'Laporan\nBulanan', _bukaLaporanBulanan),
           _itemAset('rekap_posyandu.png', Icons.summarize_outlined, AppColors.hijau,
               'Rekap\nPosyandu', () => _bukaRekap(0)),
           _itemAset('log_aktivitas.png', Icons.history_edu_outlined, AppColors.hijau,

@@ -5,6 +5,7 @@ import '../../core/widgets/common_widgets.dart';
 import '../../core/utils/posyandu.dart';
 import '../../core/pages/balita/semua_balita_page.dart';
 import '../../core/pages/rekap/rekap_posyandu_page.dart';
+import 'laporan_bulanan/laporan_bulanan_page.dart';
 import '../../service/balita_service.dart';
 import '../auth/auth_provider.dart';
 import 'balita/balita_berisiko_page.dart';
@@ -38,6 +39,14 @@ class _BidanHomeState extends State<BidanHome> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const RekapPosyanduPage(prefix: '/bidan')),
+    );
+  }
+
+  void _bukaLaporanBulanan() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (_) => const BidanLaporanBulananPage()),
     );
   }
 
@@ -252,6 +261,8 @@ class _BidanHomeState extends State<BidanHome> {
       _itemAset('surat_rujukan.png', Icons.description_outlined, _kuning, 'Surat\nRujukan',
           () => soon(context, 'Surat rujukan')),
       _itemAset('rekap_skdn.png', Icons.assessment_outlined, _teal, 'Rekap\nPosyandu', _bukaRekap),
+      _itemAset('laporan_bulanan.png', Icons.picture_as_pdf_outlined, _teal, 'Laporan\nBulanan',
+          _bukaLaporanBulanan),
     ]);
   }
 }

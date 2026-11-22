@@ -28,6 +28,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	balitaRepo := repository.NewBalitaRepository(db)
 	skdnRepo := repository.NewSkdnRepository(db)
 	logAktivitasRepo := repository.NewLogAktivitasRepository(db)
+	laporanBulananRepo := repository.NewLaporanBulananRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
@@ -68,6 +69,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	rekapH := handler.NewRekapHandler(service.NewRekapService(rekapRepo))
 	balitaH := handler.NewBalitaHandler(service.NewBalitaService(balitaRepo, vaksinRepo))
 	skdnH := handler.NewSkdnHandler(service.NewSkdnService(rekapRepo, skdnRepo))
+	// laporan bulanan posyandu (sekretaris & bidan)
+	laporanBulananH := handler.NewLaporanBulananHandler(service.NewLaporanBulananService(
+		rekapRepo, laporanBulananRepo, service.NewRekapService(rekapRepo), service.NewSkdnService(rekapRepo, skdnRepo)))
 	kaderKeluargaH := handler.NewKaderKeluargaHandler(service.NewKaderKeluargaService(userRepo, keluargaRepo))
 	logAktivitasH := handler.NewLogAktivitasHandler(logAktivitasRepo)
 	// OTP WhatsApp: registrasi orang tua & lupa PIN
@@ -138,6 +142,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.GET("/balita/:anak_id", balitaH.Detail)
 	// ringkasan penimbangan (SKDN)
 	sekretaris.GET("/skdn", skdnH.Hitung)
+	sekretaris.GET("/laporan-bulanan", laporanBulananH.Laporan)
 	// log aktivitas semua role di posyandu sekretaris
 	sekretaris.GET("/log-aktivitas", logAktivitasH.Daftar)
 
@@ -212,6 +217,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	bidan.GET("/balita/:anak_id", balitaH.Detail)
 	// ringkasan penimbangan (SKDN)
 	bidan.GET("/skdn", skdnH.Hitung)
+	bidan.GET("/laporan-bulanan", laporanBulananH.Laporan)
 	// rekap posyandu: status gizi, Vitamin A & obat cacing, balita tidak hadir
 	// (sama dengan sekretaris; data dibatasi ke posyandu akun bidan)
 	bidan.GET("/rekap/gizi", rekapH.Gizi)
