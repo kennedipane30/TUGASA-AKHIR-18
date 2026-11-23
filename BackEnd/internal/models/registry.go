@@ -17,6 +17,7 @@ func AllModels() []any {
 		&Pendaftaran{},
 		&Pengukuran{},
 		&PemeriksaanBidan{},
+		&Rujukan{}, // surat rujukan balita (bidan -> faskes)
 
 		// status gizi & penilaian
 		&StatusGizi{},

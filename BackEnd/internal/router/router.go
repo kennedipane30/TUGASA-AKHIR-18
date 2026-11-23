@@ -70,6 +70,10 @@ func Setup(db *gorm.DB) *gin.Engine {
 	balitaH := handler.NewBalitaHandler(service.NewBalitaService(balitaRepo, vaksinRepo))
 	skdnH := handler.NewSkdnHandler(service.NewSkdnService(rekapRepo, skdnRepo))
 	// laporan bulanan posyandu (sekretaris & bidan)
+	// rujukan balita (bidan membuat, orang tua melihat)
+	rujukanSvc := service.NewRujukanService(repository.NewRujukanRepository(db))
+	rujukanSvc.SetNotifikasi(notifSvc)
+	rujukanH := handler.NewRujukanHandler(rujukanSvc)
 	laporanBulananH := handler.NewLaporanBulananHandler(service.NewLaporanBulananService(
 		rekapRepo, laporanBulananRepo, service.NewRekapService(rekapRepo), service.NewSkdnService(rekapRepo, skdnRepo)))
 	kaderKeluargaH := handler.NewKaderKeluargaHandler(service.NewKaderKeluargaService(userRepo, keluargaRepo))
@@ -166,6 +170,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// riwayat vaksin sebelum posyandu & laporan reaksi setelah imunisasi
 	ortu.POST("/vaksin/anak/:anak_id/riwayat-awal", vaksinH.LaporRiwayatAwal)
 	ortu.POST("/vaksin/riwayat/:id/kipi", vaksinH.LaporKipi)
+	// rujukan anak (lihat & unduh surat)
+	ortu.GET("/rujukan", rujukanH.DaftarOrangTua)
+	ortu.GET("/rujukan/:id", rujukanH.DetailOrangTua)
 
 	// kader (menampilkan QR tetap posyandu, bukan memindai)
 	kader := protected.Group("/kader", middleware.RoleRequired("kader"))
@@ -218,6 +225,16 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// ringkasan penimbangan (SKDN)
 	bidan.GET("/skdn", skdnH.Hitung)
 	bidan.GET("/laporan-bulanan", laporanBulananH.Laporan)
+	// surat rujukan
+	bidan.GET("/rujukan", rujukanH.DaftarBidan) // ?status=aktif|selesai
+	bidan.POST("/rujukan", rujukanH.Buat)
+	bidan.GET("/rujukan/:id", rujukanH.DetailBidan)
+	bidan.PUT("/rujukan/:id", rujukanH.Ubah)
+	bidan.DELETE("/rujukan/:id", rujukanH.Hapus)
+	bidan.PUT("/rujukan/:id/balik", rujukanH.CatatBalik)
+	bidan.POST("/rujukan/:id/batal", rujukanH.Batal)
+	bidan.GET("/rujukan-anak", rujukanH.CariAnak)             // ?cari=nama/NIK
+	bidan.GET("/rujukan-anak/:anak_id", rujukanH.DataAnak) // data anak otomatis
 	// rekap posyandu: status gizi, Vitamin A & obat cacing, balita tidak hadir
 	// (sama dengan sekretaris; data dibatasi ke posyandu akun bidan)
 	bidan.GET("/rekap/gizi", rekapH.Gizi)

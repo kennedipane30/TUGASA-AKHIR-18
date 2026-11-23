@@ -10,6 +10,7 @@ import '../../service/balita_service.dart';
 import '../auth/auth_provider.dart';
 import 'balita/balita_berisiko_page.dart';
 import 'riwayat/riwayat_page.dart';
+import 'rujukan/rujukan_page.dart';
 
 // Warna tampilan
 const _hijauTeks = Color(0xFF065F46);
@@ -39,6 +40,13 @@ class _BidanHomeState extends State<BidanHome> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const RekapPosyanduPage(prefix: '/bidan')),
+    );
+  }
+
+  void _bukaRujukan() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const BidanRujukanPage()),
     );
   }
 
@@ -259,7 +267,7 @@ class _BidanHomeState extends State<BidanHome> {
       _itemAset('riwatar_pemeriksaan.png', Icons.history, _teal, 'Riwayat\nPemeriksaan',
           _bukaRiwayat),
       _itemAset('surat_rujukan.png', Icons.description_outlined, _kuning, 'Surat\nRujukan',
-          () => soon(context, 'Surat rujukan')),
+          _bukaRujukan),
       _itemAset('rekap_skdn.png', Icons.assessment_outlined, _teal, 'Rekap\nPosyandu', _bukaRekap),
       _itemAset('laporan_bulanan.png', Icons.picture_as_pdf_outlined, _teal, 'Laporan\nBulanan',
           _bukaLaporanBulanan),

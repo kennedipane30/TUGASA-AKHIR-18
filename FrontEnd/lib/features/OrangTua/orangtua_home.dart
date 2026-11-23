@@ -13,6 +13,7 @@ import 'datadiri/data_keluarga_page.dart';
 import 'pendaftaran/pendaftaran_page.dart';
 import 'riwayat/grafik_page.dart';
 import 'riwayat/pemeriksaan_page.dart';
+import 'rujukan/rujukan_anak_page.dart';
 import 'vaksin/vaksin_page.dart';
 
 const _hijauTua = Color(0xFF065F46);
@@ -173,6 +174,13 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const OrangTuaVaksinPage()),
+    );
+  }
+
+  void _bukaRujukan() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const OrangTuaRujukanPage()),
     );
   }
 
@@ -660,6 +668,13 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
         'Vaksin\nAnak',
         const Color(0xFF2563EB),
         _bukaVaksin,
+      ),
+      (
+        '${_aset}rujukan_anak.png',
+        Icons.description_rounded,
+        'Rujukan\nAnak',
+        const Color(0xFFB45309),
+        _bukaRujukan,
       ),
       (
         '${_aset}buku_panduan.png',
