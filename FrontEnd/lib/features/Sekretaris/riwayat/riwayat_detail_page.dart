@@ -394,8 +394,8 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _baris('Keluhan', _teks(c['keluhan'])),
-                  _baris('Catatan untuk orang tua', _teks(c['catatan_evaluasi'])),
-                  _baris('Saran gizi', _teks(c['saran_gizi'])),
+                  _baris('Hasil pemeriksaan', _teks(c['catatan_evaluasi'])),
+                  _baris('Catatan untuk orang tua', _teks(c['saran_gizi'])),
                   _baris('Kunjungan ulang', ulang == null ? '' : _fmtTgl(ulang)),
                 ],
               ),

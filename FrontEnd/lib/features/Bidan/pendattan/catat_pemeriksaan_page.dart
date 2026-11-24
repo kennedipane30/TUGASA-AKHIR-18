@@ -83,15 +83,8 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
       // Isi awal dari catatan yang sudah ada.
       final c = detail['catatan'];
       if (c is Map) {
-        _keluhan.text = c['keluhan']?.toString() ?? '';
         _catatanOrtu.text = c['catatan_evaluasi']?.toString() ?? '';
         _saranGizi.text = c['saran_gizi']?.toString() ?? '';
-        final t = c['tanggal_kunjungan_ulang']?.toString() ?? '';
-        _ulang = null;
-        if (t.length >= 10) {
-          final tgl = DateTime.tryParse(t.substring(0, 10));
-          if (tgl != null && !tgl.isBefore(_hariIni())) _ulang = tgl;
-        }
       }
 
       // Riwayat vaksin sebelum posyandu.
@@ -116,16 +109,18 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
         for (final e in imun) {
           if (e is Map && e['jenis_vaksin_id'] != null) {
             final k = '${e['jenis_vaksin_id']}|${e['dosis_ke']}';
-            _vaksinDipilih[k] = _PilihVaksin(
-              batch: e['nomor_batch']?.toString() ?? '',
-              reaksi: e['reaksi_kipi']?.toString() ?? '',
-            );
+            _vaksinDipilih[k] = _PilihVaksin();
             _vaksinSesiIni.add(k);
-            final kond = e['kondisi_anak']?.toString() ?? '';
-            if (kond == KondisiImunisasi.sehat || kond == KondisiImunisasi.demamRingan) _kondisi = kond;
           }
         }
       }
+
+      // Kondisi anak sebelum imunisasi mengikuti pendataan kader ("Sedang sakit").
+      final ukurKader = detail['pengukuran'] is Map
+          ? Map<String, dynamic>.from(detail['pengukuran'] as Map)
+          : const <String, dynamic>{};
+      final sakitKader = ukurKader['sedang_sakit'] == true;
+      _kondisi = sakitKader ? KondisiImunisasi.sakit : KondisiImunisasi.sehat;
 
       // Suplemen yang sudah tersimpan.
       for (final s in _suplemen) {
@@ -146,6 +141,7 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
             nama: namaSuplemen(jenis),
             dosis: dataLama ? (e['keterangan_dosis']?.toString() ?? '') : dosis,
             catatan: e['catatan']?.toString() ?? '',
+            aturanPakai: e['aturan_pakai']?.toString() ?? '',
             jumlah: dataLama ? 1 : jumlah,
             satuan: satuan.isEmpty ? 'kapsul' : satuan,
             tetap: _namaVitaminA(jenis) || _namaObatCacing(jenis),
@@ -159,7 +155,8 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
       final usiaBln = int.tryParse(detail['usia_bulan']?.toString() ?? '') ?? 0;
       var otomatis = false;
       if (rencana != null && c is! Map) {
-        if (status == StatusRiwayatVaksin.dikonfirmasi) {
+        // Anak sakit menurut kader: vaksin tidak dicentang otomatis (imunisasi ditunda).
+        if (status == StatusRiwayatVaksin.dikonfirmasi && !sakitKader) {
           for (final it in rencana.imunisasi) {
             if (it.jenisVaksinId.isEmpty) continue;
             final k = '${it.jenisVaksinId}|${it.dosisKe}';
@@ -174,6 +171,16 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
           _suplemen.add(it.jenis == 'vitamin_a' ? _vitaminA(usiaBln) : _obatCacing(usiaBln));
           otomatis = true;
         }
+      }
+
+      // Form suplemen langsung tampil (satu baris kosong bila belum ada suplemen).
+      _siapkanFormSuplemen();
+
+      // Catatan baru & anak sakit menurut kader: hasil pemeriksaan diisi awal (dapat diubah bidan).
+      if (c is! Map && sakitKader && _catatanOrtu.text.trim().isEmpty) {
+        final keluhan = (ukurKader['keluhan'] ?? '').toString().trim();
+        _catatanOrtu.text = 'Anak sedang sakit${keluhan.isEmpty ? '' : ' ($keluhan)'} '
+            'sehingga imunisasi ditunda sampai anak sehat.';
       }
 
       // Kartu vaksin anak (jadwal + status).

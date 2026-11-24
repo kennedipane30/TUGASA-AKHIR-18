@@ -218,6 +218,8 @@ Future<void> tampilkanBuktiVaksin(BuildContext context, String nama) {
 
 /// Isi halaman vaksin anak (dipakai bidan, kader, sekretaris, dan orang tua).
 /// Tab: Jadwal (dengan status) · Riwayat Vaksin · Suplemen.
+/// [hanyaRiwayat] = true: tab Jadwal dan ringkasan jadwal disembunyikan, hanya vaksin
+/// yang sudah diterima (riwayat) dan suplemen yang tampil (dipakai di halaman bidan).
 /// [bisaKelola] = true untuk bidan: mencatat vaksin dari luar posyandu, membatalkan
 /// catatan dari luar, dan menindaklanjuti reaksi setelah imunisasi (KIPI).
 /// [bisaLaporKipi] = true untuk orang tua: melaporkan reaksi setelah imunisasi.
@@ -225,12 +227,14 @@ class VaksinLihatBody extends StatefulWidget {
   final String anakId;
   final bool bisaKelola;
   final bool bisaLaporKipi;
+  final bool hanyaRiwayat;
 
   const VaksinLihatBody({
     super.key,
     required this.anakId,
     this.bisaKelola = false,
     this.bisaLaporKipi = false,
+    this.hanyaRiwayat = false,
   });
 
   @override
@@ -298,6 +302,7 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
   @override
   void initState() {
     super.initState();
+    if (widget.hanyaRiwayat) _tab = 1; // langsung ke Riwayat
     _muat();
   }
 
@@ -360,7 +365,7 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          _ringkasan(k),
+          if (!widget.hanyaRiwayat) _ringkasan(k),
           if (!k.anak.riwayatDikonfirmasi) ...[
             _infoRiwayatAwal(k),
             const SizedBox(height: 12),
@@ -479,10 +484,11 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
   }
 
   Widget _pilihTab(KartuVaksin k) {
-    final label = [
-      'Jadwal',
-      'Riwayat (${k.riwayat.length + k.vaksinMandiri.length})',
-      'Suplemen (${k.suplemen.length})',
+    // Indeks tab asli (0 Jadwal, 1 Riwayat, 2 Suplemen) beserta labelnya.
+    final tab = <(int, String)>[
+      if (!widget.hanyaRiwayat) (0, 'Jadwal'),
+      (1, 'Riwayat (${k.riwayat.length + k.vaksinMandiri.length})'),
+      (2, 'Suplemen (${k.suplemen.length})'),
     ];
     return Container(
       padding: const EdgeInsets.all(4),
@@ -493,7 +499,7 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
       ),
       child: Row(
         children: [
-          for (var i = 0; i < label.length; i++)
+          for (final (i, teks) in tab)
             Expanded(
               child: InkWell(
                 borderRadius: BorderRadius.circular(10),
@@ -506,7 +512,7 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    label[i],
+                    teks,
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

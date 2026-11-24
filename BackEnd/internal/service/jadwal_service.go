@@ -119,6 +119,50 @@ type KartuAntrean struct {
 	WaktuCheckin      *time.Time `json:"waktu_checkin"`
 	BolehBatal        bool       `json:"boleh_batal"`
 	BolehCheckin      bool       `json:"boleh_checkin"`
+	// Tahap: posisi anak dalam pelayanan (dihitung dari data kader dan bidan, tidak disimpan).
+	Tahap string `json:"tahap"`
+}
+
+// Tahap pelayanan yang dilihat orang tua pada kartu antrean.
+//
+//	belum_checkin  : sudah daftar, belum check-in
+//	menunggu_kader : sudah check-in, belum diukur kader
+//	menunggu_bidan : sudah diukur kader, belum dicatat bidan
+//	selesai        : bidan sudah menyimpan catatan pemeriksaan (selesai dilayani)
+//	tidak_dilayani : sudah check-in tetapi jadwal berakhir sebelum bidan mencatat
+//	batal, tidak_hadir : mengikuti status kehadiran
+const (
+	TahapBelumCheckin  = "belum_checkin"
+	TahapMenungguKader = "menunggu_kader"
+	TahapMenungguBidan = "menunggu_bidan"
+	TahapSelesai       = "selesai"
+	TahapTidakDilayani = "tidak_dilayani"
+	TahapBatal         = "batal"
+	TahapTidakHadir    = "tidak_hadir"
+)
+
+// hitungTahap: selesai dilayani HANYA bila bidan sudah menyimpan catatan.
+func hitungTahap(j *models.JadwalPosyandu, p *models.Pendaftaran, diukur, dicatat bool) string {
+	switch p.StatusKehadiran {
+	case "batal":
+		return TahapBatal
+	case "tidak_hadir":
+		return TahapTidakHadir
+	case "terdaftar":
+		return TahapBelumCheckin
+	case "sudah_checkin":
+		switch {
+		case dicatat:
+			return TahapSelesai
+		case jadwalSelesai(j):
+			return TahapTidakDilayani
+		case diukur:
+			return TahapMenungguBidan
+		default:
+			return TahapMenungguKader
+		}
+	}
+	return p.StatusKehadiran
 }
 
 type AnakStatus struct {
@@ -129,6 +173,7 @@ type AnakStatus struct {
 	BolehDaftar     bool          `json:"boleh_daftar"`
 	BolehBatal      bool          `json:"boleh_batal"`
 	BolehCheckin    bool          `json:"boleh_checkin"`
+	Tahap           string        `json:"tahap"` // lihat Tahap* ("belum_daftar" bila belum mendaftar)
 	Kartu           *KartuAntrean `json:"kartu"`
 	Rencana         *RencanaAnak  `json:"rencana"` // imunisasi, Vitamin A, obat cacing pada jadwal ini
 }
@@ -234,6 +279,23 @@ func cekJadwal(in JadwalInput, baru bool) (time.Time, *string, error) {
 		selesai = &s
 	}
 	return tgl, selesai, nil
+}
+
+// kartu: kartu antrean beserta tahap pelayanannya.
+func (s *JadwalService) kartu(j *models.JadwalPosyandu, a *models.Anak, p *models.Pendaftaran) *KartuAntrean {
+	k := buatKartu(j, a, p)
+	var diukur, dicatat bool
+	if p.StatusKehadiran == "sudah_checkin" {
+		ids := []uuid.UUID{p.ID}
+		if m, err := s.repo.PendaftaranDiukur(ids); err == nil {
+			diukur = m[p.ID]
+		}
+		if m, err := s.repo.PendaftaranDicatatBidan(ids); err == nil {
+			dicatat = m[p.ID]
+		}
+	}
+	k.Tahap = hitungTahap(j, p, diukur, dicatat)
+	return k
 }
 
 func buatKartu(j *models.JadwalPosyandu, a *models.Anak, p *models.Pendaftaran) *KartuAntrean {
@@ -570,10 +632,11 @@ func (s *JadwalService) Terdekat(userID uint, role, pos string) (*JadwalTerdekat
 	bukaDaftar := now.Before(selesaiJadwal(j))
 	for i := range anak {
 		a := anak[i]
-		st := AnakStatus{AnakID: a.ID, Nama: a.Nama, StatusKehadiran: "belum_daftar"}
+		st := AnakStatus{AnakID: a.ID, Nama: a.Nama, StatusKehadiran: "belum_daftar", Tahap: "belum_daftar"}
 		if p, ok := peta[a.ID]; ok && p.StatusKehadiran != "batal" {
 			pp := p
-			k := buatKartu(j, &a, &pp)
+			k := s.kartu(j, &a, &pp)
+			st.Tahap = k.Tahap
 			st.StatusKehadiran = p.StatusKehadiran
 			st.NomorAntrean = p.NomorAntrean
 			st.BolehBatal = k.BolehBatal
@@ -683,7 +746,7 @@ func (s *JadwalService) Daftar(userID uint, jadwalID, anakID uuid.UUID) (*KartuA
 	if err != nil {
 		return nil, err
 	}
-	return buatKartu(j, a, hasil), nil
+	return s.kartu(j, a, hasil), nil
 }
 
 func (s *JadwalService) BatalDaftar(userID uint, jadwalID, anakID uuid.UUID) (*KartuAntrean, error) {
@@ -720,7 +783,7 @@ func (s *JadwalService) BatalDaftar(userID uint, jadwalID, anakID uuid.UUID) (*K
 	if err := s.repo.SavePendaftaran(p); err != nil {
 		return nil, err
 	}
-	return buatKartu(j, a, p), nil
+	return s.kartu(j, a, p), nil
 }
 
 func (s *JadwalService) ScanCheckin(userID uint, jadwalID, anakID uuid.UUID, kode string) (*KartuAntrean, error) {
@@ -770,7 +833,7 @@ func (s *JadwalService) ScanCheckin(userID uint, jadwalID, anakID uuid.UUID, kod
 	if err := s.repo.SavePendaftaran(p); err != nil {
 		return nil, err
 	}
-	return buatKartu(j, a, p), nil
+	return s.kartu(j, a, p), nil
 }
 
 func (s *JadwalService) KartuAntrean(userID uint, jadwalID, anakID uuid.UUID) (*KartuAntrean, error) {
@@ -795,7 +858,7 @@ func (s *JadwalService) KartuAntrean(userID uint, jadwalID, anakID uuid.UUID) (*
 	if err != nil {
 		return nil, err
 	}
-	return buatKartu(j, a, p), nil
+	return s.kartu(j, a, p), nil
 }
 
 // ---------------------------------------------------------------- kader: cari anak, walk-in, check-in manual

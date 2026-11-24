@@ -13,7 +13,7 @@ import (
 
 // Satu akun sekretaris untuk setiap desa. No. HP format +62 (E.164).
 var daftarSekretaris = []struct{ Nama, NoHP, Posyandu string }{
-	{"Kennedi Pane", "+6282235805348", "sitoluama"},
+	{"Kennedi Pane", "+6282235805344", "sitoluama"},
 	{"Natasya Tambunan", "+6282235805349", "silimbat"},
 	{"Sara Rajagukguk", "+6282235805310", "aekbolon"},
 }

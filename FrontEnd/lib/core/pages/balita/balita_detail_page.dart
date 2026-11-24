@@ -706,8 +706,8 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
               style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup))
         else ...[
           _blok('Keluhan', c.keluhan, bg: _biruMuda, garis: _biruGaris, warnaJudul: _biru),
-          _blok('Catatan untuk orang tua', c.catatanEvaluasi, bg: _biruMuda, garis: _biruGaris, warnaJudul: _biru),
-          _blok('Saran gizi', c.saranGizi, bg: _biruMuda, garis: _biruGaris, warnaJudul: _biru),
+          _blok('Hasil pemeriksaan', c.catatanEvaluasi, bg: _biruMuda, garis: _biruGaris, warnaJudul: _biru),
+          _blok('Catatan untuk orang tua', c.saranGizi, bg: _biruMuda, garis: _biruGaris, warnaJudul: _biru),
           _baris('Kunjungan ulang', c.kunjunganUlang == null ? '' : formatTanggal(c.kunjunganUlang!)),
           if (c.keluhan.isEmpty &&
               c.catatanEvaluasi.isEmpty &&

@@ -167,6 +167,35 @@ func (r *JadwalRepository) ListPendaftaranJadwal(jadwalID uuid.UUID, status ...s
 	return list, err
 }
 
+// PendaftaranDiukur: pendaftaran yang datanya sudah diukur kader.
+func (r *JadwalRepository) PendaftaranDiukur(ids []uuid.UUID) (map[uuid.UUID]bool, error) {
+	return r.petaPendaftaran(&models.Pengukuran{}, ids)
+}
+
+// PendaftaranDicatatBidan: pendaftaran yang catatan pemeriksaannya sudah disimpan bidan.
+func (r *JadwalRepository) PendaftaranDicatatBidan(ids []uuid.UUID) (map[uuid.UUID]bool, error) {
+	return r.petaPendaftaran(&models.PemeriksaanBidan{}, ids)
+}
+
+// petaPendaftaran: id pendaftaran (dari [ids]) yang memiliki baris pada tabel [model].
+func (r *JadwalRepository) petaPendaftaran(model any, ids []uuid.UUID) (map[uuid.UUID]bool, error) {
+	hasil := map[uuid.UUID]bool{}
+	if len(ids) == 0 {
+		return hasil, nil
+	}
+	var kolom []string
+	if err := r.db.Model(model).Where("pendaftaran_id IN ?", ids).
+		Pluck("pendaftaran_id::text", &kolom).Error; err != nil {
+		return nil, err
+	}
+	for _, k := range kolom {
+		if id, err := uuid.Parse(k); err == nil {
+			hasil[id] = true
+		}
+	}
+	return hasil, nil
+}
+
 func (r *JadwalRepository) ListPendaftaranAnak(anakIDs []uuid.UUID, jadwalID uuid.UUID) ([]models.Pendaftaran, error) {
 	list := []models.Pendaftaran{}
 	if len(anakIDs) == 0 {

@@ -298,6 +298,39 @@ Widget _bannerBelumMulai(DateTime mulai) {
   );
 }
 
+/// Pesan di bagian atas form ubah bila jadwal posyandu sudah selesai.
+Widget _bannerJadwalSelesai() {
+  return Container(
+    width: double.infinity,
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(14),
+    decoration: dekorKartuBidan(warna: AppColors.kuningMuda),
+    child: const Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.lock_outline, color: AppColors.kuning),
+        SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Jadwal posyandu sudah selesai',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Pemeriksaan bidan untuk kunjungan ini hanya dapat dilihat dan tidak dapat diubah lagi.',
+                style: TextStyle(fontSize: 16, height: 1.35),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 /// Kotak informasi berwarna (peringatan / petunjuk).
 Widget _info(String teks, {IconData ikon = Icons.info_outline, Color bg = AppColors.biruMuda, Color fg = AppColors.biru}) {
   return Container(
@@ -331,27 +364,56 @@ class _BarisSuplemen {
   final TextEditingController nama;
   final TextEditingController dosis;
   final TextEditingController catatan;
+
+  /// Isian aturan pakai bila bidan memilih "Lainnya".
+  final TextEditingController aturanLain;
   int jumlah;
   String satuan;
+
+  /// Pilihan aturan pakai: salah satu [_aturanPakai] atau [_aturanLainnya].
+  String aturan;
   final bool tetap;
 
   _BarisSuplemen({
     String nama = '',
     String dosis = '',
     String catatan = '',
+    String aturanPakai = '',
     this.jumlah = 1,
     this.satuan = 'kapsul',
     this.tetap = false,
   })  : nama = TextEditingController(text: nama),
         dosis = TextEditingController(text: dosis),
-        catatan = TextEditingController(text: catatan);
+        catatan = TextEditingController(text: catatan),
+        aturan = _aturanPakai.contains(aturanPakai)
+            ? aturanPakai
+            : (aturanPakai.trim().isEmpty ? (tetap ? 'Dosis tunggal' : '1 x 1 sehari') : _aturanLainnya),
+        aturanLain = TextEditingController(
+            text: _aturanPakai.contains(aturanPakai) ? '' : aturanPakai.trim());
+
+  /// Aturan pakai yang dikirim ke server.
+  String get aturanPakai => aturan == _aturanLainnya ? aturanLain.text.trim() : aturan;
+
+  /// Baris yang belum diisi sama sekali (form suplemen yang dibiarkan kosong).
+  bool get kosong =>
+      !tetap && nama.text.trim().isEmpty && dosis.text.trim().isEmpty && catatan.text.trim().isEmpty;
 
   void dispose() {
     nama.dispose();
     dosis.dispose();
     catatan.dispose();
+    aturanLain.dispose();
   }
 }
+
+/// Pilihan aturan pakai suplemen. Selain ini, bidan memilih "Lainnya" dan mengisi sendiri.
+const _aturanPakai = <String>[
+  '1 x 1 sehari',
+  '2 x 1 sehari',
+  '3 x 1 sehari',
+  'Dosis tunggal',
+];
+const _aturanLainnya = 'Lainnya';
 
 const _satuanSuplemen = <String>[
   'kapsul',
@@ -375,19 +437,12 @@ _BarisSuplemen _obatCacing(int usia) => _BarisSuplemen(
       tetap: true,
     );
 
-/// Vaksin yang dipilih hari ini beserta nomor batch dan reaksi (opsional).
+/// Vaksin yang dipilih hari ini. Nomor batch dan reaksi tidak diisi lagi di sini:
+/// reaksi setelah imunisasi dilaporkan orang tua (tampil di kunjungan berikutnya).
 class _PilihVaksin {
-  final TextEditingController batch;
-  final TextEditingController reaksi;
+  _PilihVaksin();
 
-  _PilihVaksin({String batch = '', String reaksi = ''})
-      : batch = TextEditingController(text: batch),
-        reaksi = TextEditingController(text: reaksi);
-
-  void dispose() {
-    batch.dispose();
-    reaksi.dispose();
-  }
+  void dispose() {}
 }
 
 /// Judul header (gaya teks sama dengan halaman lain).
@@ -426,11 +481,8 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
   bool _prosesRiwayat = false;
   String? _gagal;
 
-  final _keluhan = TextEditingController();
   final _catatanOrtu = TextEditingController();
   final _saranGizi = TextEditingController();
-
-  DateTime? _ulang;
 
   /// Riwayat vaksin sebelum posyandu.
   String _statusRiwayat = StatusRiwayatVaksin.belumDitanya;
@@ -455,6 +507,9 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
 
   bool get _riwayatOk => _statusRiwayat == StatusRiwayatVaksin.dikonfirmasi;
 
+  /// Mode ubah dan jadwal posyandu sudah selesai: catatan hanya dapat dilihat.
+  bool get _jadwalSelesai => modeEdit && _detail?['jadwal_selesai'] == true;
+
   /// Waktu mulai sesi bila sesi BELUM dimulai; null bila pendataan sudah boleh.
   DateTime? get _mulaiNanti {
     final m = _mulaiSesi;
@@ -465,7 +520,7 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
   @override
   void dispose() {
     _jam?.cancel();
-    for (final c in [_keluhan, _catatanOrtu, _saranGizi]) {
+    for (final c in [_catatanOrtu, _saranGizi]) {
       c.dispose();
     }
     for (final v in _vaksinDipilih.values) {
@@ -482,11 +537,6 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     return DateTime(n.year, n.month, n.day);
   }
 
-  String _tglApi(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-'
-      '${d.month.toString().padLeft(2, '0')}-'
-      '${d.day.toString().padLeft(2, '0')}';
-
   int get _usiaBulan => int.tryParse(_detail?['usia_bulan']?.toString() ?? '') ?? 0;
 
   String get _anakId =>
@@ -497,6 +547,36 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     if (a is! Map) return null;
     final t = a['tanggal_lahir']?.toString() ?? '';
     return t.length >= 10 ? DateTime.tryParse(t.substring(0, 10)) : null;
+  }
+
+  /// Form suplemen langsung tampil: bila belum ada baris, siapkan satu baris kosong.
+  /// Baris yang dibiarkan kosong tidak ikut disimpan.
+  void _siapkanFormSuplemen() {
+    if (_suplemen.isEmpty) _suplemen.add(_BarisSuplemen());
+  }
+
+  /// Hapus satu baris suplemen; form tidak pernah dibiarkan tanpa baris.
+  void _hapusSuplemen(int i) {
+    setState(() {
+      _suplemen.removeAt(i).dispose();
+      _siapkanFormSuplemen();
+    });
+  }
+
+  /// Suplemen yang benar-benar diisi bidan.
+  List<_BarisSuplemen> get _suplemenTerisi => _suplemen.where((s) => !s.kosong).toList();
+
+  /// Laporan reaksi dari orang tua (setelah imunisasi pada kunjungan sebelumnya)
+  /// yang belum ditindaklanjuti bidan. Bila orang tua tidak melapor, dianggap normal.
+  List<RiwayatVaksin> get _laporanOrtu {
+    final k = _kartu;
+    if (k == null) return const [];
+    return k.riwayat
+        .where((r) =>
+            r.reaksiKipi.trim().isNotEmpty &&
+            r.kipiTindakLanjut.trim().isEmpty &&
+            !_vaksinSesiIni.contains('${r.jenis.id}|${r.dosisKe}'))
+        .toList();
   }
 
   bool _suplemenAda(String jenis) {
@@ -515,21 +595,15 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
       ..showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  Future<void> _pilihTanggal() async {
-    final hasil = await showDatePicker(
-      context: context,
-      initialDate: _ulang ?? _hariIni(),
-      firstDate: _hariIni(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (hasil != null) setState(() => _ulang = hasil);
-  }
-
   // -------------------------------------------------------------------------
   // SIMPAN
   // -------------------------------------------------------------------------
   Future<void> _simpan() async {
     if (_kirim) return;
+    if (_jadwalSelesai) {
+      _snack('Jadwal posyandu sudah selesai, pemeriksaan tidak dapat diubah lagi');
+      return;
+    }
 
     final mulai = _mulaiNanti;
     if (mulai != null) {
@@ -541,18 +615,21 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
         _snack('Catat riwayat vaksin anak terlebih dahulu');
         return;
       }
-      if (_kondisi == null) {
-        _snack('Pilih kondisi anak sebelum imunisasi');
-        return;
-      }
-      if (_kondisi == KondisiImunisasi.sakit) {
-        _snack('Anak sedang sakit. Hapus centang vaksin dan tunda imunisasi.');
+      // Kondisi mengikuti pendataan kader; anak sakit tidak boleh mendapat vaksin baru.
+      if (_kondisi == KondisiImunisasi.sakit &&
+          _vaksinDipilih.keys.any((k) => !_vaksinSesiIni.contains(k))) {
+        _snack('Anak sedang sakit (pendataan kader). Hapus centang vaksin dan tunda imunisasi.');
         return;
       }
     }
-    for (final s in _suplemen) {
+    final terisi = _suplemenTerisi;
+    for (final s in terisi) {
       if (s.nama.text.trim().isEmpty) {
-        _snack('Isi nama suplemen pada setiap baris atau hapus baris yang kosong');
+        _snack('Isi nama suplemen, atau kosongkan seluruh isian suplemen bila tidak ada');
+        return;
+      }
+      if (s.aturan == _aturanLainnya && s.aturanLain.text.trim().isEmpty) {
+        _snack('Isi aturan pakai ${s.nama.text.trim()}');
         return;
       }
     }
@@ -562,27 +639,25 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
       await ApiClient.dio.put(
         '/bidan/pendaftaran/$pendaftaranId/catatan',
         data: {
-          'keluhan': _keluhan.text.trim(),
+          // Keluhan diambil dari pendataan kader; tanggal kunjungan ulang tidak dipakai.
           'catatan_evaluasi': _catatanOrtu.text.trim(),
           'saran_gizi': _saranGizi.text.trim(),
-          'tanggal_kunjungan_ulang': _ulang == null ? '' : _tglApi(_ulang!),
           'vaksin': [
             for (final e in _vaksinDipilih.entries)
               {
                 'jenis_vaksin_id': e.key.split('|').first,
                 'dosis_ke': int.tryParse(e.key.split('|').last) ?? 1,
                 'kondisi_anak': _kondisi ?? '',
-                'nomor_batch': e.value.batch.text.trim(),
-                'reaksi_kipi': e.value.reaksi.text.trim(),
               }
           ],
           'suplemen': [
-            for (final s in _suplemen)
+            for (final s in terisi)
               {
                 'nama': s.nama.text.trim(),
                 'dosis': s.dosis.text.trim(),
                 'jumlah': s.tetap ? 1 : s.jumlah,
                 'satuan': s.satuan,
+                'aturan_pakai': s.aturanPakai,
                 'catatan': s.catatan.text.trim(),
               }
           ],
@@ -652,6 +727,52 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     );
     if (ya != true) return;
     await _jalankan(() => _svcVaksin.hapusRiwayat(r.id), 'Catatan vaksin dibatalkan');
+  }
+
+  /// Bidan mencatat tindak lanjut atas reaksi yang dilaporkan orang tua.
+  /// Setelah tersimpan, laporan tidak tampil lagi di atas form pemeriksaan.
+  Future<void> _isiTindakLanjut(RiwayatVaksin r) async {
+    final isian = TextEditingController();
+    final tindak = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tindak lanjut reaksi'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${r.namaDosis}\n${r.reaksiKipi}', style: const TextStyle(fontSize: 16, height: 1.35)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: isian,
+              autofocus: true,
+              maxLines: 3,
+              maxLength: 500,
+              decoration: const InputDecoration(
+                hintText: 'Mis. dianjurkan kompres hangat, bila demam berlanjut ke puskesmas',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+            onPressed: () {
+              final t = isian.text.trim();
+              if (t.isEmpty) return;
+              Navigator.pop(ctx, t);
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+    if (tindak == null || tindak.isEmpty) return;
+    await _jalankan(
+      () => _svcVaksin.tindakLanjutKipi(r.id, reaksi: r.reaksiKipi, tindakLanjut: tindak),
+      'Tindak lanjut tersimpan',
+    );
   }
 
   /// Kunjungan pertama: bidan mencatat riwayat vaksin anak sebelum posyandu

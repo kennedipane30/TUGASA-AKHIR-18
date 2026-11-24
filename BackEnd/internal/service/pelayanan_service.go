@@ -68,15 +68,29 @@ type VaksinInput struct {
 
 // SuplemenInput: suplemen diinput manual oleh bidan (nama, dosis, jumlah, satuan).
 type SuplemenInput struct {
-	Nama    string `json:"nama" binding:"required"`
-	Dosis   string `json:"dosis"`
-	Jumlah  int16  `json:"jumlah"`
-	Satuan  string `json:"satuan"`
-	Catatan string `json:"catatan"`
+	Nama        string `json:"nama" binding:"required"`
+	Dosis       string `json:"dosis"`
+	Jumlah      int16  `json:"jumlah"`
+	Satuan      string `json:"satuan"`
+	AturanPakai string `json:"aturan_pakai"` // mis. "1 x 1 sehari" (opsional)
+	Catatan     string `json:"catatan"`
 }
 
-// CatatanBidanInput: Demam/Diare/Batuk, PenyakitPenyerta, dan SaranPolaAsuh tidak lagi
-// ditampilkan di aplikasi (kolom tetap ada untuk data lama). Keluhan diisi manual.
+// keteranganSuplemenAturan: "dosis · jumlah satuan · aturan pakai" untuk tampilan.
+func keteranganSuplemenAturan(dosis string, jumlah int16, satuan, aturan string) string {
+	ket := KeteranganSuplemen(dosis, jumlah, satuan)
+	if aturan == "" {
+		return ket
+	}
+	if ket == "" {
+		return aturan
+	}
+	return ket + " · " + aturan
+}
+
+// CatatanBidanInput: Demam/Diare/Batuk, PenyakitPenyerta, SaranPolaAsuh, Keluhan, dan
+// TanggalKunjunganUlang tidak lagi diisi dari aplikasi (kolom tetap ada untuk data lama).
+// Keluhan anak diambil dari pendataan kader (pengukuran.keluhan).
 type CatatanBidanInput struct {
 	Demam                 bool            `json:"demam"`
 	Diare                 bool            `json:"diare"`
@@ -143,6 +157,10 @@ type DetailBidan struct {
 	// Riwayat vaksin sebelum posyandu: harus dikonfirmasi bidan sebelum imunisasi diberikan.
 	StatusRiwayatVaksin string              `json:"status_riwayat_vaksin"`
 	RiwayatLuar         []RiwayatVaksinResp `json:"riwayat_luar"`
+
+	// JadwalSelesai: waktu jadwal posyandu sudah lewat. Catatan bidan yang sudah
+	// tersimpan tidak dapat diubah lagi (hanya dapat dilihat).
+	JadwalSelesai bool `json:"jadwal_selesai"`
 }
 
 type PengukuranRiwayat struct {
@@ -605,9 +623,10 @@ func (s *PelayananService) DetailBidan(pos string, pendaftaranID uuid.UUID) (*De
 	}
 
 	d := &DetailBidan{
-		Anak:      *p.Anak,
-		Jadwal:    *p.Jadwal,
-		UsiaBulan: usiaBulan(p.Anak.TanggalLahir, time.Now()),
+		Anak:          *p.Anak,
+		Jadwal:        *p.Jadwal,
+		UsiaBulan:     usiaBulan(p.Anak.TanggalLahir, time.Now()),
+		JadwalSelesai: jadwalSelesai(p.Jadwal),
 	}
 	if m, err := s.repo.GetPengukuran(p.ID); err == nil {
 		d.Pengukuran = m
@@ -675,6 +694,14 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 	}
 	if err := cekSesiSudahMulai(p.Jadwal); err != nil {
 		return nil, err
+	}
+	// Jadwal sudah selesai: catatan bidan yang sudah tersimpan tidak dapat diubah.
+	if jadwalSelesai(p.Jadwal) {
+		if _, err := s.repo.GetPemeriksaan(p.ID); err == nil {
+			return nil, konflik("jadwal posyandu sudah selesai, pemeriksaan bidan tidak dapat diubah lagi")
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
 	}
 	ukur, err := s.repo.GetPengukuran(p.ID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -744,13 +771,15 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 		if s.repo.ImunisasiSudahAda(p.AnakID, id, v.DosisKe, p.ID) {
 			return nil, konflik("%s dosis ke-%d sudah tercatat untuk anak ini, tidak boleh diberikan dua kali", jv.Nama, v.DosisKe)
 		}
-		kondisi := strings.TrimSpace(v.KondisiAnak)
-		switch kondisi {
-		case models.KondisiAnakSehat, models.KondisiAnakDemamRingan:
-		case models.KondisiAnakSakit:
-			return nil, validasi("anak sedang sakit, tunda imunisasi sampai anak sehat")
-		default:
-			return nil, validasi("pilih kondisi anak sebelum imunisasi (sehat atau demam ringan)")
+		// Kondisi anak mengikuti pendataan kader (Kondisi Anak: "Sedang sakit").
+		// Anak sakit: vaksin baru ditolak; vaksin yang sudah tersimpan sesi ini dipertahankan.
+		kondisi := models.KondisiAnakSehat
+		if ukur.SedangSakit {
+			x, sudah := lama[fmt.Sprintf("%s|%d", id, v.DosisKe)]
+			if !sudah {
+				return nil, validasi("anak sedang sakit (pendataan kader), tunda imunisasi sampai anak sehat")
+			}
+			kondisi = x.KondisiAnak
 		}
 		batch, err := batasTeks(v.NomorBatch, 50, "nomor batch")
 		if err != nil {
@@ -785,6 +814,10 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 			m.KipiDitanganiOleh = x.KipiDitanganiOleh
 			m.KipiDitanganiPada = x.KipiDitanganiPada
 			m.TanggalPemberian = tglSaja(x.TanggalPemberian)
+			// nomor batch tidak diisi lagi dari form bidan: data lama tidak boleh hilang
+			if m.NomorBatch == "" {
+				m.NomorBatch = x.NomorBatch
+			}
 		}
 		if reaksi != "" {
 			if m.ReaksiKipi != reaksi {
@@ -821,6 +854,10 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 		if x.Jumlah < 1 || x.Jumlah > 999 {
 			return nil, validasi("jumlah %s harus antara 1-999", nama)
 		}
+		aturan := strings.TrimSpace(x.AturanPakai)
+		if len([]rune(aturan)) > 60 {
+			return nil, validasi("aturan pakai %s maksimal 60 karakter", nama)
+		}
 		// Vitamin A dan obat cacing: sesuai usia, selalu 1 kapsul/tablet.
 		if p.Anak != nil {
 			usiaSup := usiaBulan(p.Anak.TanggalLahir, tanggal)
@@ -843,8 +880,9 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 			Dosis:           dosis,
 			Jumlah:          x.Jumlah,
 			Satuan:          satuan,
+			AturanPakai:     aturan,
 			Tanggal:         tanggal,
-			KeteranganDosis: KeteranganSuplemen(dosis, x.Jumlah, satuan),
+			KeteranganDosis: keteranganSuplemenAturan(dosis, x.Jumlah, satuan, aturan),
 			PendaftaranID:   &pid,
 			DiberikanOleh:   bidanID,
 			Catatan:         strings.TrimSpace(x.Catatan),

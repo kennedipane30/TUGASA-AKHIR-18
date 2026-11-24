@@ -135,8 +135,8 @@ class _DetailRiwayatPage extends StatelessWidget {
                         )
                       else ...[
                         _blok('Keluhan', d.keluhan),
-                        _blok('Catatan untuk orang tua', d.evaluasi),
-                        _blok('Saran gizi', d.saranGizi),
+                        _blok('Hasil pemeriksaan', d.evaluasi),
+                        _blok('Catatan untuk orang tua', d.saranGizi),
                       ],
                       if (d.kunjunganUlang != null) ...[
                         const SizedBox(height: 4),

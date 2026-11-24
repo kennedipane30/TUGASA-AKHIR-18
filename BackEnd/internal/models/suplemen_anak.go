@@ -44,8 +44,12 @@ type SuplemenAnak struct {
 	// Tanggal: tanggal suplemen diberikan.
 	Tanggal time.Time `gorm:"column:tanggal;type:date;not null" json:"tanggal"`
 
-	// KeteranganDosis: ringkasan otomatis "dosis · jumlah satuan" untuk tampilan.
-	KeteranganDosis string `gorm:"column:keterangan_dosis;size:120" json:"keterangan_dosis"`
+	// AturanPakai: aturan minum yang diisi bidan, mis. "1 x 1 sehari", "2 x 1 sehari",
+	// "Dosis tunggal", atau isian bebas.
+	AturanPakai string `gorm:"column:aturan_pakai;size:60" json:"aturan_pakai"`
+
+	// KeteranganDosis: ringkasan otomatis "dosis · jumlah satuan · aturan pakai" untuk tampilan.
+	KeteranganDosis string `gorm:"column:keterangan_dosis;size:200" json:"keterangan_dosis"`
 
 	// PendaftaranID: kunjungan posyandu saat suplemen diberikan.
 	PendaftaranID *uuid.UUID `gorm:"column:pendaftaran_id;type:uuid;index" json:"pendaftaran_id"`

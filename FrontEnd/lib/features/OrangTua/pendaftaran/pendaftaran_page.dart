@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../riwayat/pemeriksaan_page.dart' show OrangTuaPemeriksaanPage;
 import 'kartu_antrean_page.dart';
 
 // ---------------------------------------------------------------------------
@@ -77,6 +78,13 @@ class AnakStatusJadwal {
   final bool bolehCheckin;
   final RencanaAnakJadwal? rencana;
 
+  /// Posisi dalam pelayanan (dari server): belum_daftar | belum_checkin | menunggu_kader |
+  /// menunggu_bidan | selesai | tidak_dilayani | tidak_hadir.
+  final String tahap;
+
+  /// Id pendaftaran (ada bila anak sudah terdaftar); dipakai membuka hasil pemeriksaan.
+  final String pendaftaranId;
+
   AnakStatusJadwal({
     required this.anakId,
     required this.nama,
@@ -86,7 +94,18 @@ class AnakStatusJadwal {
     required this.bolehBatal,
     required this.bolehCheckin,
     this.rencana,
+    this.tahap = '',
+    this.pendaftaranId = '',
   });
+
+  /// Bidan sudah menyimpan catatan pemeriksaan = selesai dilayani.
+  bool get selesai => status == 'sudah_checkin' && tahap == 'selesai';
+
+  /// Sudah check-in, jadwal berakhir sebelum bidan mencatat.
+  bool get tidakDilayani => status == 'sudah_checkin' && tahap == 'tidak_dilayani';
+
+  /// Status yang ditampilkan: untuk anak yang sudah check-in mengikuti tahap pelayanan.
+  String get statusTampil => (status == 'sudah_checkin' && tahap.isNotEmpty) ? tahap : status;
 
   factory AnakStatusJadwal.fromApi(Map<String, dynamic> j) =>
       AnakStatusJadwal(
@@ -97,6 +116,8 @@ class AnakStatusJadwal {
         bolehDaftar: j['boleh_daftar'] == true,
         bolehBatal: j['boleh_batal'] == true,
         bolehCheckin: j['boleh_checkin'] == true,
+        tahap: j['tahap']?.toString() ?? '',
+        pendaftaranId: j['kartu'] is Map ? (j['kartu']['pendaftaran_id']?.toString() ?? '') : '',
         rencana: j['rencana'] is Map
             ? RencanaAnakJadwal.fromApi(Map<String, dynamic>.from(j['rencana'] as Map))
             : null,
@@ -194,7 +215,16 @@ String _pesanError(Object e) {
     case 'terdaftar':
       return ('Terdaftar', AppColors.biruMuda, AppColors.biru);
     case 'sudah_checkin':
-      return ('Sudah check-in', AppColors.hijauMuda, AppColors.hijau);
+    case 'menunggu_kader':
+      return ('Menunggu pengukuran kader', AppColors.hijauMuda, AppColors.hijau);
+    case 'menunggu_bidan':
+      return ('Menunggu pemeriksaan bidan', AppColors.biruMuda, AppColors.biru);
+    case 'selesai':
+      return ('Selesai dilayani', AppColors.hijauMuda, AppColors.hijau);
+    case 'tidak_dilayani':
+      return ('Tidak dilayani', AppColors.merahMuda, AppColors.merah);
+    case 'belum_checkin':
+      return ('Terdaftar', AppColors.biruMuda, AppColors.biru);
     case 'tidak_hadir':
       return ('Tidak hadir', AppColors.merahMuda, AppColors.merah);
     default:
@@ -709,7 +739,7 @@ class _OrangTuaPendaftaranPageState
   }
 
   Widget _bagianBalita(JadwalTerdekatData j, AnakStatusJadwal a) {
-    final (label, _, fg) = labelStatusHadir(a.status);
+    final (label, _, fg) = labelStatusHadir(a.statusTampil);
     final banyak = j.anak.length > 1;
 
     return Column(
@@ -861,11 +891,41 @@ class _OrangTuaPendaftaranPageState
     final proses = _sibuk == a.anakId;
     final lock = _sibuk != null;
 
+    if (a.selesai) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _kotakStatus('Selesai dilayani. Hasil pemeriksaan sudah dapat dilihat.', _hijauHeader),
+          const SizedBox(height: 8),
+          _tombolUtama(
+            teks: 'Lihat Hasil Pemeriksaan',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => OrangTuaPemeriksaanPage(
+                  anakId: a.anakId,
+                  pendaftaranId: a.pendaftaranId.isEmpty ? null : a.pendaftaranId,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (a.tidakDilayani) {
+      return _kotakStatus('Sesi berakhir sebelum anak diperiksa bidan', AppColors.merah);
+    }
+
     if (a.status == 'sudah_checkin') {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _kotakStatus('Check-in selesai, menunggu dipanggil kader', _hijauHeader),
+          _kotakStatus(
+              a.tahap == 'menunggu_bidan'
+                  ? 'Pengukuran selesai, menunggu dipanggil bidan'
+                  : 'Check-in selesai, menunggu dipanggil kader',
+              _hijauHeader),
           const SizedBox(height: 8),
           _tombolUtama(
             teks: 'Lihat Kartu Antrean',

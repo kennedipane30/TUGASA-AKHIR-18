@@ -28,7 +28,6 @@ type AyahInput struct {
 }
 
 type ProfilInput struct {
-	TanpaIbu     bool       `json:"tanpa_ibu"`
 	TglLahirIbu  string     `json:"tgl_lahir_ibu"`
 	PekerjaanIbu string     `json:"pekerjaan_ibu"`
 	Alamat       string     `json:"alamat"`

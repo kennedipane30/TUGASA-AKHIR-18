@@ -27,6 +27,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
       padding: const EdgeInsets.all(16),
       children: [
         if (mulaiNanti != null) _bannerBelumMulai(mulaiNanti),
+        if (_jadwalSelesai) _bannerJadwalSelesai(),
         kartuBidan(
           judul: nama,
           kanan: 'Antrean $nomor',
@@ -72,7 +73,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
               if (anakId.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 tombolGarisBidan(
-                  'Jadwal & Riwayat Vaksin',
+                  'Riwayat Vaksin',
                   ikon: Icons.vaccines_outlined,
                   onPressed: () async {
                     await Navigator.push(
@@ -88,6 +89,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
             ],
           ),
         ),
+        _kartuLaporanOrtu(),
         if (ukur.isNotEmpty)
           kartuBidan(
             judul: 'Status Gizi',
@@ -95,35 +97,22 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
           ),
         if (!_riwayatOk) _kartuRiwayat(),
         kartuBidan(
-          judul: 'Catatan Pemeriksaan',
+          judul: 'Hasil Pemeriksaan',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _teks(_keluhan, 'Keluhan',
-                  hint: 'Mis. demam 2 hari, batuk pilek', ikon: Icons.sick_outlined),
-              _teks(_catatanOrtu, 'Catatan untuk orang tua', baris: 3, ikon: Icons.note_alt_outlined),
-              _teks(_saranGizi, 'Saran gizi', baris: 3, ikon: Icons.restaurant_menu_outlined),
-              const Text('Tanggal kunjungan ulang',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: _teksGelap)),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(
-                    child: kotakPilihBidan(
-                      Icons.calendar_month_outlined,
-                      _ulang == null ? 'Tidak dijadwalkan' : formatTanggal(_ulang!),
-                      _pilihTanggal,
-                    ),
-                  ),
-                  if (_ulang != null)
-                    IconButton(onPressed: () => setState(() => _ulang = null), icon: const Icon(Icons.close)),
-                ],
-              ),
+              // Keluhan anak tampil di kartu pengukuran (diisi kader saat pendataan).
+              // Disimpan di kolom yang sama (catatan_evaluasi & saran_gizi), hanya label yang berubah.
+              _teks(_catatanOrtu, 'Hasil pemeriksaan',
+                  baris: 3,
+                  hint: 'Mis. anak demam sehingga imunisasi ditunda',
+                  ikon: Icons.fact_check_outlined),
+              _teks(_saranGizi, 'Catatan untuk orang tua', baris: 3, ikon: Icons.note_alt_outlined),
             ],
           ),
         ),
         _kartuImunisasi(),
-        _kartuSuplemen(usia),
+        _kartuSuplemen(),
         const SizedBox(height: 8),
       ],
     );
@@ -278,14 +267,6 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
         .where((e) => (e.bisaDiberikan && !e.keFaskes) || _vaksinSesiIni.contains(e.jadwal.kunci))
         .toList();
     final faskes = k.jadwal.where((e) => !e.sudah && e.keFaskes && e.status != StatusVaksin.terlewat).toList();
-    final berikutnya = k.jadwal
-        .where((e) =>
-            !e.sudah &&
-            !e.opsional &&
-            !e.keFaskes &&
-            (e.status == StatusVaksin.belumWaktunya || e.status == StatusVaksin.menunggu))
-        .take(4)
-        .toList();
     final sakit = _kondisi == KondisiImunisasi.sakit;
 
     return kartuBidan(
@@ -301,44 +282,29 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
             const Text('Tidak ada vaksin yang perlu diberikan hari ini.',
                 style: TextStyle(fontSize: 16.5, color: AppColors.teksRedup))
           else ...[
-            const Text('Kondisi anak sebelum imunisasi',
+            // Kondisi anak diambil dari pendataan kader (Kondisi Anak: "Sedang sakit").
+            const Text('Kondisi anak (dari pendataan kader)',
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: _teksGelap)),
             const SizedBox(height: 6),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                for (final kd in [KondisiImunisasi.sehat, KondisiImunisasi.demamRingan, KondisiImunisasi.sakit])
-                  ChoiceChip(
-                    label: Text(KondisiImunisasi.label(kd)),
-                    selected: _kondisi == kd,
-                    showCheckmark: false,
-                    backgroundColor: Colors.white,
-                    selectedColor: kd == KondisiImunisasi.sakit ? AppColors.merah : _hijauHeader,
-                    side: BorderSide(
-                      color: _kondisi == kd
-                          ? (kd == KondisiImunisasi.sakit ? AppColors.merah : _hijauHeader)
-                          : garisKartuBidan,
-                    ),
-                    labelStyle: TextStyle(
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.w500,
-                      color: _kondisi == kd ? Colors.white : Colors.black87,
-                    ),
-                    onSelected: (_) => setState(() {
-                      _kondisi = kd;
-                      if (kd == KondisiImunisasi.sakit) {
-                        for (final key in _vaksinDipilih.keys.where((x) => !_vaksinSesiIni.contains(x)).toList()) {
-                          _vaksinDipilih.remove(key)?.dispose();
-                        }
-                      }
-                    }),
-                  ),
-              ],
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: sakit ? AppColors.merah : _hijauHeader,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(sakit ? Icons.sick_outlined : Icons.favorite_outline, size: 18, color: Colors.white),
+                  const SizedBox(width: 6),
+                  Text(sakit ? 'Sedang sakit' : 'Sehat',
+                      style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600, color: Colors.white)),
+                ],
+              ),
             ),
             const SizedBox(height: 8),
             if (sakit)
-              _info('Anak sedang sakit: tunda imunisasi sampai anak sehat. Vaksin akan dijadwalkan di posyandu berikutnya.',
+              _info('Anak sedang sakit: tunda imunisasi sampai anak sehat.',
                   ikon: Icons.do_not_disturb_on_outlined, bg: AppColors.merahMuda, fg: AppColors.merah)
             else
               const Padding(
@@ -353,30 +319,6 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
             for (final e in faskes)
               _info('${e.jadwal.namaDosis}: ${e.teksJadwal}',
                   ikon: Icons.local_hospital_outlined, bg: AppColors.merahMuda, fg: AppColors.merah),
-          ],
-          if (berikutnya.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            const Text('Jadwal berikutnya',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: _teksGelap)),
-            const SizedBox(height: 6),
-            for (final e in berikutnya)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2),
-                      child: Icon(Icons.schedule, size: 16, color: aksenKartuBidan),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text('${e.jadwal.namaDosis}\n${e.teksJadwal}',
-                          style: const TextStyle(fontSize: 16, height: 1.35)),
-                    ),
-                  ],
-                ),
-              ),
           ],
         ],
       ),
@@ -446,35 +388,11 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
               style: const TextStyle(fontSize: 16),
             ),
           ),
-          if (pilih != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (tersimpan) ...[
-                    const Text('Tersimpan',
-                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: _hijauHeader)),
-                    const SizedBox(height: 8),
-                  ],
-                  TextField(
-                    controller: pilih.batch,
-                    style: const TextStyle(fontSize: 16.5),
-                    maxLength: 50,
-                    decoration: _dekor('Nomor batch vaksin (opsional)', ikon: Icons.qr_code_2)
-                        .copyWith(counterText: ''),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: pilih.reaksi,
-                    style: const TextStyle(fontSize: 16.5),
-                    maxLength: 500,
-                    decoration: _dekor('Reaksi setelah imunisasi (opsional)',
-                            hint: 'Mis. demam ringan, bengkak di bekas suntikan', ikon: Icons.healing_outlined)
-                        .copyWith(counterText: ''),
-                  ),
-                ],
-              ),
+          if (pilih != null && tersimpan)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(14, 0, 12, 10),
+              child: Text('Tersimpan',
+                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: _hijauHeader)),
             ),
         ],
       ),
@@ -484,64 +402,90 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
   // -------------------------------------------------------------------------
   // SUPLEMEN HARI INI
   // -------------------------------------------------------------------------
-  Widget _kartuSuplemen(int usia) {
-    final bisaVitA = usia >= 6 && usia <= 59;
-    final bisaCacing = usia >= 12 && usia <= 59;
-
-    Widget chip(String label, IconData ikon, VoidCallback onTap) => ActionChip(
-          avatar: Icon(ikon, size: 16, color: aksenKartuBidan),
-          label: Text(label),
-          labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: _teksGelap),
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: garisKartuBidan),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          onPressed: onTap,
-        );
-
+  /// Form suplemen langsung tampil (tanpa pilihan cepat): suplemen berbeda untuk
+  /// setiap anak sesuai kondisi kesehatannya, jadi nama, dosis, dan aturan pakai
+  /// diisi bidan. Baris yang dibiarkan kosong tidak disimpan.
+  Widget _kartuSuplemen() {
+    final terisi = _suplemenTerisi.length;
     return kartuBidan(
       judul: 'Suplemen Hari Ini',
-      kanan: _suplemen.isEmpty ? null : '${_suplemen.length} item',
+      kanan: terisi == 0 ? null : '$terisi item',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Tambah cepat',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: _teksGelap)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              if (bisaVitA)
-                chip('Vitamin A', Icons.circle, () {
-                  if (_suplemenAda('vitamin_a')) return _snack('Vitamin A sudah ditambahkan');
-                  setState(() => _suplemen.add(_vitaminA(usia)));
-                }),
-              if (bisaCacing)
-                chip('Obat Cacing', Icons.medication_outlined, () {
-                  if (_suplemenAda('obat_cacing')) return _snack('Obat cacing sudah ditambahkan');
-                  setState(() => _suplemen.add(_obatCacing(usia)));
-                }),
-              chip('PMT', Icons.restaurant_outlined,
-                  () => setState(() => _suplemen.add(_BarisSuplemen(nama: 'PMT (Pemberian Makanan Tambahan)', satuan: 'porsi')))),
-              chip('Zinc', Icons.science_outlined,
-                  () => setState(() => _suplemen.add(_BarisSuplemen(nama: 'Zinc', dosis: usia < 6 ? '10 mg' : '20 mg', satuan: 'tablet')))),
-              chip('Lainnya', Icons.add, () => setState(() => _suplemen.add(_BarisSuplemen()))),
-            ],
-          ),
-          if (!bisaVitA)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text('Vitamin A diberikan mulai usia 6 bulan, obat cacing mulai usia 12 bulan.',
-                  style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
-            ),
-          const SizedBox(height: 12),
-          if (_suplemen.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 6),
-              child: Text('Belum ada suplemen yang diberikan hari ini.',
-                  style: TextStyle(fontSize: 16.5, color: AppColors.teksRedup)),
-            ),
           for (var i = 0; i < _suplemen.length; i++) _barisSuplemen(i),
+          tombolGarisBidan(
+            'Tambah Suplemen',
+            ikon: Icons.add,
+            onPressed: () => setState(() => _suplemen.add(_BarisSuplemen())),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // LAPORAN ORANG TUA SETELAH IMUNISASI (tampil di atas form pemeriksaan)
+  // Hanya muncul bila orang tua melapor; bila tidak, anak dianggap normal.
+  // -------------------------------------------------------------------------
+  Widget _kartuLaporanOrtu() {
+    final daftar = _laporanOrtu;
+    if (daftar.isEmpty) return const SizedBox.shrink();
+
+    return kartuBidan(
+      judul: 'Laporan Orang Tua Setelah Imunisasi',
+      kanan: '${daftar.length} laporan',
+      warnaKanan: AppColors.merah,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _info('Orang tua melaporkan reaksi setelah imunisasi pada kunjungan sebelumnya. '
+              'Tanyakan keadaan anak sekarang dan catat tindak lanjutnya.',
+              ikon: Icons.report_gmailerrorred_outlined, bg: AppColors.merahMuda, fg: AppColors.merah),
+          for (final r in daftar) _barisLaporanOrtu(r),
+        ],
+      ),
+    );
+  }
+
+  Widget _barisLaporanOrtu(RiwayatVaksin r) {
+    final tglVaksin = r.tanggal == null ? '' : formatTanggal(r.tanggal!);
+    final tglLapor = r.kipiDilaporkanPada == null ? '' : formatTanggal(r.kipiDilaporkanPada!);
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.merah.withValues(alpha: 0.6), width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(r.namaDosis,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16.5, color: _teksGelap)),
+          if (tglVaksin.isNotEmpty || tglLapor.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                [
+                  if (tglVaksin.isNotEmpty) 'Diimunisasi $tglVaksin',
+                  if (tglLapor.isNotEmpty) 'dilaporkan $tglLapor',
+                ].join(' · '),
+                style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup),
+              ),
+            ),
+          const SizedBox(height: 6),
+          Text(r.reaksiKipi, style: const TextStyle(fontSize: 16.5, height: 1.35, color: _teksGelap)),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _prosesRiwayat ? null : () => _isiTindakLanjut(r),
+              icon: const Icon(Icons.edit_note_outlined, size: 20),
+              label: const Text('Isi tindak lanjut'),
+            ),
+          ),
         ],
       ),
     );
@@ -568,12 +512,13 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
                   style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _teksGelap),
                 ),
               ),
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                tooltip: 'Hapus',
-                onPressed: () => setState(() => _suplemen.removeAt(i).dispose()),
-                icon: const Icon(Icons.delete_outline, color: AppColors.merah),
-              ),
+              if (!(_suplemen.length == 1 && s.kosong))
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Hapus',
+                  onPressed: () => _hapusSuplemen(i),
+                  icon: const Icon(Icons.delete_outline, color: AppColors.merah),
+                ),
             ],
           ),
           Padding(
@@ -584,6 +529,8 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
                     children: [
                       barisInfoBidan('Dosis', '${s.dosis.text} · 1 ${s.satuan}', lebar: 70),
                       const SizedBox(height: 4),
+                      _aturanSuplemen(s),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: s.catatan,
                         style: const TextStyle(fontSize: 17),
@@ -652,6 +599,8 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
                         ],
                       ),
                       const SizedBox(height: 8),
+                      _aturanSuplemen(s),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: s.catatan,
                         style: const TextStyle(fontSize: 17.5),
@@ -662,6 +611,37 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Aturan pakai suplemen: pilihan cepat (1 x 1, 2 x 1, 3 x 1, dosis tunggal)
+  /// atau "Lainnya" yang diisi sendiri oleh bidan.
+  Widget _aturanSuplemen(_BarisSuplemen s) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<String>(
+          value: s.aturan,
+          isExpanded: true,
+          style: const TextStyle(fontSize: 17.5, color: Colors.black87),
+          decoration: _dekor('Aturan pakai', ikon: Icons.schedule_outlined),
+          items: [
+            for (final x in [..._aturanPakai, _aturanLainnya])
+              DropdownMenuItem(value: x, child: Text(x == _aturanLainnya ? 'Lainnya (isi sendiri)' : x)),
+          ],
+          onChanged: (v) => setState(() => s.aturan = v ?? s.aturan),
+        ),
+        if (s.aturan == _aturanLainnya) ...[
+          const SizedBox(height: 8),
+          TextField(
+            controller: s.aturanLain,
+            style: const TextStyle(fontSize: 17.5),
+            maxLength: 60,
+            decoration: _dekor('Mis. 1 x ½ sehari sesudah makan', ikon: Icons.edit_note_outlined)
+                .copyWith(counterText: ''),
+          ),
+        ],
+      ],
     );
   }
 }

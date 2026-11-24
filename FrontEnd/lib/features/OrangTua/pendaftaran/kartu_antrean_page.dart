@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -15,6 +16,7 @@ import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../auth/auth_provider.dart';
+import '../riwayat/pemeriksaan_page.dart' show OrangTuaPemeriksaanPage;
 
 const _hijauHeader = Color(0xFF065F46);
 const _hijauTua = Color(0xFF0B3D2E);
@@ -192,6 +194,10 @@ class KartuAntreanData {
   final bool bolehBatal;
   final bool bolehCheckin;
 
+  /// Posisi anak dalam pelayanan (dari server): belum_checkin | menunggu_kader |
+  /// menunggu_bidan | selesai | tidak_dilayani | batal | tidak_hadir.
+  final String tahap;
+
   KartuAntreanData({
     required this.pendaftaranId,
     required this.anakId,
@@ -207,6 +213,7 @@ class KartuAntreanData {
     required this.waktuCheckin,
     required this.bolehBatal,
     required this.bolehCheckin,
+    this.tahap = '',
   });
 
   static String _jam(dynamic v) {
@@ -231,8 +238,18 @@ class KartuAntreanData {
       waktuCheckin: DateTime.tryParse(j['waktu_checkin']?.toString() ?? '')?.toLocal(),
       bolehBatal: j['boleh_batal'] == true,
       bolehCheckin: j['boleh_checkin'] == true,
+      tahap: j['tahap']?.toString() ?? '',
     );
   }
+
+  /// Selesai dilayani = bidan sudah menyimpan catatan pemeriksaan.
+  bool get selesai => status == 'sudah_checkin' && tahap == 'selesai';
+
+  /// Sudah check-in tetapi jadwal berakhir sebelum bidan mencatat.
+  bool get tidakDilayani => status == 'sudah_checkin' && tahap == 'tidak_dilayani';
+
+  /// Masih berada dalam antrean pelayanan (perlu dipantau).
+  bool get sedangDilayani => status == 'sudah_checkin' && !selesai && !tidakDilayani;
 
   String get kodeNomor => nomor == null ? '-' : 'A-${nomor.toString().padLeft(3, '0')}';
 
@@ -282,6 +299,9 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
   bool _sibuk = false;
   String? _gagal;
 
+  /// Selama anak masih dalam antrean pelayanan, status disegarkan otomatis.
+  Timer? _pantau;
+
   /// Penanda area tiket yang diubah menjadi gambar (Simpan Tiket / Bagikan).
   final _kunciTiket = GlobalKey();
   bool _menyimpan = false;
@@ -291,9 +311,19 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
   void initState() {
     super.initState();
     _muat();
+    _pantau = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted && !_sibuk && (_kartu?.sedangDilayani ?? false)) _muat(senyap: true);
+    });
   }
 
-  Future<void> _muat() async {
+  @override
+  void dispose() {
+    _pantau?.cancel();
+    super.dispose();
+  }
+
+  /// [senyap]: penyegaran otomatis; gangguan jaringan sesaat tidak menampilkan pesan error.
+  Future<void> _muat({bool senyap = false}) async {
     try {
       final r = await ApiClient.dio.get(
         '/jadwal/${widget.jadwalId}/kartu',
@@ -309,7 +339,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
         _memuat = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || senyap) return;
       setState(() {
         _gagal = _pesanError(e);
         _memuat = false;
@@ -616,8 +646,14 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
   // -------------------------------------------------------------------------
   Widget _tiket(KartuAntreanData k, String namaUser) {
     final batal = k.status == 'batal' || k.status == 'tidak_hadir';
+    final selesaiAtauLewat = k.selesai || k.tidakDilayani;
     final (teksStatus, warnaTitik) = switch (k.status) {
-      'sudah_checkin' => ('Menunggu panggilan kader', const Color(0xFF10B981)),
+      'sudah_checkin' => switch (k.tahap) {
+          'selesai' => ('Selesai dilayani', _hijauHeader),
+          'menunggu_bidan' => ('Menunggu pemeriksaan bidan', AppColors.biru),
+          'tidak_dilayani' => ('Tidak dilayani', const Color(0xFFEF4444)),
+          _ => ('Menunggu pengukuran kader', const Color(0xFF10B981)),
+        },
       'terdaftar' => ('Belum check-in', _oranye2),
       'batal' => ('Antrean dibatalkan', const Color(0xFFEF4444)),
       _ => ('Antrean tidak aktif', const Color(0xFFEF4444)),
@@ -678,7 +714,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
                     height: 1.1,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
-                    color: batal ? AppColors.teksRedup : _hijauHeader,
+                    color: (batal || selesaiAtauLewat) ? AppColors.teksRedup : _hijauHeader,
                     decoration: batal ? TextDecoration.lineThrough : null,
                   ),
                 ),
@@ -799,8 +835,46 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
   // AKSI: CHECK-IN & BATALKAN
   // -------------------------------------------------------------------------
   Widget _aksiUtama(KartuAntreanData k) {
+    if (k.selesai) {
+      return Column(
+        children: [
+          _kotakStatus('Pelayanan selesai. Hasil pemeriksaan bidan sudah dapat dilihat.', _hijauHeader),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _hijauHeader,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OrangTuaPemeriksaanPage(anakId: k.anakId, pendaftaranId: k.pendaftaranId),
+                ),
+              ),
+              icon: const Icon(Icons.fact_check_outlined, size: 21),
+              label: const Text('Lihat Hasil Pemeriksaan',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.5)),
+            ),
+          ),
+        ],
+      );
+    }
+    if (k.tidakDilayani) {
+      return _kotakStatus(
+          'Sesi berakhir sebelum anak diperiksa bidan. Silakan hubungi bidan atau kader posyandu.',
+          AppColors.merah);
+    }
     if (k.status == 'sudah_checkin') {
-      return _kotakStatus('Check-in berhasil. Silakan menunggu dipanggil kader.', _hijauHeader);
+      return _kotakStatus(
+          k.tahap == 'menunggu_bidan'
+              ? 'Pengukuran selesai. Silakan menunggu dipanggil bidan.'
+              : 'Check-in berhasil. Silakan menunggu dipanggil kader.',
+          _hijauHeader);
     }
     if (k.status == 'batal') {
       return _kotakStatus('Pendaftaran ini telah dibatalkan', AppColors.merah);
@@ -943,6 +1017,36 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
         ],
       ),
     );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SCAN CHECK-IN LANGSUNG (dipakai tombol "Scan Sekarang" di beranda)
+// ---------------------------------------------------------------------------
+/// Membuka kamera, memindai QR posyandu, lalu check-in anak [anakId] pada
+/// jadwal [jadwalId]. Mengembalikan true bila check-in berhasil.
+Future<bool> scanCheckin(BuildContext context,
+    {required String jadwalId, required String anakId}) async {
+  final kode = await Navigator.push<String>(
+    context,
+    MaterialPageRoute(builder: (_) => const _LayarScanQr()),
+  );
+  if (kode == null || kode.isEmpty || !context.mounted) return false;
+  final pesan = ScaffoldMessenger.of(context);
+  void snack(String m) => pesan
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(m)));
+  try {
+    await ApiClient.dio.post(
+      '/jadwal/$jadwalId/scan',
+      data: {'anak_id': anakId, 'kode_qr': kode.trim()},
+      options: Options(receiveTimeout: const Duration(seconds: 15)),
+    );
+    snack('Check-in berhasil. Anda masuk ke antrean pendataan kader.');
+    return true;
+  } catch (e) {
+    snack(_pesanError(e));
+    return false;
   }
 }
 

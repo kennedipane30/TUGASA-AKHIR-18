@@ -439,7 +439,7 @@ func notifTeksKg(v float64) string {
 	return strings.Replace(fmt.Sprintf("%.1f", v), ".", ",", 1) + " kg"
 }
 
-// notifHasilPemeriksaan: hasil pendataan anak selesai diperiksa bidan (hanya ke orang tua).
+// notifHasilPemeriksaan: anak selesai dilayani (bidan menyimpan catatan), hanya ke orang tua.
 // objek_tabel = "pendaftaran", objek_id = id pendaftaran (aplikasi membuka detail pemeriksaan).
 const notifHasilPemeriksaan = "hasil_pemeriksaan"
 
@@ -461,8 +461,9 @@ func (s *NotifikasiService) HasilPemeriksaan(anak *models.Anak, pendaftaranID uu
 	}
 
 	nama := strings.TrimSpace(anak.Nama)
-	judul := fmt.Sprintf("Hasil Pemeriksaan %s", nama)
-	isi := fmt.Sprintf("Hasil pengukuran %s telah selesai didata dan diperiksa bidan. Lihat detailnya.", nama)
+	judul := fmt.Sprintf("Selesai Dilayani: %s", nama)
+	isi := fmt.Sprintf("%s sudah selesai dilayani di posyandu (diukur kader dan diperiksa bidan). "+
+		"Hasil pemeriksaan sudah dapat dilihat.", nama)
 	if versi > 1 {
 		judul = "Diperbarui: " + judul
 		isi = fmt.Sprintf("Hasil pemeriksaan %s diperbarui oleh bidan. Lihat detailnya.", nama)

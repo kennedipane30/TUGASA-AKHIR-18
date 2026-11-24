@@ -64,15 +64,8 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
       // Isi form dari catatan yang sudah tersimpan.
       final c = detail['catatan'];
       if (c is Map) {
-        _keluhan.text = c['keluhan']?.toString() ?? '';
         _catatanOrtu.text = c['catatan_evaluasi']?.toString() ?? '';
         _saranGizi.text = c['saran_gizi']?.toString() ?? '';
-        final t = c['tanggal_kunjungan_ulang']?.toString() ?? '';
-        _ulang = null;
-        if (t.length >= 10) {
-          final tgl = DateTime.tryParse(t.substring(0, 10));
-          if (tgl != null && !tgl.isBefore(_hariIni())) _ulang = tgl;
-        }
       }
 
       // Riwayat vaksin sebelum posyandu.
@@ -97,16 +90,18 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
         for (final e in imun) {
           if (e is Map && e['jenis_vaksin_id'] != null) {
             final k = '${e['jenis_vaksin_id']}|${e['dosis_ke']}';
-            _vaksinDipilih[k] = _PilihVaksin(
-              batch: e['nomor_batch']?.toString() ?? '',
-              reaksi: e['reaksi_kipi']?.toString() ?? '',
-            );
+            _vaksinDipilih[k] = _PilihVaksin();
             _vaksinSesiIni.add(k);
-            final kond = e['kondisi_anak']?.toString() ?? '';
-            if (kond == KondisiImunisasi.sehat || kond == KondisiImunisasi.demamRingan) _kondisi = kond;
           }
         }
       }
+
+      // Kondisi anak sebelum imunisasi mengikuti pendataan kader ("Sedang sakit").
+      final ukurKader = detail['pengukuran'] is Map
+          ? Map<String, dynamic>.from(detail['pengukuran'] as Map)
+          : const <String, dynamic>{};
+      final sakitKader = ukurKader['sedang_sakit'] == true;
+      _kondisi = sakitKader ? KondisiImunisasi.sakit : KondisiImunisasi.sehat;
 
       // Suplemen yang sudah tersimpan.
       for (final s in _suplemen) {
@@ -127,12 +122,16 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
             nama: namaSuplemen(jenis),
             dosis: dataLama ? (e['keterangan_dosis']?.toString() ?? '') : dosis,
             catatan: e['catatan']?.toString() ?? '',
+            aturanPakai: e['aturan_pakai']?.toString() ?? '',
             jumlah: dataLama ? 1 : jumlah,
             satuan: satuan.isEmpty ? 'kapsul' : satuan,
             tetap: _namaVitaminA(jenis) || _namaObatCacing(jenis),
           ));
         }
       }
+
+      // Form suplemen langsung tampil (satu baris kosong bila belum ada suplemen).
+      _siapkanFormSuplemen();
 
       // Kartu vaksin anak (jadwal + status).
       KartuVaksin? kartu;
@@ -245,12 +244,14 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
   }
 
   Widget _tombolBawah() {
-    final terkunci = _mulaiNanti != null;
-    final label = terkunci
-        ? 'Sesi Belum Dimulai'
-        : _kirim
-            ? 'Menyimpan...'
-            : 'Simpan Perubahan';
+    final terkunci = _mulaiNanti != null || _jadwalSelesai;
+    final label = _jadwalSelesai
+        ? 'Jadwal Sudah Selesai'
+        : _mulaiNanti != null
+            ? 'Sesi Belum Dimulai'
+            : _kirim
+                ? 'Menyimpan...'
+                : 'Simpan Perubahan';
 
     return SafeArea(
       top: false,

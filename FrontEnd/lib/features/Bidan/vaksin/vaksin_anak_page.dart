@@ -32,8 +32,8 @@ Widget _judulTebal(String teks) {
 }
 
 /// Halaman vaksin (hanya lihat) untuk satu anak yang sudah dipilih.
-/// Bidan: jadwal, riwayat vaksin, dan suplemen anak, serta pencatatan vaksin
-/// yang diberikan di luar posyandu.
+/// Bidan: riwayat vaksin yang sudah diterima dan suplemen anak, serta pencatatan
+/// vaksin yang diberikan di luar posyandu.
 class BidanVaksinAnakPage extends StatelessWidget {
   final String anakId;
   final String namaAnak;
@@ -136,7 +136,7 @@ class BidanVaksinAnakPage extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.fromLTRB(14, 10, 14, 12),
               child: Text(
-                'Jadwal, riwayat vaksin, dan suplemen anak.',
+                'Riwayat vaksin yang sudah diterima dan suplemen anak.',
                 style: TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFF374151)),
               ),
             ),
@@ -160,7 +160,7 @@ class BidanVaksinAnakPage extends StatelessWidget {
           children: [
             _header(context),
             _kartuAnak(),
-            Expanded(child: VaksinLihatBody(anakId: anakId, bisaKelola: true)),
+            Expanded(child: VaksinLihatBody(anakId: anakId, bisaKelola: true, hanyaRiwayat: true)),
           ],
         ),
       ),

@@ -10,6 +10,7 @@ import '../../core/widgets/status_gizi_widget.dart';
 import '../auth/auth_provider.dart';
 import 'bukupanduan/buku_panduan_page.dart';
 import 'datadiri/data_keluarga_page.dart';
+import 'pendaftaran/kartu_antrean_page.dart';
 import 'pendaftaran/pendaftaran_page.dart';
 import 'riwayat/grafik_page.dart';
 import 'riwayat/pemeriksaan_page.dart';
@@ -163,6 +164,47 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     _muat();
   }
 
+  /// Anak terpilih terdaftar tetapi belum check-in: langsung buka kamera scan QR.
+  /// Berhasil check-in -> diarahkan ke halaman nomor antrean.
+  Future<void> _scanSekarang() async {
+    final j = _jadwal;
+    final a = _anak;
+    final s = _statusAnak;
+    if (j == null || a?.id == null || s == null) return;
+    if (!s.bolehCheckin) {
+      final buka = j.checkinBuka;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text(buka == null
+              ? 'Check-in belum dapat dilakukan'
+              : 'Check-in dibuka pukul ${formatJam(buka)} WIB (1 jam sebelum jadwal dimulai)'),
+        ));
+      return;
+    }
+    final ok = await scanCheckin(context, jadwalId: j.id, anakId: a!.id!.toString());
+    if (!mounted) return;
+    if (ok) {
+      await _bukaNomorAntrean();
+    } else {
+      _muat();
+    }
+  }
+
+  /// Anak terpilih sudah check-in: buka halaman nomor antrean.
+  Future<void> _bukaNomorAntrean() async {
+    final j = _jadwal;
+    final a = _anak;
+    if (j == null || a?.id == null) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => KartuAntreanPage(jadwalId: j.id, anakId: a!.id!.toString()),
+      ),
+    );
+    _muat();
+  }
+
   void _bukaBukuPanduan() {
     Navigator.push(
       context,
@@ -191,6 +233,20 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       MaterialPageRoute(
         builder: (_) => OrangTuaPemeriksaanPage(
           anakId: a?.id?.toString(),
+        ),
+      ),
+    );
+  }
+
+  /// Anak selesai dilayani: buka hasil pemeriksaan kunjungan hari ini.
+  void _bukaHasilSelesai() {
+    final st = _statusAnak;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OrangTuaPemeriksaanPage(
+          anakId: st?.anakId ?? _anak?.id?.toString(),
+          pendaftaranId: (st == null || st.pendaftaranId.isEmpty) ? null : st.pendaftaranId,
         ),
       ),
     );
@@ -525,12 +581,27 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     );
   }
 
+  /// Tombol utama kartu jadwal (mengikuti anak yang dipilih):
+  ///  - belum daftar   : "Buka Pendaftaran & Check-in" -> halaman pendaftaran
+  ///  - terdaftar      : "Scan Sekarang"   -> kamera scan QR -> halaman nomor antrean
+  ///  - sudah check-in : "Nomor Antrean"   -> halaman nomor antrean
+  ///  - selesai dilayani (bidan sudah mencatat): "Lihat Hasil Pemeriksaan"
   Widget _tombolDaftar() {
+    final terdaftar = _hadir == 'terdaftar';
+    final sudahCheckin = _hadir == 'sudah_checkin';
+    final selesai = _statusAnak?.selesai ?? false;
+    final (String label, IconData? ikon, VoidCallback aksi) = terdaftar
+        ? ('Scan Sekarang', Icons.qr_code_scanner, _scanSekarang)
+        : selesai
+            ? ('Lihat Hasil Pemeriksaan', Icons.fact_check_outlined, _bukaHasilSelesai)
+            : sudahCheckin
+                ? ('Nomor Antrean', Icons.confirmation_number_outlined, _bukaNomorAntrean)
+                : ('Buka Pendaftaran & Check-in', null, _bukaPendaftaran);
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _bukaPendaftaran,
+        onPressed: aksi,
         style: ElevatedButton.styleFrom(
           backgroundColor: _hijauTua,
           foregroundColor: Colors.white,
@@ -538,12 +609,16 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Flexible(child: Text('Buka Pendaftaran & Check-in', overflow: TextOverflow.ellipsis)),
-            SizedBox(width: 8),
-            Icon(Icons.arrow_forward_rounded, size: 20),
+            if (ikon != null) ...[
+              Icon(ikon, size: 21),
+              const SizedBox(width: 8),
+            ],
+            Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+            const SizedBox(width: 8),
+            const Icon(Icons.arrow_forward_rounded, size: 20),
           ],
         ),
       ),
@@ -553,7 +628,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   Widget _jadwalPosyandu() {
     final j = _jadwal;
     final pos = (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
-    final (labelStatus, _, _) = labelStatusHadir(_hadir);
+    final (labelStatus, _, _) = labelStatusHadir(_statusAnak?.statusTampil ?? _hadir);
     final belumDaftar = _hadir == 'belum_daftar';
 
     if (j == null) {

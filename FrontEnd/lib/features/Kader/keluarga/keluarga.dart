@@ -621,7 +621,6 @@ class IsianKeluarga {
 
   /// Body sesuai ProfilInput backend.
   Map<String, dynamic> toJson() => {
-        'tanpa_ibu': false,
         'tgl_lahir_ibu': kkKeApi(tglLahirIbu.text),
         'pekerjaan_ibu': pekerjaanIbu.text.trim(),
         'alamat': alamat.text.trim(),

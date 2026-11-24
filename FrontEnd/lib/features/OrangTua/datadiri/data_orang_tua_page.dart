@@ -291,8 +291,7 @@ class DataAnak {
 }
 
 class DataKeluarga {
-  // Ibu / wali
-  bool tanpaIbu;
+  // Ibu / wali (pemilik akun)
   String namaIbu, nikIbu, tglLahirIbu, noHpIbu, pekerjaanIbu;
   String alamat, rt, rw;
   // Suami / ayah
@@ -302,7 +301,6 @@ class DataKeluarga {
   List<DataAnak> anak;
 
   DataKeluarga({
-    this.tanpaIbu = false,
     this.namaIbu = '',
     this.nikIbu = '',
     this.tglLahirIbu = '',
@@ -321,8 +319,7 @@ class DataKeluarga {
   }) : anak = anak ?? [];
 
   bool get ibuLengkap =>
-      tanpaIbu ||
-      (tglLahirIbu.isNotEmpty && alamat.trim().isNotEmpty && rw.trim().isNotEmpty);
+      tglLahirIbu.isNotEmpty && alamat.trim().isNotEmpty && rw.trim().isNotEmpty;
 
   bool get ayahLengkap => tanpaAyah || namaAyah.trim().isNotEmpty;
   bool get anakLengkap => anak.isNotEmpty;
@@ -579,89 +576,17 @@ class KartuKeluarga extends StatelessWidget {
   }
 }
 
-class StepperKeluarga extends StatelessWidget {
-  final DataKeluarga data;
-  const StepperKeluarga({super.key, required this.data});
-
-  Widget _bulat(String no, bool selesai) => Container(
-        width: 32,
-        height: 32,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(
-              color: selesai ? kHijauHeader : kGarisKartu, width: 1.6),
-        ),
-        child: selesai
-            ? const Icon(Icons.check, size: 18, color: kHijauHeader)
-            : Text(no,
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: no == '1' ? kHijauHeader : Colors.grey)),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    final d = data;
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(children: [
-              _bulat('1', d.ibuLengkap),
-              const SizedBox(height: 4),
-              const Text('Data Diri',
-                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500)),
-            ]),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 15, left: 8, right: 8),
-                child: Divider(height: 2, thickness: 2, color: Colors.grey.shade300),
-              ),
-            ),
-            Column(children: [
-              _bulat('2', d.ayahLengkap),
-              const SizedBox(height: 4),
-              const Text('Suami / Ayah',
-                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w500)),
-            ]),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(
-            value: d.langkahSelesai / 2,
-            minHeight: 7,
-            backgroundColor: const Color(0xFFE5E7EB),
-            color: kHijauHeader,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text('${d.langkahSelesai} dari 2 bagian lengkap. Data boleh disimpan bertahap.',
-            style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
-      ],
-    );
-  }
-}
-
 // ---------------------------------------------------------------------------
 // BAGIAN IBU
 // ---------------------------------------------------------------------------
 class BagianIbu extends StatelessWidget {
   final DataKeluarga data;
-  final bool tanpaIbu;
-  final ValueChanged<bool?> onTanpaIbu;
   final TextEditingController nama, nik, tgl, hp, kerja, alamat, rt, rw;
   final VoidCallback onPilihTanggal;
 
   const BagianIbu({
     super.key,
     required this.data,
-    required this.tanpaIbu,
-    required this.onTanpaIbu,
     required this.nama,
     required this.nik,
     required this.tgl,
@@ -681,50 +606,47 @@ class BagianIbu extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          centangKeluarga(tanpaIbu, 'Tidak ada data ibu', onTanpaIbu),
-          if (!tanpaIbu) ...[
-            labelKeluarga('Nama lengkap', ket: '(dari akun)'),
-            TextFormField(
-              controller: nama,
-              readOnly: true,
-              decoration:
-                  dekorKeluarga('Nama', icon: Icons.person_outline, terkunci: true),
-            ),
-            gapKeluarga(),
-            labelKeluarga('NIK', ket: '(dari akun)'),
-            TextFormField(
-              controller: nik,
-              readOnly: true,
-              decoration:
-                  dekorKeluarga('NIK', icon: Icons.badge_outlined, terkunci: true),
-            ),
-            gapKeluarga(),
-            labelKeluarga('Tanggal Lahir'),
-            TextFormField(
-              controller: tgl,
-              readOnly: true,
-              onTap: onPilihTanggal,
-              decoration:
-                  dekorKeluarga('dd/mm/yyyy', icon: Icons.calendar_month_outlined),
-            ),
-            gapKeluarga(),
-            labelKeluarga('No. WhatsApp', ket: '(dari akun)'),
-            TextFormField(
-              controller: hp,
-              readOnly: true,
-              decoration: dekorKeluarga('No. WhatsApp',
-                  icon: Icons.phone_outlined, terkunci: true),
-            ),
-            gapKeluarga(),
-            labelKeluarga('Pekerjaan', ket: '(opsional)'),
-            TextFormField(
-              controller: kerja,
-              textCapitalization: TextCapitalization.words,
-              decoration:
-                  dekorKeluarga('Pekerjaan (opsional)', icon: Icons.work_outline),
-            ),
-            gapKeluarga(),
-          ],
+          labelKeluarga('Nama lengkap', ket: '(dari akun)'),
+          TextFormField(
+            controller: nama,
+            readOnly: true,
+            decoration:
+                dekorKeluarga('Nama', icon: Icons.person_outline, terkunci: true),
+          ),
+          gapKeluarga(),
+          labelKeluarga('NIK', ket: '(dari akun)'),
+          TextFormField(
+            controller: nik,
+            readOnly: true,
+            decoration:
+                dekorKeluarga('NIK', icon: Icons.badge_outlined, terkunci: true),
+          ),
+          gapKeluarga(),
+          labelKeluarga('Tanggal Lahir'),
+          TextFormField(
+            controller: tgl,
+            readOnly: true,
+            onTap: onPilihTanggal,
+            decoration:
+                dekorKeluarga('dd/mm/yyyy', icon: Icons.calendar_month_outlined),
+          ),
+          gapKeluarga(),
+          labelKeluarga('No. WhatsApp', ket: '(dari akun)'),
+          TextFormField(
+            controller: hp,
+            readOnly: true,
+            decoration: dekorKeluarga('No. WhatsApp',
+                icon: Icons.phone_outlined, terkunci: true),
+          ),
+          gapKeluarga(),
+          labelKeluarga('Pekerjaan', ket: '(opsional)'),
+          TextFormField(
+            controller: kerja,
+            textCapitalization: TextCapitalization.words,
+            decoration:
+                dekorKeluarga('Pekerjaan (opsional)', icon: Icons.work_outline),
+          ),
+          gapKeluarga(),
           labelKeluarga('Alamat Tempat Tinggal'),
           TextFormField(
             controller: alamat,
@@ -880,7 +802,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
   bool _menyimpan = false;
   String? _gagal;
 
-  bool _tanpaIbu = false;
   final _namaIbu = TextEditingController();
   final _nikIbu = TextEditingController();
   final _tglIbu = TextEditingController();
@@ -934,7 +855,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
       _nikIbu.text = m.nikIbu;
       _hpIbu.text = formatNoHp(m.noHpIbu); // hanya tampilan (dari akun)
 
-      _tanpaIbu = false;
       _tglIbu.text = m.tglLahirIbu;
       _kerjaIbu.text = m.pekerjaanIbu;
       _alamat.text = m.alamat;
@@ -962,7 +882,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
   }
 
   DataKeluarga _ambil() => DataKeluarga(
-        tanpaIbu: _tanpaIbu,
         namaIbu: _namaIbu.text.trim(),
         nikIbu: _nikIbu.text.trim(),
         tglLahirIbu: _tglIbu.text.trim(),
@@ -997,7 +916,6 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
   }
 
   Map<String, dynamic> _bodyProfil() => {
-        'tanpa_ibu': _tanpaIbu,
         'tgl_lahir_ibu': keApi(_tglIbu.text),
         'pekerjaan_ibu': _kerjaIbu.text.trim(),
         'alamat': _alamat.text.trim(),
@@ -1106,11 +1024,8 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 children: [
-                  KartuKeluarga(child: StepperKeluarga(data: d)),
                   BagianIbu(
                     data: d,
-                    tanpaIbu: _tanpaIbu,
-                    onTanpaIbu: (v) => setState(() => _tanpaIbu = v ?? false),
                     nama: _namaIbu,
                     nik: _nikIbu,
                     tgl: _tglIbu,

@@ -263,7 +263,8 @@ class _Pemeriksaan {
       diare: c?['diare'] == true,
       batuk: c?['batuk'] == true,
       penyakit: _teks(c?['penyakit_penyerta']),
-      keluhan: _teks(c?['keluhan']),
+      // Keluhan dari pendataan kader (data lama: dari catatan bidan).
+      keluhan: _teks(u?['keluhan']).isNotEmpty ? _teks(u?['keluhan']) : _teks(c?['keluhan']),
       evaluasi: _teks(c?['catatan_evaluasi']),
       saranGizi: _teks(c?['saran_gizi']),
       saranAsuh: _teks(c?['saran_pola_asuh']),
