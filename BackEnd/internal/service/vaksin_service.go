@@ -307,6 +307,9 @@ type KartuVaksinResp struct {
 	Jadwal    []JadwalAnakItem    `json:"jadwal"`
 	Riwayat   []RiwayatVaksinResp `json:"riwayat"`
 	Suplemen  []SuplemenResp      `json:"suplemen"`
+
+	// VaksinMandiri: vaksin di luar jadwal program (dicatat bidan), hanya riwayat.
+	VaksinMandiri []VaksinMandiriResp `json:"vaksin_mandiri"`
 }
 
 // ---------------------------------------------------------------- helper
@@ -657,10 +660,11 @@ func (s *VaksinService) KartuAnak(anakID uuid.UUID, uid uint, role, pos string) 
 			StatusRiwayatVaksin: status,
 			MenungguKonfirmasi:  s.repo.JumlahMenungguKonfirmasi(anak.ID),
 		},
-		Ringkasan: rk,
-		Jadwal:    jadwal,
-		Riwayat:   make([]RiwayatVaksinResp, 0, len(riwayat)),
-		Suplemen:  make([]SuplemenResp, 0, len(sup)),
+		Ringkasan:     rk,
+		Jadwal:        jadwal,
+		Riwayat:       make([]RiwayatVaksinResp, 0, len(riwayat)),
+		Suplemen:      make([]SuplemenResp, 0, len(sup)),
+		VaksinMandiri: s.daftarVaksinMandiri(anak),
 	}
 	for i := len(riwayat) - 1; i >= 0; i-- { // terbaru di atas
 		out.Riwayat = append(out.Riwayat, riwayatResp(&riwayat[i], lahir))
@@ -1008,7 +1012,8 @@ func (s *VaksinService) HapusRiwayat(bidanID uint, pos string, id uuid.UUID) err
 	return s.repo.DeleteRiwayat(id)
 }
 
-// ---------------------------------------------------------------- riwayat awal (orang tua)
+// ---------------------------------------------------------------- riwayat awal (dicatat bidan)
+// Lihat vaksin_riwayat_awal_service.go. Orang tua tidak lagi mengisi riwayat vaksin.
 
 type RiwayatAwalItem struct {
 	JenisVaksinID    uuid.UUID `json:"jenis_vaksin_id" binding:"required"`
@@ -1016,85 +1021,6 @@ type RiwayatAwalItem struct {
 	TanggalPemberian string    `json:"tanggal_pemberian" binding:"required"`
 	Tempat           string    `json:"tempat"`
 	FotoBukti        string    `json:"foto_bukti"`
-}
-
-type RiwayatAwalInput struct {
-	Status string            `json:"status" binding:"required"` // sudah | belum_pernah | lupa
-	Items  []RiwayatAwalItem `json:"items"`
-}
-
-// LaporRiwayatAwal: orang tua mengisi vaksin yang sudah diterima anak sebelum ke posyandu.
-// Dosis yang dilaporkan langsung terkunci (tidak bisa diberikan lagi) dan menunggu konfirmasi bidan.
-func (s *VaksinService) LaporRiwayatAwal(uid uint, anakID uuid.UUID, in RiwayatAwalInput) (*KartuVaksinResp, error) {
-	anak, err := s.CekAkses(anakID, uid, "orang_tua", "")
-	if err != nil {
-		return nil, err
-	}
-	if anak.StatusRiwayatVaksin == models.RiwayatVaksinDikonfirmasi {
-		return nil, konflik("riwayat vaksin sudah dikonfirmasi bidan; sampaikan perubahan kepada bidan saat posyandu")
-	}
-
-	status := ""
-	switch strings.TrimSpace(in.Status) {
-	case "belum_pernah":
-		status = models.RiwayatVaksinBelumPernah
-	case "lupa":
-		status = models.RiwayatVaksinPerluDitanyakan
-	case "sudah":
-		status = models.RiwayatVaksinDilaporkan
-		if len(in.Items) == 0 {
-			return nil, validasi("pilih minimal satu vaksin yang sudah diterima anak")
-		}
-	default:
-		return nil, validasi("status riwayat vaksin harus sudah, belum_pernah, atau lupa")
-	}
-
-	err = s.repo.Tx(func(r *repository.VaksinRepository) error {
-		if err := r.HapusLaporanOrangTua(anak.ID); err != nil {
-			return err
-		}
-		if status == models.RiwayatVaksinDilaporkan {
-			items := make([]itemRiwayat, 0, len(in.Items))
-			baru := make([]models.ImunisasiAnak, 0, len(in.Items))
-			for _, x := range in.Items {
-				tgl, err := time.Parse(vaksinTglLayout, strings.TrimSpace(x.TanggalPemberian))
-				if err != nil {
-					return validasi("tanggal pemberian harus berformat YYYY-MM-DD")
-				}
-				tempat, err := batasTeks(x.Tempat, 100, "tempat")
-				if err != nil {
-					return err
-				}
-				if tempat == "" {
-					return validasi("tempat pemberian setiap vaksin wajib diisi (mis. RSUD Porsea)")
-				}
-				foto, err := cekNamaBukti(x.FotoBukti)
-				if err != nil {
-					return err
-				}
-				items = append(items, itemRiwayat{JenisVaksinID: x.JenisVaksinID, DosisKe: x.DosisKe, Tanggal: tgl})
-				baru = append(baru, models.ImunisasiAnak{
-					AnakID: anak.ID, JenisVaksinID: x.JenisVaksinID, DosisKe: x.DosisKe,
-					TanggalPemberian: tglSaja(tgl), Tempat: tempat, FotoBukti: foto,
-					Sumber: models.SumberImunisasiOrangTua, StatusKonfirmasi: models.KonfirmasiImunisasiMenunggu,
-					DiberikanOleh: uid, Version: 1,
-				})
-			}
-			if err := validasiRiwayat(r, anak, items, nil, nil); err != nil {
-				return err
-			}
-			for i := range baru {
-				if err := r.CreateRiwayat(&baru[i]); err != nil {
-					return err
-				}
-			}
-		}
-		return r.SimpanStatusRiwayat(anak.ID, status, nil, nil)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return s.KartuAnak(anak.ID, uid, "orang_tua", "")
 }
 
 // ---------------------------------------------------------------- konfirmasi riwayat (bidan)

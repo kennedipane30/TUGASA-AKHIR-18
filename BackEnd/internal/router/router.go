@@ -167,8 +167,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	ortu.POST("/jadwal/:id/scan", jadwalH.Scan)
 	ortu.GET("/jadwal/:id/kartu", jadwalH.Kartu)
 	ortu.GET("/riwayat", pelayananH.Riwayat)
-	// riwayat vaksin sebelum posyandu & laporan reaksi setelah imunisasi
-	ortu.POST("/vaksin/anak/:anak_id/riwayat-awal", vaksinH.LaporRiwayatAwal)
+	// laporan reaksi setelah imunisasi (riwayat vaksin awal dicatat bidan)
 	ortu.POST("/vaksin/riwayat/:id/kipi", vaksinH.LaporKipi)
 	// rujukan anak (lihat & unduh surat)
 	ortu.GET("/rujukan", rujukanH.DaftarOrangTua)
@@ -219,6 +218,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	bidan.PUT("/vaksin/riwayat/:id/konfirmasi", vaksinH.KonfirmasiRiwayat)
 	bidan.PUT("/vaksin/riwayat/:id/kipi", vaksinH.TindakLanjutKipi)
 	bidan.POST("/vaksin/anak/:anak_id/konfirmasi-selesai", vaksinH.SelesaiKonfirmasi)
+	// riwayat vaksin sebelum posyandu (kunjungan pertama) & vaksin di luar program
+	bidan.POST("/vaksin/anak/:anak_id/riwayat-awal", vaksinH.CatatRiwayatAwal)
+	bidan.DELETE("/vaksin/mandiri/:id", vaksinH.HapusVaksinMandiri)
 	bidan.GET("/balita", balitaH.Daftar)
 	bidan.GET("/balita-berisiko", balitaH.Berisiko)
 	bidan.GET("/balita/:anak_id", balitaH.Detail)
@@ -233,7 +235,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	bidan.DELETE("/rujukan/:id", rujukanH.Hapus)
 	bidan.PUT("/rujukan/:id/balik", rujukanH.CatatBalik)
 	bidan.POST("/rujukan/:id/batal", rujukanH.Batal)
-	bidan.GET("/rujukan-anak", rujukanH.CariAnak)             // ?cari=nama/NIK
+	bidan.GET("/rujukan-anak", rujukanH.CariAnak)          // ?cari=nama/NIK
 	bidan.GET("/rujukan-anak/:anak_id", rujukanH.DataAnak) // data anak otomatis
 	// rekap posyandu: status gizi, Vitamin A & obat cacing, balita tidak hadir
 	// (sama dengan sekretaris; data dibatasi ke posyandu akun bidan)

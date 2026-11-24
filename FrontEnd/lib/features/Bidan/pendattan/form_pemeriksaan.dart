@@ -2,8 +2,8 @@ part of 'catat_pemeriksaan_page.dart';
 
 // ===========================================================================
 // BAGIAN BERSAMA HALAMAN CATAT & EDIT PEMERIKSAAN
-// Helper, model baris suplemen/vaksin, state form, simpan, riwayat vaksin,
-// dan form vaksin dari luar posyandu.
+// Helper, model baris suplemen/vaksin, state form, simpan, dan riwayat vaksin
+// sebelum posyandu (dicatat bidan pada kunjungan pertama anak).
 // ===========================================================================
 
 const _hijauHeader = Color(0xFF065F46);
@@ -538,7 +538,7 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     }
     if (_vaksinDipilih.isNotEmpty) {
       if (!_riwayatOk) {
-        _snack('Konfirmasi riwayat vaksin anak terlebih dahulu');
+        _snack('Catat riwayat vaksin anak terlebih dahulu');
         return;
       }
       if (_kondisi == null) {
@@ -654,38 +654,18 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     await _jalankan(() => _svcVaksin.hapusRiwayat(r.id), 'Catatan vaksin dibatalkan');
   }
 
-  Future<void> _selesaiKonfirmasi() async {
-    final ya = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Riwayat vaksin sudah benar?'),
-        content: const Text(
-          'Pastikan Anda sudah menanyakan kepada orang tua semua vaksin yang pernah '
-          'diterima anak di luar posyandu. Setelah dikonfirmasi, imunisasi hari ini dapat diberikan.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Periksa lagi')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Ya, sudah benar')),
-        ],
-      ),
-    );
-    if (ya != true) return;
-    await _jalankan(() => _svcVaksin.selesaiKonfirmasi(_anakId), 'Riwayat vaksin dikonfirmasi');
-  }
-
-  Future<void> _tambahDariLuar() async {
-    final k = _kartu;
-    if (k == null) {
-      _snack('Jadwal vaksin anak belum dimuat');
+  /// Kunjungan pertama: bidan mencatat riwayat vaksin anak sebelum posyandu
+  /// (belum pernah / sudah pernah + daftar centang + vaksin mandiri).
+  Future<void> _catatRiwayatAwal() async {
+    final lahir = _lahir;
+    if (lahir == null) {
+      _snack('Tanggal lahir anak belum tersedia');
       return;
     }
-    final pilihan = k.jadwal
-        .where((e) => !e.sudah && !e.opsional && e.status != StatusVaksin.menunggu)
-        .toList();
-    if (pilihan.isEmpty) {
-      _snack('Tidak ada vaksin yang dapat dicatat');
-      return;
-    }
+    final sudah = <String>{
+      for (final r in _riwayatLuar) '${r.jenis.id}|${r.dosisKe}',
+      ...?_kartu?.riwayat.map((r) => '${r.jenis.id}|${r.dosisKe}'),
+    };
     final hasil = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -693,14 +673,16 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => _FormVaksinLuar(
+      builder: (_) => _FormRiwayatVaksinAwal(
         anakId: _anakId,
-        lahir: _lahir,
-        pilihan: pilihan,
+        nama: _kartu?.anak.nama ?? '',
+        lahir: lahir,
+        sudahTercatat: sudah,
+        adaRiwayatLuar: _riwayatLuar.isNotEmpty,
       ),
     );
     if (hasil == true) {
-      _snack('Vaksin dari luar posyandu tercatat');
+      _snack('Riwayat vaksin anak tersimpan');
       _muat();
     }
   }
@@ -729,80 +711,449 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// FORM VAKSIN DARI LUAR POSYANDU (berdasarkan keterangan orang tua)
-// ---------------------------------------------------------------------------
-class _FormVaksinLuar extends StatefulWidget {
-  final String anakId;
-  final DateTime? lahir;
-  final List<JadwalVaksinAnak> pilihan;
 
-  const _FormVaksinLuar({required this.anakId, required this.lahir, required this.pilihan});
+// ---------------------------------------------------------------------------
+// FORM RIWAYAT VAKSIN SEBELUM POSYANDU (bidan, kunjungan pertama anak)
+//   - Belum pernah divaksin, atau
+//   - Sudah pernah: centang dosis vaksin program + "vaksin mandiri" di luar daftar.
+// Data langsung sah. Dosis yang sudah tercatat tampil terkunci (tidak dobel).
+// ---------------------------------------------------------------------------
 
-  @override
-  State<_FormVaksinLuar> createState() => _FormVaksinLuarState();
+/// Isian satu dosis vaksin program yang dicentang.
+class _DosisAwal {
+  DateTime? tanggal;
+  final tempat = TextEditingController();
+  String foto = '';
+  bool mengunggah = false;
+
+  void dispose() => tempat.dispose();
 }
 
-class _FormVaksinLuarState extends State<_FormVaksinLuar> {
+/// Isian satu vaksin di luar daftar program.
+class _VaksinMandiriAwal {
+  final nama = TextEditingController();
+  int dosis = 1;
+  DateTime? tanggal;
+  final tempat = TextEditingController();
+  String foto = '';
+  bool mengunggah = false;
+
+  void dispose() {
+    nama.dispose();
+    tempat.dispose();
+  }
+}
+
+class _FormRiwayatVaksinAwal extends StatefulWidget {
+  final String anakId;
+  final String nama;
+  final DateTime lahir;
+
+  /// Kunci "jenisVaksinId|dosisKe" yang sudah tercatat.
+  final Set<String> sudahTercatat;
+
+  /// Sudah ada catatan vaksin dari luar posyandu (mis. laporan lama yang sudah dibenarkan).
+  final bool adaRiwayatLuar;
+
+  const _FormRiwayatVaksinAwal({
+    required this.anakId,
+    required this.nama,
+    required this.lahir,
+    required this.sudahTercatat,
+    required this.adaRiwayatLuar,
+  });
+
+  @override
+  State<_FormRiwayatVaksinAwal> createState() => _FormRiwayatVaksinAwalState();
+}
+
+class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
   final _svc = VaksinService();
-  final _tempat = TextEditingController();
-  final _batch = TextEditingController();
-  final _pemberi = TextEditingController();
-  JadwalVaksinAnak? _vaksin;
-  DateTime? _tanggal;
-  bool _kirim = false;
+  String _status = ''; // sudah | belum_pernah
+  List<JadwalImunisasi> _master = [];
+  bool _memuatMaster = false;
+  final Map<String, _DosisAwal> _dipilih = {};
+  final List<_VaksinMandiriAwal> _mandiri = [];
+  bool _menyimpan = false;
   String? _galat;
 
   @override
   void dispose() {
-    _tempat.dispose();
-    _batch.dispose();
-    _pemberi.dispose();
+    for (final d in _dipilih.values) {
+      d.dispose();
+    }
+    for (final v in _mandiri) {
+      v.dispose();
+    }
     super.dispose();
   }
 
-  InputDecoration _dekor(String label, IconData ikon) =>
-      dekorFormBidan(label, ikon: ikon).copyWith(counterText: '');
-
-  Future<void> _pilihTanggal() async {
+  DateTime get _hariIni {
     final n = DateTime.now();
-    final t = await showDatePicker(
+    return DateTime(n.year, n.month, n.day);
+  }
+
+  int get _usiaBulan {
+    final n = _hariIni;
+    var b = (n.year - widget.lahir.year) * 12 + n.month - widget.lahir.month;
+    if (n.day < widget.lahir.day) b--;
+    return b < 0 ? 0 : b;
+  }
+
+  Future<void> _pilihStatus(String s) async {
+    setState(() {
+      _status = s;
+      _galat = null;
+    });
+    if (s == 'sudah' && _master.isEmpty) {
+      setState(() => _memuatMaster = true);
+      try {
+        final m = await _svc.jadwalMaster();
+        if (!mounted) return;
+        setState(() {
+          // hanya dosis yang sudah mungkin diterima sesuai usia anak
+          _master = m.where((j) => !j.jenis.khususDaerah && j.usiaMinBulan <= _usiaBulan).toList();
+          _memuatMaster = false;
+        });
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _memuatMaster = false;
+          _galat = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    }
+  }
+
+  Future<DateTime?> _tanggal(DateTime? awal) => showDatePicker(
+        context: context,
+        initialDate: awal ?? _hariIni,
+        firstDate: widget.lahir,
+        lastDate: _hariIni,
+      );
+
+  /// Ambil foto bukti (kamera / galeri) lalu unggah. Mengembalikan nama file di server.
+  Future<String?> _unggahFoto() async {
+    final sumber = await showModalBottomSheet<ImageSource>(
       context: context,
-      initialDate: _tanggal ?? DateTime(n.year, n.month, n.day),
-      firstDate: widget.lahir ?? DateTime(n.year - 6),
-      lastDate: DateTime(n.year, n.month, n.day),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Ambil foto'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Pilih dari galeri'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
     );
-    if (t != null) setState(() => _tanggal = t);
+    if (sumber == null) return null;
+    final x = await ImagePicker().pickImage(source: sumber, maxWidth: 1600, imageQuality: 80);
+    if (x == null) return null;
+    try {
+      return await _svc.unggahBukti(x.path);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+      }
+      return null;
+    }
+  }
+
+  Future<void> _fotoDosis(_DosisAwal d) async {
+    setState(() => d.mengunggah = true);
+    final nama = await _unggahFoto();
+    if (!mounted) return;
+    setState(() {
+      if (nama != null) d.foto = nama;
+      d.mengunggah = false;
+    });
+  }
+
+  Future<void> _fotoMandiri(_VaksinMandiriAwal v) async {
+    setState(() => v.mengunggah = true);
+    final nama = await _unggahFoto();
+    if (!mounted) return;
+    setState(() {
+      if (nama != null) v.foto = nama;
+      v.mengunggah = false;
+    });
   }
 
   Future<void> _simpan() async {
-    final v = _vaksin;
-    if (v == null || _tanggal == null || _tempat.text.trim().isEmpty) {
-      setState(() => _galat = 'Pilih vaksin, tanggal, dan isi tempat pemberian.');
+    if (_status.isEmpty) {
+      setState(() => _galat = 'Pilih: belum pernah atau sudah pernah divaksin');
       return;
     }
+    final items = <Map<String, dynamic>>[];
+    final mandiri = <Map<String, dynamic>>[];
+    if (_status == 'sudah') {
+      for (final e in _dipilih.entries) {
+        final d = e.value;
+        if (d.tanggal == null || d.tempat.text.trim().isEmpty) {
+          setState(() => _galat = 'Isi tanggal dan tempat untuk setiap vaksin yang dicentang');
+          return;
+        }
+        if (d.mengunggah) {
+          setState(() => _galat = 'Tunggu foto selesai diunggah');
+          return;
+        }
+        items.add({
+          'jenis_vaksin_id': e.key.split('|').first,
+          'dosis_ke': int.tryParse(e.key.split('|').last) ?? 1,
+          'tanggal_pemberian': tanggalApiVaksin(d.tanggal!),
+          'tempat': d.tempat.text.trim(),
+          'foto_bukti': d.foto,
+        });
+      }
+      final kunciMandiri = <String>{};
+      for (final v in _mandiri) {
+        final nama = v.nama.text.trim();
+        if (nama.isEmpty || v.tanggal == null || v.tempat.text.trim().isEmpty) {
+          setState(() => _galat = 'Isi nama vaksin, tanggal, dan tempat untuk setiap vaksin mandiri');
+          return;
+        }
+        if (v.mengunggah) {
+          setState(() => _galat = 'Tunggu foto selesai diunggah');
+          return;
+        }
+        if (!kunciMandiri.add('${nama.toLowerCase()}|${v.dosis}')) {
+          setState(() => _galat = '$nama dosis ${v.dosis} diisi lebih dari sekali');
+          return;
+        }
+        mandiri.add({
+          'nama_vaksin': nama,
+          'dosis_ke': v.dosis,
+          'tanggal_pemberian': tanggalApiVaksin(v.tanggal!),
+          'tempat': v.tempat.text.trim(),
+          'foto_bukti': v.foto,
+        });
+      }
+      if (items.isEmpty && mandiri.isEmpty && !widget.adaRiwayatLuar) {
+        setState(() => _galat = 'Centang minimal satu vaksin atau tambahkan vaksin mandiri');
+        return;
+      }
+    }
     setState(() {
-      _kirim = true;
+      _menyimpan = true;
       _galat = null;
     });
     try {
-      await _svc.catatRiwayat(
-        anakId: widget.anakId,
-        jenisVaksinId: v.jadwal.jenis.id,
-        dosisKe: v.jadwal.dosisKe,
-        tanggal: _tanggal!,
-        tempat: _tempat.text.trim(),
-        nomorBatch: _batch.text.trim(),
-        pemberiLuar: _pemberi.text.trim(),
-      );
+      await _svc.catatRiwayatAwal(anakId: widget.anakId, status: _status, items: items, mandiri: mandiri);
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _kirim = false;
+        _menyimpan = false;
         _galat = e.toString().replaceFirst('Exception: ', '');
       });
     }
+  }
+
+  // -------------------------------------------------------------------------
+
+  Widget _opsi(String kode, String judul, String ket, IconData ikon) {
+    final aktif = _status == kode;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _pilihStatus(kode),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: aktif ? _hijauHeader : garisKartuBidan, width: aktif ? 1.6 : 1.2),
+          ),
+          child: Row(
+            children: [
+              Icon(ikon, color: aksenKartuBidan),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(judul, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _teksGelap)),
+                    Text(ket, style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
+                  ],
+                ),
+              ),
+              Icon(aktif ? Icons.radio_button_checked : Icons.radio_button_off, color: _hijauHeader),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Baris tanggal + tempat + foto (dipakai dosis program & vaksin mandiri).
+  Widget _isianDosis({
+    required DateTime? tanggal,
+    required VoidCallback onTanggal,
+    required TextEditingController tempat,
+    required String foto,
+    required bool mengunggah,
+    required VoidCallback onFoto,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        kotakPilihBidan(
+          Icons.calendar_month_outlined,
+          tanggal == null ? 'Tanggal diberikan *' : formatTanggal(tanggal),
+          onTanggal,
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: tempat,
+          maxLength: 100,
+          textCapitalization: TextCapitalization.words,
+          decoration: dekorFormBidan('Tempat * (mis. RSUD Porsea, Bidan Praktik)', ikon: Icons.local_hospital_outlined)
+              .copyWith(counterText: ''),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: mengunggah ? null : onFoto,
+            icon: Icon(foto.isEmpty ? Icons.add_a_photo_outlined : Icons.check_circle, size: 18),
+            label: Text(mengunggah
+                ? 'Mengunggah...'
+                : (foto.isEmpty ? 'Foto bukti (opsional)' : 'Foto terunggah, ganti')),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _barisVaksin(JadwalImunisasi j) {
+    final tercatat = widget.sudahTercatat.contains(j.kunci);
+    final d = _dipilih[j.kunci];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: tercatat ? const Color(0xFFF3F4F6) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: d != null ? _hijauHeader : garisKartuBidan, width: 1.2),
+      ),
+      child: Column(
+        children: [
+          CheckboxListTile(
+            value: tercatat || d != null,
+            dense: true,
+            activeColor: _hijauHeader,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: Text(j.namaDosis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            subtitle: Text(
+              tercatat ? 'Sudah tercatat' : 'Biasanya usia ${j.labelUsia}',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: tercatat ? FontWeight.w600 : FontWeight.w400,
+                color: tercatat ? _hijauHeader : AppColors.teksRedup,
+              ),
+            ),
+            onChanged: tercatat
+                ? null
+                : (v) => setState(() {
+                      if (v == true) {
+                        _dipilih[j.kunci] = _DosisAwal();
+                      } else {
+                        _dipilih.remove(j.kunci)?.dispose();
+                      }
+                    }),
+          ),
+          if (d != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: _isianDosis(
+                tanggal: d.tanggal,
+                onTanggal: () async {
+                  final t = await _tanggal(d.tanggal);
+                  if (t != null) setState(() => d.tanggal = t);
+                },
+                tempat: d.tempat,
+                foto: d.foto,
+                mengunggah: d.mengunggah,
+                onFoto: () => _fotoDosis(d),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _barisMandiri(int i) {
+    final v = _mandiri[i];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 6, 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _hijauHeader, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Vaksin mandiri ${i + 1}',
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _teksGelap)),
+              ),
+              IconButton(
+                tooltip: 'Hapus',
+                onPressed: () => setState(() => _mandiri.removeAt(i).dispose()),
+                icon: const Icon(Icons.delete_outline, color: AppColors.merah),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: Column(
+              children: [
+                TextField(
+                  controller: v.nama,
+                  maxLength: 100,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: dekorFormBidan('Nama vaksin * (mis. Rotavirus, PCV)', ikon: Icons.vaccines_outlined)
+                      .copyWith(counterText: ''),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<int>(
+                  value: v.dosis,
+                  decoration: dekorFormBidan('Dosis ke-', ikon: Icons.format_list_numbered),
+                  items: [
+                    for (var n = 1; n <= 10; n++) DropdownMenuItem(value: n, child: Text('Dosis $n')),
+                  ],
+                  onChanged: (n) => setState(() => v.dosis = n ?? 1),
+                ),
+                const SizedBox(height: 8),
+                _isianDosis(
+                  tanggal: v.tanggal,
+                  onTanggal: () async {
+                    final t = await _tanggal(v.tanggal);
+                    if (t != null) setState(() => v.tanggal = t);
+                  },
+                  tempat: v.tempat,
+                  foto: v.foto,
+                  mengunggah: v.mengunggah,
+                  onFoto: () => _fotoMandiri(v),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -814,56 +1165,81 @@ class _FormVaksinLuarState extends State<_FormVaksinLuar> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('VAKSIN DARI LUAR POSYANDU',
+            const Text('RIWAYAT VAKSIN SEBELUM POSYANDU',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _teksGelap)),
             const SizedBox(height: 6),
             Container(height: 3, color: aksenKartuBidan),
-            const SizedBox(height: 8),
-            const SizedBox(height: 4),
-            const Text('Isi sesuai keterangan orang tua. Vaksin yang sudah tercatat tidak akan diberikan lagi.',
-                style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
+            const SizedBox(height: 10),
+            Text(
+              'Apakah ${widget.nama.isEmpty ? 'anak' : widget.nama} sudah pernah menerima vaksin sebelum ke posyandu '
+              '(rumah sakit, puskesmas, klinik, atau bidan praktik)? Cocokkan dengan Buku KIA.',
+              style: const TextStyle(fontSize: 16, color: AppColors.teksRedup, height: 1.4),
+            ),
             const SizedBox(height: 14),
-            DropdownButtonFormField<JadwalVaksinAnak>(
-              value: _vaksin,
-              isExpanded: true,
-              decoration: _dekor('Vaksin', Icons.vaccines_outlined),
-              items: [
-                for (final e in widget.pilihan)
-                  DropdownMenuItem(value: e, child: Text(e.jadwal.namaDosis, overflow: TextOverflow.ellipsis)),
-              ],
-              onChanged: (v) => setState(() => _vaksin = v),
-            ),
-            const SizedBox(height: 10),
-            kotakPilihBidan(
-              Icons.calendar_month_outlined,
-              _tanggal == null ? 'Pilih tanggal pemberian' : formatTanggal(_tanggal!),
-              _pilihTanggal,
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _tempat,
-              maxLength: 100,
-              textCapitalization: TextCapitalization.words,
-              decoration: _dekor('Tempat (mis. RSUD Porsea, Puskesmas Balige)', Icons.location_on_outlined),
-            ),
-            const SizedBox(height: 10),
-            TextField(controller: _batch, maxLength: 50, decoration: _dekor('Nomor batch (opsional)', Icons.qr_code_2)),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _pemberi,
-              maxLength: 100,
-              textCapitalization: TextCapitalization.words,
-              decoration: _dekor('Nama petugas pemberi (opsional)', Icons.person_outline),
-            ),
-            if (_galat != null) ...[
+            _opsi('belum_pernah', 'Belum pernah', 'Anak belum pernah divaksin', Icons.block_outlined),
+            _opsi('sudah', 'Sudah pernah', 'Centang vaksin yang sudah diterima', Icons.vaccines_outlined),
+            if (_status == 'sudah') ...[
+              const SizedBox(height: 6),
+              if (_memuatMaster)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else
+                for (final j in _master) _barisVaksin(j),
+              const SizedBox(height: 10),
+              const Text('VAKSIN MANDIRI (DI LUAR PROGRAM)',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _teksGelap)),
+              const SizedBox(height: 4),
+              const Text('Mis. Rotavirus, PCV, Influenza, Varisela, Hepatitis A.',
+                  style: TextStyle(fontSize: 15, color: AppColors.teksRedup)),
               const SizedBox(height: 8),
-              Text(_galat!, style: const TextStyle(color: AppColors.merah, fontSize: 16)),
+              for (var i = 0; i < _mandiri.length; i++) _barisMandiri(i),
+              tombolGarisBidan(
+                'Tambah Vaksin Mandiri',
+                ikon: Icons.add,
+                onPressed: () => setState(() => _mandiri.add(_VaksinMandiriAwal())),
+              ),
             ],
+            if (_galat != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(_galat!, style: const TextStyle(color: AppColors.merah, fontSize: 16)),
+              ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: garisKartuBidan, width: 1.2),
+              ),
+              child: const Text(
+                'Vaksin yang dicatat langsung sah dan tidak akan diberikan lagi di posyandu. '
+                'Bagian ini hanya diisi sekali, pada kunjungan pertama anak.',
+                style: TextStyle(fontSize: 15, height: 1.4),
+              ),
+            ),
             const SizedBox(height: 14),
-            tombolHijauBidan(
-              _kirim ? 'Menyimpan...' : 'Simpan',
-              ikon: Icons.save_outlined,
-              onPressed: _kirim ? null : _simpan,
+            Row(
+              children: [
+                Expanded(
+                  child: tombolGarisBidan(
+                    'Batal',
+                    warna: AppColors.merah,
+                    onPressed: _menyimpan ? null : () => Navigator.pop(context),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: tombolHijauBidan(
+                    _menyimpan ? 'Menyimpan...' : 'Simpan',
+                    ikon: Icons.save_outlined,
+                    onPressed: _menyimpan ? null : _simpan,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

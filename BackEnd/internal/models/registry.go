@@ -30,6 +30,7 @@ func AllModels() []any {
 		&JenisVaksin{},
 		&JadwalImunisasi{},
 		&ImunisasiAnak{},
+		&VaksinMandiriAnak{}, // vaksin di luar program (dicatat bidan)
 
 		// notifikasi, perangkat & log aktivitas
 		&Notifikasi{},

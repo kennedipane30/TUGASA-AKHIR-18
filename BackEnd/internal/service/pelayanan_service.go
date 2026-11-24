@@ -710,7 +710,7 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 	items := make([]ItemVaksin, 0, len(in.Vaksin))
 
 	if len(in.Vaksin) > 0 && p.Anak != nil && !p.Anak.RiwayatVaksinSudahDikonfirmasi() {
-		return nil, konflik("konfirmasi riwayat vaksin anak terlebih dahulu sebelum memberikan imunisasi")
+		return nil, konflik("catat riwayat vaksin anak (kunjungan pertama) terlebih dahulu sebelum memberikan imunisasi")
 	}
 
 	// data reaksi (KIPI) dari catatan lama sesi ini dipertahankan

@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
@@ -147,30 +146,26 @@ class _DataAnakPageState extends State<DataAnakPage> {
       context,
       awal == null ? 'Data anak ditambahkan' : 'Data anak diperbarui',
     );
-    // Anak baru: langsung tanyakan riwayat vaksin sebelum posyandu.
-    if (awal == null && hasil.id != null) {
-      await _isiRiwayatVaksin(hasil);
-    }
+    // Anak baru: riwayat vaksin dicatat bidan saat kunjungan pertama.
+    if (awal == null) await _infoBukuKia(hasil.nama);
     _muat();
   }
 
-  Future<void> _isiRiwayatVaksin(DataAnak anak) async {
-    final lahir = parseTgl(anak.tglLahir);
-    if (anak.id == null || lahir == null) return;
-    final ok = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => _FormRiwayatVaksin(anakId: anak.id!, nama: anak.nama, lahir: lahir),
-    );
-    if (ok == true && mounted) {
-      snackDi(context, 'Riwayat vaksin tersimpan. Bidan akan mengonfirmasi saat posyandu.');
-      _muat();
-    }
-  }
+  /// Info untuk orang tua: riwayat vaksin anak dicatat bidan, bukan diisi sendiri.
+  Future<void> _infoBukuKia(String nama) => showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Riwayat Vaksin Anak'),
+          content: Text(
+            'Bawa Buku KIA atau kartu vaksin $nama saat pertama kali ke posyandu. '
+            'Bidan akan mencatat vaksin yang sudah pernah diterima anak.',
+            style: const TextStyle(fontSize: 16, height: 1.4),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Mengerti')),
+          ],
+        ),
+      );
 
   Future<void> _hapus(DataAnak anak) async {
     final ya = await showDialog<bool>(
@@ -232,7 +227,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
   }
 
   Widget _kartuAnak(DataAnak anak) {
-    final belumDitanya = anak.statusRiwayatVaksin == StatusRiwayatVaksin.belumDitanya;
+    final belumDicatat = anak.statusRiwayatVaksin != StatusRiwayatVaksin.dikonfirmasi;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
@@ -269,23 +264,12 @@ class _DataAnakPageState extends State<DataAnakPage> {
                         style: TextStyle(
                           fontSize: 15.5,
                           fontWeight: FontWeight.w700,
-                          color: belumDitanya ? AppColors.kuning : kHijauHeader,
+                          color: belumDicatat ? AppColors.kuning : kHijauHeader,
                         ),
                       ),
                     ),
                   ],
                 ),
-                if (anak.statusRiwayatVaksin != StatusRiwayatVaksin.dikonfirmasi)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: InkWell(
-                      onTap: () => _isiRiwayatVaksin(anak),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: tautanKeluarga(belumDitanya ? 'Isi riwayat vaksin' : 'Ubah riwayat vaksin'),
-                      ),
-                    ),
-                  ),
                 const SizedBox(height: 8),
                 // Tombol bergaris: Hapus di kiri, Ubah di kanan.
                 Row(
@@ -706,371 +690,4 @@ class _FormAnakState extends State<_FormAnak> {
           ),
         ),
       );
-}
-// ---------------------------------------------------------------------------
-// FORM RIWAYAT VAKSIN SEBELUM POSYANDU
-// ---------------------------------------------------------------------------
-class _DosisDipilih {
-  DateTime? tanggal;
-  final TextEditingController tempat = TextEditingController();
-  String foto = '';
-  bool mengunggah = false;
-
-  void dispose() => tempat.dispose();
-}
-
-class _FormRiwayatVaksin extends StatefulWidget {
-  final String anakId;
-  final String nama;
-  final DateTime lahir;
-
-  const _FormRiwayatVaksin({required this.anakId, required this.nama, required this.lahir});
-
-  @override
-  State<_FormRiwayatVaksin> createState() => _FormRiwayatVaksinState();
-}
-
-class _FormRiwayatVaksinState extends State<_FormRiwayatVaksin> {
-  final _svc = VaksinService();
-  String _status = ''; // sudah | belum_pernah | lupa
-  List<JadwalImunisasi> _master = [];
-  bool _memuatMaster = false;
-  final Map<String, _DosisDipilih> _dipilih = {};
-  bool _menyimpan = false;
-  String? _error;
-
-  @override
-  void dispose() {
-    for (final d in _dipilih.values) {
-      d.dispose();
-    }
-    super.dispose();
-  }
-
-  DateTime get _hariIni {
-    final n = DateTime.now();
-    return DateTime(n.year, n.month, n.day);
-  }
-
-  int get _usiaBulan {
-    final n = _hariIni;
-    var b = (n.year - widget.lahir.year) * 12 + n.month - widget.lahir.month;
-    if (n.day < widget.lahir.day) b--;
-    return b < 0 ? 0 : b;
-  }
-
-  String _api(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
-  Future<void> _pilihStatus(String s) async {
-    setState(() {
-      _status = s;
-      _error = null;
-    });
-    if (s == 'sudah' && _master.isEmpty) {
-      setState(() => _memuatMaster = true);
-      try {
-        final m = await _svc.jadwalMaster();
-        if (!mounted) return;
-        setState(() {
-          // hanya vaksin yang sudah mungkin diterima sesuai usia anak
-          _master = m.where((j) => !j.jenis.khususDaerah && j.usiaMinBulan <= _usiaBulan).toList();
-          _memuatMaster = false;
-        });
-      } catch (e) {
-        if (!mounted) return;
-        setState(() {
-          _memuatMaster = false;
-          _error = e.toString().replaceFirst('Exception: ', '');
-        });
-      }
-    }
-  }
-
-  Future<void> _pilihTanggal(_DosisDipilih d) async {
-    final t = await showDatePicker(
-      context: context,
-      initialDate: d.tanggal ?? _hariIni,
-      firstDate: widget.lahir,
-      lastDate: _hariIni,
-    );
-    if (t != null) setState(() => d.tanggal = t);
-  }
-
-  Future<void> _ambilFoto(_DosisDipilih d) async {
-    final sumber = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Ambil foto'),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Pilih dari galeri'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (sumber == null) return;
-    final x = await ImagePicker().pickImage(source: sumber, maxWidth: 1600, imageQuality: 80);
-    if (x == null) return;
-    setState(() => d.mengunggah = true);
-    try {
-      final nama = await _svc.unggahBukti(x.path);
-      if (!mounted) return;
-      setState(() {
-        d.foto = nama;
-        d.mengunggah = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => d.mengunggah = false);
-      snackDi(context, e.toString().replaceFirst('Exception: ', ''));
-    }
-  }
-
-  Future<void> _simpan() async {
-    if (_status.isEmpty) {
-      setState(() => _error = 'Pilih salah satu jawaban');
-      return;
-    }
-    final items = <Map<String, dynamic>>[];
-    if (_status == 'sudah') {
-      if (_dipilih.isEmpty) {
-        setState(() => _error = 'Centang vaksin yang sudah diterima anak');
-        return;
-      }
-      for (final e in _dipilih.entries) {
-        final d = e.value;
-        if (d.tanggal == null || d.tempat.text.trim().isEmpty) {
-          setState(() => _error = 'Isi tanggal dan tempat untuk setiap vaksin yang dicentang');
-          return;
-        }
-        if (d.mengunggah) {
-          setState(() => _error = 'Tunggu foto selesai diunggah');
-          return;
-        }
-        items.add({
-          'jenis_vaksin_id': e.key.split('|').first,
-          'dosis_ke': int.tryParse(e.key.split('|').last) ?? 1,
-          'tanggal_pemberian': _api(d.tanggal!),
-          'tempat': d.tempat.text.trim(),
-          'foto_bukti': d.foto,
-        });
-      }
-    }
-    setState(() {
-      _menyimpan = true;
-      _error = null;
-    });
-    try {
-      await _svc.laporRiwayatAwal(anakId: widget.anakId, status: _status, items: items);
-      if (mounted) Navigator.pop(context, true);
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _menyimpan = false;
-        _error = e.toString().replaceFirst('Exception: ', '');
-      });
-    }
-  }
-
-  Widget _opsi(String kode, String judul, String ket, IconData ikon) {
-    final aktif = _status == kode;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => _pilihStatus(kode),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: aktif ? _hijauTua : _garisInput, width: aktif ? 1.6 : 1.2),
-          ),
-          child: Row(
-            children: [
-              Icon(ikon, color: kAksen),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(judul,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 16, color: kTeksGelap)),
-                    Text(ket, style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
-                  ],
-                ),
-              ),
-              Icon(aktif ? Icons.radio_button_checked : Icons.radio_button_off, color: _hijauTua),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _barisVaksin(JadwalImunisasi j) {
-    final d = _dipilih[j.kunci];
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: d != null ? _hijauTua : _garisInput, width: 1.2),
-      ),
-      child: Column(
-        children: [
-          CheckboxListTile(
-            value: d != null,
-            dense: true,
-            activeColor: _hijauTua,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: Text(j.namaDosis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-            subtitle: Text('Biasanya usia ${j.labelUsia}', style: const TextStyle(fontSize: 15)),
-            onChanged: (v) => setState(() {
-              if (v == true) {
-                _dipilih[j.kunci] = _DosisDipilih();
-              } else {
-                _dipilih.remove(j.kunci)?.dispose();
-              }
-            }),
-          ),
-          if (d != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  InkWell(
-                    onTap: () => _pilihTanggal(d),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _garisInput, width: 1.2),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.calendar_month_outlined, size: 20, color: kAksen),
-                          const SizedBox(width: 8),
-                          Text(
-                            d.tanggal == null ? 'Tanggal diberikan *' : fmtTgl(d.tanggal!),
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: d.tanggal == null ? Colors.black45 : Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: d.tempat,
-                    maxLength: 100,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: _dekor('Tempat * (mis. RSUD Porsea, Bidan Praktik)', icon: Icons.local_hospital_outlined),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      TextButton.icon(
-                        onPressed: d.mengunggah ? null : () => _ambilFoto(d),
-                        icon: Icon(d.foto.isEmpty ? Icons.add_a_photo_outlined : Icons.check_circle, size: 18),
-                        label: Text(d.mengunggah
-                            ? 'Mengunggah...'
-                            : (d.foto.isEmpty ? 'Foto bukti (opsional)' : 'Foto terunggah, ganti')),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(18, 18, 18, 16 + MediaQuery.of(context).viewInsets.bottom),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            judulLembarKeluarga('Riwayat Vaksin'),
-            const SizedBox(height: 8),
-            Text(
-              'Apakah ${widget.nama} sudah pernah menerima vaksin sebelum ke posyandu '
-              '(di rumah sakit, puskesmas, klinik, atau bidan praktik)?',
-              style: const TextStyle(fontSize: 16, color: AppColors.teksRedup, height: 1.4),
-            ),
-            const SizedBox(height: 14),
-            _opsi('belum_pernah', 'Belum pernah', 'Anak belum pernah divaksin', Icons.block_outlined),
-            _opsi('sudah', 'Sudah pernah', 'Pilih vaksin yang sudah diterima', Icons.vaccines_outlined),
-            _opsi('lupa', 'Lupa / tidak tahu', 'Bidan akan menanyakan saat posyandu', Icons.help_outline),
-            if (_status == 'sudah') ...[
-              const SizedBox(height: 6),
-              if (_memuatMaster)
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else
-                for (final j in _master) _barisVaksin(j),
-            ],
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(_error!, style: const TextStyle(color: AppColors.merah, fontSize: 15)),
-              ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _garisInput, width: 1.2),
-              ),
-              child: const Text(
-                'Vaksin yang Anda isi tidak akan diberikan lagi di posyandu. '
-                'Bidan akan mengonfirmasi data ini saat kunjungan pertama.',
-                style: TextStyle(fontSize: 15, height: 1.4),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: tombolGarisKeluarga('Nanti saja', onPressed: () => Navigator.pop(context)),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: tombolHijauKeluarga(
-                    _menyimpan ? 'Menyimpan...' : 'Simpan',
-                    onPressed: _menyimpan ? null : _simpan,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

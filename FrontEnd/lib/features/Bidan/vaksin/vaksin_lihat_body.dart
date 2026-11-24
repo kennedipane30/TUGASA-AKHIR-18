@@ -456,8 +456,9 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
 
   Widget _infoRiwayatAwal(KartuVaksin k) {
     final pesan = widget.bisaKelola
-        ? 'Riwayat vaksin anak belum dikonfirmasi. Konfirmasi dilakukan di halaman Catatan Bidan saat posyandu.'
-        : 'Riwayat vaksin: ${StatusRiwayatVaksin.label(k.anak.statusRiwayatVaksin)}.';
+        ? 'Riwayat vaksin anak sebelum posyandu belum dicatat. Catat di halaman Catatan Bidan saat kunjungan pertama.'
+        : 'Riwayat vaksin anak sebelum posyandu akan dicatat bidan saat kunjungan pertama. '
+            'Bawa Buku KIA atau kartu vaksin anak.';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -478,7 +479,11 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
   }
 
   Widget _pilihTab(KartuVaksin k) {
-    final label = ['Jadwal', 'Riwayat (${k.riwayat.length})', 'Suplemen (${k.suplemen.length})'];
+    final label = [
+      'Jadwal',
+      'Riwayat (${k.riwayat.length + k.vaksinMandiri.length})',
+      'Suplemen (${k.suplemen.length})',
+    ];
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -701,8 +706,84 @@ class _VaksinLihatBodyState extends State<VaksinLihatBody> {
   // =================================================================== riwayat
 
   List<Widget> _isiRiwayat(KartuVaksin k) {
-    if (k.riwayat.isEmpty) return [_kosong(Icons.vaccines_outlined, 'Belum ada riwayat vaksin')];
-    return [for (final r in k.riwayat) _kartuRiwayat(r)];
+    if (k.riwayat.isEmpty && k.vaksinMandiri.isEmpty) {
+      return [_kosong(Icons.vaccines_outlined, 'Belum ada riwayat vaksin')];
+    }
+    return [
+      for (final r in k.riwayat) _kartuRiwayat(r),
+      if (k.vaksinMandiri.isNotEmpty) ...[
+        const Padding(
+          padding: EdgeInsets.fromLTRB(4, 8, 4, 8),
+          child: Text('VAKSIN MANDIRI (DI LUAR PROGRAM)',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _teksGelap)),
+        ),
+        for (final v in k.vaksinMandiri) _kartuVaksinMandiri(v),
+      ],
+    ];
+  }
+
+  Widget _kartuVaksinMandiri(VaksinMandiri v) {
+    return _kartuIsi(
+      judul: v.namaDosis,
+      kanan: v.tanggal == null ? '-' : formatTanggal(v.tanggal!),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _info('Usia', v.usiaTeks),
+          _info('Tempat', v.tempat),
+          const SizedBox(height: 4),
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 14,
+            runSpacing: 4,
+            children: [
+              if (v.fotoBukti.isNotEmpty)
+                InkWell(
+                  onTap: () => tampilkanBuktiVaksin(context, v.fotoBukti),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: _tautan('Lihat foto bukti'),
+                  ),
+                ),
+              if (widget.bisaKelola)
+                InkWell(
+                  onTap: () => _hapusMandiri(v),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: _tautan('Hapus catatan', warna: AppColors.merah),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _hapusMandiri(VaksinMandiri v) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus catatan vaksin mandiri?'),
+        content: Text('${v.namaDosis} '
+            '(${v.tanggal == null ? '-' : formatTanggal(v.tanggal!)}) akan dihapus dari riwayat.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tidak')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Hapus', style: TextStyle(color: AppColors.merah)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _svc.hapusVaksinMandiri(v.id);
+      _snack('Catatan vaksin mandiri dihapus');
+      await _muat();
+    } catch (e) {
+      _snack(e.toString().replaceFirst('Exception: ', ''));
+    }
   }
 
   bool _dalam30Hari(RiwayatVaksin r) {

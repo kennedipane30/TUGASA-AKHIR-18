@@ -30,6 +30,9 @@ String _tglApi(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
+/// Tanggal untuk dikirim ke server (YYYY-MM-DD).
+String tanggalApiVaksin(DateTime d) => _tglApi(d);
+
 /// Status riwayat vaksin anak sebelum dilayani posyandu.
 class StatusRiwayatVaksin {
   static const belumDitanya = 'belum_ditanya';
@@ -40,16 +43,14 @@ class StatusRiwayatVaksin {
 
   static String label(String s) {
     switch (s) {
-      case belumPernah:
-        return 'Belum pernah divaksin (menunggu konfirmasi bidan)';
-      case dilaporkan:
-        return 'Sudah diisi, menunggu konfirmasi bidan';
-      case perluDitanyakan:
-        return 'Akan ditanyakan bidan saat posyandu';
       case dikonfirmasi:
-        return 'Sudah dikonfirmasi bidan';
+        return 'Sudah dicatat bidan';
+      case belumPernah:
+      case dilaporkan:
+      case perluDitanyakan:
+        return 'Akan dicatat bidan saat kunjungan pertama';
     }
-    return 'Belum diisi';
+    return 'Akan dicatat bidan saat kunjungan pertama';
   }
 }
 
@@ -482,12 +483,47 @@ class AnakVaksinInfo {
 }
 
 /// Kartu vaksin anak: jadwal + status, riwayat vaksin, riwayat suplemen.
+/// Vaksin di luar jadwal program (mis. Rotavirus, PCV, Influenza), dicatat bidan.
+/// Hanya riwayat: tidak memengaruhi jadwal imunisasi program.
+class VaksinMandiri {
+  final String id;
+  final String namaVaksin;
+  final int dosisKe;
+  final DateTime? tanggal;
+  final String usiaTeks;
+  final String tempat;
+  final String fotoBukti;
+
+  const VaksinMandiri({
+    required this.id,
+    required this.namaVaksin,
+    required this.dosisKe,
+    required this.tanggal,
+    required this.usiaTeks,
+    required this.tempat,
+    required this.fotoBukti,
+  });
+
+  String get namaDosis => '$namaVaksin dosis $dosisKe';
+
+  factory VaksinMandiri.fromJson(Map<String, dynamic> j) => VaksinMandiri(
+        id: _s(j['id']),
+        namaVaksin: _s(j['nama_vaksin']),
+        dosisKe: _i(j['dosis_ke']),
+        tanggal: _tgl(j['tanggal_pemberian']),
+        usiaTeks: _s(j['usia_teks']),
+        tempat: _s(j['tempat']),
+        fotoBukti: _s(j['foto_bukti']),
+      );
+}
+
 class KartuVaksin {
   final AnakVaksinInfo anak;
   final RingkasanVaksin ringkasan;
   final List<JadwalVaksinAnak> jadwal;
   final List<RiwayatVaksin> riwayat;
   final List<SuplemenRiwayat> suplemen;
+  final List<VaksinMandiri> vaksinMandiri;
 
   const KartuVaksin({
     required this.anak,
@@ -495,6 +531,7 @@ class KartuVaksin {
     required this.jadwal,
     required this.riwayat,
     required this.suplemen,
+    this.vaksinMandiri = const [],
   });
 
   factory KartuVaksin.fromJson(Map<String, dynamic> j) => KartuVaksin(
@@ -503,6 +540,7 @@ class KartuVaksin {
         jadwal: _l(j['jadwal']).map(JadwalVaksinAnak.fromJson).toList(),
         riwayat: _l(j['riwayat']).map(RiwayatVaksin.fromJson).toList(),
         suplemen: _l(j['suplemen']).map(SuplemenRiwayat.fromJson).toList(),
+        vaksinMandiri: _l(j['vaksin_mandiri']).map(VaksinMandiri.fromJson).toList(),
       );
 
   /// Dosis yang boleh diberikan hari ini.
@@ -665,23 +703,6 @@ class VaksinService {
 
   // ---------------------------------------------------------------- orang tua
 
-  /// Riwayat vaksin sebelum posyandu. [status]: sudah | belum_pernah | lupa.
-  Future<KartuVaksin> laporRiwayatAwal({
-    required String anakId,
-    required String status,
-    List<Map<String, dynamic>> items = const [],
-  }) async {
-    try {
-      final res = await ApiClient.dio.post('/vaksin/anak/$anakId/riwayat-awal', data: {
-        'status': status,
-        'items': items,
-      });
-      return KartuVaksin.fromJson(_m(_data(res.data)));
-    } on DioException catch (e) {
-      throw Exception(_pesanError(e));
-    }
-  }
-
   /// Orang tua melaporkan reaksi anak setelah imunisasi (diteruskan ke bidan).
   Future<void> laporKipi(String riwayatId, String reaksi) async {
     try {
@@ -737,6 +758,37 @@ class VaksinService {
         'tempat': tempat,
         'nomor_batch': nomorBatch,
       });
+    } on DioException catch (e) {
+      throw Exception(_pesanError(e));
+    }
+  }
+
+  /// Bidan mencatat riwayat vaksin anak sebelum posyandu (kunjungan pertama).
+  /// [status]: 'sudah' | 'belum_pernah'.
+  /// [items]: vaksin program yang dicentang {jenis_vaksin_id, dosis_ke, tanggal_pemberian, tempat, foto_bukti}.
+  /// [mandiri]: vaksin di luar program {nama_vaksin, dosis_ke, tanggal_pemberian, tempat, foto_bukti}.
+  Future<KartuVaksin> catatRiwayatAwal({
+    required String anakId,
+    required String status,
+    List<Map<String, dynamic>> items = const [],
+    List<Map<String, dynamic>> mandiri = const [],
+  }) async {
+    try {
+      final res = await ApiClient.dio.post('/bidan/vaksin/anak/$anakId/riwayat-awal', data: {
+        'status': status,
+        'items': items,
+        'mandiri': mandiri,
+      });
+      return KartuVaksin.fromJson(_m(_data(res.data)));
+    } on DioException catch (e) {
+      throw Exception(_pesanError(e));
+    }
+  }
+
+  /// Hapus catatan vaksin di luar program yang salah (bidan).
+  Future<void> hapusVaksinMandiri(String id) async {
+    try {
+      await ApiClient.dio.delete('/bidan/vaksin/mandiri/$id');
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }

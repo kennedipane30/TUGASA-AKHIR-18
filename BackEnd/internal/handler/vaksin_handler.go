@@ -127,25 +127,6 @@ func (h *VaksinHandler) AmbilBukti(c *gin.Context) {
 
 // ---------------------------------------------------------------- orang tua
 
-// POST /vaksin/anak/:anak_id/riwayat-awal : riwayat vaksin anak sebelum ke posyandu.
-func (h *VaksinHandler) LaporRiwayatAwal(c *gin.Context) {
-	anakID, ok := idParam(c, "anak_id")
-	if !ok {
-		return
-	}
-	var in service.RiwayatAwalInput
-	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "data riwayat vaksin belum lengkap"})
-		return
-	}
-	data, err := h.svc.LaporRiwayatAwal(c.GetUint("user_id"), anakID, in)
-	if err != nil {
-		h.gagal(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"data": data})
-}
-
 // POST /vaksin/riwayat/:id/kipi : orang tua melaporkan reaksi setelah imunisasi.
 func (h *VaksinHandler) LaporKipi(c *gin.Context) {
 	id, ok := idParam(c, "id")

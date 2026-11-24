@@ -49,19 +49,18 @@ var petaAksi = map[string]infoAksi{
 	"POST /sekretaris/jadwal/:id/batalkan": {"Membatalkan jadwal posyandu", "Jadwal"},
 
 	// orang tua
-	"PUT /keluarga/saya":                 {"Memperbarui data keluarga", "Keluarga"},
-	"PUT /keluarga":                      {"Memperbarui data keluarga", "Keluarga"},
-	"POST /keluarga/saya/anak":           {"Menambah data anak", "Keluarga"},
-	"POST /keluarga/anak":                {"Menambah data anak", "Keluarga"},
-	"PUT /keluarga/saya/anak/:id":        {"Mengubah data anak", "Keluarga"},
-	"PUT /keluarga/anak/:id":             {"Mengubah data anak", "Keluarga"},
-	"DELETE /keluarga/saya/anak/:id":     {"Menghapus data anak", "Keluarga"},
-	"DELETE /keluarga/anak/:id":          {"Menghapus data anak", "Keluarga"},
-	"POST /jadwal/:id/daftar":            {"Mendaftar ke jadwal posyandu", "Pendaftaran"},
-	"POST /jadwal/:id/batal":             {"Membatalkan pendaftaran", "Pendaftaran"},
-	"POST /jadwal/:id/scan":              {"Check-in dengan scan QR", "Pendaftaran"},
-	"POST /vaksin/anak/:id/riwayat-awal": {"Melaporkan riwayat vaksin anak", "Imunisasi"},
-	"POST /vaksin/riwayat/:id/kipi":      {"Melaporkan reaksi setelah imunisasi", "Imunisasi"},
+	"PUT /keluarga/saya":             {"Memperbarui data keluarga", "Keluarga"},
+	"PUT /keluarga":                  {"Memperbarui data keluarga", "Keluarga"},
+	"POST /keluarga/saya/anak":       {"Menambah data anak", "Keluarga"},
+	"POST /keluarga/anak":            {"Menambah data anak", "Keluarga"},
+	"PUT /keluarga/saya/anak/:id":    {"Mengubah data anak", "Keluarga"},
+	"PUT /keluarga/anak/:id":         {"Mengubah data anak", "Keluarga"},
+	"DELETE /keluarga/saya/anak/:id": {"Menghapus data anak", "Keluarga"},
+	"DELETE /keluarga/anak/:id":      {"Menghapus data anak", "Keluarga"},
+	"POST /jadwal/:id/daftar":        {"Mendaftar ke jadwal posyandu", "Pendaftaran"},
+	"POST /jadwal/:id/batal":         {"Membatalkan pendaftaran", "Pendaftaran"},
+	"POST /jadwal/:id/scan":          {"Check-in dengan scan QR", "Pendaftaran"},
+	"POST /vaksin/riwayat/:id/kipi":  {"Melaporkan reaksi setelah imunisasi", "Imunisasi"},
 
 	// kader
 	"POST /kader/users/:id/reset-pin":       {"Mereset PIN orang tua", "Akun"},
@@ -81,6 +80,8 @@ var petaAksi = map[string]infoAksi{
 	"PUT /bidan/vaksin/riwayat/:id/konfirmasi":       {"Mengonfirmasi riwayat vaksin", "Imunisasi"},
 	"PUT /bidan/vaksin/riwayat/:id/kipi":             {"Menindaklanjuti reaksi imunisasi", "Imunisasi"},
 	"POST /bidan/vaksin/anak/:id/konfirmasi-selesai": {"Menyelesaikan konfirmasi vaksin anak", "Imunisasi"},
+	"POST /bidan/vaksin/anak/:id/riwayat-awal":       {"Mencatat riwayat vaksin anak", "Imunisasi"},
+	"DELETE /bidan/vaksin/mandiri/:id":               {"Menghapus catatan vaksin mandiri", "Imunisasi"},
 }
 
 var polaParam = regexp.MustCompile(`:[A-Za-z_]+`)

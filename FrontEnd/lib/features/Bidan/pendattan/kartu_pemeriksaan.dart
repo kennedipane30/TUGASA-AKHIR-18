@@ -130,18 +130,11 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
   }
 
   // -------------------------------------------------------------------------
-  // KARTU RIWAYAT VAKSIN SEBELUM POSYANDU (konfirmasi sekali)
+  // KARTU RIWAYAT VAKSIN SEBELUM POSYANDU (dicatat bidan sekali, kunjungan pertama)
   // -------------------------------------------------------------------------
   Widget _kartuRiwayat() {
-    final pesan = switch (_statusRiwayat) {
-      StatusRiwayatVaksin.dilaporkan =>
-        'Orang tua sudah mengisi vaksin yang pernah diterima anak. Cocokkan satu per satu dengan orang tua.',
-      StatusRiwayatVaksin.belumPernah =>
-        'Orang tua menyatakan anak belum pernah divaksin. Pastikan kembali kepada orang tua.',
-      _ =>
-        'Tanyakan kepada orang tua vaksin apa saja yang pernah diterima anak di luar posyandu '
-            '(rumah sakit, puskesmas, klinik, bidan praktik).',
-    };
+    const pesan = 'Kunjungan pertama anak. Tanyakan kepada orang tua dan lihat Buku KIA: vaksin apa saja '
+        'yang pernah diterima anak di luar posyandu (rumah sakit, puskesmas, klinik, bidan praktik).';
     final menunggu = _riwayatLuar.where((r) => r.menungguKonfirmasi).length;
 
     return kartuBidan(
@@ -152,24 +145,20 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _info(pesan, ikon: Icons.record_voice_over_outlined, bg: AppColors.kuningMuda, fg: AppColors.kuning),
-          if (_riwayatLuar.isEmpty)
+          // catatan lama (mis. laporan orang tua sebelum fitur ini diubah): dicek dahulu
+          if (_riwayatLuar.isNotEmpty) ...[
             const Padding(
-              padding: EdgeInsets.only(bottom: 8),
-              child: Text('Belum ada vaksin dari luar posyandu yang tercatat.',
-                  style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
+              padding: EdgeInsets.only(bottom: 6),
+              child: Text('Catatan vaksin yang sudah ada:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _teksGelap)),
             ),
-          for (final r in _riwayatLuar) _barisRiwayatLuar(r),
+            for (final r in _riwayatLuar) _barisRiwayatLuar(r),
+          ],
           const SizedBox(height: 4),
-          tombolGarisBidan(
-            'Tambah Vaksin dari Luar Posyandu',
-            ikon: Icons.add,
-            onPressed: _prosesRiwayat ? null : _tambahDariLuar,
-          ),
-          const SizedBox(height: 8),
           tombolHijauBidan(
-            menunggu > 0 ? 'Konfirmasi $menunggu vaksin di atas dahulu' : 'Riwayat Sudah Benar',
-            ikon: Icons.verified_outlined,
-            onPressed: (_prosesRiwayat || menunggu > 0) ? null : _selesaiKonfirmasi,
+            menunggu > 0 ? 'Cek $menunggu catatan di atas dahulu' : 'Catat Riwayat Vaksin',
+            ikon: Icons.fact_check_outlined,
+            onPressed: (_prosesRiwayat || menunggu > 0) ? null : _catatRiwayatAwal,
           ),
         ],
       ),
@@ -197,7 +186,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
               ),
               const SizedBox(width: 8),
               Text(
-                r.menungguKonfirmasi ? 'Perlu dicek' : 'Dikonfirmasi',
+                r.menungguKonfirmasi ? 'Perlu dicek' : 'Tercatat',
                 style: TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w600,
@@ -258,7 +247,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
         kanan: 'Terkunci',
         warnaKanan: AppColors.teksRedup,
         child: const Text(
-          'Konfirmasi riwayat vaksin anak di atas terlebih dahulu agar tidak ada vaksin yang diberikan dua kali.',
+          'Catat riwayat vaksin anak di atas terlebih dahulu agar tidak ada vaksin yang diberikan dua kali.',
           style: TextStyle(fontSize: 16.5, color: AppColors.teksRedup),
         ),
       );
