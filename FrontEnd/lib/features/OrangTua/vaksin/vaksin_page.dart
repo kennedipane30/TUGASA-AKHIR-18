@@ -15,9 +15,7 @@ const _garis = Color(0xFFB8BEC6);
 const _aksen = Color(0xFF5E9C84);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const _bayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const _bayangan = AppColors.bayanganKartu;
 
 BoxDecoration _dekorKartu() => BoxDecoration(
       color: Colors.white,

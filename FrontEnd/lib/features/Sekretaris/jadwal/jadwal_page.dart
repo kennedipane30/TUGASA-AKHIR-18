@@ -103,9 +103,7 @@ const teksGelapJadwal = Color(0xFF1F2937);
 const garisKartuJadwal = Color(0xFFB8BEC6);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const bayanganKartuJadwal = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const bayanganKartuJadwal = AppColors.bayanganKartu;
 
 /// Warna aksen kartu (garis pemisah, ikon kecil, tautan): hijau lembut senada header.
 const aksenKartuJadwal = Color(0xFF5E9C84);

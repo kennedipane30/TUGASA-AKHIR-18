@@ -20,9 +20,7 @@ const garisKartuBidan = Color(0xFFB8BEC6);
 const aksenKartuBidan = Color(0xFF5E9C84);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const bayanganKartuBidan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const bayanganKartuBidan = AppColors.bayanganKartu;
 
 BoxDecoration dekorKartuBidan({Color warna = Colors.white}) => BoxDecoration(
       color: warna,
@@ -831,7 +829,6 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     return d == d.roundToDouble() ? d.toStringAsFixed(0) : d.toString();
   }
 }
-
 
 // ---------------------------------------------------------------------------
 // FORM RIWAYAT VAKSIN SEBELUM POSYANDU (bidan, kunjungan pertama anak)

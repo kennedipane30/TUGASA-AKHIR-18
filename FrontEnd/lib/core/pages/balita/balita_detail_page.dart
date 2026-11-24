@@ -9,6 +9,7 @@ import '../../../features/Bidan/vaksin/vaksin_lihat_body.dart';
 import '../rekap/rekap_posyandu_page.dart';
 import 'arsip_balita_page.dart';
 import 'semua_balita_page.dart' show labelTimbang;
+import '../../theme/app_colors.dart';
 
 /// Detail satu balita: profil & keluarga, riwayat penimbangan (beserta catatan
 /// kader, catatan bidan, imunisasi, dan suplemen tiap kunjungan), dan vaksin.
@@ -23,9 +24,7 @@ const _teksGelap = Color(0xFF1F2937);
 const _garis = Color(0xFFB8BEC6);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const _bayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const _bayangan = AppColors.bayanganKartu;
 
 /// Warna aksen kartu: hijau lembut senada header.
 const _aksen = Color(0xFF5E9C84);

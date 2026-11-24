@@ -18,9 +18,7 @@ const hijauHeaderAkun = Color(0xFF065F46);
 const garisKartuAkun = Color(0xFFB8BEC6);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const bayanganKartuAkun = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const bayanganKartuAkun = AppColors.bayanganKartu;
 
 /// Warna aksen kartu (garis pemisah, ikon kecil, tautan): hijau lembut senada header.
 const aksenKartuAkun = Color(0xFF5E9C84);

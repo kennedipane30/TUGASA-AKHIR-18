@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/config/api_client.dart';
 import '../../../core/utils/no_hp.dart';
+import '../../../core/theme/app_colors.dart';
 
 // ============================================================================
 // BAGIAN BERSAMA FITUR "DATA KELUARGA"
@@ -28,9 +29,7 @@ const kkLatar = Color(0xFFF4F7F5);
 const kkAksen = Color(0xFF5E9C84);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const kkBayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const kkBayangan = AppColors.bayanganKartu;
 
 BoxDecoration kkDekorKartu() => BoxDecoration(
       color: Colors.white,

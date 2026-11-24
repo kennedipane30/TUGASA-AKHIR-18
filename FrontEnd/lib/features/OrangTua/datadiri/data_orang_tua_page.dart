@@ -28,9 +28,7 @@ const kTeksGelap = Color(0xFF1F2937);
 const kAksen = Color(0xFF5E9C84);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const kBayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const kBayangan = AppColors.bayanganKartu;
 
 BoxDecoration dekorKartuKeluarga({Color warna = Colors.white}) => BoxDecoration(
       color: warna,

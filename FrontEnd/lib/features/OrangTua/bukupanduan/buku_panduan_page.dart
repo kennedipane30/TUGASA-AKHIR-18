@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/theme/app_colors.dart';
 
 // ---------------------------------------------------------------------------
 // WARNA
 // ---------------------------------------------------------------------------
 const _hijauHeader = Color(0xFF065F46);
-const _latar = Color(0xFFF7FAF8);
+const _latar = AppColors.latar;
 const _teks = Color(0xFF1F2A37);
 const _teksRedup = Color(0xFF6B7280);
 const _merah = Color(0xFFD64545);
@@ -20,9 +21,7 @@ const _garis = Color(0xFFB8BEC6);
 const _aksen = Color(0xFF5E9C84);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const _bayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const _bayangan = AppColors.bayanganKartu;
 
 BoxDecoration _dekorKartu() => BoxDecoration(
       color: Colors.white,

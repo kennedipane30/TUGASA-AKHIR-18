@@ -6,15 +6,14 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../config/api_client.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/posyandu.dart';
+import '../../theme/app_colors.dart';
 
 const Color _hijauHeader = Color(0xFF065F46);
 const Color _hijau = Color(0xFF176A46);
 const Color _teksGelap = Color(0xFF1F2937);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const _bayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const _bayangan = AppColors.bayanganKartu;
 
 /// Warna aksen kartu: hijau lembut senada header.
 const Color _aksen = Color(0xFF5E9C84);

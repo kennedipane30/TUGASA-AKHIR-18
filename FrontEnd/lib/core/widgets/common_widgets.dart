@@ -970,13 +970,7 @@ class SectionCard extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE6ECE8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppColors.bayanganKartu,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

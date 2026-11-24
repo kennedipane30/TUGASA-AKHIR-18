@@ -8,6 +8,7 @@ import '../../widgets/common_widgets.dart';
 import '../../../service/balita_service.dart';
 import '../rekap/rekap_posyandu_page.dart';
 import 'balita_detail_page.dart';
+import '../../theme/app_colors.dart';
 
 const _hijauTua = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
@@ -17,9 +18,7 @@ const _garisKartu = Color(0xFFB8BEC6);
 const _garisCari = _garisKartu;
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const _bayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const _bayangan = AppColors.bayanganKartu;
 
 /// Warna aksen kartu: hijau lembut senada header.
 const _aksen = Color(0xFF5E9C84);

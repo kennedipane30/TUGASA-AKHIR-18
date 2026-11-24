@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../core/config/api_client.dart';
 import '../keluarga/keluarga.dart';
 import '../keluarga/tambah_keluarga_page.dart';
+import '../../../core/theme/app_colors.dart';
 
 // ============================================================================
 // DAFTARKAN ANAK KE SESI POSYANDU HARI INI (kader)
@@ -99,9 +100,7 @@ const _garis = Color(0xFFB8BEC6);
 const _aksen = Color(0xFF5E9C84);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const _bayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const _bayangan = AppColors.bayanganKartu;
 
 BoxDecoration _dekorKartu() => BoxDecoration(
       color: Colors.white,

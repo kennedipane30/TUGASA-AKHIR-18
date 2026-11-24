@@ -14,6 +14,7 @@ import '../../theme/app_colors.dart';
 import '../balita/balita_detail_page.dart';
 import '../../widgets/common_widgets.dart';
 import '../../../service/notifikasi_service.dart';
+import '../../theme/app_colors.dart';
 
 const _hijauHeader = Color(0xFF065F46); // sama dengan header halaman lain
 const _teksGelap = Color(0xFF1F2937);
@@ -25,9 +26,7 @@ const _garis = Color(0xFFB8BEC6);
 const _aksen = Color(0xFF5E9C84);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const _bayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const _bayangan = AppColors.bayanganKartu;
 
 String _pesanError(Object e) {
   if (e is DioException) {

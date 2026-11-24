@@ -5,6 +5,7 @@ import '../../theme/app_colors.dart';
 import '../../widgets/common_widgets.dart';
 import '../../../service/rekap_service.dart';
 import 'skdn_page.dart';
+import '../../theme/app_colors.dart';
 
 // Halaman Rekap Posyandu dipecah menjadi 3 file (satu library):
 //   rekap_posyandu_page.dart : komponen bersama, halaman utama, balita tidak hadir
@@ -21,9 +22,7 @@ const _abuMuda = Color(0xFFF1F5F9);
 const garisKartuRekap = Color(0xFFB8BEC6);
 
 /// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const bayanganKartuRekap = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const bayanganKartuRekap = AppColors.bayanganKartu;
 
 /// Warna aksen kartu: hijau lembut senada header.
 const aksenKartuRekap = Color(0xFF5E9C84);
