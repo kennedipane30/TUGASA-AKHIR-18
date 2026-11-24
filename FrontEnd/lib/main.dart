@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'service/notifikasi_service.dart';
 import 'core/widgets/role_home_scaffold.dart';
-import 'features/Sekretaris/admin_home.dart';
+import 'features/Sekretaris/sekretaris_home.dart';
 import 'features/Sekretaris/akun/kelola_akun_page.dart';
 import 'features/Bidan/pendattan/hasil_pendataan_page.dart';
 import 'features/Bidan/bidan_home.dart';
@@ -144,7 +144,7 @@ class MyApp extends StatelessWidget {
             beranda: const BidanHome(),
             tengah: const BidanHasilPendataanPage(),
             navTengah: NavItemData.ikon(
-              label: 'Hasil Pendataan',
+              label: 'Pendataan',
               ikon: Icons.assignment_turned_in_outlined,
               ikonAktif: Icons.assignment_turned_in,
             ),
@@ -166,7 +166,7 @@ class MyApp extends StatelessWidget {
             beranda: const OrangTuaHome(),
             tengah: const OrangTuaGrafikPage(),
             navTengah: const NavItemData(
-              label: 'Grafik Perkembangan',
+              label: 'Perkembangan',
               ikon: Icons.show_chart_rounded,
               ikonAktif: IkonGrafikAktif(),
             ),

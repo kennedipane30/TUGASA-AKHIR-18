@@ -11,23 +11,17 @@ import '../../../core/standar_who.dart';
 import '../datadiri/data_orang_tua_page.dart' show KeluargaApi, parseTgl;
 import 'grafik_panduan_page.dart';
 
-// Warna tampilan
+// Warna tampilan: semuanya diambil dari AppColors agar seragam di semua halaman.
+// Warna garis kurva WHO dan warna status gizi di bawah tidak ikut ke sini,
+// karena warnanya menandai arti datanya, bukan gaya tampilan.
 const _latar = AppColors.latar;
-const _teksGelap = Color(0xFF1F2937);
-const _teksAbu = Color(0xFF64748B);
-const _hijauTua = Color(0xFF065F46);
-const _hijauMuda = Color(0xFFE6F8EF);
-
-/// Garis tepi kotak di dalam kartu: hitam lembut.
-const _garis = Color(0xFFB8BEC6);
-
-/// Warna aksen kartu: hijau lembut senada header.
-const _aksen = Color(0xFF5E9C84);
-
-/// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const _bayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+const _teksGelap = AppColors.teksGelap;
+const _teksAbu = AppColors.teksAbu;
+const _hijauTua = AppColors.hijauTua;
+const _hijauMuda = AppColors.hijauMuda;
+const _garis = AppColors.garis;
+const _aksen = AppColors.aksen;
+const _bayangan = AppColors.bayanganKartu;
 
 /// Kepala kartu: judul kapital tebal di kiri, keterangan di kanan, garis aksen di bawah.
 Widget _kepala(String judul, {String? kanan, Color warnaKanan = _teksGelap, Widget? aksi}) {

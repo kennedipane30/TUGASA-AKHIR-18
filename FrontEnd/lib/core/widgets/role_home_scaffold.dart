@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import 'common_widgets.dart';
 
-const _teal = Color(0xFF14A085);
-const _tealMuda = Color(0xFFDDF4EF);
-const _abu = Color(0xFF7C8796);
+// ===========================================================================
+// NAVIGASI BAWAH (sama untuk semua peran)
+//
+// Tiga tombol: Beranda | fungsi utama peran | Akun.
+// Tombol aktif ditandai pil hijau muda di belakang ikonnya.
+// ===========================================================================
 
-const double _ukuranIkon = 27;
+const double _ukuranIkon = 22;
 
 /// Satu tombol navigasi bawah.
 class NavItemData {
@@ -29,56 +32,17 @@ class NavItemData {
       NavItemData(
         label: label,
         ikon: ikon,
-        ikonAktif: Icon(ikonAktif, size: _ukuranIkon, color: _teal),
+        ikonAktif: Icon(ikonAktif, size: _ukuranIkon, color: warnaUtamaHome),
       );
 }
 
-/// Ikon aktif "Grafik": kotak teal dengan panah naik putih.
+/// Ikon aktif "Perkembangan": grafik garis tebal berwarna hijau utama.
 class IkonGrafikAktif extends StatelessWidget {
   const IkonGrafikAktif({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 25,
-      height: 25,
-      decoration: BoxDecoration(
-        color: _teal,
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: const Icon(Icons.trending_up_rounded, size: 19, color: Colors.white),
-    );
-  }
-}
-
-/// Ikon garis yang ditebalkan tanpa memperbesar ukurannya
-/// (lapisan bayangan tipis di sekeliling garis).
-class _IkonTebal extends StatelessWidget {
-  final IconData ikon;
-  final Color warna;
-  final double ukuran;
-  final double tebal;
-
-  const _IkonTebal(
-    this.ikon, {
-    required this.warna,
-    this.ukuran = _ukuranIkon,
-    this.tebal = 0.45,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Icon(
-      ikon,
-      size: ukuran,
-      color: warna,
-      shadows: [
-        Shadow(color: warna, offset: Offset(tebal, 0)),
-        Shadow(color: warna, offset: Offset(-tebal, 0)),
-        Shadow(color: warna, offset: Offset(0, tebal)),
-        Shadow(color: warna, offset: Offset(0, -tebal)),
-      ],
-    );
+    return const Icon(Icons.show_chart_rounded, size: _ukuranIkon, color: warnaUtamaHome);
   }
 }
 
@@ -103,19 +67,20 @@ class _RoleNavScaffoldState extends State<RoleNavScaffold> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.latar,
+      backgroundColor: warnaLatarHome,
       body: IndexedStack(index: _currentIndex, children: widget.pages),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
-          boxShadow: [
-            BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -1)),
+          border: Border(top: BorderSide(color: warnaGarisHome.withValues(alpha: 0.6))),
+          boxShadow: const [
+            BoxShadow(color: Color(0x0F003828), blurRadius: 16, offset: Offset(0, -4)),
           ],
         ),
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               children: [
                 for (var i = 0; i < widget.navItems.length; i++)
@@ -156,23 +121,24 @@ class _NavTombol extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Pil hijau muda di belakang ikon tombol yang sedang dibuka.
               AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
+                duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOut,
-                width: 60,
-                height: 34,
+                width: 64,
+                height: 32,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: aktif ? _tealMuda : Colors.transparent,
-                  borderRadius: BorderRadius.circular(18),
+                  color: aktif ? warnaLembutHome : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 child: aktif
                     ? data.ikonAktif
-                    : _IkonTebal(data.ikon, warna: _abu),
+                    : Icon(data.ikon, size: _ukuranIkon, color: warnaTeksVarianHome),
               ),
               const SizedBox(height: 4),
               FittedBox(
@@ -181,9 +147,9 @@ class _NavTombol extends StatelessWidget {
                   data.label,
                   maxLines: 1,
                   style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: aktif ? FontWeight.w800 : FontWeight.w600,
-                    color: aktif ? _teal : _abu,
+                    fontSize: 12,
+                    fontWeight: aktif ? FontWeight.w600 : FontWeight.w500,
+                    color: aktif ? warnaUtamaHome : warnaTeksVarianHome,
                   ),
                 ),
               ),

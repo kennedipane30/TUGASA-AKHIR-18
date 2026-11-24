@@ -143,50 +143,23 @@ class _AdminHomeState extends State<AdminHome> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
-    final nama = _namaSapaan(user);
     final desa = (user?['posyandu_nama'] ?? '').toString();
     final labelDesa = desa.isEmpty ? 'Posyandu' : 'Posyandu $desa';
 
     return HomeShell(
       peran: 'Sekretaris',
       lokasi: labelDesa,
+      sapaan: _namaSapaan(user),
       notif: _tugas.length,
+      kartuUtama: _kartuGrafikHadir(),
       children: [
-        // Sapaan
-        _sapaan(nama),
-
-        // Grafik kehadiran balita per jadwal
-        _kartuGrafikHadir(),
-
-        // Aksi cepat (ikon dari assets)
-        _gridAset('Layanan Sekretaris', [
-          _itemAset('kelola_akun.png', Icons.manage_accounts, AppColors.hijau,
-              'Kelola\nAkun', _bukaAkun),
-          _itemAset('jadwal.png', Icons.calendar_month, AppColors.hijau,
-              'Jadwal &\nAgenda', _bukaJadwal),
-          _itemAset('riwatar_pemeriksaan.png', Icons.history, AppColors.hijau,
-              'Riwayat\nPemeriksaan', _bukaRiwayat),
-          _itemAset('qr_chekin.png', Icons.qr_code_2, AppColors.hijau,
-              'QR\nCheck-in', _bukaQr),
-          _itemAset('vaksin_anak.png', Icons.vaccines_outlined, AppColors.hijau,
-              'Data\nVaksin', _bukaVaksin),
-          _itemAset('pengumuman.png', Icons.campaign_outlined, AppColors.hijau,
-              'Pengumuman', () => soon(context, 'Pengumuman')),
-          _itemAset('semua_balita.png', Icons.child_care, AppColors.hijau,
-              'Semua\nBalita', _bukaBalita),
-          _itemAset('laporan_bulanan.png', Icons.picture_as_pdf_outlined, AppColors.hijau,
-              'Laporan\nBulanan', _bukaLaporanBulanan),
-          _itemAset('rekap_posyandu.png', Icons.summarize_outlined, AppColors.hijau,
-              'Rekap\nPosyandu', () => _bukaRekap(0)),
-          _itemAset('log_aktivitas.png', Icons.history_edu_outlined, AppColors.hijau,
-              'Log\nAktivitas', _bukaLogAktivitas),
-        ]),
+        _menuGrid(),
       ],
     );
   }
 
   // -------------------------------------------------------------------------
-  // Grafik garis: total balita, check-in, dan tidak check-in per jadwal
+  // KARTU STATUS: kehadiran balita pada beberapa jadwal terakhir
   // -------------------------------------------------------------------------
   Widget _kartuGrafikHadir() {
     Widget isi;
@@ -200,7 +173,7 @@ class _AdminHomeState extends State<AdminHome> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(_hadirGagal!,
-                  style: const TextStyle(fontSize: 15, color: AppColors.teksRedup)),
+                  style: const TextStyle(fontSize: 14, color: warnaTeksVarianHome)),
               TextButton(
                 onPressed: () {
                   setState(() => _hadirMemuat = true);
@@ -219,7 +192,7 @@ class _AdminHomeState extends State<AdminHome> {
           child: Text(
             'Belum ada jadwal yang sudah berjalan.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 15, color: AppColors.teksRedup),
+            style: TextStyle(fontSize: 14, color: warnaTeksVarianHome),
           ),
         ),
       );
@@ -233,7 +206,7 @@ class _AdminHomeState extends State<AdminHome> {
             width: double.infinity,
             child: CustomPaint(painter: _GrafikHadirPainter(_hadir)),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           const Wrap(
             spacing: 14,
             runSpacing: 6,
@@ -243,36 +216,44 @@ class _AdminHomeState extends State<AdminHome> {
               _Legenda(_warnaTidak, 'Tidak check-in'),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            'Jadwal terakhir (${_tglPendek(akhir.tanggal!)}): '
-            '${akhir.total} balita, ${akhir.checkin} check-in, ${akhir.tidak} tidak check-in.',
-            style: const TextStyle(fontSize: 14.5, height: 1.4, color: AppColors.teksRedup),
+          const SizedBox(height: 12),
+          BarisInfoHome(
+            Icons.event_rounded,
+            'Terakhir',
+            _tglPendek(akhir.tanggal!),
+          ),
+          BarisInfoHome(
+            Icons.groups_outlined,
+            'Balita',
+            '${akhir.total} terdaftar',
+          ),
+          BarisInfoHome(
+            Icons.how_to_reg_outlined,
+            'Check-in',
+            '${akhir.checkin} hadir  ·  ${akhir.tidak} tidak hadir',
+          ),
+          const SizedBox(height: 4),
+          TombolUtamaHome(
+            label: 'Lihat Rekap Posyandu',
+            ikon: Icons.summarize_outlined,
+            onTap: () => _bukaRekap(0),
           ),
         ],
       );
     }
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE6ECE8)),
-      ),
+    return KartuHome(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Kehadiran Balita per Jadwal',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+          const KepalaKartuHome(
+            ikon: Icons.insert_chart_outlined_rounded,
+            judul: 'Kehadiran Balita',
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 12),
           const Text(
-            'Jumlah balita terdaftar dan yang check-in pada 6 jadwal terakhir',
-            style: TextStyle(fontSize: 14, color: AppColors.teksRedup),
+            'Jumlah balita terdaftar dan yang check-in pada 6 jadwal terakhir.',
+            style: TextStyle(fontSize: 13.5, height: 1.4, color: warnaTeksVarianHome),
           ),
           const SizedBox(height: 12),
           isi,
@@ -288,140 +269,84 @@ class _AdminHomeState extends State<AdminHome> {
     return nama.split(RegExp(r'\s+')).first.toUpperCase();
   }
 
-  Widget _sapaan(String nama) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
-      child: Text(
-        'Hi, $nama',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          fontSize: 21,
-          height: 1.2,
-          color: Color(0xFF0F172A),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
   // -------------------------------------------------------------------------
-  // Ikon menu dari assets (gaya sama dengan beranda orang tua)
+  // GRID LAYANAN (ikon memakai gambar yang sudah ada)
   // -------------------------------------------------------------------------
-  Widget _itemAset(String aset, IconData cadangan, Color warna, String judul,
-      VoidCallback onTap, {int? badge, Color badgeWarna = const Color(0xFFE11D48)}) {
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  SizedBox(
-                    width: 52,
-                    height: 52,
-                    child: Image.asset(
-                      aset,
-                      width: 52,
-                      height: 52,
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.high,
-                      errorBuilder: (_, __, ___) => Icon(cadangan, color: warna, size: 32),
-                    ),
-                  ),
-                  if (badge != null && badge > 0)
-                    Positioned(
-                      top: -4,
-                      right: -6,
-                      child: Container(
-                        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: badgeWarna,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        child: Text(
-                          badge > 99 ? '99+' : '$badge',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                width: double.infinity,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    judul,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    softWrap: false,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      height: 1.2,
-                      color: Color(0xFF0F2547),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+  Widget _menuGrid() {
+    return GridLayananHome(
+      judul: 'Layanan Sekretaris',
+      item: [
+        ItemLayananHome(
+          aset: 'kelola_akun.png',
+          cadangan: Icons.manage_accounts,
+          warna: AppColors.hijau,
+          judul: 'Kelola\nAkun',
+          onTap: _bukaAkun,
         ),
-      ),
-    );
-  }
-
-  Widget _gridAset(String judul, List<Widget> item) {
-    final baris = <Widget>[];
-    for (var i = 0; i < item.length; i += 4) {
-      final potong = item.sublist(i, i + 4 > item.length ? item.length : i + 4);
-      baris.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ...potong,
-              for (var k = potong.length; k < 4; k++) const Expanded(child: SizedBox()),
-            ],
-          ),
+        ItemLayananHome(
+          aset: 'jadwal.png',
+          cadangan: Icons.calendar_month,
+          warna: AppColors.hijau,
+          judul: 'Jadwal &\nAgenda',
+          onTap: _bukaJadwal,
         ),
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 4, 14),
-            child: Text(
-              judul,
-              style: const TextStyle(
-                fontSize: 21,
-                height: 1.2,
-                color: Color(0xFF0F172A),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          ...baris,
-        ],
-      ),
+        ItemLayananHome(
+          aset: 'riwatar_pemeriksaan.png',
+          cadangan: Icons.history,
+          warna: AppColors.hijau,
+          judul: 'Riwayat\nPemeriksaan',
+          onTap: _bukaRiwayat,
+        ),
+        ItemLayananHome(
+          aset: 'qr_chekin.png',
+          cadangan: Icons.qr_code_2,
+          warna: AppColors.hijau,
+          judul: 'QR\nCheck-in',
+          onTap: _bukaQr,
+        ),
+        ItemLayananHome(
+          aset: 'vaksin_anak.png',
+          cadangan: Icons.vaccines_outlined,
+          warna: AppColors.hijau,
+          judul: 'Data\nVaksin',
+          onTap: _bukaVaksin,
+        ),
+        ItemLayananHome(
+          aset: 'pengumuman.png',
+          cadangan: Icons.campaign_outlined,
+          warna: AppColors.hijau,
+          judul: 'Pengumuman',
+          onTap: () => soon(context, 'Pengumuman'),
+        ),
+        ItemLayananHome(
+          aset: 'semua_balita.png',
+          cadangan: Icons.child_care,
+          warna: AppColors.hijau,
+          judul: 'Semua\nBalita',
+          onTap: _bukaBalita,
+        ),
+        ItemLayananHome(
+          aset: 'laporan_bulanan.png',
+          cadangan: Icons.picture_as_pdf_outlined,
+          warna: AppColors.hijau,
+          judul: 'Laporan\nBulanan',
+          onTap: _bukaLaporanBulanan,
+        ),
+        ItemLayananHome(
+          aset: 'rekap_posyandu.png',
+          cadangan: Icons.summarize_outlined,
+          warna: AppColors.hijau,
+          judul: 'Rekap\nPosyandu',
+          onTap: () => _bukaRekap(0),
+        ),
+        ItemLayananHome(
+          aset: 'log_aktivitas.png',
+          cadangan: Icons.history_edu_outlined,
+          warna: AppColors.hijau,
+          judul: 'Log\nAktivitas',
+          onTap: _bukaLogAktivitas,
+        ),
+      ],
     );
   }
 }

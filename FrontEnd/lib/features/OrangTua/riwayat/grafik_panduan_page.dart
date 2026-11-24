@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-const _latar = Color(0xFFF4F7F5);
-const _teksGelap = Color(0xFF1F2937);
-const _teksAbu = Color(0xFF4B5563);
-const _hijauTua = Color(0xFF065F46);
+import '../../../core/theme/app_colors.dart';
 
-/// Garis tepi kotak di dalam kartu: hitam lembut.
-const _garis = Color(0xFFB8BEC6);
-
-/// Warna aksen kartu: hijau lembut senada header.
-const _aksen = Color(0xFF5E9C84);
-
-/// Bayangan lembut di bawah kartu (pengganti garis tepi).
-const _bayangan = [
-  BoxShadow(color: Color(0x24000000), blurRadius: 8, offset: Offset(0, 3)),
-];
+// Warna tampilan: semuanya diambil dari AppColors agar seragam dengan
+// halaman grafik dan halaman lain.
+const _latar = AppColors.latar;
+const _teksGelap = AppColors.teksGelap;
+const _teksAbu = AppColors.teksAbu;
+const _hijauTua = AppColors.hijauTua;
+const _garis = AppColors.garis;
+const _aksen = AppColors.aksen;
+const _bayangan = AppColors.bayanganKartu;
 
 /// Judul header (gaya teks sama dengan halaman lain).
 Widget _judulTebal(String teks) {
