@@ -14,9 +14,19 @@ type BalitaHandler struct{ svc *service.BalitaService }
 func NewBalitaHandler(svc *service.BalitaService) *BalitaHandler { return &BalitaHandler{svc} }
 
 // GET /{sekretaris|kader|bidan}/balita?cari=&semua=1
+// GET /{sekretaris|kader|bidan}/balita?arsip=1 : hanya anak yang diarsipkan
 func (h *BalitaHandler) Daftar(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
+		return
+	}
+	if c.Query("arsip") == "1" {
+		data, err := h.svc.DaftarArsip(pos, c.Query("cari"))
+		if err != nil {
+			tulisError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": data})
 		return
 	}
 	data, err := h.svc.Daftar(pos, c.Query("cari"), c.Query("semua") == "1")

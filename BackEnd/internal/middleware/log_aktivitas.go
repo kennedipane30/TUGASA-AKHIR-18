@@ -72,6 +72,8 @@ var petaAksi = map[string]infoAksi{
 	"PUT /kader/keluarga/:id":               {"Mengubah data keluarga", "Keluarga"},
 	"POST /kader/keluarga/:id/anak":         {"Menambah data anak", "Keluarga"},
 	"PUT /kader/keluarga/:id/anak/:id":      {"Mengubah data anak", "Keluarga"},
+	"PUT /kader/balita/:id/arsip":           {"Mengarsipkan data anak", "Keluarga"},
+	"PUT /kader/balita/:id/aktifkan":        {"Mengaktifkan kembali data anak", "Keluarga"},
 
 	// bidan
 	"PUT /bidan/pendaftaran/:id/catatan":             {"Menyimpan catatan pemeriksaan", "Pemeriksaan"},

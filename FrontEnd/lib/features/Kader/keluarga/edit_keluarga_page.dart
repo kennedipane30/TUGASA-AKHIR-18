@@ -8,6 +8,8 @@ import 'keluarga.dart';
 ///  - Data akun (nama, NIK, No. HP) hanya ditampilkan (tidak diubah di sini).
 ///  - Data keluarga (ibu, alamat, suami/ayah) dapat diubah lalu disimpan.
 ///  - Data anak dapat ditambah dan diubah (tidak dihapus, demi riwayat pemeriksaan).
+///  - Hanya anak aktif yang ditampilkan. Anak arsip (pindah, meninggal, lulus balita)
+///    dilihat dan dikelola di Semua Balita > Diarsipkan.
 class EditKeluargaPage extends StatefulWidget {
   final String keluargaId;
   const EditKeluargaPage({super.key, required this.keluargaId});
@@ -52,6 +54,7 @@ class _EditKeluargaPageState extends State<EditKeluargaPage> {
       final ibu = d['ibu'] is Map ? Map<String, dynamic>.from(d['ibu']) : null;
       final anak = ((d['anak'] as List?) ?? [])
           .map((e) => IsianAnak.fromApi(Map<String, dynamic>.from(e as Map)))
+          .where((a) => !a.diarsipkan)
           .toList();
       setState(() {
         _nama = (ibu?['nama'] ?? '').toString();

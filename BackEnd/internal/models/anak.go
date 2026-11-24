@@ -24,6 +24,25 @@ const (
 	RiwayatVaksinDikonfirmasi    = "dikonfirmasi"
 )
 
+// Status data anak di posyandu.
+//
+//	aktif : balita yang dilayani posyandu.
+//	arsip : tidak dilayani lagi; riwayat tetap tersimpan dan dapat dilihat.
+//	        Diarsipkan kader (pindah, meninggal, lainnya) atau otomatis oleh
+//	        sistem saat anak berusia 60 bulan (lulus balita).
+const (
+	StatusAnakAktif = "aktif"
+	StatusAnakArsip = "arsip"
+)
+
+// Alasan arsip (disimpan di alasan_arsip, boleh diikuti ": keterangan").
+const (
+	AlasanArsipLulus     = "Lulus balita (usia 5 tahun)"
+	AlasanArsipPindah    = "Pindah domisili"
+	AlasanArsipMeninggal = "Meninggal"
+	AlasanArsipLainnya   = "Lainnya"
+)
+
 // Anak: data identitas balita.
 type Anak struct {
 	ID             uuid.UUID  `gorm:"type:uuid;primaryKey;column:id" json:"id"`
@@ -36,7 +55,7 @@ type Anak struct {
 	BeratLahirKg   *float64   `gorm:"column:berat_lahir_kg;type:numeric(4,2)" json:"berat_lahir_kg"`
 	PanjangLahirCm *float64   `gorm:"column:panjang_lahir_cm;type:numeric(4,1)" json:"panjang_lahir_cm"`
 	KodeQR         string     `gorm:"column:kode_qr;size:64;not null;uniqueIndex:ux_anak_kode_qr" json:"kode_qr"`
-	Status         string     `gorm:"column:status;size:10;default:aktif" json:"status"` // aktif | arsip (lulus balita, pindah, meninggal)
+	Status         string     `gorm:"column:status;size:10;default:aktif" json:"status"` // StatusAnakAktif | StatusAnakArsip
 	TanggalArsip   *time.Time `gorm:"column:tanggal_arsip;type:date" json:"tanggal_arsip,omitempty"`
 	AlasanArsip    string     `gorm:"column:alasan_arsip;size:100" json:"alasan_arsip,omitempty"`
 

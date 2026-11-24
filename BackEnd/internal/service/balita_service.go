@@ -96,6 +96,8 @@ type KunjunganRingkas struct {
 type BalitaItem struct {
 	AnakRekap
 	Status           string          `json:"status"`
+	TanggalArsip     string          `json:"tanggal_arsip,omitempty"` // YYYY-MM-DD, hanya anak arsip
+	AlasanArsip      string          `json:"alasan_arsip,omitempty"`
 	KelompokUsia     string          `json:"kelompok_usia"` // 0-11 | 12-23 | 24-59
 	JumlahTimbang    int             `json:"jumlah_timbang"`
 	Terakhir         *TimbangRingkas `json:"terakhir"`
@@ -220,7 +222,10 @@ func (d *dataBalita) item(a *models.Anak, hari time.Time) BalitaItem {
 	u := usiaBulan(lahir, hari)
 	it := BalitaItem{
 		AnakRekap: anakRekap(a, hari), Status: a.Status, KelompokUsia: kelompokUsia(u),
-		BulanTidakDatang: -1,
+		BulanTidakDatang: -1, AlasanArsip: a.AlasanArsip,
+	}
+	if a.TanggalArsip != nil {
+		it.TanggalArsip = a.TanggalArsip.Format("2006-01-02")
 	}
 	list := d.ukur[a.ID]
 	it.JumlahTimbang = len(list)
@@ -313,6 +318,43 @@ func (s *BalitaService) Daftar(pos, cari string, semua bool) (*DaftarBalitaResp,
 	}
 	sort.SliceStable(out.Balita, func(i, j int) bool {
 		return strings.ToLower(out.Balita[i].Nama) < strings.ToLower(out.Balita[j].Nama)
+	})
+	return out, nil
+}
+
+// DaftarArsip: anak yang sudah diarsipkan (pindah, meninggal, lulus balita) di
+// posyandu [pos], terbaru diarsipkan di atas. Riwayatnya tetap dapat dibuka.
+func (s *BalitaService) DaftarArsip(pos, cari string) (*DaftarBalitaResp, error) {
+	if pos == "" {
+		return nil, terlarang("akun belum terhubung ke posyandu")
+	}
+	anak, err := s.repo.AnakPosyandu(pos)
+	if err != nil {
+		return nil, err
+	}
+	cari = strings.ToLower(strings.TrimSpace(cari))
+	pilih := make([]models.Anak, 0)
+	for _, a := range anak {
+		if a.Status != models.StatusAnakArsip {
+			continue
+		}
+		if cari != "" && !strings.Contains(strings.ToLower(a.Nama), cari) {
+			continue
+		}
+		pilih = append(pilih, a)
+	}
+	d, err := s.muatData(pilih)
+	if err != nil {
+		return nil, err
+	}
+	hari := hariIni()
+	out := &DaftarBalitaResp{Posyandu: pos, Balita: make([]BalitaItem, 0, len(pilih))}
+	for i := range pilih {
+		out.Balita = append(out.Balita, d.item(&pilih[i], hari))
+	}
+	out.Ringkas.Total = len(out.Balita)
+	sort.SliceStable(out.Balita, func(i, j int) bool {
+		return out.Balita[i].TanggalArsip > out.Balita[j].TanggalArsip
 	})
 	return out, nil
 }

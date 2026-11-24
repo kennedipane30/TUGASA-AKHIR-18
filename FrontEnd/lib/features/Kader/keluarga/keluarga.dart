@@ -282,6 +282,10 @@ class IsianAnak {
   String? id;
   String nama, nik, tglLahir, jk, beratLahir, panjangLahir;
 
+  /// aktif | arsip (hanya dibaca dari server, tidak dikirim saat simpan).
+  /// Anak arsip dikelola di Semua Balita > Lihat detail.
+  String status;
+
   IsianAnak({
     this.id,
     this.nama = '',
@@ -290,7 +294,10 @@ class IsianAnak {
     this.jk = '',
     this.beratLahir = '',
     this.panjangLahir = '',
+    this.status = 'aktif',
   });
+
+  bool get diarsipkan => status == 'arsip';
 
   factory IsianAnak.fromApi(Map<String, dynamic> j) => IsianAnak(
         id: j['id']?.toString(),
@@ -300,6 +307,7 @@ class IsianAnak {
         jk: (j['jenis_kelamin'] ?? '').toString(),
         beratLahir: kkAngka(j['berat_lahir_kg']),
         panjangLahir: kkAngka(j['panjang_lahir_cm']),
+        status: (j['status'] ?? 'aktif').toString(),
       );
 
   Map<String, dynamic> toJson() => {

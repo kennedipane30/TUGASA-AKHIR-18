@@ -250,6 +250,13 @@ class DataAnak {
   // belum_ditanya | belum_pernah | dilaporkan | perlu_ditanyakan | dikonfirmasi
   String statusRiwayatVaksin;
 
+  /// aktif | arsip (diarsipkan kader: pindah / meninggal, atau otomatis: lulus balita)
+  String status;
+  String tglArsip; // dd/mm/yyyy
+  String alasanArsip;
+
+  bool get diarsipkan => status == 'arsip';
+
   DataAnak({
     this.id,
     this.kodeQr = '',
@@ -260,6 +267,9 @@ class DataAnak {
     this.beratLahir = '',
     this.panjangLahir = '',
     this.statusRiwayatVaksin = 'belum_ditanya',
+    this.status = 'aktif',
+    this.tglArsip = '',
+    this.alasanArsip = '',
   });
 
   factory DataAnak.fromApi(Map<String, dynamic> j) => DataAnak(
@@ -274,6 +284,9 @@ class DataAnak {
         statusRiwayatVaksin: (j['status_riwayat_vaksin']?.toString() ?? '').isEmpty
             ? 'belum_ditanya'
             : j['status_riwayat_vaksin'].toString(),
+        status: j['status']?.toString() ?? 'aktif',
+        tglArsip: dariApi(j['tanggal_arsip']),
+        alasanArsip: j['alasan_arsip']?.toString() ?? '',
       );
 }
 

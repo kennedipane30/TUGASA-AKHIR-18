@@ -263,6 +263,10 @@ class BalitaItem {
   final int bulanTidakDatang; // -1 = belum pernah ditimbang
   final VaksinRingkas vaksin;
 
+  /// Hanya terisi untuk anak arsip (pindah, meninggal, lulus balita).
+  final DateTime? tanggalArsip;
+  final String alasanArsip;
+
   const BalitaItem({
     required this.anakId,
     required this.nama,
@@ -276,6 +280,8 @@ class BalitaItem {
     required this.terakhir,
     required this.bulanTidakDatang,
     required this.vaksin,
+    this.tanggalArsip,
+    this.alasanArsip = '',
   });
 
   factory BalitaItem.fromJson(Map<String, dynamic> j) => BalitaItem(
@@ -291,7 +297,11 @@ class BalitaItem {
         terakhir: j['terakhir'] is Map ? TimbangRingkas.fromJson(_m(j['terakhir'])) : null,
         bulanTidakDatang: _i(j['bulan_tidak_datang']),
         vaksin: VaksinRingkas.fromJson(_m(j['vaksin'])),
+        tanggalArsip: _tgl(j['tanggal_arsip']),
+        alasanArsip: _s(j['alasan_arsip']),
       );
+
+  bool get diarsipkan => status == 'arsip';
 
   String get jkTeks => jenisKelamin == 'P' ? 'Perempuan' : 'Laki-laki';
   bool get masalahGizi => (terakhir?.masalah.isNotEmpty ?? false);
@@ -469,6 +479,40 @@ class BalitaService {
         options: Options(receiveTimeout: const Duration(seconds: 20)),
       );
       return DaftarBalita.fromJson(_data(res.data));
+    } on DioException catch (e) {
+      throw Exception(_pesanError(e));
+    }
+  }
+
+  /// Anak yang sudah diarsipkan (pindah, meninggal, lulus balita), terbaru di atas.
+  Future<DaftarBalita> daftarArsip({String cari = ''}) async {
+    try {
+      final res = await ApiClient.dio.get(
+        '$prefix/balita',
+        queryParameters: {'arsip': '1', if (cari.isNotEmpty) 'cari': cari},
+        options: Options(receiveTimeout: const Duration(seconds: 20)),
+      );
+      return DaftarBalita.fromJson(_data(res.data));
+    } on DioException catch (e) {
+      throw Exception(_pesanError(e));
+    }
+  }
+
+  /// Kader: arsipkan anak. [alasan]: pindah | meninggal | lainnya. [tanggal]: YYYY-MM-DD.
+  Future<void> arsipkan(String anakId,
+      {required String alasan, required String tanggal, String keterangan = ''}) async {
+    try {
+      await ApiClient.dio.put('$prefix/balita/$anakId/arsip',
+          data: {'alasan': alasan, 'tanggal': tanggal, 'keterangan': keterangan.trim()});
+    } on DioException catch (e) {
+      throw Exception(_pesanError(e));
+    }
+  }
+
+  /// Kader: aktifkan kembali anak arsip (bukan lulus balita).
+  Future<void> aktifkan(String anakId) async {
+    try {
+      await ApiClient.dio.put('$prefix/balita/$anakId/aktifkan');
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }

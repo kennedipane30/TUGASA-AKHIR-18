@@ -29,6 +29,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	skdnRepo := repository.NewSkdnRepository(db)
 	logAktivitasRepo := repository.NewLogAktivitasRepository(db)
 	laporanBulananRepo := repository.NewLaporanBulananRepository(db)
+	anakArsipRepo := repository.NewAnakArsipRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
@@ -57,6 +58,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 		giziSvc.HitungDataLama()
 		kbmSvc.HitungDataLama()
 	}()
+	// arsip otomatis anak yang sudah berusia 60 bulan (lulus balita), dicek setiap hari
+	anakArsipSvc := service.NewAnakArsipService(anakArsipRepo)
+	go anakArsipSvc.JalankanLulusBalita(context.Background())
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
@@ -77,6 +81,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	laporanBulananH := handler.NewLaporanBulananHandler(service.NewLaporanBulananService(
 		rekapRepo, laporanBulananRepo, service.NewRekapService(rekapRepo), service.NewSkdnService(rekapRepo, skdnRepo)))
 	kaderKeluargaH := handler.NewKaderKeluargaHandler(service.NewKaderKeluargaService(userRepo, keluargaRepo))
+	anakArsipH := handler.NewAnakArsipHandler(anakArsipSvc)
 	logAktivitasH := handler.NewLogAktivitasHandler(logAktivitasRepo)
 	// OTP WhatsApp: registrasi orang tua & lupa PIN
 	otpH := handler.NewOtpHandler(service.NewOtpService(
@@ -191,6 +196,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kader.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
 	kader.GET("/balita", balitaH.Daftar)
 	kader.GET("/balita/:anak_id", balitaH.Detail)
+	kader.PUT("/balita/:anak_id/arsip", anakArsipH.Arsipkan)    // pindah | meninggal | lainnya
+	kader.PUT("/balita/:anak_id/aktifkan", anakArsipH.Aktifkan) // batalkan arsip
 	// Tambahkan Akun & Data Keluarga oleh kader (orang tua tanpa akun / tanpa HP)
 	kader.GET("/cek-akun", kaderKeluargaH.CekAkun) // ?nik=&no_hp= : cek langsung saat diisi
 	kader.GET("/keluarga", kaderKeluargaH.Cari)    // ?cari= nama ibu / NIK / No. HP / nama anak

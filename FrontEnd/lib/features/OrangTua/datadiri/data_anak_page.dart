@@ -236,7 +236,9 @@ class _DataAnakPageState extends State<DataAnakPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          kepalaKeluarga(anak.nama, kanan: 'Aktif', warnaKanan: kHijauHeader),
+          kepalaKeluarga(anak.nama,
+              kanan: anak.diarsipkan ? 'Tidak aktif' : 'Aktif',
+              warnaKanan: anak.diarsipkan ? AppColors.teksRedup : kHijauHeader),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             child: Column(
@@ -245,6 +247,11 @@ class _DataAnakPageState extends State<DataAnakPage> {
                 infoKeluarga('Jenis Kelamin', anak.jk == 'P' ? 'Perempuan' : 'Laki-laki', lebar: 130),
                 infoKeluarga('Umur', _usiaDetail(anak.tglLahir), lebar: 130),
                 infoKeluarga('Tanggal Lahir', anak.tglLahir, lebar: 130),
+                if (anak.diarsipkan) ...[
+                  infoKeluarga('Keterangan', anak.alasanArsip.isEmpty ? '-' : anak.alasanArsip,
+                      lebar: 130),
+                  infoKeluarga('Sejak', anak.tglArsip.isEmpty ? '-' : anak.tglArsip, lebar: 130),
+                ],
                 const Divider(height: 18, color: Color(0xFFE5E7EB)),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,15 +278,24 @@ class _DataAnakPageState extends State<DataAnakPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Tombol bergaris: Hapus di kiri, Ubah di kanan.
-                Row(
-                  children: [
-                    Expanded(child: _tombolGaris('Hapus', AppColors.merah, () => _hapus(anak))),
-                    const SizedBox(width: 10),
-                    Expanded(
-                        child: _tombolGaris('Ubah', kHijauHeader, () => _tambahAtauUbah(awal: anak))),
-                  ],
-                ),
+                if (anak.diarsipkan)
+                  // Anak arsip hanya dapat dilihat; riwayat tetap ada di menu Riwayat.
+                  const Text(
+                    'Data anak ini sudah tidak aktif di posyandu. '
+                    'Riwayat penimbangan dan vaksin tetap dapat dilihat.',
+                    style: TextStyle(fontSize: 14.5, height: 1.4, color: AppColors.teksRedup),
+                  )
+                else
+                  // Tombol bergaris: Hapus di kiri, Ubah di kanan.
+                  Row(
+                    children: [
+                      Expanded(child: _tombolGaris('Hapus', AppColors.merah, () => _hapus(anak))),
+                      const SizedBox(width: 10),
+                      Expanded(
+                          child:
+                              _tombolGaris('Ubah', kHijauHeader, () => _tambahAtauUbah(awal: anak))),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -337,7 +353,9 @@ class _DataAnakPageState extends State<DataAnakPage> {
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   children: [
-                    for (final anak in _anak) _kartuAnak(anak),
+                    // anak aktif lebih dulu, anak tidak aktif di bawah
+                    for (final anak in _anak.where((a) => !a.diarsipkan)) _kartuAnak(anak),
+                    for (final anak in _anak.where((a) => a.diarsipkan)) _kartuAnak(anak),
                   ],
                 ),
         ),
