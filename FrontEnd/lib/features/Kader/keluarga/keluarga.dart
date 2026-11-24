@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/config/api_client.dart';
+import '../../../core/utils/no_hp.dart';
 
 // ============================================================================
 // BAGIAN BERSAMA FITUR "DATA KELUARGA"
@@ -606,7 +607,7 @@ class IsianKeluarga {
     namaAyah.text = (ayah?['nama'] ?? '').toString();
     nikAyah.text = (ayah?['nik'] ?? '').toString();
     tglLahirAyah.text = kkDariApi(ayah?['tanggal_lahir']);
-    hpAyah.text = (ayah?['no_hp'] ?? '').toString();
+    hpAyah.text = noHpKeIsian((ayah?['no_hp'] ?? '').toString());
     pekerjaanAyah.text = (ayah?['pekerjaan'] ?? '').toString();
   }
 
@@ -625,7 +626,7 @@ class IsianKeluarga {
                 'nama': namaAyah.text.trim(),
                 'nik': nikAyah.text.trim(),
                 'tgl_lahir': kkKeApi(tglLahirAyah.text),
-                'no_hp': hpAyah.text.trim(),
+                'no_hp': noHpKeServer(hpAyah.text),
                 'pekerjaan': pekerjaanAyah.text.trim(),
               },
       };
@@ -807,16 +808,10 @@ class _FormDataKeluargaState extends State<FormDataKeluarga> {
                 TextFormField(
                   controller: i.hpAyah,
                   keyboardType: TextInputType.phone,
-                  maxLength: 15,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: kkDekor('08xxxxxxxxxx', ikon: Icons.phone_outlined),
-                  validator: (v) {
-                    final t = (v ?? '').trim();
-                    if (t.isNotEmpty && (t.length < 10 || t.length > 15)) {
-                      return 'No. HP 10-15 digit';
-                    }
-                    return null;
-                  },
+                  inputFormatters: inputNoHp,
+                  decoration: denganAwalanNoHp(
+                      kkDekor('Contoh: $contohNoHp', ikon: Icons.phone_outlined)),
+                  validator: validasiNoHpOpsional,
                 ),
                 kkJarak(),
                 kkLabel('Pekerjaan', opsional: true),

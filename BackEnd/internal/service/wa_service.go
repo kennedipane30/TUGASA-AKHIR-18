@@ -47,7 +47,7 @@ func NewWaService() *WaService {
 
 func (w *WaService) Aktif() bool { return w != nil && w.token != "" }
 
-// Kirim mengirim satu pesan teks ke nomor WhatsApp (format 08xx / 62xx).
+// Kirim mengirim satu pesan teks ke nomor WhatsApp (format baku +62...).
 func (w *WaService) Kirim(noHP, pesan string) error {
 	if !w.Aktif() {
 		log.Printf("wa: [MODE UJI] ke %s:\n%s", noHP, pesan)
@@ -55,7 +55,7 @@ func (w *WaService) Kirim(noHP, pesan string) error {
 	}
 
 	form := url.Values{}
-	form.Set("target", noHP)
+	form.Set("target", strings.TrimPrefix(strings.TrimSpace(noHP), "+")) // Fonnte: 628...
 	form.Set("message", pesan)
 	form.Set("countryCode", "62")
 

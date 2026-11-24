@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/pin_util.dart';
 import '../../core/utils/posyandu.dart';
+import '../../core/utils/no_hp.dart';
 import 'otp_page.dart';
 import 'otp_service.dart';
 
@@ -65,7 +66,7 @@ class _RegisterPageState extends State<RegisterPage> {
       _snack('Centang pernyataan kebenaran data terlebih dahulu');
       return;
     }
-    final hp = _hp.text.trim();
+    final hp = noHpKeServer(_hp.text);
     setState(() => _loading = true);
     try {
       // 1. Verifikasi No. WhatsApp lewat kode OTP (dilewati bila nomor ini sudah terverifikasi)
@@ -411,11 +412,9 @@ class _RegisterPageState extends State<RegisterPage> {
             controller: _hp,
             style: const TextStyle(fontSize: 16),
             keyboardType: TextInputType.phone,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: _dekor('Contoh: 081234567890', Icons.phone_outlined),
-            validator: (v) => (v == null || v.trim().length < 10)
-                ? 'No. WhatsApp tidak valid'
-                : null,
+            inputFormatters: inputNoHp,
+            decoration: denganAwalanNoHp(_dekor('Contoh: $contohNoHp', Icons.phone_outlined)),
+            validator: (v) => validasiNoHp(v, label: 'No. WhatsApp'),
           ),
           _catatan(
             'Digunakan untuk masuk dan pengingat otomatis jadwal imunisasi & vitamin A',

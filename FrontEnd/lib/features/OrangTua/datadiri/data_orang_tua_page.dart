@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/no_hp.dart';
 import '../../auth/auth_provider.dart';
 
 // ---------------------------------------------------------------------------
@@ -828,12 +829,10 @@ class BagianAyah extends StatelessWidget {
             TextFormField(
               controller: hp,
               keyboardType: TextInputType.phone,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration:
-                  dekorKeluarga('No. HP (opsional)', icon: Icons.phone_outlined),
-              validator: (v) => (v != null && v.isNotEmpty && v.length < 10)
-                  ? 'No. HP tidak valid'
-                  : null,
+              inputFormatters: inputNoHp,
+              decoration: denganAwalanNoHp(
+                  dekorKeluarga('Contoh: $contohNoHp (opsional)', icon: Icons.phone_outlined)),
+              validator: validasiNoHpOpsional,
             ),
             gapKeluarga(),
             labelKeluarga('Pekerjaan', ket: '(opsional)'),
@@ -920,7 +919,7 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
 
       _namaIbu.text = m.namaIbu;
       _nikIbu.text = m.nikIbu;
-      _hpIbu.text = m.noHpIbu;
+      _hpIbu.text = formatNoHp(m.noHpIbu); // hanya tampilan (dari akun)
 
       _tanpaIbu = false;
       _tglIbu.text = m.tglLahirIbu;
@@ -933,7 +932,7 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
       _namaAyah.text = m.namaAyah;
       _nikAyah.text = m.nikAyah;
       _tglAyah.text = m.tglLahirAyah;
-      _hpAyah.text = m.noHpAyah;
+      _hpAyah.text = noHpKeIsian(m.noHpAyah);
       _kerjaAyah.text = m.pekerjaanAyah;
 
       setState(() {
@@ -954,7 +953,7 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
         namaIbu: _namaIbu.text.trim(),
         nikIbu: _nikIbu.text.trim(),
         tglLahirIbu: _tglIbu.text.trim(),
-        noHpIbu: _hpIbu.text.trim(),
+        noHpIbu: noHpKeServer(noHpKeIsian(_hpIbu.text)),
         pekerjaanIbu: _kerjaIbu.text.trim(),
         alamat: _alamat.text.trim(),
         rt: _rt.text.trim(),
@@ -963,7 +962,7 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
         namaAyah: _namaAyah.text.trim(),
         nikAyah: _nikAyah.text.trim(),
         tglLahirAyah: _tglAyah.text.trim(),
-        noHpAyah: _hpAyah.text.trim(),
+        noHpAyah: noHpKeServer(_hpAyah.text),
         pekerjaanAyah: _kerjaAyah.text.trim(),
       );
 
@@ -998,7 +997,7 @@ class _LengkapiKeluargaPageState extends State<LengkapiKeluargaPage> {
                 'nama': _namaAyah.text.trim(),
                 'nik': _nikAyah.text.trim(),
                 'tgl_lahir': keApi(_tglAyah.text),
-                'no_hp': _hpAyah.text.trim(),
+                'no_hp': noHpKeServer(_hpAyah.text),
                 'pekerjaan': _kerjaAyah.text.trim(),
               },
       };

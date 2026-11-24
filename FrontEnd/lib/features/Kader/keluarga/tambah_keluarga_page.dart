@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/utils/no_hp.dart';
 import 'form_anak.dart';
 import 'keluarga.dart';
 
@@ -70,7 +71,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
   void _ubahHp(String v) {
     _tundaHp?.cancel();
     setState(() => _hpTerpakai = null);
-    if (v.length >= 10) {
+    if (v.length >= 9) {
       _tundaHp = Timer(const Duration(milliseconds: 500), _periksaHp);
     }
   }
@@ -91,12 +92,13 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
   }
 
   Future<void> _periksaHp() async {
-    final hp = _hp.text.trim();
-    if (hp.length < 10) return;
+    final isian = _hp.text.trim();
+    if (validasiNoHp(isian) != null) return;
+    final hp = noHpKeServer(isian);
     setState(() => _cekHp = true);
     try {
       final r = await KeluargaAkunApi.cekAkun(noHp: hp);
-      if (!mounted || hp != _hp.text.trim()) return;
+      if (!mounted || isian != _hp.text.trim()) return;
       setState(() => _hpTerpakai = r['no_hp_terpakai'] == true);
     } catch (_) {
       // divalidasi ulang oleh server saat simpan
@@ -212,7 +214,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
       await KeluargaAkunApi.tambah({
         'nama': _nama.text.trim(),
         'nik': _nik.text.trim(),
-        'no_hp': _hp.text.trim(),
+        'no_hp': noHpKeServer(_hp.text),
         'pin': _pin.text,
         'profil': _keluarga.toJson(),
         'anak': _anak.map((a) => a.toJson()).toList(),
@@ -251,11 +253,11 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
           children: [
             kkInfo('Nama', _nama.text.trim(), lebar: 100),
             kkInfo('NIK', _nik.text.trim(), lebar: 100),
-            kkInfo('No. HP', _hp.text.trim(), lebar: 100),
+            kkInfo('No. HP', formatNoHp(noHpKeServer(_hp.text)), lebar: 100),
             kkInfo('Jumlah anak', '${_anak.length}', lebar: 100),
             const SizedBox(height: 8),
             const Text(
-              'Orang tua dapat masuk memakai NIK atau No. HP dan PIN yang mereka sebutkan. '
+              'Orang tua masuk memakai No. HP dan PIN yang mereka sebutkan. '
               'PIN tidak ditampilkan di sistem.',
               style: TextStyle(fontSize: 14.5, color: kkTeksAbu, height: 1.4),
             ),
@@ -359,14 +361,13 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
             TextFormField(
               controller: _hp,
               keyboardType: TextInputType.phone,
-              maxLength: 15,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              inputFormatters: inputNoHp,
               onChanged: _ubahHp,
-              decoration: kkDekor('08xxxxxxxxxx',
-                  ikon: Icons.phone_outlined, suffix: _tandaCek(_cekHp, _hpTerpakai)),
+              decoration: denganAwalanNoHp(kkDekor('Contoh: $contohNoHp',
+                  ikon: Icons.phone_outlined, suffix: _tandaCek(_cekHp, _hpTerpakai))),
               validator: (v) {
-                final t = (v ?? '').trim();
-                if (t.length < 10 || t.length > 15) return 'No. HP 10-15 digit';
+                final salah = validasiNoHp(v);
+                if (salah != null) return salah;
                 if (_hpTerpakai == true) return 'No. HP telah digunakan';
                 return null;
               },
@@ -454,7 +455,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
             children: [
               kkInfo('Nama', _nama.text.trim()),
               kkInfo('NIK', _nik.text.trim()),
-              kkInfo('No. HP', _hp.text.trim()),
+              kkInfo('No. HP', formatNoHp(noHpKeServer(_hp.text))),
               kkInfo('Alamat', _keluarga.ringkasAlamat),
               kkInfo('Suami/Ayah',
                   _keluarga.tanpaAyah ? 'Tidak ada' : _keluarga.namaAyah.text.trim()),

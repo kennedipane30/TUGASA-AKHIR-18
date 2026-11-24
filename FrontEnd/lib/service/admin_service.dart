@@ -6,16 +6,14 @@ import '../core/utils/posyandu.dart';
 class StaffAkun {
   final int id;
   final String nama;
-  final String username;
   final String role; // kader | bidan
   final String posyandu;
   final bool aktif;
-  final String noHp;
+  final String noHp; // format +62, dipakai untuk login
 
   const StaffAkun({
     required this.id,
     required this.nama,
-    required this.username,
     required this.role,
     required this.posyandu,
     required this.aktif,
@@ -28,7 +26,6 @@ class StaffAkun {
   factory StaffAkun.fromJson(Map<String, dynamic> j) => StaffAkun(
         id: (j['id'] as num).toInt(),
         nama: (j['nama'] ?? '').toString(),
-        username: (j['username'] ?? '').toString(),
         role: (j['role'] ?? '').toString(),
         posyandu: (j['posyandu'] ?? '').toString(),
         aktif: j['is_active'] == true,
@@ -61,7 +58,6 @@ class AdminService {
 
   Future<void> tambah({
     required String nama,
-    required String username,
     required String noHp,
     required String pin,
     required String role,
@@ -69,7 +65,6 @@ class AdminService {
     try {
       await ApiClient.dio.post('/sekretaris/users', data: {
         'nama': nama,
-        'username': username,
         'no_hp': noHp,
         'pin': pin,
         'role': role,
@@ -82,7 +77,6 @@ class AdminService {
   Future<void> ubah(
     int id, {
     required String nama,
-    required String username,
     required String noHp,
     required String role,
     String? pin,
@@ -90,7 +84,6 @@ class AdminService {
     try {
       await ApiClient.dio.put('/sekretaris/users/$id', data: {
         'nama': nama,
-        'username': username,
         'no_hp': noHp,
         'role': role,
         if (pin != null && pin.isNotEmpty) 'pin': pin,

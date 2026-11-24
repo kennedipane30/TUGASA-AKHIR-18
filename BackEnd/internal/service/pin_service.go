@@ -21,9 +21,9 @@ type ErrLoginSalah struct{ Sisa int }
 
 func (e ErrLoginSalah) Error() string {
 	if e.Sisa > 0 {
-		return fmt.Sprintf("No. HP/username atau PIN salah, sisa %d percobaan", e.Sisa)
+		return fmt.Sprintf("No. HP atau PIN salah, sisa %d percobaan", e.Sisa)
 	}
-	return "No. HP/username atau PIN salah"
+	return "No. HP atau PIN salah"
 }
 
 // ErrLoginTerkunci: akun dikunci sementara karena terlalu banyak percobaan (kode 429).
@@ -52,13 +52,17 @@ type PinService struct{ repo *repository.UserRepository }
 
 func NewPinService(r *repository.UserRepository) *PinService { return &PinService{r} }
 
-// Login: semua role masuk dengan identitas (username / NIK / No. HP) + PIN 6 digit.
+// Login: semua role masuk dengan No. HP (format +62) + PIN 6 digit.
 // Akun dikunci 15 menit setelah 5 kali PIN salah.
-func (s *PinService) Login(identifier, pin string) (string, *models.User, error) {
+func (s *PinService) Login(noHP, pin string) (string, *models.User, error) {
+	hp, ok := utils.NormalisasiNoHP(noHP)
+	if !ok {
+		return "", nil, ErrPin{Pesan: utils.PesanNoHP}
+	}
 	if !utils.FormatPIN(pin) {
 		return "", nil, ErrPin{Pesan: "PIN harus 6 digit angka"}
 	}
-	u, err := s.repo.FindByIdentifier(identifier)
+	u, err := s.repo.FindByNoHP(hp)
 	if err != nil {
 		return "", nil, ErrLoginSalah{}
 	}

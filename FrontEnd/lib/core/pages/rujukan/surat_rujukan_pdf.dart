@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../../../service/rujukan_service.dart';
 import '../../utils/posyandu.dart';
+import '../../utils/no_hp.dart';
 
 // ============================================================================
 // PDF SURAT RUJUKAN BALITA
@@ -106,7 +107,7 @@ Future<Uint8List> buatPdfSuratRujukan(RujukanDetail r) async {
     if (a.namaAyah.isNotEmpty) ('Nama ayah', a.namaAyah),
     if (a.namaWali.isNotEmpty) ('Nama wali', a.namaWali),
     if (a.namaIbu.isEmpty && a.namaAyah.isEmpty && a.namaWali.isEmpty) ('Nama orang tua', '-'),
-    ('No. HP', _isi(a.noHp)),
+    ('No. HP', formatNoHp(a.noHp)),
     ('Alamat', _isi(a.alamat)),
     ('Posyandu', 'Posyandu $namaPos'),
   ];

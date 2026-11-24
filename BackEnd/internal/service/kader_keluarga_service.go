@@ -75,7 +75,8 @@ func (s *KaderKeluargaService) nikTerpakai(nik string) bool {
 }
 
 func (s *KaderKeluargaService) hpTerpakai(hp string) bool {
-	return hp != "" && s.users.Exists("no_hp", hp)
+	h, ok := utils.NormalisasiNoHP(hp)
+	return ok && s.users.Exists("no_hp", h)
 }
 
 // CekAkun: dipanggil langsung saat NIK / No. HP diisi di form Tambahkan Akun.
@@ -113,8 +114,9 @@ func (s *KaderKeluargaService) Tambah(pos string, in TambahKeluargaInput) (*Kelu
 	if len(nik) != 16 || !reAngka.MatchString(nik) {
 		return nil, invalid("NIK harus 16 digit angka")
 	}
-	if len(hp) < 10 || len(hp) > 15 || !reAngka.MatchString(hp) {
-		return nil, invalid("No. HP harus 10-15 digit angka")
+	hp, ok := utils.NormalisasiNoHP(hp)
+	if !ok {
+		return nil, invalid(utils.PesanNoHP)
 	}
 	if len(in.Pin) != 6 || !reAngka.MatchString(in.Pin) {
 		return nil, invalid("PIN harus 6 digit angka")

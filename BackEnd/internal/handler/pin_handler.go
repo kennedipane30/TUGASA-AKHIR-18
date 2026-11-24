@@ -32,18 +32,18 @@ func tulisErrorPin(c *gin.Context, err error) {
 	}
 }
 
-// POST /auth/login  {identifier, pin}
-// Semua role masuk dengan No. HP / NIK / username + PIN 6 digit.
+// POST /auth/login  {no_hp, pin}
+// Semua role masuk dengan No. HP (format +62) + PIN 6 digit.
 func (h *PinHandler) Login(c *gin.Context) {
 	var in struct {
-		Identifier string `json:"identifier" binding:"required"`
-		Pin        string `json:"pin" binding:"required"`
+		NoHP string `json:"no_hp" binding:"required"`
+		Pin  string `json:"pin" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No. HP/username dan PIN wajib diisi"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No. HP dan PIN wajib diisi"})
 		return
 	}
-	token, u, err := h.svc.Login(in.Identifier, in.Pin)
+	token, u, err := h.svc.Login(in.NoHP, in.Pin)
 	if err != nil {
 		tulisErrorPin(c, err)
 		return

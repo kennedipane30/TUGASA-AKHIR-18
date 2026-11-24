@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"time"
 
 	"posyandu-api/internal/models"
@@ -34,10 +33,11 @@ func (r *UserRepository) FindByID(id uint) (*models.User, error) {
 	return &u, err
 }
 
-// identifier bisa username, NIK, atau no HP
-func (r *UserRepository) FindByIdentifier(idf string) (*models.User, error) {
+// FindByNoHP: akun pemilik No. HP (format baku +62, lihat utils.NormalisasiNoHP).
+// Dipakai untuk login.
+func (r *UserRepository) FindByNoHP(noHP string) (*models.User, error) {
 	var u models.User
-	err := r.db.Where("username = ? OR nik = ? OR no_hp = ?", idf, idf, idf).First(&u).Error
+	err := r.db.Where("no_hp = ?", noHP).First(&u).Error
 	if err == nil {
 		r.isiNama(&u)
 	}
@@ -93,20 +93,11 @@ func (r *UserRepository) Delete(id uint) error {
 // Arsipkan: "hapus" akun petugas tanpa menghapus barisnya.
 // Baris user tetap ada karena dirujuk data pelayanan (pengukuran, imunisasi,
 // suplemen, notifikasi) sebagai pencatat. Akun dinonaktifkan, disembunyikan
-// dari daftar, dan username/No. HP dibebaskan agar dapat dipakai akun baru.
+// dari daftar, dan No. HP dibebaskan agar dapat dipakai akun baru.
 func (r *UserRepository) Arsipkan(u *models.User) error {
-	lama := ""
-	if u.Username != nil {
-		lama = *u.Username
-	}
-	baru := fmt.Sprintf("arsip_%d_%s", u.ID, lama)
-	if len(baru) > 50 {
-		baru = baru[:50]
-	}
 	return r.db.Model(&models.User{}).Where("id = ?", u.ID).Updates(map[string]any{
 		"is_active":       false,
 		"diarsipkan_pada": time.Now(),
-		"username":        baru,
 		"no_hp":           nil,
 	}).Error
 }

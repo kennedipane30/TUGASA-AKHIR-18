@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"posyandu-api/internal/models"
+	"posyandu-api/internal/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -52,9 +53,13 @@ func (r *KeluargaRepository) CariKeluarga(posyandu, kata string) ([]RingkasKelua
 		Where("k.posyandu = ? AND k.deleted_at IS NULL", posyandu)
 	if kata = strings.TrimSpace(kata); kata != "" {
 		like := "%" + strings.ToLower(kata) + "%"
+		hp := kata
+		if n, ok := utils.NormalisasiNoHP(kata); ok {
+			hp = n // 0812... / 62812... / 812... -> +62812...
+		}
 		q = q.Where(`(LOWER(o.nama) LIKE ? OR o.nik = ? OR o.no_hp = ? OR EXISTS (
 			SELECT 1 FROM anak a WHERE a.keluarga_id = k.id AND a.deleted_at IS NULL AND LOWER(a.nama) LIKE ?))`,
-			like, kata, kata, like)
+			like, kata, hp, like)
 	}
 	err := q.Order("o.nama ASC").Limit(50).Scan(&list).Error
 	return list, err

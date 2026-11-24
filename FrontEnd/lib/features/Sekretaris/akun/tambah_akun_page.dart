@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/no_hp.dart';
 import '../../../core/pin_util.dart';
 import '../../../service/admin_service.dart';
 import 'kelola_akun_page.dart' show HeaderAkun, gayaStatusBarAkun, garisKartuAkun, kepalaKartuAkun, bayanganKartuAkun;
@@ -9,7 +10,6 @@ import 'kelola_akun_page.dart' show HeaderAkun, gayaStatusBarAkun, garisKartuAku
 const _hijauTua = Color(0xFF065F46); // sama dengan warna header
 const _hijauGelap = Color(0xFF14634A);
 const _hijauGaris = Color(0xFF1FA27F);
-const _biruGaris = Color(0xFF2F6FD6);
 const _oranyeGaris = Color(0xFFEA580C);
 const _abuGaris = Color(0xFFD5DBD8);
 
@@ -30,7 +30,6 @@ class _TambahAkunPageState extends State<TambahAkunPage> {
   final _form = GlobalKey<FormState>();
   final _service = AdminService();
   late final TextEditingController _nama;
-  late final TextEditingController _username;
   late final TextEditingController _noHp;
   final _pin = TextEditingController();
   late String _peran;
@@ -42,7 +41,6 @@ class _TambahAkunPageState extends State<TambahAkunPage> {
   void initState() {
     super.initState();
     _nama = TextEditingController();
-    _username = TextEditingController();
     _noHp = TextEditingController();
     _peran = widget.peranAwal == 'bidan' ? 'bidan' : 'kader';
   }
@@ -50,7 +48,6 @@ class _TambahAkunPageState extends State<TambahAkunPage> {
   @override
   void dispose() {
     _nama.dispose();
-    _username.dispose();
     _noHp.dispose();
     _pin.dispose();
     super.dispose();
@@ -127,8 +124,7 @@ class _TambahAkunPageState extends State<TambahAkunPage> {
     try {
       await _service.tambah(
         nama: _nama.text.trim(),
-        username: _username.text.trim(),
-        noHp: _noHp.text.trim(),
+        noHp: noHpKeServer(_noHp.text),
         pin: pin,
         role: _peran,
       );
@@ -247,34 +243,16 @@ class _TambahAkunPageState extends State<TambahAkunPage> {
                             validator: (v) =>
                                 (v == null || v.trim().isEmpty) ? 'Nama wajib diisi' : null,
                           ),
-                          _label('USERNAME AKUN', 'Min. 4 karakter', _biruGaris,
-                              const Color(0xFFE6F1FF),
-                              wajib: true),
-                          TextFormField(
-                            controller: _username,
-                            decoration: _dekor('Buat username tanpa spasi',
-                                Icons.alternate_email, _biruGaris),
-                            validator: (v) => (v == null || v.trim().length < 4)
-                                ? 'Minimal 4 karakter'
-                                : null,
-                          ),
-                          _label('NO. HP / WHATSAPP', '10-15 digit', _hijauGelap,
+                          _label('NO. HP / WHATSAPP', 'Untuk masuk aplikasi', _hijauGelap,
                               AppColors.hijauMuda,
                               wajib: true),
                           TextFormField(
                             controller: _noHp,
                             keyboardType: TextInputType.phone,
-                            maxLength: 15,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            decoration: _dekor('Contoh: 081234567890',
-                                Icons.phone_outlined, _hijauGaris),
-                            validator: (v) {
-                              final t = (v ?? '').trim();
-                              if (t.length < 10 || t.length > 15) {
-                                return 'No. HP 10-15 digit angka';
-                              }
-                              return null;
-                            },
+                            inputFormatters: inputNoHp,
+                            decoration: denganAwalanNoHp(_dekor('Contoh: $contohNoHp',
+                                Icons.phone_outlined, _hijauGaris)),
+                            validator: validasiNoHp,
                           ),
                           _label(
                               'PIN AWAL',

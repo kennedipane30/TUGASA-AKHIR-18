@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/utils/no_hp.dart';
 import 'auth_provider.dart';
 import 'lupa_pin_page.dart';
 import 'otp_page.dart';
@@ -26,7 +27,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _idf = TextEditingController();
+  final _hp = TextEditingController(); // isian setelah +62
   final _pin = TextEditingController();
 
   bool _hide = true;
@@ -35,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    _idf.dispose();
+    _hp.dispose();
     _pin.dispose();
     super.dispose();
   }
@@ -48,8 +49,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submit() async {
-    if (_idf.text.trim().isEmpty) {
-      _snack('No. HP atau username wajib diisi');
+    final salahHp = validasiNoHp(_hp.text);
+    if (salahHp != null) {
+      _snack(salahHp);
       return;
     }
     if (!RegExp(r'^\d{6}$').hasMatch(_pin.text)) {
@@ -60,33 +62,32 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await context
           .read<AuthProvider>()
-          .login(_idf.text.trim(), _pin.text);
+          .login(noHpKeServer(_hp.text), _pin.text);
     } catch (e) {
       _snack(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
-  /// Lupa PIN: kode OTP langsung dikirim ke No. WhatsApp yang terdaftar di
-  /// akun (dicari dari No. HP / NIK / username yang diketik), lalu
-  /// halaman kode OTP -> halaman buat PIN baru.
+  /// Lupa PIN: kode OTP dikirim ke No. HP (WhatsApp) yang diketik di kolom
+  /// login, lalu halaman kode OTP -> halaman buat PIN baru.
   Future<void> _lupaPin() async {
-    final idf = _idf.text.trim();
-    if (idf.isEmpty) {
-      _snack('Isi No. HP, NIK, atau username terlebih dahulu, lalu ketuk Lupa PIN');
+    if (validasiNoHp(_hp.text) != null) {
+      _snack('Isi No. HP Anda terlebih dahulu, lalu ketuk Lupa PIN');
       return;
     }
+    final hp = noHpKeServer(_hp.text);
     FocusScope.of(context).unfocus();
     setState(() => _mengirimOtp = true);
     try {
       final svc = OtpService();
-      final info = await svc.kirim(idf, TujuanOtp.resetPin);
+      final info = await svc.kirim(hp, TujuanOtp.resetPin);
       if (!mounted) return;
       setState(() => _mengirimOtp = false);
 
       final token = await Navigator.push<String>(
         context,
         MaterialPageRoute(
-          builder: (_) => OtpPage(noHp: idf, tujuan: TujuanOtp.resetPin, info: info),
+          builder: (_) => OtpPage(noHp: hp, tujuan: TujuanOtp.resetPin, info: info),
         ),
       );
       if (token == null || token.isEmpty || !mounted) return;
@@ -94,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
       final berhasil = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
-          builder: (_) => LupaPinPage(identitas: idf, tokenOtp: token),
+          builder: (_) => LupaPinPage(noHp: hp, tokenOtp: token),
         ),
       );
       if (berhasil == true && mounted) {
@@ -237,19 +238,19 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           const SizedBox(height: 20),
-          _label('No. HP atau Username'),
+          _label('Nomor HP'),
           TextField(
-            controller: _idf,
+            controller: _hp,
             style: const TextStyle(fontSize: 16),
-            keyboardType: TextInputType.text,
-            textCapitalization: TextCapitalization.none,
+            keyboardType: TextInputType.phone,
+            inputFormatters: inputNoHp,
             autocorrect: false,
             enableSuggestions: false,
             textInputAction: TextInputAction.next,
-            decoration: _dekor(
-              'Contoh: 081234567890 atau kennedi',
-              ikon: Icons.person_outline,
-            ),
+            decoration: denganAwalanNoHp(_dekor(
+              'Contoh: $contohNoHp',
+              ikon: Icons.phone_outlined,
+            )),
           ),
           const SizedBox(height: 14),
           _label('PIN (6 Digit Angka)'),

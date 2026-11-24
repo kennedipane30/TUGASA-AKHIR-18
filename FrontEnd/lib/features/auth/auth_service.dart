@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import '../../core/config/api_client.dart';
 import '../../core/token_storage.dart';
 
-/// Autentikasi: semua role masuk dengan identitas (No. HP / NIK / username) + PIN 6 digit.
+/// Autentikasi: semua role masuk dengan No. HP (format +62) + PIN 6 digit.
 class AuthService {
   String _pesanError(DioException e) {
     final data = e.response?.data;
@@ -11,10 +11,11 @@ class AuthService {
     return 'Tidak dapat terhubung ke server';
   }
 
-  Future<Map<String, dynamic>> login(String identifier, String pin) async {
+  /// [noHp]: format +62 (mis. +6281234567890).
+  Future<Map<String, dynamic>> login(String noHp, String pin) async {
     try {
       final res = await ApiClient.dio.post('/auth/login',
-          data: {'identifier': identifier, 'pin': pin});
+          data: {'no_hp': noHp, 'pin': pin});
       await TokenStorage.save(res.data['token']);
       return Map<String, dynamic>.from(res.data['user']);
     } on DioException catch (e) {
@@ -52,26 +53,6 @@ class AuthService {
     } catch (_) {
       await TokenStorage.clear();
       return null;
-    }
-  }
-
-  // Khusus sekretaris: membuat akun kader atau bidan dengan PIN awal.
-  // Posyandu otomatis mengikuti desa sekretaris (ditentukan server).
-  Future<void> createStaff({
-    required String nama,
-    required String username,
-    required String pin,
-    required String role, // 'kader' atau 'bidan'
-  }) async {
-    try {
-      await ApiClient.dio.post('/sekretaris/users', data: {
-        'nama': nama,
-        'username': username,
-        'pin': pin,
-        'role': role,
-      });
-    } on DioException catch (e) {
-      throw Exception(_pesanError(e));
     }
   }
 

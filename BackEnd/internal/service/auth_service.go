@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	ErrInactive    = errors.New("akun tidak aktif, hubungi sekretaris")
-	ErrDuplicate   = errors.New("NIK, No. HP, atau username sudah terdaftar")
-	ErrInvalidRole = errors.New("role hanya boleh kader atau bidan")
-	ErrPosyandu    = errors.New("posyandu tidak valid: pilih sitoluama, silimbat, atau aekbolon")
+	ErrInactive       = errors.New("akun tidak aktif, hubungi sekretaris")
+	ErrDuplicate      = errors.New("NIK atau No. HP sudah terdaftar")
+	ErrInvalidRole    = errors.New("role hanya boleh kader atau bidan")
+	ErrPosyandu       = errors.New("posyandu tidak valid: pilih sitoluama, silimbat, atau aekbolon")
+	ErrNoHPTidakValid = errors.New(utils.PesanNoHP)
 )
 
 // AuthService: registrasi orang tua, profil, dan pembuatan akun petugas.
@@ -39,7 +40,7 @@ func (s *AuthService) ListPosyandu() []PilihanPosyandu {
 type RegisterInput struct {
 	Nama       string `json:"nama" binding:"required"`
 	NIK        string `json:"nik" binding:"required,len=16,numeric"`
-	NoHP       string `json:"no_hp" binding:"required,min=10,max=15"`
+	NoHP       string `json:"no_hp" binding:"required"` // format +62, dicek utils.NormalisasiNoHP
 	Pin        string `json:"pin" binding:"required,len=6,numeric"`
 	Posyandu   string `json:"posyandu"`
 	PosyanduID string `json:"posyandu_id"` // alias dari Posyandu
@@ -58,6 +59,11 @@ func (s *AuthService) RegisterOrangTua(in RegisterInput) (*models.User, error) {
 	if !ok {
 		return nil, ErrPosyandu
 	}
+	hp, ok := utils.NormalisasiNoHP(in.NoHP)
+	if !ok {
+		return nil, ErrNoHPTidakValid
+	}
+	in.NoHP = hp
 	if s.repo.Exists("nik", in.NIK) || s.repo.Exists("no_hp", in.NoHP) {
 		return nil, ErrDuplicate
 	}
@@ -71,11 +77,10 @@ func (s *AuthService) RegisterOrangTua(in RegisterInput) (*models.User, error) {
 }
 
 type CreateStaffInput struct {
-	Nama     string      `json:"nama" binding:"required"`
-	Username string      `json:"username" binding:"required,min=4"`
-	NoHP     string      `json:"no_hp" binding:"required,min=10,max=15,numeric"`
-	Pin      string      `json:"pin" binding:"required,len=6,numeric"` // PIN awal
-	Role     models.Role `json:"role" binding:"required"`
+	Nama string      `json:"nama" binding:"required"`
+	NoHP string      `json:"no_hp" binding:"required"`             // format +62, dipakai untuk login
+	Pin  string      `json:"pin" binding:"required,len=6,numeric"` // PIN awal
+	Role models.Role `json:"role" binding:"required"`
 }
 
 // Akun kader/bidan selalu dibuat pada posyandu milik sekretaris yang membuatnya.
@@ -91,14 +96,19 @@ func (s *AuthService) CreateStaff(posyandu string, in CreateStaffInput) (*models
 	if !ok {
 		return nil, ErrPosyandu
 	}
-	if s.repo.Exists("username", in.Username) || s.repo.Exists("no_hp", in.NoHP) {
+	hp, ok := utils.NormalisasiNoHP(in.NoHP)
+	if !ok {
+		return nil, ErrNoHPTidakValid
+	}
+	in.NoHP = hp
+	if s.repo.Exists("no_hp", in.NoHP) {
 		return nil, ErrDuplicate
 	}
 	hash, err := utils.HashPIN(in.Pin)
 	if err != nil {
 		return nil, err
 	}
-	u := &models.User{Nama: in.Nama, Username: &in.Username, NoHP: &in.NoHP, PinHash: hash,
+	u := &models.User{Nama: in.Nama, NoHP: &in.NoHP, PinHash: hash,
 		Role: in.Role, Posyandu: pos, IsActive: true, WajibGantiPIN: false}
 	return u, s.repo.Create(u)
 }

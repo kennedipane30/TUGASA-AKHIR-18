@@ -13,11 +13,10 @@ var (
 )
 
 type UpdateStaffInput struct {
-	Nama     string      `json:"nama" binding:"required"`
-	Username string      `json:"username" binding:"required,min=4"`
-	NoHP     string      `json:"no_hp" binding:"omitempty,min=10,max=15,numeric"`
-	Pin      string      `json:"pin" binding:"omitempty,len=6,numeric"` // PIN baru (opsional)
-	Role     models.Role `json:"role" binding:"required"`
+	Nama string      `json:"nama" binding:"required"`
+	NoHP string      `json:"no_hp" binding:"required"`              // format +62, dipakai untuk login
+	Pin  string      `json:"pin" binding:"omitempty,len=6,numeric"` // PIN baru (opsional)
+	Role models.Role `json:"role" binding:"required"`
 }
 
 // ListStaff: kader dan bidan pada posyandu milik sekretaris.
@@ -61,17 +60,15 @@ func (s *AuthService) UpdateStaff(id uint, posyandu string, in UpdateStaffInput)
 			return nil, err
 		}
 	}
-	if s.repo.ExistsExcept("username", in.Username, u.ID) {
-		return nil, ErrDuplicate
+	hp, ok := utils.NormalisasiNoHP(in.NoHP)
+	if !ok {
+		return nil, ErrNoHPTidakValid
 	}
-	if in.NoHP != "" && s.repo.ExistsExcept("no_hp", in.NoHP, u.ID) {
+	if s.repo.ExistsExcept("no_hp", hp, u.ID) {
 		return nil, ErrDuplicate
 	}
 	u.Nama = in.Nama
-	u.Username = &in.Username
-	if in.NoHP != "" {
-		u.NoHP = &in.NoHP
-	}
+	u.NoHP = &hp
 	u.Role = in.Role
 	if in.Pin != "" {
 		hash, err := utils.HashPIN(in.Pin)

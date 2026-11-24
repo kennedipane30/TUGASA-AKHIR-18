@@ -9,6 +9,7 @@ import '../../../service/rujukan_service.dart';
 import 'surat_rujukan_pdf.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/posyandu.dart';
+import '../../utils/no_hp.dart';
 import '../rekap/rekap_posyandu_page.dart';
 
 // ============================================================================
@@ -199,7 +200,7 @@ List<Widget> kartuDataAnakRujukan(DataAnakRujukan a) {
           if (a.namaIbu.isNotEmpty) ('Nama ibu', a.namaIbu),
           if (a.namaAyah.isNotEmpty) ('Nama ayah', a.namaAyah),
           if (a.namaWali.isNotEmpty) ('Nama wali', a.namaWali),
-          ('No. HP', a.noHp),
+          ('No. HP', formatNoHp(a.noHp)),
           ('Alamat', a.alamat),
           ('Posyandu', 'Posyandu ${labelPosyandu(a.posyandu)}'),
         ]),

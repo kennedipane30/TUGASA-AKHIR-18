@@ -11,14 +11,15 @@ import (
 	"gorm.io/gorm"
 )
 
-var daftarSekretaris = []struct{ Nama, Username, NoHP, Posyandu string }{
-	{"Kennedi Pane", "sekretaris.sitoluama", "082235805348", "sitoluama"},
-	{"Natasya Tambunan", "sekretaris.silimbat", "082235805349", "silimbat"},
-	{"Sara Rajagukguk", "sekretaris.aekbolon", "082235805310", "aekbolon"},
+// Satu akun sekretaris untuk setiap desa. No. HP format +62 (E.164).
+var daftarSekretaris = []struct{ Nama, NoHP, Posyandu string }{
+	{"Kennedi Pane", "+6282235805348", "sitoluama"},
+	{"Natasya Tambunan", "+6282235805349", "silimbat"},
+	{"Sara Rajagukguk", "+6282235805310", "aekbolon"},
 }
 
 // seedSekretaris membuat (atau memperbarui) satu akun sekretaris untuk setiap desa.
-// Sekretaris masuk dengan username atau No. HP + PIN dari .env: SEKRETARIS_PIN.
+// Sekretaris masuk dengan No. HP + PIN dari .env: SEKRETARIS_PIN.
 func seedSekretaris(db *gorm.DB) {
 	pin := os.Getenv("SEKRETARIS_PIN")
 	if err := utils.ValidasiPIN(pin); err != nil {
@@ -30,15 +31,18 @@ func seedSekretaris(db *gorm.DB) {
 	}
 
 	for _, s := range daftarSekretaris {
-		username := s.Username
-		noHP := s.NoHP
+		noHP, ok := utils.NormalisasiNoHP(s.NoHP)
+		if !ok {
+			log.Fatal("No. HP sekretaris tidak valid: ", s.NoHP)
+		}
 
+		// satu sekretaris per desa: dicari berdasarkan role + posyandu
 		var u models.User
-		err := db.Where("username = ?", s.Username).First(&u).Error
+		err := db.Where("role = ? AND posyandu = ? AND diarsipkan_pada IS NULL",
+			models.RoleSekretaris, s.Posyandu).First(&u).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			u = models.User{
 				Nama:     s.Nama,
-				Username: &username,
 				NoHP:     &noHP,
 				PinHash:  hash,
 				Role:     models.RoleSekretaris,
@@ -48,7 +52,7 @@ func seedSekretaris(db *gorm.DB) {
 			if err := db.Create(&u).Error; err != nil {
 				log.Fatal("gagal membuat sekretaris ", s.Posyandu, ": ", err)
 			}
-			log.Println("sekretaris dibuat:", s.Nama, "| username:", s.Username, "| No. HP:", s.NoHP)
+			log.Println("sekretaris dibuat:", s.Nama, "| No. HP:", noHP)
 			continue
 		}
 		if err != nil {
@@ -67,6 +71,6 @@ func seedSekretaris(db *gorm.DB) {
 		if err := db.Save(&u).Error; err != nil {
 			log.Fatal("gagal memperbarui sekretaris ", s.Posyandu, ": ", err)
 		}
-		log.Println("sekretaris sudah ada, data diperbarui:", s.Nama, "| username:", s.Username, "| No. HP:", s.NoHP)
+		log.Println("sekretaris sudah ada, data diperbarui:", s.Nama, "| No. HP:", noHP)
 	}
 }

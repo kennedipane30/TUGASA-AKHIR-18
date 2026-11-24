@@ -10,7 +10,7 @@ class TujuanOtp {
 
 /// Jawaban server setelah kode dikirim ke WhatsApp.
 class InfoKirimOtp {
-  final String noHpSamaran; // contoh: 0812****7890
+  final String noHpSamaran; // contoh: +62 812****7890
   final int berlakuDetik; // kode berlaku (detik)
   final int kirimUlangDetik; // jeda sebelum boleh kirim ulang (detik)
   final bool modeUji; // true bila server belum memakai gateway WA (kode ada di log server)
@@ -38,18 +38,12 @@ class OtpService {
     return 'Tidak dapat terhubung ke server';
   }
 
-  /// Registrasi memakai No. WhatsApp yang diisi. Lupa PIN memakai identitas
-  /// dari halaman login (No. HP / NIK / username); server mengirim kode ke
-  /// No. WhatsApp yang terdaftar di akun tersebut.
-  String _kunci(String tujuan) =>
-      tujuan == TujuanOtp.resetPin ? 'identitas' : 'no_hp';
-
   /// Kirim kode 6 digit ke WhatsApp. [tujuan]: TujuanOtp.registrasi / TujuanOtp.resetPin.
-  /// [noHp]: No. WhatsApp (registrasi) atau identitas akun (lupa PIN).
+  /// [noHp]: No. WhatsApp format +62 (registrasi: nomor baru; lupa PIN: nomor login).
   Future<InfoKirimOtp> kirim(String noHp, String tujuan) async {
     try {
       final res = await ApiClient.dio.post('/auth/otp/kirim',
-          data: {_kunci(tujuan): noHp, 'tujuan': tujuan});
+          data: {'no_hp': noHp, 'tujuan': tujuan});
       return InfoKirimOtp.fromJson(Map<String, dynamic>.from(res.data['data']));
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
@@ -60,7 +54,7 @@ class OtpService {
   Future<String> verifikasi(String noHp, String tujuan, String kode) async {
     try {
       final res = await ApiClient.dio.post('/auth/otp/verifikasi',
-          data: {_kunci(tujuan): noHp, 'tujuan': tujuan, 'kode': kode});
+          data: {'no_hp': noHp, 'tujuan': tujuan, 'kode': kode});
       return (res.data['data']?['token_otp'] ?? '').toString();
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
@@ -91,15 +85,15 @@ class OtpService {
   }
 
   /// Lupa PIN: atur PIN baru setelah No. WhatsApp terverifikasi.
-  /// [identitas]: No. HP / NIK / username yang diketik di halaman login.
+  /// [noHp]: No. HP login (format +62).
   Future<void> lupaPin({
-    required String identitas,
+    required String noHp,
     required String pinBaru,
     required String tokenOtp,
   }) async {
     try {
       await ApiClient.dio.post('/auth/lupa-pin', data: {
-        'identitas': identitas,
+        'no_hp': noHp,
         'pin_baru': pinBaru,
         'token_otp': tokenOtp,
       });

@@ -36,36 +36,26 @@ func tulisErrorOtp(c *gin.Context, err error) {
 	}
 }
 
-// noHP: No. WhatsApp tujuan kode. Lupa PIN mengirim identitas (No. HP / NIK /
-// username dari halaman login), lalu dicari No. WhatsApp terdaftar di akunnya.
-func (h *OtpHandler) noHP(c *gin.Context, noHP, identitas string) (string, bool) {
-	if strings.TrimSpace(identitas) == "" {
-		if strings.TrimSpace(noHP) == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "No. WhatsApp wajib diisi"})
-			return "", false
-		}
-		return noHP, true
-	}
-	hp, err := h.svc.NoHPAkun(identitas)
-	if err != nil {
-		tulisErrorOtp(c, err)
+// noHP: No. WhatsApp tujuan kode (registrasi maupun lupa PIN).
+func noHPWajib(c *gin.Context, noHP string) (string, bool) {
+	if strings.TrimSpace(noHP) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No. HP wajib diisi"})
 		return "", false
 	}
-	return hp, true
+	return noHP, true
 }
 
-// POST /auth/otp/kirim  {no_hp | identitas, tujuan}   tujuan: registrasi | reset_pin
+// POST /auth/otp/kirim  {no_hp, tujuan}   tujuan: registrasi | reset_pin
 func (h *OtpHandler) Kirim(c *gin.Context) {
 	var in struct {
-		NoHP      string `json:"no_hp"`
-		Identitas string `json:"identitas"`
-		Tujuan    string `json:"tujuan" binding:"required"`
+		NoHP   string `json:"no_hp"`
+		Tujuan string `json:"tujuan" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "permintaan kode tidak valid"})
 		return
 	}
-	hp, ok := h.noHP(c, in.NoHP, in.Identitas)
+	hp, ok := noHPWajib(c, in.NoHP)
 	if !ok {
 		return
 	}
@@ -77,19 +67,18 @@ func (h *OtpHandler) Kirim(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": hasil})
 }
 
-// POST /auth/otp/verifikasi  {no_hp | identitas, tujuan, kode}  -> {data: {token_otp, berlaku_detik}}
+// POST /auth/otp/verifikasi  {no_hp, tujuan, kode}  -> {data: {token_otp, berlaku_detik}}
 func (h *OtpHandler) Verifikasi(c *gin.Context) {
 	var in struct {
-		NoHP      string `json:"no_hp"`
-		Identitas string `json:"identitas"`
-		Tujuan    string `json:"tujuan" binding:"required"`
-		Kode      string `json:"kode" binding:"required"`
+		NoHP   string `json:"no_hp"`
+		Tujuan string `json:"tujuan" binding:"required"`
+		Kode   string `json:"kode" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "kode verifikasi wajib diisi"})
 		return
 	}
-	hp, ok := h.noHP(c, in.NoHP, in.Identitas)
+	hp, ok := noHPWajib(c, in.NoHP)
 	if !ok {
 		return
 	}
@@ -116,19 +105,18 @@ func (h *OtpHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"user": u})
 }
 
-// POST /auth/lupa-pin  {no_hp | identitas, pin_baru, token_otp}
+// POST /auth/lupa-pin  {no_hp, pin_baru, token_otp}
 func (h *OtpHandler) LupaPIN(c *gin.Context) {
 	var in struct {
-		NoHP      string `json:"no_hp"`
-		Identitas string `json:"identitas"`
-		PinBaru   string `json:"pin_baru" binding:"required"`
-		TokenOTP  string `json:"token_otp" binding:"required"`
+		NoHP     string `json:"no_hp"`
+		PinBaru  string `json:"pin_baru" binding:"required"`
+		TokenOTP string `json:"token_otp" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "PIN baru dan verifikasi WhatsApp wajib diisi"})
 		return
 	}
-	hp, ok := h.noHP(c, in.NoHP, in.Identitas)
+	hp, ok := noHPWajib(c, in.NoHP)
 	if !ok {
 		return
 	}

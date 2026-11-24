@@ -19,11 +19,12 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(String identifier, String pin) async {
+  /// [noHp]: format +62 (mis. +6281234567890).
+  Future<void> login(String noHp, String pin) async {
     loading = true;
     notifyListeners();
     try {
-      user = await _svc.login(identifier, pin);
+      user = await _svc.login(noHp, pin);
     } finally {
       loading = false;
       notifyListeners();

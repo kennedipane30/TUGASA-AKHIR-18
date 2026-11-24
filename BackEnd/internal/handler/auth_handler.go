@@ -32,7 +32,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		switch {
 		case errors.Is(err, service.ErrDuplicate):
 			code = http.StatusConflict
-		case errors.Is(err, service.ErrPosyandu), errors.As(err, &pin):
+		case errors.Is(err, service.ErrPosyandu), errors.Is(err, service.ErrNoHPTidakValid), errors.As(err, &pin):
 			code = http.StatusBadRequest
 		}
 		c.JSON(code, gin.H{"error": err.Error()})
@@ -51,7 +51,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"user": u})
 }
 
-// POST /sekretaris/users  {nama, username, no_hp, pin, role}
+// POST /sekretaris/users  {nama, no_hp, pin, role}
 // Akun dibuat pada posyandu milik sekretaris.
 func (h *AuthHandler) CreateStaff(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
@@ -60,7 +60,7 @@ func (h *AuthHandler) CreateStaff(c *gin.Context) {
 	}
 	var in service.CreateStaffInput
 	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "nama, username (min. 4 karakter), No. HP (10-15 digit angka), dan PIN 6 digit wajib diisi"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "nama, No. HP, dan PIN 6 digit wajib diisi"})
 		return
 	}
 	u, err := h.svc.CreateStaff(pos, in)

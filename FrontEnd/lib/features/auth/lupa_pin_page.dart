@@ -22,13 +22,13 @@ const _isiField = Color(0xFFF3FBF8);
 ///
 /// Halaman ditutup dengan nilai true bila PIN berhasil disimpan.
 class LupaPinPage extends StatefulWidget {
-  /// No. HP / NIK / username yang diketik di halaman login.
-  final String identitas;
+  /// No. HP login (format +62).
+  final String noHp;
 
   /// Token sekali pakai dari OtpPage (berlaku 15 menit).
   final String tokenOtp;
 
-  const LupaPinPage({super.key, required this.identitas, required this.tokenOtp});
+  const LupaPinPage({super.key, required this.noHp, required this.tokenOtp});
 
   @override
   State<LupaPinPage> createState() => _LupaPinPageState();
@@ -63,7 +63,7 @@ class _LupaPinPageState extends State<LupaPinPage> {
     setState(() => _loading = true);
     try {
       await _svc.lupaPin(
-        identitas: widget.identitas,
+        noHp: widget.noHp,
         pinBaru: _pin.text,
         tokenOtp: widget.tokenOtp,
       );

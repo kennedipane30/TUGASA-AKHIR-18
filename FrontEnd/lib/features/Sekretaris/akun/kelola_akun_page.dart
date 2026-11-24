@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/no_hp.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../auth/auth_provider.dart';
 import '../../../service/admin_service.dart';
@@ -417,14 +418,11 @@ class _AdminKelolaAkunPageState extends State<AdminKelolaAkunPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       bagianKartuAkun(
-                          Icons.phone_outlined, 'No. HP', a.noHp.isEmpty ? '-' : a.noHp),
+                          Icons.phone_outlined, 'No. HP', formatNoHp(a.noHp)),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Expanded(
-                            child: bagianKartuAkun(Icons.alternate_email, 'Username',
-                                a.username.isEmpty ? '-' : a.username),
-                          ),
+                          const Spacer(),
                           const Padding(
                             padding: EdgeInsets.only(left: 10, bottom: 8),
                             child: Text(

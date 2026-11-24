@@ -39,12 +39,13 @@ func (e ErrOtpTunggu) Error() string { return e.Pesan }
 //	POST /auth/otp/verifikasi  {no_hp, tujuan:"registrasi", kode}  -> token_otp
 //	POST /auth/register-otp    {nama, nik, no_hp, pin, posyandu, token_otp}
 //
-// Alur lupa PIN (dari halaman login; identitas = No. HP / NIK / username
-// yang diketik di login, kode dikirim ke No. WhatsApp terdaftar di akun):
+// Alur lupa PIN (No. HP yang diketik di halaman login = No. WhatsApp akun):
 //
-//	POST /auth/otp/kirim       {identitas, tujuan:"reset_pin"}
-//	POST /auth/otp/verifikasi  {identitas, tujuan:"reset_pin", kode}   -> token_otp
-//	POST /auth/lupa-pin        {identitas, pin_baru, token_otp}
+//	POST /auth/otp/kirim       {no_hp, tujuan:"reset_pin"}
+//	POST /auth/otp/verifikasi  {no_hp, tujuan:"reset_pin", kode}   -> token_otp
+//	POST /auth/lupa-pin        {no_hp, pin_baru, token_otp}
+//
+// Semua No. HP memakai format baku +62 (utils.NormalisasiNoHP).
 type OtpService struct {
 	repo  *repository.OtpRepository
 	users *repository.UserRepository
@@ -56,56 +57,11 @@ func NewOtpService(r *repository.OtpRepository, u *repository.UserRepository, a 
 	return &OtpService{repo: r, users: u, auth: a, wa: wa}
 }
 
-// NormalisasiNoHP mengubah "+62 812-3456-7890" / "6281234567890" menjadi "081234567890".
-func NormalisasiNoHP(s string) (string, bool) {
-	s = strings.NewReplacer(" ", "", "-", "", "+", "", "(", "", ")", "").Replace(strings.TrimSpace(s))
-	if strings.HasPrefix(s, "62") {
-		s = "0" + s[2:]
-	}
-	if !strings.HasPrefix(s, "08") || len(s) < 10 || len(s) > 14 {
-		return "", false
-	}
-	for _, r := range s {
-		if r < '0' || r > '9' {
-			return "", false
-		}
-	}
-	return s, true
-}
+// NormalisasiNoHP: format baku No. HP (+62...), sama dengan login & pendaftaran akun.
+func NormalisasiNoHP(s string) (string, bool) { return utils.NormalisasiNoHP(s) }
 
-// NoHPAkun: No. WhatsApp terdaftar milik akun dengan identitas
-// (No. HP / NIK / username) yang diketik di halaman login. Dipakai untuk Lupa PIN.
-func (s *OtpService) NoHPAkun(identitas string) (string, error) {
-	idf := strings.TrimSpace(identitas)
-	if idf == "" {
-		return "", validasi("isi No. HP, NIK, atau username terlebih dahulu")
-	}
-	u, err := s.users.FindByIdentifier(idf)
-	if err != nil {
-		if hp, ok := NormalisasiNoHP(idf); ok {
-			u, err = s.users.FindByIdentifier(hp)
-		}
-	}
-	if err != nil {
-		return "", konflik("akun tidak ditemukan, periksa kembali No. HP, NIK, atau username")
-	}
-	if u.NoHP == nil || strings.TrimSpace(*u.NoHP) == "" {
-		return "", konflik("akun ini belum memiliki No. WhatsApp, hubungi sekretaris posyandu")
-	}
-	hp, ok := NormalisasiNoHP(*u.NoHP)
-	if !ok {
-		return "", konflik("No. WhatsApp akun tidak valid, hubungi sekretaris posyandu")
-	}
-	return hp, nil
-}
-
-// samarkanNoHP: 081234567890 -> 0812****7890 (untuk ditampilkan di aplikasi).
-func samarkanNoHP(s string) string {
-	if len(s) < 8 {
-		return s
-	}
-	return s[:4] + strings.Repeat("*", len(s)-8) + s[len(s)-4:]
-}
+// samarkanNoHP: +6281234567890 -> +62 812****7890 (untuk ditampilkan di aplikasi).
+func samarkanNoHP(s string) string { return utils.SamarkanNoHP(s) }
 
 func tujuanValid(t string) bool {
 	return t == models.TujuanOTPRegistrasi || t == models.TujuanOTPResetPIN
@@ -145,7 +101,7 @@ type KirimOTPHasil struct {
 func (s *OtpService) Kirim(noHP, tujuan, ip string) (*KirimOTPHasil, error) {
 	hp, ok := NormalisasiNoHP(noHP)
 	if !ok {
-		return nil, validasi("No. WhatsApp tidak valid, gunakan format 08xxxxxxxxxx")
+		return nil, validasi(utils.PesanNoHP)
 	}
 	if !tujuanValid(tujuan) {
 		return nil, validasi("tujuan kode tidak valid")

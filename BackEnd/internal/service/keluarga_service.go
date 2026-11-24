@@ -8,6 +8,7 @@ import (
 
 	"posyandu-api/internal/models"
 	"posyandu-api/internal/repository"
+	"posyandu-api/internal/utils"
 
 	"github.com/google/uuid"
 )
@@ -135,12 +136,20 @@ func profilData(in ProfilInput) (repository.ProfilData, error) {
 		if err != nil {
 			return kosong, err
 		}
+		hpAyah := strings.TrimSpace(in.Ayah.NoHP)
+		if hpAyah != "" {
+			h, ok := utils.NormalisasiNoHP(hpAyah)
+			if !ok {
+				return kosong, invalid("No. HP ayah: " + utils.PesanNoHP)
+			}
+			hpAyah = h
+		}
 		ayah = &models.OrangTua{
 			PeranKeluarga: "ayah",
 			Nama:          strings.TrimSpace(in.Ayah.Nama),
 			NIK:           strPtr(in.Ayah.NIK),
 			TanggalLahir:  tglAyah,
-			NoHP:          strings.TrimSpace(in.Ayah.NoHP),
+			NoHP:          hpAyah,
 			Pekerjaan:     strings.TrimSpace(in.Ayah.Pekerjaan),
 		}
 	}

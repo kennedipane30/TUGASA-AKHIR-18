@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/no_hp.dart';
 import 'form_anak.dart';
 import 'keluarga.dart';
 
@@ -142,7 +143,7 @@ class _EditKeluargaPageState extends State<EditKeluargaPage> {
               children: [
                 kkInfo('Nama', _nama),
                 kkInfo('NIK', _nik),
-                kkInfo('No. HP', _hp),
+                kkInfo('No. HP', formatNoHp(_hp)),
               ],
             ),
           ),

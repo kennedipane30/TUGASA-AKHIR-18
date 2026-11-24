@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/no_hp.dart';
 import 'edit_keluarga_page.dart';
 import 'keluarga.dart';
 import 'tambah_keluarga_page.dart';
@@ -143,7 +144,7 @@ class _KeluargaPageState extends State<KeluargaPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       kkInfo('NIK', k.nik, lebar: 80),
-                      kkInfo('No. HP', k.noHp, lebar: 80),
+                      kkInfo('No. HP', formatNoHp(k.noHp), lebar: 80),
                       kkInfo('Alamat', k.alamat, lebar: 80),
                       Align(
                         alignment: Alignment.centerRight,
