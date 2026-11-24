@@ -90,35 +90,3 @@ func (r *StatusGiziRepository) AnakByIDs(ids []uuid.UUID) ([]models.Anak, error)
 	err := r.db.Unscoped().Where("id IN ?", ids).Find(&list).Error
 	return list, err
 }
-
-// ---------------------------------------------------------------- peringatan risiko
-
-// GantiPeringatanOtomatis mengganti peringatan otomatis satu pengukuran yang belum ditangani.
-// Peringatan yang sudah diproses bidan (status selain "baru") tidak disentuh.
-func (r *StatusGiziRepository) GantiPeringatanOtomatis(pengukuranID uuid.UUID, baru []models.PeringatanRisiko) error {
-	return r.db.Transaction(func(tx *gorm.DB) error {
-		var ditangani []string
-		if err := tx.Model(&models.PeringatanRisiko{}).
-			Where("pengukuran_id = ? AND dibuat_otomatis = ? AND status_penanganan <> ?", pengukuranID, true, "baru").
-			Pluck("jenis", &ditangani).Error; err != nil {
-			return err
-		}
-		if err := tx.Where("pengukuran_id = ? AND dibuat_otomatis = ? AND status_penanganan = ?", pengukuranID, true, "baru").
-			Delete(&models.PeringatanRisiko{}).Error; err != nil {
-			return err
-		}
-		sudah := map[string]bool{}
-		for _, j := range ditangani {
-			sudah[j] = true
-		}
-		for i := range baru {
-			if sudah[baru[i].Jenis] {
-				continue
-			}
-			if err := tx.Create(&baru[i]).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}

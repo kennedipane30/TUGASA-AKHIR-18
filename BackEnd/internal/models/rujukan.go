@@ -68,10 +68,11 @@ type Rujukan struct {
 	AlasanBatal    string     `gorm:"column:alasan_batal;type:text" json:"alasan_batal"`
 	DibatalkanPada *time.Time `gorm:"column:dibatalkan_pada" json:"dibatalkan_pada"`
 
-	Version   int            `gorm:"column:version;default:1" json:"version"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	Version       int            `gorm:"column:version;default:1" json:"version"`
+	PerangkatAsal *uuid.UUID     `gorm:"column:perangkat_asal;type:uuid" json:"perangkat_asal,omitempty"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `gorm:"index" json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (Rujukan) TableName() string { return "rujukan" }

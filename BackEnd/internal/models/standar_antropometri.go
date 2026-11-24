@@ -41,7 +41,7 @@ type StandarAntropometri struct {
 	SdPlus3      float64   `gorm:"column:sd_plus3;type:numeric(8,3)" json:"sd_plus3"`
 	Sumber       string    `gorm:"column:sumber;size:120" json:"sumber"`
 	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	UpdatedAt    time.Time `gorm:"index" json:"updated_at"`
 }
 
 func (StandarAntropometri) TableName() string { return "standar_antropometri" }

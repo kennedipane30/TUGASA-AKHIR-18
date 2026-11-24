@@ -457,7 +457,6 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaran
 			AnakID:        p.AnakID,
 			TanggalUkur:   hari,
 			DicatatOleh:   kaderID,
-			StatusData:    "tersinkron",
 			Version:       1,
 		}
 	} else if err != nil {

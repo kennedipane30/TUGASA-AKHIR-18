@@ -23,7 +23,6 @@ func AllModels() []any {
 		&StatusGizi{},
 		&PenilaianTimbang{},
 		&StandarAntropometri{},
-		&PeringatanRisiko{},
 		&SuplemenAnak{},
 
 		// imunisasi

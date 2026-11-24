@@ -51,6 +51,8 @@ type TimbangRingkas struct {
 	ZBbu          *float64  `json:"z_bbu"`
 	ZTbu          *float64  `json:"z_tbu"`
 	ZBbtb         *float64  `json:"z_bbtb"`
+	KategoriLku   string    `json:"kategori_lku"` // Normal | Mikrosefali | Makrosefali
+	ZLku          *float64  `json:"z_lku"`
 	Masalah       []string  `json:"masalah"`
 	Tingkat       string    `json:"tingkat"`
 
@@ -148,6 +150,7 @@ func timbangRingkas(lahir time.Time, u *models.Pengukuran, g *models.StatusGizi,
 	if g != nil {
 		t.KategoriBbu, t.KategoriTbu, t.KategoriBbtb = g.KategoriBbu, g.KategoriTbu, g.KategoriBbtb
 		t.ZBbu, t.ZTbu, t.ZBbtb = g.ZBbu, g.ZTbu, g.ZBbtb
+		t.KategoriLku, t.ZLku = g.KategoriLku, g.ZLku
 		t.Masalah = masalahGizi(g)
 		t.Tingkat = g.Tingkat
 	}
@@ -445,7 +448,8 @@ func (s *BalitaService) muatKunjungan(ukur []models.Pengukuran) (map[uuid.UUID]*
 //                   sangat pendek (TB/U < -3 SD)
 //   Risiko sedang : gizi kurang (BB/TB < -2 SD), pendek (TB/U < -2 SD),
 //                   BB kurang (BB/U < -2 SD), tidak naik (T) bulan ini,
-//                   gizi lebih / obesitas (BB/TB > +2 SD)
+//                   gizi lebih / obesitas (BB/TB > +2 SD),
+//                   lingkar kepala tidak normal (LK/U < -2 SD atau > +2 SD)
 // Diurutkan dari skor risiko tertinggi.
 // ============================================================================
 
@@ -512,6 +516,12 @@ func nilaiRisiko(t *TimbangRingkas) ([]string, int, bool) {
 		case "Obesitas", "Gizi lebih":
 			tambah(m, 3, false)
 		}
+	}
+	switch t.KategoriLku {
+	case "Mikrosefali":
+		tambah("Lingkar kepala kecil (mikrosefali)", 3, false)
+	case "Makrosefali":
+		tambah("Lingkar kepala besar (makrosefali)", 3, false)
 	}
 	return alasan, skor, tinggi
 }

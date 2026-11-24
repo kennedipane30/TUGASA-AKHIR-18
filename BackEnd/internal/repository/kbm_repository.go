@@ -49,10 +49,14 @@ func (r *KbmRepository) Simpan(m *models.PenilaianTimbang) error {
 		return err
 	}
 	if lama == nil {
+		if m.Version == 0 {
+			m.Version = 1
+		}
 		return r.db.Create(m).Error
 	}
 	m.ID = lama.ID
 	m.CreatedAt = lama.CreatedAt
+	m.Version = lama.Version + 1 // delta sync: setiap perubahan menaikkan versi
 	return r.db.Save(m).Error
 }
 

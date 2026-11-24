@@ -12,7 +12,6 @@ import (
 type Keluarga struct {
 	ID            uuid.UUID      `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	Posyandu      string         `gorm:"column:posyandu;size:20;not null;default:'';index" json:"posyandu"`
-	NoKK          *string        `gorm:"column:no_kk;size:16;uniqueIndex:ux_keluarga_no_kk,where:deleted_at IS NULL" json:"no_kk,omitempty"`
 	Alamat        string         `gorm:"column:alamat;type:text" json:"alamat"`
 	RT            string         `gorm:"column:rt;size:5" json:"rt"`
 	RW            string         `gorm:"column:rw;size:5" json:"rw"`
@@ -22,7 +21,7 @@ type Keluarga struct {
 	Version       int            `gorm:"column:version;default:1" json:"version"`
 	PerangkatAsal *uuid.UUID     `gorm:"column:perangkat_asal;type:uuid" json:"perangkat_asal,omitempty"`
 	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
+	UpdatedAt     time.Time      `gorm:"index" json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 }
 

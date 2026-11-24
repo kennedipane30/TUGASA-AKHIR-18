@@ -1233,7 +1233,7 @@ const List<_Bab> _daftarBab = [
       _Blok(_par,
           'Di beranda, ketuk "Lengkapi Sekarang" lalu isi data diri, data ayah, dan data anak. Data boleh disimpan bertahap.'),
       _Blok(_sub, '2. Daftar posyandu'),
-      _Blok(_pnt, 'Pendaftaran dibuka 7 hari sebelum posyandu.'),
+      _Blok(_pnt, 'Pendaftaran dibuka sejak jadwal diumumkan sampai posyandu selesai.'),
       _Blok(_pnt, 'Buka "Pendaftaran Posyandu", pilih anak, lalu ketuk Daftarkan.'),
       _Blok(_pnt, 'Pendaftaran dapat dibatalkan sebelum posyandu dimulai.'),
       _Blok(_sub, '3. Check-in'),

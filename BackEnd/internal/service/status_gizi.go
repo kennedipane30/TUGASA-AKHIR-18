@@ -202,18 +202,6 @@ func KategoriLKU(z float64) (string, string) {
 	}
 }
 
-// KategoriLILA: lingkar lengan atas menurut umur (WHO).
-func KategoriLILA(z float64) (string, string) {
-	switch {
-	case z < -3:
-		return "Sangat kurang", models.TingkatRisiko
-	case z < -2:
-		return "Kurang", models.TingkatWaspada
-	default:
-		return "Normal", models.TingkatBaik
-	}
-}
-
 // ---------------------------------------------------------------- perhitungan
 
 type hasilIndeks struct {
@@ -284,9 +272,9 @@ func (s *StatusGiziService) Hitung(anak *models.Anak, u *models.Pengukuran) (*mo
 	tb = math.Round(tb*10) / 10
 	st.TbKoreksiCm = tb
 
-	idxTB, idxBBTB, idxIMT := models.IndeksTBU, models.IndeksBBTB, models.IndeksIMTUTB
+	idxTB, idxBBTB := models.IndeksTBU, models.IndeksBBTB
 	if usia < 24 {
-		idxTB, idxBBTB, idxIMT = models.IndeksPBU, models.IndeksBBPB, models.IndeksIMTUPB
+		idxTB, idxBBTB = models.IndeksPBU, models.IndeksBBPB
 	}
 	st.IndeksTbu = idxTB
 	st.IndeksBbtb = idxBBTB
@@ -316,19 +304,9 @@ func (s *StatusGiziService) Hitung(anak *models.Anak, u *models.Pengukuran) (*mo
 	}
 	pakai(hBBTB, &st.ZBbtb, &st.KategoriBbtb, "BB/PB atau BB/TB")
 
-	if tb > 0 {
-		imt := u.BbKg / math.Pow(tb/100, 2)
-		st.Imt = bulat2(imt)
-		pakai(s.hitungIndeks(idxIMT, jk, umur, imt, true, KategoriBBTB, -5, 5),
-			&st.ZImtu, &st.KategoriImtu, "IMT/U")
-	}
 	if u.LingkarKepalaCm != nil {
 		pakai(s.hitungIndeks(models.IndeksLKU, jk, umur, *u.LingkarKepalaCm, false, KategoriLKU, -5, 5),
 			&st.ZLku, &st.KategoriLku, "LK/U")
-	}
-	if u.LilaCm != nil && usia >= 3 {
-		pakai(s.hitungIndeks(models.IndeksLILAU, jk, umur, *u.LilaCm, true, KategoriLILA, -5, 5),
-			&st.ZLila, &st.KategoriLila, "LiLA/U")
 	}
 
 	st.Stunting = st.ZTbu != nil && *st.ZTbu < -2
@@ -348,64 +326,7 @@ func (s *StatusGiziService) HitungDanSimpan(anak *models.Anak, u *models.Penguku
 	if err := s.repo.Simpan(st); err != nil {
 		return nil, err
 	}
-	if err := s.repo.GantiPeringatanOtomatis(u.ID, PeringatanDariStatus(st)); err != nil {
-		log.Printf("status gizi: peringatan risiko pengukuran %s gagal disimpan: %v", u.ID, err)
-	}
 	return st, nil
-}
-
-func teksZ(nama string, z *float64, kategori string) string {
-	return fmt.Sprintf("%s %s (z = %.2f)", nama, kategori, *z)
-}
-
-// PeringatanDariStatus: peringatan risiko otomatis untuk ditindaklanjuti bidan.
-// Prioritas 1 = paling mendesak.
-func PeringatanDariStatus(st *models.StatusGizi) []models.PeringatanRisiko {
-	out := []models.PeringatanRisiko{}
-	tambah := func(jenis, penyebab string, prioritas int16) {
-		out = append(out, models.PeringatanRisiko{
-			AnakID:           st.AnakID,
-			PengukuranID:     st.PengukuranID,
-			Jenis:            jenis,
-			Penyebab:         penyebab,
-			Prioritas:        prioritas,
-			StatusPenanganan: "baru",
-			DibuatOtomatis:   true,
-			Version:          1,
-		})
-	}
-	if st.Stunting {
-		p := int16(2)
-		if *st.ZTbu < -3 {
-			p = 1
-		}
-		tambah("stunting", teksZ("PB/U atau TB/U", st.ZTbu, st.KategoriTbu), p)
-	}
-	if st.Wasting {
-		p := int16(2)
-		if *st.ZBbtb < -3 {
-			p = 1
-		}
-		tambah("wasting", teksZ("BB/PB atau BB/TB", st.ZBbtb, st.KategoriBbtb), p)
-	}
-	if st.Underweight {
-		p := int16(3)
-		if *st.ZBbu < -3 {
-			p = 2
-		}
-		tambah("underweight", teksZ("BB/U", st.ZBbu, st.KategoriBbu), p)
-	}
-	if st.Overweight {
-		p := int16(3)
-		if *st.ZBbtb > 3 {
-			p = 2
-		}
-		tambah("overweight", teksZ("BB/PB atau BB/TB", st.ZBbtb, st.KategoriBbtb), p)
-	}
-	if st.ZLku != nil && (*st.ZLku < -2 || *st.ZLku > 2) {
-		tambah("lingkar_kepala", teksZ("LK/U", st.ZLku, st.KategoriLku), 2)
-	}
-	return out
 }
 
 // UntukPengukuran: status gizi tersimpan (nil bila belum ada).

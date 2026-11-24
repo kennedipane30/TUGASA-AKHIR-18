@@ -50,7 +50,6 @@ type Notifikasi struct {
 	ObjekTabel      string         `gorm:"column:objek_tabel;size:40" json:"objek_tabel"`
 	ObjekID         *uuid.UUID     `gorm:"column:objek_id;type:uuid" json:"objek_id"`
 	DikirimOleh     *uint          `gorm:"column:dikirim_oleh;index" json:"dikirim_oleh"`
-	DikirimPada     *time.Time     `gorm:"column:dikirim_pada" json:"dikirim_pada"`
 	SudahDibaca     bool           `gorm:"column:sudah_dibaca" json:"sudah_dibaca"`
 	DibacaPada      *time.Time     `gorm:"column:dibaca_pada" json:"dibaca_pada"`
 	User            *User          `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
@@ -58,7 +57,7 @@ type Notifikasi struct {
 	Version         int            `gorm:"default:1;column:version" json:"version"`
 	PerangkatAsal   *uuid.UUID     `gorm:"type:uuid;column:perangkat_asal" json:"perangkat_asal,omitempty"`
 	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
+	UpdatedAt       time.Time      `gorm:"index" json:"updated_at"`
 	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
 }
 

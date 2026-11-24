@@ -281,16 +281,14 @@ func (s *JadwalService) Buat(sekretarisID uint, pos string, in JadwalInput) (*mo
 		return nil, konflik("posyandu ini sudah memiliki jadwal pada tanggal tersebut")
 	}
 	j := &models.JadwalPosyandu{
-		Posyandu:         pos,
-		Tanggal:          tgl,
-		JamMulai:         in.JamMulai,
-		JamSelesai:       selesai,
-		Lokasi:           strings.TrimSpace(in.Lokasi),
-		BukaDaftarHari:   7,
-		BukaCheckinMenit: bukaCheckinMenit,
-		Status:           "terjadwal",
-		DibuatOleh:       sekretarisID,
-		Version:          1,
+		Posyandu:   pos,
+		Tanggal:    tgl,
+		JamMulai:   in.JamMulai,
+		JamSelesai: selesai,
+		Lokasi:     strings.TrimSpace(in.Lokasi),
+		Status:     "terjadwal",
+		DibuatOleh: sekretarisID,
+		Version:    1,
 	}
 	if err := s.repo.CreateJadwal(j); err != nil {
 		return nil, err
@@ -331,7 +329,6 @@ func (s *JadwalService) Ubah(id uuid.UUID, pos string, in JadwalInput) (*models.
 	j.JamMulai = in.JamMulai
 	j.JamSelesai = selesai
 	j.Lokasi = strings.TrimSpace(in.Lokasi)
-	j.BukaCheckinMenit = bukaCheckinMenit
 	j.Version++
 	if err := s.repo.SaveJadwal(j); err != nil {
 		return nil, err

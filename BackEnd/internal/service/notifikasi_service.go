@@ -120,12 +120,9 @@ func notifLokasi(j *models.JadwalPosyandu) string {
 	return ""
 }
 
-func notifMenitCheckin(j *models.JadwalPosyandu) int {
-	if j.BukaCheckinMenit <= 0 {
-		return 60
-	}
-	return int(j.BukaCheckinMenit)
-}
+// notifMenitCheckin: check-in dibuka bukaCheckinMenit (60) menit sebelum jam mulai,
+// sama dengan aturan check-in di jadwal_service.
+func notifMenitCheckin(*models.JadwalPosyandu) int { return bukaCheckinMenit }
 
 func (s *NotifikasiService) waktuMulai(j *models.JadwalPosyandu) (time.Time, bool) {
 	h, m, d, ok := notifParseJam(j.JamMulai)
@@ -201,7 +198,6 @@ func (s *NotifikasiService) kirimKeUser(
 	pengirim *uint,
 	pesan func(role models.Role) (string, string),
 ) {
-	now := time.Now()
 	baru := make([]models.Notifikasi, 0, len(users))
 	for _, u := range users {
 		judul, isi := pesan(u.Role)
@@ -217,7 +213,6 @@ func (s *NotifikasiService) kirimKeUser(
 			ObjekTabel:  objekTabel,
 			ObjekID:     objekID,
 			DikirimOleh: pengirim,
-			DikirimPada: &now,
 			Version:     1,
 		}
 		ok, err := s.repo.SimpanJikaBaru(&n)

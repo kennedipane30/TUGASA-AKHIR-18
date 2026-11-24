@@ -67,7 +67,7 @@ type JadwalImunisasi struct {
 	JenisVaksin *JenisVaksin `gorm:"foreignKey:JenisVaksinID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"jenis_vaksin,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	UpdatedAt time.Time `gorm:"index" json:"updated_at"`
 }
 
 func (JadwalImunisasi) TableName() string { return "jadwal_imunisasi" }

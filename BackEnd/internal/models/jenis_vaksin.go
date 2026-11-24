@@ -55,7 +55,7 @@ type JenisVaksin struct {
 	IsActive bool `gorm:"column:is_active;default:true" json:"is_active"`
 
 	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	UpdatedAt time.Time `gorm:"index" json:"updated_at"`
 }
 
 func (JenisVaksin) TableName() string { return "jenis_vaksin" }
