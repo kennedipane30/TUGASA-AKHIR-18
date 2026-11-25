@@ -31,6 +31,11 @@ func AllModels() []any {
 		&ImunisasiAnak{},
 		&ImunisasiMandiriAnak{}, // imunisasi di luar program (dicatat bidan)
 
+		// KPSP (skrining perkembangan)
+		&PertanyaanKpsp{}, // master 10 pertanyaan per kelompok umur
+		&HasilKpsp{},
+		&JawabanKpsp{},
+
 		// notifikasi, perangkat & log aktivitas
 		&Notifikasi{},
 		&Perangkat{},

@@ -1,44 +1,29 @@
-import 'dart:async';
-
-import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-
-import '../../../core/config/api_client.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/common_widgets.dart';
-import '../../../core/widgets/status_gizi_widget.dart';
-import '../../../service/kbm_model.dart';
-import '../../../service/imunisasi_service.dart';
-import '../../OrangTua/pendaftaran/pendaftaran_page.dart' show RencanaAnakJadwal;
-import '../imunisasi/imunisasi_anak_page.dart';
-import '../imunisasi/imunisasi_lihat_body.dart' show tampilkanBuktiImunisasi;
-
-part 'form_pemeriksaan.dart';
-part 'kartu_pemeriksaan.dart';
-part 'edit_pemeriksaan_page.dart';
+part of 'catat_pemeriksaan_page.dart';
 
 // ---------------------------------------------------------------------------
-// HALAMAN CATAT PEMERIKSAAN (anak yang belum memiliki catatan bidan)
-// Imunisasi & suplemen sesuai jadwal dicentang otomatis.
+// HALAMAN EDIT PEMERIKSAAN (anak yang catatan bidannya sudah tersimpan)
+// Catatan, imunisasi, dan suplemen yang tersimpan dimuat ke form.
 // ---------------------------------------------------------------------------
-class CatatPemeriksaanPage extends StatefulWidget {
+class EditPemeriksaanPage extends StatefulWidget {
   final String pendaftaranId;
   final String nomor;
 
-  const CatatPemeriksaanPage({
+  const EditPemeriksaanPage({
     super.key,
     required this.pendaftaranId,
     required this.nomor,
   });
 
   @override
-  State<CatatPemeriksaanPage> createState() => _CatatPemeriksaanState();
+  State<EditPemeriksaanPage> createState() => _EditPemeriksaanState();
 }
 
-class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
-    with _FormPemeriksaan<CatatPemeriksaanPage>, _KartuPemeriksaan<CatatPemeriksaanPage> {
+class _EditPemeriksaanState extends State<EditPemeriksaanPage>
+    with _FormPemeriksaan<EditPemeriksaanPage>,
+        _FormSuplemen<EditPemeriksaanPage>,
+        _FormImunisasi<EditPemeriksaanPage>,
+        _FormKpsp<EditPemeriksaanPage>,
+        _KartuPemeriksaan<EditPemeriksaanPage> {
   @override
   String get pendaftaranId => widget.pendaftaranId;
 
@@ -46,7 +31,7 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
   String get nomor => widget.nomor;
 
   @override
-  bool get modeEdit => false;
+  bool get modeEdit => true;
 
   @override
   void initState() {
@@ -80,7 +65,7 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
         );
       }
 
-      // Isi awal dari catatan yang sudah ada.
+      // Isi form dari catatan yang sudah tersimpan.
       final c = detail['catatan'];
       if (c is Map) {
         _catatanOrtu.text = c['catatan_evaluasi']?.toString() ?? '';
@@ -149,39 +134,13 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
         }
       }
 
-      // Catatan belum pernah disimpan: imunisasi & suplemen sesuai jadwal dipilih otomatis.
-      final rRaw = detail['rencana'];
-      final rencana = rRaw is Map ? RencanaAnakJadwal.fromApi(Map<String, dynamic>.from(rRaw)) : null;
-      final usiaBln = int.tryParse(detail['usia_bulan']?.toString() ?? '') ?? 0;
-      var otomatis = false;
-      if (rencana != null && c is! Map) {
-        // Anak sakit menurut kader: imunisasi tidak dicentang otomatis (imunisasi ditunda).
-        if (status == StatusRiwayatImunisasi.dikonfirmasi && !sakitKader) {
-          for (final it in rencana.imunisasi) {
-            if (it.jenisImunisasiId.isEmpty) continue;
-            final k = '${it.jenisImunisasiId}|${it.dosisKe}';
-            if (!_imunisasiDipilih.containsKey(k)) {
-              _imunisasiDipilih[k] = _PilihImunisasi();
-              otomatis = true;
-            }
-          }
-        }
-        for (final it in rencana.suplemen) {
-          if (_suplemenAda(it.jenis)) continue;
-          _suplemen.add(it.jenis == 'vitamin_a' ? _vitaminA(usiaBln) : _obatCacing(usiaBln));
-          otomatis = true;
-        }
-      }
-
       // Form suplemen langsung tampil (satu baris kosong bila belum ada suplemen).
       _siapkanFormSuplemen();
 
-      // Catatan baru & anak sakit menurut kader: hasil pemeriksaan diisi awal (dapat diubah bidan).
-      if (c is! Map && sakitKader && _catatanOrtu.text.trim().isEmpty) {
-        final keluhan = (ukurKader['keluhan'] ?? '').toString().trim();
-        _catatanOrtu.text = 'Anak sedang sakit${keluhan.isEmpty ? '' : ' ($keluhan)'} '
-            'sehingga imunisasi ditunda sampai anak sehat.';
-      }
+      // KPSP: umur anak menentukan lembar yang dipakai; jawaban yang sudah
+      // tersimpan ditampilkan kembali agar bidan dapat mengubahnya.
+      _kpspUsiaAnak = int.tryParse(detail['usia_bulan']?.toString() ?? '') ?? 0;
+      _isiKpspTersimpan(detail['kpsp']);
 
       // Kartu imunisasi anak (jadwal + status).
       KartuImunisasi? kartu;
@@ -203,10 +162,11 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
         _riwayatLuar = luar;
         _kartu = kartu;
         _gagalKartu = gagalKartu;
-        _otomatis = otomatis;
+        _otomatis = false;
         _gagal = null;
         _memuat = false;
       });
+      unawaited(_muatKpsp());
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -229,7 +189,7 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
-                child: _judulTebal('Catat Pemeriksaan'),
+                child: _judulTebal('Edit Pemeriksaan'),
               ),
               Align(
                 alignment: Alignment.centerLeft,
@@ -294,12 +254,14 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
   }
 
   Widget _tombolBawah() {
-    final terkunci = _mulaiNanti != null;
-    final label = terkunci
-        ? 'Sesi Belum Dimulai'
-        : _kirim
-            ? 'Menyimpan...'
-            : 'Simpan Catatan';
+    final terkunci = _mulaiNanti != null || _jadwalSelesai;
+    final label = _jadwalSelesai
+        ? 'Jadwal Sudah Selesai'
+        : _mulaiNanti != null
+            ? 'Sesi Belum Dimulai'
+            : _kirim
+                ? 'Menyimpan...'
+                : 'Simpan Perubahan';
 
     return SafeArea(
       top: false,

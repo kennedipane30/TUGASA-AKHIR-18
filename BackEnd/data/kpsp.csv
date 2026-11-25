@@ -1,0 +1,161 @@
+usia_bulan,nomor,aspek,pertanyaan
+3,1,gerak_kasar,"Pada posisi telungkup, dapatkah bayi mengangkat kepalanya hingga 45 derajat?"
+3,2,gerak_kasar,"Saat telentang, dapatkah bayi menggerakkan kedua lengan dan kakinya dengan mudah?"
+3,3,gerak_kasar,"Saat ditengkurapkan, dapatkah bayi menahan kepalanya tetap tegak sesaat?"
+3,4,gerak_halus,Dapatkah bayi mengikuti gerakan benda dengan matanya dari sisi ke tengah?
+3,5,gerak_halus,Dapatkah bayi membuka dan menutup telapak tangannya?
+3,6,bicara,"Apakah bayi mengeluarkan suara seperti ""ooo"" atau ""aaa""?"
+3,7,bicara,Apakah bayi menoleh ke arah sumber suara di dekatnya?
+3,8,sosialisasi,Apakah bayi tersenyum ketika melihat wajah Anda?
+3,9,sosialisasi,Apakah bayi menatap wajah Anda saat diajak bicara?
+3,10,sosialisasi,Apakah bayi menjadi tenang ketika digendong atau diajak bicara?
+6,1,gerak_kasar,Dapatkah bayi berbalik dari telentang ke telungkup sendiri?
+6,2,gerak_kasar,Dapatkah bayi duduk dengan bantuan sandaran?
+6,3,gerak_kasar,"Saat ditarik ke posisi duduk, dapatkah kepala bayi terangkat mengikuti badannya?"
+6,4,gerak_halus,Dapatkah bayi meraih mainan yang diletakkan di depannya?
+6,5,gerak_halus,Dapatkah bayi memindahkan mainan dari satu tangan ke tangan lainnya?
+6,6,gerak_halus,Apakah bayi memperhatikan benda kecil di dekatnya?
+6,7,bicara,"Apakah bayi mengeluarkan suara berulang seperti ""ba-ba"" atau ""ma-ma""?"
+6,8,bicara,Apakah bayi menoleh cepat ketika namanya dipanggil?
+6,9,sosialisasi,Apakah bayi tertawa keras ketika diajak bermain?
+6,10,sosialisasi,Dapatkah bayi memasukkan makanan atau mainan ke mulutnya sendiri?
+9,1,gerak_kasar,Dapatkah bayi duduk sendiri tanpa dibantu?
+9,2,gerak_kasar,Dapatkah bayi merangkak atau merayap maju?
+9,3,gerak_kasar,Dapatkah bayi berdiri dengan berpegangan pada kursi atau meja?
+9,4,gerak_halus,Dapatkah bayi menjumput benda kecil dengan ibu jari dan jari telunjuk?
+9,5,gerak_halus,Dapatkah bayi memukulkan dua mainan satu sama lain?
+9,6,bicara,"Apakah bayi mengucapkan dua suku kata berulang seperti ""da-da"" atau ""pa-pa""?"
+9,7,bicara,"Apakah bayi mengerti kata ""tidak boleh"" dan berhenti sejenak?"
+9,8,sosialisasi,Apakah bayi mencari mainan yang disembunyikan di depannya?
+9,9,sosialisasi,Apakah bayi melambaikan tangan atau bertepuk tangan saat diajak?
+9,10,sosialisasi,Apakah bayi menunjukkan rasa malu atau cemas pada orang yang belum dikenal?
+12,1,gerak_kasar,Dapatkah anak berdiri sendiri tanpa berpegangan selama beberapa detik?
+12,2,gerak_kasar,Dapatkah anak berjalan dengan dituntun satu tangan?
+12,3,gerak_kasar,Dapatkah anak bangkit berdiri dari posisi duduk sendiri?
+12,4,gerak_halus,Dapatkah anak memasukkan benda kecil ke dalam cangkir atau wadah?
+12,5,gerak_halus,Dapatkah anak menjumput potongan kecil makanan dengan rapi?
+12,6,bicara,"Apakah anak mengucapkan satu kata bermakna selain ""mama"" dan ""papa""?"
+12,7,bicara,"Apakah anak menuruti perintah sederhana seperti ""berikan kepada ibu""?"
+12,8,sosialisasi,Apakah anak menunjuk benda yang diinginkannya?
+12,9,sosialisasi,Dapatkah anak minum sendiri dari gelas dengan sedikit bantuan?
+12,10,sosialisasi,"Apakah anak ikut bermain ""ciluk-ba"" atau permainan sederhana lainnya?"
+15,1,gerak_kasar,Dapatkah anak berjalan sendiri tanpa jatuh?
+15,2,gerak_kasar,Dapatkah anak membungkuk mengambil mainan lalu berdiri kembali?
+15,3,gerak_kasar,Dapatkah anak naik tangga dengan merangkak?
+15,4,gerak_halus,Dapatkah anak menumpuk dua kubus atau balok?
+15,5,gerak_halus,Dapatkah anak mencoret-coret kertas dengan pensil?
+15,6,bicara,Apakah anak mengucapkan tiga kata bermakna atau lebih?
+15,7,bicara,"Apakah anak menunjuk bagian tubuh yang disebutkan, misalnya hidung?"
+15,8,sosialisasi,Dapatkah anak makan sendiri dengan sendok meskipun masih tumpah?
+15,9,sosialisasi,"Apakah anak meniru pekerjaan rumah tangga, misalnya menyapu?"
+15,10,sosialisasi,Apakah anak menunjukkan mainan kepada orang lain?
+18,1,gerak_kasar,Dapatkah anak berlari tanpa sering terjatuh?
+18,2,gerak_kasar,Dapatkah anak naik tangga dengan berpegangan?
+18,3,gerak_kasar,Dapatkah anak menarik atau mendorong mainan sambil berjalan?
+18,4,gerak_halus,Dapatkah anak menumpuk empat kubus atau balok?
+18,5,gerak_halus,Dapatkah anak membuka halaman buku meskipun beberapa lembar sekaligus?
+18,6,bicara,Apakah anak menyebut nama benda yang sering dilihatnya?
+18,7,bicara,Apakah anak mengucapkan enam kata bermakna atau lebih?
+18,8,sosialisasi,Dapatkah anak melepas pakaian sederhana seperti kaus kaki?
+18,9,sosialisasi,Apakah anak memberi tahu bila popoknya basah atau ingin buang air?
+18,10,sosialisasi,Apakah anak memeluk atau mencium orang tua tanpa diminta?
+21,1,gerak_kasar,Dapatkah anak menendang bola tanpa berpegangan?
+21,2,gerak_kasar,Dapatkah anak melompat di tempat dengan kedua kaki?
+21,3,gerak_kasar,Dapatkah anak berjalan mundur beberapa langkah?
+21,4,gerak_halus,Dapatkah anak menumpuk enam kubus atau balok?
+21,5,gerak_halus,Dapatkah anak membuat garis lurus meniru contoh?
+21,6,bicara,"Apakah anak menggabungkan dua kata, misalnya ""mau makan""?"
+21,7,bicara,Apakah anak menuruti dua perintah berurutan?
+21,8,sosialisasi,Dapatkah anak mencuci dan mengeringkan tangannya sendiri?
+21,9,sosialisasi,Apakah anak bermain berdampingan dengan anak lain?
+21,10,sosialisasi,Dapatkah anak memakai sendok tanpa banyak menumpahkan?
+24,1,gerak_kasar,Dapatkah anak naik tangga sendiri dengan kedua kaki bergantian?
+24,2,gerak_kasar,Dapatkah anak melompat dengan kedua kaki sekaligus?
+24,3,gerak_kasar,Dapatkah anak berdiri dengan satu kaki sesaat sambil berpegangan?
+24,4,gerak_halus,Dapatkah anak menumpuk delapan kubus atau balok?
+24,5,gerak_halus,Dapatkah anak memutar tutup botol atau gagang pintu?
+24,6,bicara,Apakah anak menyusun kalimat dua sampai tiga kata?
+24,7,bicara,Apakah anak menyebut namanya sendiri bila ditanya?
+24,8,bicara,Apakah anak menunjuk gambar yang disebutkan namanya di dalam buku?
+24,9,sosialisasi,Dapatkah anak memakai celana atau baju dengan sedikit bantuan?
+24,10,sosialisasi,Apakah anak menirukan kegiatan orang dewasa dalam bermain?
+30,1,gerak_kasar,Dapatkah anak melompati garis di lantai dengan kedua kaki?
+30,2,gerak_kasar,Dapatkah anak berdiri satu kaki selama dua detik tanpa berpegangan?
+30,3,gerak_kasar,Dapatkah anak berlari lalu berhenti tanpa jatuh?
+30,4,gerak_halus,Dapatkah anak meniru membuat garis tegak?
+30,5,gerak_halus,Dapatkah anak memasukkan benang ke lubang besar atau meronce?
+30,6,bicara,Apakah anak menyebut nama lengkapnya bila ditanya?
+30,7,bicara,"Apakah anak bertanya menggunakan kata ""apa"" atau ""siapa""?"
+30,8,sosialisasi,Dapatkah anak memakai sepatu sendiri meskipun masih terbalik?
+30,9,sosialisasi,Apakah anak memberi tahu bila ingin buang air besar atau kecil?
+30,10,sosialisasi,Apakah anak membantu pekerjaan rumah sederhana bila diminta?
+36,1,gerak_kasar,Dapatkah anak mengayuh sepeda roda tiga?
+36,2,gerak_kasar,Dapatkah anak berdiri satu kaki selama tiga detik?
+36,3,gerak_kasar,Dapatkah anak melompat ke depan beberapa langkah?
+36,4,gerak_halus,Dapatkah anak meniru membuat lingkaran?
+36,5,gerak_halus,Dapatkah anak menumpuk delapan kubus atau lebih dengan rapi?
+36,6,bicara,Apakah anak menyebut nama satu warna dengan benar?
+36,7,bicara,Apakah bicara anak dapat dimengerti orang lain di luar keluarga?
+36,8,bicara,"Apakah anak menyebutkan kegunaan benda, misalnya ""sendok untuk makan""?"
+36,9,sosialisasi,Dapatkah anak memakai baju sendiri tanpa dibantu mengancingkan?
+36,10,sosialisasi,"Apakah anak bermain bersama anak lain, bukan hanya berdampingan?"
+42,1,gerak_kasar,Dapatkah anak berdiri satu kaki selama lima detik?
+42,2,gerak_kasar,Dapatkah anak melompat dengan satu kaki beberapa kali?
+42,3,gerak_kasar,Dapatkah anak menangkap bola besar dengan kedua tangan?
+42,4,gerak_halus,Dapatkah anak meniru membuat tanda tambah atau silang?
+42,5,gerak_halus,Dapatkah anak menggunting kertas mengikuti garis secara kasar?
+42,6,bicara,Apakah anak menyebut nama tiga warna dengan benar?
+42,7,bicara,Apakah anak menceritakan kegiatan yang baru dialaminya?
+42,8,bicara,"Apakah anak mengerti kata depan seperti ""di atas"" dan ""di bawah""?"
+42,9,sosialisasi,Dapatkah anak mencuci tangan dan mengeringkannya tanpa diingatkan?
+42,10,sosialisasi,Apakah anak bergiliran saat bermain dengan temannya?
+48,1,gerak_kasar,Dapatkah anak melompat dengan satu kaki sejauh beberapa langkah?
+48,2,gerak_kasar,Dapatkah anak berdiri satu kaki selama enam detik?
+48,3,gerak_kasar,Dapatkah anak menuruni tangga dengan kaki bergantian?
+48,4,gerak_halus,Dapatkah anak menggambar orang dengan tiga bagian tubuh?
+48,5,gerak_halus,Dapatkah anak meniru membuat gambar kotak?
+48,6,bicara,"Apakah anak menjawab pertanyaan ""mengapa"" dengan masuk akal?"
+48,7,bicara,Apakah anak menyebut nama empat warna dengan benar?
+48,8,bicara,Apakah anak menghitung benda sampai lima dengan benar?
+48,9,sosialisasi,Dapatkah anak memakai baju lengkap termasuk mengancingkan?
+48,10,sosialisasi,"Apakah anak bermain peran bersama teman, misalnya masak-masakan?"
+54,1,gerak_kasar,Dapatkah anak berdiri satu kaki selama delapan detik?
+54,2,gerak_kasar,Dapatkah anak melompat ke depan dengan kedua kaki sejauh satu meter?
+54,3,gerak_kasar,Dapatkah anak berjalan lurus mengikuti garis?
+54,4,gerak_halus,Dapatkah anak menggambar orang dengan enam bagian tubuh?
+54,5,gerak_halus,Dapatkah anak menggunting kertas mengikuti garis dengan rapi?
+54,6,bicara,Apakah anak menceritakan sebuah kejadian secara berurutan?
+54,7,bicara,"Apakah anak mengerti lawan kata, misalnya besar dan kecil?"
+54,8,bicara,Apakah anak menghitung benda sampai sepuluh dengan benar?
+54,9,sosialisasi,Dapatkah anak buang air sendiri di kamar mandi tanpa dibantu?
+54,10,sosialisasi,Apakah anak mengikuti aturan permainan sederhana?
+60,1,gerak_kasar,Dapatkah anak berdiri satu kaki selama sebelas detik?
+60,2,gerak_kasar,Dapatkah anak melompat dengan satu kaki secara bergantian?
+60,3,gerak_kasar,Dapatkah anak menangkap bola kecil yang dilempar kepadanya?
+60,4,gerak_halus,Dapatkah anak meniru menulis beberapa huruf atau angka?
+60,5,gerak_halus,Dapatkah anak menggambar segitiga meniru contoh?
+60,6,bicara,Apakah anak menyebutkan nama dan umurnya dengan benar?
+60,7,bicara,"Apakah anak menjelaskan arti kata sederhana, misalnya ""apa itu bola""?"
+60,8,bicara,Apakah anak menyebut lima nama benda beserta kegunaannya?
+60,9,sosialisasi,Dapatkah anak memakai dan melepas pakaian sendiri sepenuhnya?
+60,10,sosialisasi,Apakah anak bermain bersama kelompok dan menunggu giliran?
+66,1,gerak_kasar,Dapatkah anak berlari sambil menghindari rintangan?
+66,2,gerak_kasar,Dapatkah anak melompat tali atau melompati benda rendah?
+66,3,gerak_kasar,Dapatkah anak berjalan jinjit beberapa langkah?
+66,4,gerak_halus,Dapatkah anak menulis namanya sendiri?
+66,5,gerak_halus,Dapatkah anak mewarnai gambar tanpa banyak keluar garis?
+66,6,bicara,Apakah anak bercerita dengan kalimat yang runtut dan jelas?
+66,7,bicara,Apakah anak mengenali beberapa huruf atau angka?
+66,8,bicara,"Apakah anak menyebutkan waktu, misalnya pagi dan malam?"
+66,9,sosialisasi,Dapatkah anak merapikan mainannya sendiri setelah bermain?
+66,10,sosialisasi,Apakah anak dapat ditinggal bermain tanpa orang tua tanpa menangis?
+72,1,gerak_kasar,Dapatkah anak berdiri satu kaki dengan mata tertutup sesaat?
+72,2,gerak_kasar,Dapatkah anak melompat dengan satu kaki sambil berpindah tempat?
+72,3,gerak_kasar,Dapatkah anak menangkap bola kecil dengan satu tangan?
+72,4,gerak_halus,Dapatkah anak menggambar orang lengkap dengan wajah dan anggota badan?
+72,5,gerak_halus,Dapatkah anak menulis beberapa angka atau huruf dengan benar?
+72,6,bicara,"Apakah anak menjelaskan perbedaan dua benda, misalnya batu dan bola?"
+72,7,bicara,Apakah anak menghitung mundur dari lima ke satu?
+72,8,bicara,Apakah anak menceritakan pengalaman hari ini dengan jelas?
+72,9,sosialisasi,Dapatkah anak makan sendiri dengan rapi tanpa dibantu?
+72,10,sosialisasi,Apakah anak mengerti giliran dan aturan dalam permainan kelompok?

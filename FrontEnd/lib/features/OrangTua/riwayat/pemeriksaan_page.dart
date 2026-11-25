@@ -6,6 +6,7 @@ import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../../core/widgets/status_gizi_widget.dart';
+import '../../../service/kpsp_service.dart';
 import '../datadiri/data_orang_tua_page.dart' show KeluargaApi, parseTgl;
 
 part 'pemeriksaan_detail_page.dart';
@@ -149,6 +150,9 @@ class _Pemeriksaan {
   final List<_Suplemen> suplemen;
   final Map<String, dynamic>? statusGizi;
 
+  /// Hasil KPSP kunjungan ini; null bila bidan tidak melakukan skrining.
+  final HasilKpsp? kpsp;
+
   _Pemeriksaan({
     required this.pendaftaranId,
     required this.anakId,
@@ -176,6 +180,7 @@ class _Pemeriksaan {
     required this.imunisasi,
     required this.suplemen,
     required this.statusGizi,
+    required this.kpsp,
   });
 
   static const _namaSuplemen = {
@@ -270,6 +275,9 @@ class _Pemeriksaan {
       imunisasi: imunisasi,
       suplemen: suplemen,
       statusGizi: petaGizi(j['status_gizi']),
+      kpsp: j['kpsp'] is Map
+          ? HasilKpsp.fromJson(Map<String, dynamic>.from(j['kpsp'] as Map))
+          : null,
     );
   }
 }

@@ -30,6 +30,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	logAktivitasRepo := repository.NewLogAktivitasRepository(db)
 	laporanBulananRepo := repository.NewLaporanBulananRepository(db)
 	anakArsipRepo := repository.NewAnakArsipRepository(db)
+	kpspRepo := repository.NewKpspRepository(db)
 
 	// service
 	jadwalSvc := service.NewJadwalService(jadwalRepo, keluargaRepo)
@@ -70,6 +71,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	pelayananH := handler.NewPelayananHandler(pelayananSvc)
 	notifH := handler.NewNotifikasiHandler(notifSvc)
 	imunisasiH := handler.NewImunisasiHandler(imunisasiSvc)
+	kpspH := handler.NewKpspHandler(service.NewKpspService(kpspRepo))
 	rekapH := handler.NewRekapHandler(service.NewRekapService(rekapRepo))
 	balitaH := handler.NewBalitaHandler(service.NewBalitaService(balitaRepo, imunisasiRepo))
 	skdnH := handler.NewSkdnHandler(service.NewSkdnService(rekapRepo, skdnRepo))
@@ -228,6 +230,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// riwayat imunisasi sebelum posyandu (kunjungan pertama) & imunisasi di luar program
 	bidan.POST("/vaksin/anak/:anak_id/riwayat-awal", imunisasiH.CatatRiwayatAwal)
 	bidan.DELETE("/vaksin/mandiri/:id", imunisasiH.HapusImunisasiMandiri)
+	// KPSP (skrining perkembangan): ambil 10 pertanyaan sesuai umur anak.
+	// Pengisiannya ikut tersimpan lewat PUT /bidan/pendaftaran/:id/catatan.
+	bidan.GET("/kpsp/lembar", kpspH.Lembar)
 	bidan.GET("/balita", balitaH.Daftar)
 	bidan.GET("/balita-berisiko", balitaH.Berisiko)
 	bidan.GET("/balita/:anak_id", balitaH.Detail)

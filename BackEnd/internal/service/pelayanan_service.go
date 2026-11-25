@@ -103,6 +103,21 @@ type CatatanBidanInput struct {
 	TanggalKunjunganUlang string          `json:"tanggal_kunjungan_ulang"` // YYYY-MM-DD
 	Imunisasi                []ImunisasiInput   `json:"vaksin"`
 	Suplemen              []SuplemenInput `json:"suplemen"`
+	Kpsp                  *KpspInput      `json:"kpsp"`
+}
+
+// KpspInput adalah satu lembar KPSP yang diisi bidan. Jawaban berisi 10 baris
+// (nomor 1-10) berisi true bila dijawab "Ya". Hasil S/M/P dihitung di server
+// dari jumlah jawaban "Ya", tidak dikirim aplikasi, agar tidak bisa dipalsukan.
+type KpspInput struct {
+	UsiaBulan int16              `json:"usia_bulan"`
+	Jawaban   []KpspJawabanInput `json:"jawaban"`
+	Catatan   string             `json:"catatan"`
+}
+
+type KpspJawabanInput struct {
+	Nomor int16 `json:"nomor"`
+	Ya    bool  `json:"ya"`
 }
 
 // ---------------------------------------------------------------- keluaran
@@ -152,6 +167,7 @@ type DetailBidan struct {
 	Imunisasi        []models.ImunisasiAnak   `json:"imunisasi"`
 	Suplemen         []models.SuplemenAnak    `json:"suplemen"`
 	RiwayatImunisasi []models.ImunisasiAnak   `json:"riwayat_imunisasi"`
+	Kpsp             *models.HasilKpsp        `json:"kpsp"` // skrining perkembangan kunjungan ini
 	Rencana          *RencanaAnak             `json:"rencana"` // rencana imunisasi & suplemen kunjungan ini
 
 	// Riwayat imunisasi sebelum posyandu: harus dikonfirmasi bidan sebelum imunisasi diberikan.
@@ -185,6 +201,7 @@ type RiwayatItem struct {
 	Catatan       *models.PemeriksaanBidan `json:"catatan"`
 	Imunisasi     []models.ImunisasiAnak   `json:"imunisasi"`
 	Suplemen      []models.SuplemenAnak    `json:"suplemen"`
+	Kpsp          *models.HasilKpsp        `json:"kpsp"` // skrining perkembangan kunjungan ini
 }
 
 // ---------------------------------------------------------------- fungsi bantu
@@ -664,6 +681,11 @@ func (s *PelayananService) DetailBidan(pos string, pendaftaranID uuid.UUID) (*De
 	if d.RiwayatImunisasi, err = s.repo.ListImunisasiAnak(p.AnakID); err != nil {
 		return nil, err
 	}
+	if kpsp, err := s.repo.ListKpsp([]uuid.UUID{p.ID}); err != nil {
+		return nil, err
+	} else if len(kpsp) > 0 {
+		d.Kpsp = &kpsp[0]
+	}
 	d.Rencana = s.notif.RencanaPendaftaran(p.Anak, p.Jadwal, p.ID)
 	d.StatusRiwayatImunisasi = p.Anak.StatusRiwayatImunisasi
 	if d.StatusRiwayatImunisasi == "" {
@@ -713,8 +735,8 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 
 	// minimal satu isian
 	isi := strings.TrimSpace(in.CatatanEvaluasi + in.SaranGizi + in.SaranPolaAsuh + in.Keluhan + in.PenyakitPenyerta)
-	if isi == "" && len(in.Imunisasi) == 0 && len(in.Suplemen) == 0 {
-		return nil, validasi("isi minimal satu catatan, imunisasi, atau suplemen")
+	if isi == "" && len(in.Imunisasi) == 0 && len(in.Suplemen) == 0 && in.Kpsp == nil {
+		return nil, validasi("isi minimal satu catatan, imunisasi, suplemen, atau KPSP")
 	}
 	ulang, err := parseTanggalMendatang(in.TanggalKunjunganUlang)
 	if err != nil {
@@ -891,6 +913,11 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 	}
 
 	// simpan dalam satu transaksi
+	kpsp, err := s.rakitKpsp(bidanID, p, tanggal, in.Kpsp)
+	if err != nil {
+		return nil, err
+	}
+
 	err = s.repo.Tx(func(r *repository.PelayananRepository) error {
 		c, err := r.GetPemeriksaan(p.ID)
 		baru := false
@@ -929,7 +956,10 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 		if err := r.GantiImunisasi(p.ID, imunisasi); err != nil {
 			return err
 		}
-		return r.GantiSuplemen(p.ID, suplemen)
+		if err := r.GantiSuplemen(p.ID, suplemen); err != nil {
+			return err
+		}
+		return r.GantiKpsp(p.ID, kpsp)
 	})
 	if err != nil {
 		return nil, err
@@ -945,6 +975,71 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 		go s.notif.HasilPemeriksaan(&a, p.ID, int(d.Catatan.Version), &pengirim)
 	}
 	return d, nil
+}
+
+// rakitKpsp memeriksa isian KPSP dari aplikasi lalu menyusunnya menjadi satu
+// lembar HasilKpsp siap simpan. Mengembalikan nil bila bidan tidak mengisi KPSP
+// pada kunjungan ini, sehingga lembar lama (bila ada) ikut terhapus.
+//
+// Hasil S/M/P SELALU dihitung di server dari jumlah jawaban "Ya", tidak diambil
+// dari aplikasi, supaya penilaian tidak dapat dipalsukan dari sisi klien.
+func (s *PelayananService) rakitKpsp(bidanID uint, p *models.Pendaftaran, tanggal time.Time, in *KpspInput) (*models.HasilKpsp, error) {
+	if in == nil {
+		return nil, nil
+	}
+	usiaAnak := usiaBulan(p.Anak.TanggalLahir, tanggal)
+	kelompok, berlaku := models.KelompokUsiaKpsp(usiaAnak)
+	if !berlaku {
+		return nil, validasi("KPSP hanya untuk anak usia 3-72 bulan (usia anak %s)",
+			usiaTeks(p.Anak.TanggalLahir, tanggal))
+	}
+	// Kelompok umur ditentukan server dari tanggal lahir anak; nilai dari
+	// aplikasi hanya diterima bila sama, agar lembar tidak tertukar.
+	if in.UsiaBulan != 0 && in.UsiaBulan != kelompok {
+		return nil, validasi("kelompok umur KPSP tidak sesuai usia anak (seharusnya %d bulan)", kelompok)
+	}
+	if len(in.Jawaban) != 10 {
+		return nil, validasi("KPSP harus berisi 10 jawaban, diterima %d", len(in.Jawaban))
+	}
+	if len(strings.TrimSpace(in.Catatan)) > 500 {
+		return nil, validasi("catatan KPSP maksimal 500 karakter")
+	}
+
+	ada := map[int16]bool{}
+	jumlahYa := 0
+	jawaban := make([]models.JawabanKpsp, 0, 10)
+	for _, j := range in.Jawaban {
+		if j.Nomor < 1 || j.Nomor > 10 {
+			return nil, validasi("nomor pertanyaan KPSP harus 1-10, diterima %d", j.Nomor)
+		}
+		if ada[j.Nomor] {
+			return nil, validasi("jawaban KPSP nomor %d dikirim lebih dari sekali", j.Nomor)
+		}
+		ada[j.Nomor] = true
+		if j.Ya {
+			jumlahYa++
+		}
+		jawaban = append(jawaban, models.JawabanKpsp{Nomor: j.Nomor, Ya: j.Ya})
+	}
+	for n := int16(1); n <= 10; n++ {
+		if !ada[n] {
+			return nil, validasi("jawaban KPSP nomor %d belum diisi", n)
+		}
+	}
+
+	pid := p.ID
+	return &models.HasilKpsp{
+		AnakID:        p.AnakID,
+		PendaftaranID: &pid,
+		UsiaBulan:     kelompok,
+		JumlahYa:      int16(jumlahYa),
+		Hasil:         models.HitungHasilKpsp(jumlahYa),
+		Tanggal:       tanggal,
+		Catatan:       strings.TrimSpace(in.Catatan),
+		DicatatOleh:   bidanID,
+		Version:       1,
+		Jawaban:       jawaban,
+	}, nil
 }
 
 // ---------------------------------------------------------------- orang tua: riwayat
@@ -1001,6 +1096,10 @@ func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatIte
 	if err != nil {
 		return nil, err
 	}
+	kpsp, err := s.repo.ListKpsp(pids)
+	if err != nil {
+		return nil, err
+	}
 	petaGizi := map[uuid.UUID]models.StatusGizi{}
 	if s.gizi != nil {
 		ukurIDs := make([]uuid.UUID, 0, len(ukur))
@@ -1039,6 +1138,13 @@ func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatIte
 		}
 	}
 
+	petaKpsp := map[uuid.UUID]models.HasilKpsp{}
+	for _, x := range kpsp {
+		if x.PendaftaranID != nil {
+			petaKpsp[*x.PendaftaranID] = x
+		}
+	}
+
 	out := make([]RiwayatItem, 0, len(list))
 	for _, p := range list {
 		it := RiwayatItem{
@@ -1053,6 +1159,9 @@ func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatIte
 		}
 		if it.Suplemen == nil {
 			it.Suplemen = []models.SuplemenAnak{}
+		}
+		if k, ok := petaKpsp[p.ID]; ok {
+			it.Kpsp = &k
 		}
 		if p.Jadwal != nil {
 			it.Tanggal = p.Jadwal.Tanggal

@@ -5,7 +5,7 @@ import 'service/notifikasi_service.dart';
 import 'core/widgets/role_home_scaffold.dart';
 import 'features/Sekretaris/sekretaris_home.dart';
 import 'features/Sekretaris/akun/kelola_akun_page.dart';
-import 'features/Bidan/pendattan/hasil_pendataan_page.dart';
+import 'features/Bidan/pendataan/hasil_pendataan_page.dart';
 import 'features/Bidan/bidan_home.dart';
 import 'features/Kader/kader_home.dart';
 import 'features/Kader/pendataan/pendataan_page.dart';

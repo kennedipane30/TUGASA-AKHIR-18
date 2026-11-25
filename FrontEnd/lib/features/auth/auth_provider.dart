@@ -13,10 +13,22 @@ class AuthProvider extends ChangeNotifier {
   /// true bila PIN dibuat/direset petugas dan wajib diganti pemilik akun.
   bool get wajibGantiPin => user?['wajib_ganti_pin'] == true;
 
+  /// Memulihkan sesi dari token tersimpan.
+  ///
+  /// Apa pun hasilnya, [initialized] wajib menjadi true: selama masih false,
+  /// main.dart menahan layar di CircularProgressIndicator. Maka pemanggilan
+  /// dibatasi waktu dan dibungkus try/finally, supaya backend yang mati atau
+  /// alamat yang salah berujung ke halaman login, bukan loading tanpa henti.
   Future<void> restoreSession() async {
-    user = await _svc.me();
-    initialized = true;
-    notifyListeners();
+    try {
+      user = await _svc.me().timeout(const Duration(seconds: 15));
+    } catch (e) {
+      debugPrint('restoreSession gagal: $e');
+      user = null;
+    } finally {
+      initialized = true;
+      notifyListeners();
+    }
   }
 
   /// [noHp]: format +62 (mis. +6281234567890).
