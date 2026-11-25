@@ -456,7 +456,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
       ),
       if (imun.isNotEmpty)
         _kartu(
-          title: 'Imunisasi',
+          title: 'Vaksin & Imunisasi',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

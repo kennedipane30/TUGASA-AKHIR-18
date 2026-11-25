@@ -428,7 +428,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
               : _ringkasTimbang(r.terakhir!, r.tanggalLahir),
         ),
         _kartu(
-          judul: 'Imunisasi',
+          judul: 'Vaksin & Imunisasi',
           kanan: '${r.vaksin.persen}%',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

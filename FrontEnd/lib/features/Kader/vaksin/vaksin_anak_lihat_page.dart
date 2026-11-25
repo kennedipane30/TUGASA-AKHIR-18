@@ -58,7 +58,7 @@ class VaksinAnakLihatPage extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
-                child: _judulTebal('Vaksin Anak'),
+                child: _judulTebal('Vaksin & Imunisasi'),
               ),
               Align(
                 alignment: Alignment.centerLeft,

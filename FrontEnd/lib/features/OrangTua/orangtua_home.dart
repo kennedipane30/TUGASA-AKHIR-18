@@ -513,7 +513,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           aset: 'vaksin_anak.png',
           cadangan: Icons.vaccines_rounded,
           warna: const Color(0xFF2563EB),
-          judul: 'Vaksin\nAnak',
+          judul: 'Vaksin &\nImunisasi',
           onTap: _bukaVaksin,
         ),
         ItemLayananHome(

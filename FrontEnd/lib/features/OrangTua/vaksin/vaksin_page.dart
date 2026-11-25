@@ -99,7 +99,7 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
               // Judul di tengah
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
-                child: _judulTebal('Vaksin Anak'),
+                child: _judulTebal('Vaksin & Imunisasi'),
               ),
               // Tombol kembali di kiri
               Align(

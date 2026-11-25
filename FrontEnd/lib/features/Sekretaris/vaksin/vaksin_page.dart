@@ -167,7 +167,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
               // Judul di tengah
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
-                child: _judulTebal('Data Imunisasi'),
+                child: _judulTebal('Data Vaksin & Imunisasi'),
               ),
               // Tombol kembali di kiri
               if (bisaKembali)

@@ -232,7 +232,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
   Widget _kartuImunisasi() {
     if (!_riwayatOk) {
       return kartuBidan(
-        judul: 'Imunisasi Hari Ini',
+        judul: 'Vaksin & Imunisasi Hari Ini',
         kanan: 'Terkunci',
         warnaKanan: AppColors.teksRedup,
         child: const Text(
@@ -245,7 +245,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
     final k = _kartu;
     if (k == null) {
       return kartuBidan(
-        judul: 'Imunisasi Hari Ini',
+        judul: 'Vaksin & Imunisasi Hari Ini',
         child: Column(
           children: [
             Text(
@@ -270,7 +270,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
     final sakit = _kondisi == KondisiImunisasi.sakit;
 
     return kartuBidan(
-      judul: 'Imunisasi Hari Ini',
+      judul: 'Vaksin & Imunisasi Hari Ini',
       kanan: '${_vaksinDipilih.length} dipilih',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -149,7 +149,7 @@ class _DetailRiwayatPage extends StatelessWidget {
                 // Imunisasi
                 if (d.vaksin.isNotEmpty)
                   _kartu(
-                    judul: 'Imunisasi',
+                    judul: 'Vaksin & Imunisasi',
                     kanan: '${d.vaksin.length} vaksin',
                     child: Column(
                       children: [

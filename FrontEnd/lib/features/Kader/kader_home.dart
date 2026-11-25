@@ -323,7 +323,7 @@ class _KaderHomeState extends State<KaderHome> {
           aset: 'vaksin_anak.png',
           cadangan: Icons.vaccines_outlined,
           warna: const Color(0xFF0B7FBF),
-          judul: 'Vaksin\nAnak',
+          judul: 'Vaksin &\nImunisasi',
           onTap: _bukaVaksin,
         ),
       ],

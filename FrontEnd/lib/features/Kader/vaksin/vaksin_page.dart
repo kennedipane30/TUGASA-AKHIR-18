@@ -168,7 +168,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
-                child: _judulTebal('Vaksin Anak'),
+                child: _judulTebal('Vaksin & Imunisasi'),
               ),
               Align(
                 alignment: Alignment.centerLeft,
