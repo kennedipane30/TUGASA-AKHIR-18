@@ -87,13 +87,13 @@ func (r *BalitaRepository) SuplemenByPendaftaran(ids []uuid.UUID) ([]models.Supl
 	return list, err
 }
 
-// ImunisasiByPendaftaran: imunisasi yang diberikan pada banyak kunjungan, beserta nama vaksin.
+// ImunisasiByPendaftaran: imunisasi yang diberikan pada banyak kunjungan, beserta nama imunisasi.
 func (r *BalitaRepository) ImunisasiByPendaftaran(ids []uuid.UUID) ([]models.ImunisasiAnak, error) {
 	list := []models.ImunisasiAnak{}
 	if len(ids) == 0 {
 		return list, nil
 	}
-	err := r.db.Preload("JenisVaksin").Where("pendaftaran_id IN ?", ids).
+	err := r.db.Preload("JenisImunisasi").Where("pendaftaran_id IN ?", ids).
 		Order("dosis_ke ASC").Find(&list).Error
 	return list, err
 }

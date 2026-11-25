@@ -8,7 +8,7 @@ import '../../../features/OrangTua/pendaftaran/kartu_antrean_page.dart';
 import '../../../features/OrangTua/pendaftaran/pendaftaran_page.dart';
 import '../../../features/OrangTua/riwayat/grafik_page.dart';
 import '../../../features/OrangTua/riwayat/pemeriksaan_page.dart';
-import '../../../features/OrangTua/vaksin/vaksin_page.dart';
+import '../../../features/OrangTua/imunisasi/imunisasi_page.dart';
 import '../../../features/auth/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../balita/balita_detail_page.dart';
@@ -118,11 +118,11 @@ String? labelTujuanNotifikasi(String jenis, String role, String? objekId) {
       return role == 'orang_tua' ? 'Lihat Rencana & Daftar' : null;
     case 'imunisasi_terlambat':
     case 'imunisasi_faskes':
-      return role == 'orang_tua' ? 'Lihat Jadwal Vaksin Anak' : null;
+      return role == 'orang_tua' ? 'Lihat Jadwal Imunisasi Anak' : null;
     case 'jadwal_belum_ada':
       return role == 'sekretaris' ? 'Buat Jadwal Posyandu' : null;
     case 'laporan_kipi':
-      return role == 'bidan' && adaObjek ? 'Lihat Vaksin Anak' : null;
+      return role == 'bidan' && adaObjek ? 'Lihat Imunisasi Anak' : null;
     case 'hasil_pemeriksaan':
       return role == 'orang_tua' ? 'Lihat Detail Pemeriksaan' : null;
   }
@@ -135,9 +135,9 @@ String? labelTujuanNotifikasi(String jenis, String role, String? objekId) {
 ///     (pilih anak bila lebih dari satu; ke Pendaftaran bila belum ada yang terdaftar).
 ///   - Peringatan 2T/BGM: orang tua ke Grafik anak, petugas ke detail balita.
 ///   - Rencana / pengingat H-3 (orang tua): halaman Pendaftaran (kartu Rencana Pelayanan).
-///   - Imunisasi terlambat / ke puskesmas (orang tua): halaman Vaksin Anak.
+///   - Imunisasi terlambat / ke puskesmas (orang tua): halaman Imunisasi Anak.
 ///   - Jadwal belum dibuat (sekretaris): halaman Kelola Jadwal.
-///   - Laporan reaksi imunisasi / KIPI (bidan): tab Vaksin pada detail balita.
+///   - Laporan reaksi imunisasi / KIPI (bidan): tab Imunisasi pada detail balita.
 ///   - Hasil pemeriksaan bidan (orang tua): langsung ke detail pemeriksaan kunjungan itu.
 ///   - Lainnya: daftar notifikasi.
 void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
@@ -160,7 +160,7 @@ void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
       if (adaObjek) {
         halaman = switch (role) {
           'orang_tua' => OrangTuaGrafikPage(anakId: id),
-          'bidan' => BalitaDetailPage(prefix: '/bidan', anakId: id, nama: 'Detail Balita', bisaKelolaVaksin: true),
+          'bidan' => BalitaDetailPage(prefix: '/bidan', anakId: id, nama: 'Detail Balita', bisaKelolaImunisasi: true),
           'kader' => BalitaDetailPage(prefix: '/kader', anakId: id, nama: 'Detail Balita'),
           'sekretaris' => BalitaDetailPage(prefix: '/sekretaris', anakId: id, nama: 'Detail Balita'),
           _ => const NotifikasiPage(),
@@ -172,7 +172,7 @@ void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
       if (role == 'orang_tua') halaman = const OrangTuaPendaftaranPage();
     case 'imunisasi_terlambat':
     case 'imunisasi_faskes':
-      if (role == 'orang_tua') halaman = const OrangTuaVaksinPage();
+      if (role == 'orang_tua') halaman = const OrangTuaImunisasiPage();
     case 'jadwal_belum_ada':
       if (role == 'sekretaris') halaman = const AdminJadwalPage();
     case 'laporan_kipi':
@@ -181,7 +181,7 @@ void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
           prefix: '/bidan',
           anakId: id,
           nama: 'Detail Balita',
-          bisaKelolaVaksin: true,
+          bisaKelolaImunisasi: true,
           tabAwal: 2,
         );
       }

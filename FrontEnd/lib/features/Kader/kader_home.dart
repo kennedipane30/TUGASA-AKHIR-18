@@ -12,7 +12,7 @@ import 'keluarga/keluarga_page.dart';
 import 'daftarkan_anak/daftarkan_anak_page.dart';
 import 'riwayat/riwayat_page.dart';
 import 'rekap/balita_tidak_hadir_page.dart';
-import 'vaksin/vaksin_page.dart';
+import 'imunisasi/imunisasi_page.dart';
 
 const _namaHari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
@@ -102,10 +102,10 @@ class _KaderHomeState extends State<KaderHome> {
     );
   }
 
-  void _bukaVaksin() {
+  void _bukaImunisasi() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const KaderVaksinPage()),
+      MaterialPageRoute(builder: (_) => const KaderImunisasiPage()),
     );
   }
 
@@ -320,11 +320,11 @@ class _KaderHomeState extends State<KaderHome> {
           onTap: _bukaTidakHadir,
         ),
         ItemLayananHome(
-          aset: 'vaksin_anak.png',
+          aset: 'imunisasi_anak.png',
           cadangan: Icons.vaccines_outlined,
           warna: const Color(0xFF0B7FBF),
-          judul: 'Vaksin &\nImunisasi',
-          onTap: _bukaVaksin,
+          judul: 'Imunisasi\nAnak',
+          onTap: _bukaImunisasi,
         ),
       ],
     );

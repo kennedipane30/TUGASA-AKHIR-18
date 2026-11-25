@@ -90,9 +90,9 @@ String labelTimbang(String s) => const {
 
 class SemuaBalitaPage extends StatefulWidget {
   final String prefix;
-  final bool bisaKelolaVaksin;
+  final bool bisaKelolaImunisasi;
 
-  const SemuaBalitaPage({super.key, required this.prefix, this.bisaKelolaVaksin = false});
+  const SemuaBalitaPage({super.key, required this.prefix, this.bisaKelolaImunisasi = false});
 
   @override
   State<SemuaBalitaPage> createState() => _SemuaBalitaPageState();
@@ -106,7 +106,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
     '24-59 bln',
     'Masalah gizi',
     '2T / BGM',
-    'Vaksin terlambat',
+    'Imunisasi terlambat',
     'Belum ditimbang',
     'Diarsipkan', // pindah, meninggal, lulus balita (riwayat tetap dapat dilihat)
   ];
@@ -177,8 +177,8 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
         return list.where((b) => b.masalahGizi).toList();
       case '2T / BGM':
         return list.where((b) => b.perluPerhatian).toList();
-      case 'Vaksin terlambat':
-        return list.where((b) => b.vaksin.terlambat > 0).toList();
+      case 'Imunisasi terlambat':
+        return list.where((b) => b.imunisasi.terlambat > 0).toList();
       case 'Belum ditimbang':
         return list.where((b) => b.terakhir == null).toList();
     }
@@ -193,7 +193,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
           prefix: widget.prefix,
           anakId: b.anakId,
           nama: b.nama,
-          bisaKelolaVaksin: widget.bisaKelolaVaksin,
+          bisaKelolaImunisasi: widget.bisaKelolaImunisasi,
         ),
       ),
     );
@@ -309,7 +309,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
             _pemisah,
             _barisJumlah('Stunting', r.stunting, AppColors.merah),
             _pemisah,
-            _barisJumlah('Vaksin terlambat', r.vaksinTerlambat, AppColors.kuning),
+            _barisJumlah('Imunisasi terlambat', r.imunisasiTerlambat, AppColors.kuning),
             _pemisah,
             _barisJumlah('Usia 0-11 bulan', r.usia0_11, _teksGelap),
             _pemisah,

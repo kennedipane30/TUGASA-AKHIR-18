@@ -40,8 +40,8 @@ type NotifikasiService struct {
 	push *PushService
 	loc  *time.Location
 
-	// pengingat imunisasi, Vitamin A, dan obat cacing (aktif setelah SetVaksin)
-	vaksin         *repository.VaksinRepository
+	// pengingat imunisasi, Vitamin A, dan obat cacing (aktif setelah SetImunisasi)
+	imunisasi         *repository.ImunisasiRepository
 	muHarian       sync.Mutex
 	harianTerakhir string
 }
@@ -54,8 +54,8 @@ func NewNotifikasiService(r *repository.NotifikasiRepository, p *PushService) *N
 	return &NotifikasiService{repo: r, push: p, loc: loc}
 }
 
-// SetVaksin: aktifkan rencana & pengingat imunisasi, Vitamin A, dan obat cacing.
-func (s *NotifikasiService) SetVaksin(v *repository.VaksinRepository) { s.vaksin = v }
+// SetImunisasi: aktifkan rencana & pengingat imunisasi, Vitamin A, dan obat cacing.
+func (s *NotifikasiService) SetImunisasi(v *repository.ImunisasiRepository) { s.imunisasi = v }
 
 // ---------------------------------------------------------------- input / keluaran
 
@@ -513,7 +513,7 @@ func (s *NotifikasiService) periksaJadwal() {
 // periksaHarian: pengingat imunisasi, Vitamin A, dan obat cacing sekali sehari mulai 07.00 WIB.
 // Bila server dinyalakan ulang, kunci notifikasi mencegah pengiriman ganda.
 func (s *NotifikasiService) periksaHarian(now time.Time) {
-	if s.vaksin == nil || now.Hour() < jamCekHarian {
+	if s.imunisasi == nil || now.Hour() < jamCekHarian {
 		return
 	}
 	tgl := now.Format("2006-01-02")
@@ -635,7 +635,7 @@ const (
 type RencanaItem struct {
 	Jenis         string `json:"jenis"` // imunisasi | vitamin_a | obat_cacing
 	Kode          string `json:"kode"`
-	JenisVaksinID string `json:"jenis_vaksin_id,omitempty"` // untuk centang otomatis di catatan bidan
+	JenisImunisasiID string `json:"jenis_vaksin_id,omitempty"` // untuk centang otomatis di catatan bidan
 	Nama          string `json:"nama"`
 	DosisKe       int16  `json:"dosis_ke"`
 	Keterangan    string `json:"keterangan"`
@@ -730,9 +730,9 @@ func notifAwalSemester(t time.Time) time.Time {
 }
 
 func notifNamaDosis(it *JadwalAnakItem) string {
-	nama := strings.TrimSpace(it.JenisVaksin.Nama)
+	nama := strings.TrimSpace(it.JenisImunisasi.Nama)
 	if nama == "" {
-		nama = it.JenisVaksin.Kode
+		nama = it.JenisImunisasi.Kode
 	}
 	if it.JumlahDosis > 1 {
 		nama += fmt.Sprintf(" dosis ke-%d", it.DosisKe)
@@ -741,7 +741,7 @@ func notifNamaDosis(it *JadwalAnakItem) string {
 }
 
 func notifPerluDiberi(s string) bool {
-	return s == StatusVaksinJatuhTemp || s == StatusVaksinTerlambat
+	return s == StatusImunisasiJatuhTemp || s == StatusImunisasiTerlambat
 }
 
 type notifDataAnak struct {
@@ -751,7 +751,7 @@ type notifDataAnak struct {
 }
 
 func (s *NotifikasiService) muat(anak []models.Anak) (*notifDataAnak, error) {
-	master, err := s.vaksin.ListJadwalMaster()
+	master, err := s.imunisasi.ListJadwalMaster()
 	if err != nil {
 		return nil, err
 	}
@@ -759,7 +759,7 @@ func (s *NotifikasiService) muat(anak []models.Anak) (*notifDataAnak, error) {
 	for _, a := range anak {
 		ids = append(ids, a.ID)
 	}
-	riw, err := s.vaksin.ListRiwayatBanyakAnak(ids)
+	riw, err := s.imunisasi.ListRiwayatBanyakAnak(ids)
 	if err != nil {
 		return nil, err
 	}
@@ -808,31 +808,31 @@ func (s *NotifikasiService) rencana(a *models.Anak, d *notifDataAnak, tgl, hari 
 		if it.Opsional {
 			continue
 		}
-		if it.JenisVaksin.Kode == kodeHB0 {
+		if it.JenisImunisasi.Kode == kodeHB0 {
 			if i < len(kini) && notifPerluDiberi(kini[i].Status) && int(hari.Sub(lahir).Hours()/24) <= 7 {
 				out.KeFaskes = append(out.KeFaskes, RencanaItem{
-					Jenis: rencanaImunisasi, Kode: it.JenisVaksin.Kode, Nama: notifNamaDosis(it), DosisKe: it.DosisKe,
+					Jenis: rencanaImunisasi, Kode: it.JenisImunisasi.Kode, Nama: notifNamaDosis(it), DosisKe: it.DosisKe,
 					Keterangan: "Diberikan di puskesmas/bidan, paling lambat usia 7 hari",
 				})
 			}
 			continue
 		}
-		ideal, err := time.Parse(vaksinTglLayout, it.TanggalJadwal)
+		ideal, err := time.Parse(imunisasiTglLayout, it.TanggalJadwal)
 		if err != nil {
 			continue
 		}
-		item := RencanaItem{Jenis: rencanaImunisasi, Kode: it.JenisVaksin.Kode, Nama: notifNamaDosis(it), DosisKe: it.DosisKe,
-			JenisVaksinID: it.JenisVaksin.ID.String()}
+		item := RencanaItem{Jenis: rencanaImunisasi, Kode: it.JenisImunisasi.Kode, Nama: notifNamaDosis(it), DosisKe: it.DosisKe,
+			JenisImunisasiID: it.JenisImunisasi.ID.String()}
 		switch {
 		case notifPerluDiberi(it.Status) && !ideal.After(tgl):
-			item.Terlambat = it.Status == StatusVaksinTerlambat
+			item.Terlambat = it.Status == StatusImunisasiTerlambat
 			if item.Terlambat {
 				item.Keterangan = "Terlambat, jadwal ideal " + notifTglIndo(ideal)
 			} else {
 				item.Keterangan = "Jadwal ideal " + notifTglIndo(ideal)
 			}
 			out.Imunisasi = append(out.Imunisasi, item)
-		case it.Status == StatusVaksinTerlewat && i < len(kini) && notifPerluDiberi(kini[i].Status):
+		case it.Status == StatusImunisasiTerlewat && i < len(kini) && notifPerluDiberi(kini[i].Status):
 			if it.UsiaMaksBulan != nil {
 				batas := lahir.AddDate(0, int(*it.UsiaMaksBulan)+1, 0).AddDate(0, 0, -1)
 				item.Keterangan = "Batas usia " + notifTglIndo(batas) + ", berikan di puskesmas sebelum tanggal ini"
@@ -905,7 +905,7 @@ func (s *NotifikasiService) rencanaSuplemen(a *models.Anak, d *notifDataAnak, tg
 // RencanaBanyak: rencana per anak untuk satu jadwal (dipakai halaman pendaftaran orang tua).
 func (s *NotifikasiService) RencanaBanyak(anak []models.Anak, j *models.JadwalPosyandu) map[uuid.UUID]*RencanaAnak {
 	out := map[uuid.UUID]*RencanaAnak{}
-	if s.vaksin == nil || j == nil || len(anak) == 0 {
+	if s.imunisasi == nil || j == nil || len(anak) == 0 {
 		return out
 	}
 	hari := hariIni()
@@ -923,9 +923,9 @@ func (s *NotifikasiService) RencanaBanyak(anak []models.Anak, j *models.JadwalPo
 }
 
 // RencanaPendaftaran: "Rencana Hari Ini" satu anak pada kunjungan posyandunya (halaman catatan bidan).
-// Vaksin/suplemen yang dicatat pada kunjungan ini diabaikan agar tetap tampil sebagai bagian rencana.
+// Imunisasi/suplemen yang dicatat pada kunjungan ini diabaikan agar tetap tampil sebagai bagian rencana.
 func (s *NotifikasiService) RencanaPendaftaran(a *models.Anak, j *models.JadwalPosyandu, pendaftaranID uuid.UUID) *RencanaAnak {
-	if s == nil || s.vaksin == nil || a == nil || j == nil {
+	if s == nil || s.imunisasi == nil || a == nil || j == nil {
 		return nil
 	}
 	tgl := tglSaja(j.Tanggal)
@@ -960,7 +960,7 @@ func (s *NotifikasiService) RencanaPendaftaran(a *models.Anak, j *models.JadwalP
 // KirimRencana: rencana imunisasi & suplemen per anak ke orang tua, ringkasan ke bidan.
 // [pindahan] = rencana berasal dari jadwal sebelumnya yang dibatalkan.
 func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uint, pindahan bool) {
-	if s.vaksin == nil || j == nil {
+	if s.imunisasi == nil || j == nil {
 		return
 	}
 	defer s.pulih("rencana posyandu")
@@ -977,7 +977,7 @@ func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uin
 		return
 	}
 
-	semua, err := s.vaksin.AnakAktifPosyandu(j.Posyandu)
+	semua, err := s.imunisasi.AnakAktifPosyandu(j.Posyandu)
 	if err != nil {
 		log.Printf("pengingat: gagal mengambil anak posyandu %s: %v", j.Posyandu, err)
 		return
@@ -1073,7 +1073,7 @@ func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uin
 	}
 	kunci := fmt.Sprintf("%s:%s:ringkas:%s:%d-%d-%d-%d", models.NotifRencanaPosyandu, j.ID, tgl.Format("20060102"),
 		nAnak, nImun, nVit, nCacing)
-	isi := fmt.Sprintf("Posyandu %s, %s%s: %s. Mohon siapkan vaksin dan logistik suplemen.",
+	isi := fmt.Sprintf("Posyandu %s, %s%s: %s. Mohon siapkan imunisasi dan logistik suplemen.",
 		namaPos, waktu, lokasi, notifGabungKata(bagian))
 	s.kirimKeUser(bidan, models.NotifRencanaPosyandu, kunci, "jadwal_posyandu", &jid, pengirim,
 		func(models.Role) (string, string) { return "Rencana Pelayanan Posyandu", isi })
@@ -1081,7 +1081,7 @@ func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uin
 
 // RencanaSetelahBatal: rencana jadwal yang dibatalkan pindah ke jadwal berikutnya (bila sudah ada).
 func (s *NotifikasiService) RencanaSetelahBatal(batal *models.JadwalPosyandu, pengirim *uint) {
-	if s.vaksin == nil || batal == nil {
+	if s.imunisasi == nil || batal == nil {
 		return
 	}
 	defer s.pulih("rencana setelah batal")
@@ -1106,7 +1106,7 @@ func (s *NotifikasiService) RencanaSetelahBatal(batal *models.JadwalPosyandu, pe
 
 // Harian: H-3, imunisasi terlambat (H-1, maks 3 kali), ke faskes, dan jadwal belum dibuat.
 func (s *NotifikasiService) Harian(now time.Time) {
-	if s.vaksin == nil {
+	if s.imunisasi == nil {
 		return
 	}
 	defer s.pulih("pengingat kesehatan harian")
@@ -1131,7 +1131,7 @@ func (s *NotifikasiService) harianPosyandu(pos string, hari time.Time) {
 		}
 	}
 
-	daftar, err := s.vaksin.AnakAktifPosyandu(pos)
+	daftar, err := s.imunisasi.AnakAktifPosyandu(pos)
 	if err != nil {
 		log.Printf("pengingat: gagal mengambil anak %s: %v", pos, err)
 		return
@@ -1185,7 +1185,7 @@ func (s *NotifikasiService) cekFaskes(a *models.Anak, d *notifDataAnak, hari tim
 		if it.Opsional || !notifPerluDiberi(it.Status) {
 			continue
 		}
-		if it.JenisVaksin.Kode == kodeHB0 {
+		if it.JenisImunisasi.Kode == kodeHB0 {
 			if int(hari.Sub(lahir).Hours()/24) <= 7 {
 				hb0 = true
 			}
@@ -1201,7 +1201,7 @@ func (s *NotifikasiService) cekFaskes(a *models.Anak, d *notifDataAnak, hari tim
 		if berikut != nil && berikut.Before(batas) {
 			continue
 		}
-		items = append(items, RencanaItem{Jenis: rencanaImunisasi, Kode: it.JenisVaksin.Kode, Nama: notifNamaDosis(it), DosisKe: it.DosisKe})
+		items = append(items, RencanaItem{Jenis: rencanaImunisasi, Kode: it.JenisImunisasi.Kode, Nama: notifNamaDosis(it), DosisKe: it.DosisKe})
 		if batasAwal.IsZero() || batas.Before(batasAwal) {
 			batasAwal = batas
 		}
@@ -1273,10 +1273,10 @@ func (s *NotifikasiService) cekTerlambat(a *models.Anak, d *notifDataAnak, hari 
 	telat := []RencanaItem{}
 	for i := range kini {
 		it := &kini[i]
-		if it.Opsional || it.JenisVaksin.Kode == kodeHB0 || it.Status != StatusVaksinTerlambat {
+		if it.Opsional || it.JenisImunisasi.Kode == kodeHB0 || it.Status != StatusImunisasiTerlambat {
 			continue
 		}
-		telat = append(telat, RencanaItem{Jenis: rencanaImunisasi, Kode: it.JenisVaksin.Kode, Nama: notifNamaDosis(it), DosisKe: it.DosisKe, Terlambat: true})
+		telat = append(telat, RencanaItem{Jenis: rencanaImunisasi, Kode: it.JenisImunisasi.Kode, Nama: notifNamaDosis(it), DosisKe: it.DosisKe, Terlambat: true})
 	}
 	if len(telat) == 0 {
 		return
@@ -1335,15 +1335,15 @@ func (s *NotifikasiService) cekJadwalBelumAda(pos string, anak []models.Anak, d 
 		punya, telat := false, false
 		for k := range pada {
 			it := &pada[k]
-			if it.Opsional || it.JenisVaksin.Kode == kodeHB0 || !notifPerluDiberi(it.Status) {
+			if it.Opsional || it.JenisImunisasi.Kode == kodeHB0 || !notifPerluDiberi(it.Status) {
 				continue
 			}
-			ideal, err := time.Parse(vaksinTglLayout, it.TanggalJadwal)
+			ideal, err := time.Parse(imunisasiTglLayout, it.TanggalJadwal)
 			if err != nil || ideal.After(cek) {
 				continue
 			}
 			punya = true
-			if it.Status == StatusVaksinTerlambat {
+			if it.Status == StatusImunisasiTerlambat {
 				telat = true
 			}
 		}
@@ -1407,11 +1407,11 @@ func (s *NotifikasiService) LaporanKipi(anak *models.Anak, m *models.ImunisasiAn
 	if err != nil || len(bidan) == 0 {
 		return
 	}
-	vaksin := "imunisasi"
-	if m.JenisVaksin != nil && m.JenisVaksin.Nama != "" {
-		vaksin = m.JenisVaksin.Nama
-		if m.JenisVaksin.JumlahDosis > 1 {
-			vaksin += fmt.Sprintf(" dosis ke-%d", m.DosisKe)
+	imunisasi := "imunisasi"
+	if m.JenisImunisasi != nil && m.JenisImunisasi.Nama != "" {
+		imunisasi = m.JenisImunisasi.Nama
+		if m.JenisImunisasi.JumlahDosis > 1 {
+			imunisasi += fmt.Sprintf(" dosis ke-%d", m.DosisKe)
 		}
 	}
 	h := fnv.New32a()
@@ -1420,7 +1420,7 @@ func (s *NotifikasiService) LaporanKipi(anak *models.Anak, m *models.ImunisasiAn
 	aid := anak.ID
 	nama := strings.TrimSpace(anak.Nama)
 	isi := fmt.Sprintf("Orang tua %s melaporkan reaksi setelah %s (%s): %s. Mohon segera dihubungi dan ditindaklanjuti.",
-		nama, vaksin, notifTglIndo(tglSaja(m.TanggalPemberian)), m.ReaksiKipi)
+		nama, imunisasi, notifTglIndo(tglSaja(m.TanggalPemberian)), m.ReaksiKipi)
 	s.kirimKeUser(bidan, models.NotifLaporanKipi, kunci, "anak", &aid, &pengirim,
 		func(models.Role) (string, string) { return "Laporan Reaksi Imunisasi: " + nama, isi })
 }

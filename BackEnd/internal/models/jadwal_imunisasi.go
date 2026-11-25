@@ -19,13 +19,13 @@ const (
 )
 
 // JadwalImunisasi adalah master jadwal imunisasi: aturan usia pemberian
-// setiap dosis vaksin. Berlaku sama untuk semua anak.
+// setiap dosis imunisasi. Berlaku sama untuk semua anak.
 //
 // Tabel  : jadwal_imunisasi
-// Kunci  : (jenis_vaksin_id, dosis_ke) unik, satu baris per dosis.
-// Sumber : diisi otomatis saat server mulai (service.VaksinService.SiapkanMaster).
+// Kunci  : (jenis_imunisasi_id, dosis_ke) unik, satu baris per dosis.
+// Sumber : diisi otomatis saat server mulai (service.ImunisasiService.SiapkanMaster).
 //
-// Jadwal vaksin per anak TIDAK disimpan di database. Jadwal dan status setiap
+// Jadwal imunisasi per anak TIDAK disimpan di database. Jadwal dan status setiap
 // dosis (sudah, saatnya diberikan, terlambat, belum waktunya, menunggu dosis
 // sebelumnya, lewat batas usia) dihitung dari:
 //
@@ -37,8 +37,8 @@ type JadwalImunisasi struct {
 	// ID: kunci utama (UUID).
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 
-	// JenisVaksinID: vaksin yang dijadwalkan (FK ke jenis_vaksin).
-	JenisVaksinID uuid.UUID `gorm:"column:jenis_vaksin_id;type:uuid;not null;uniqueIndex:ux_jadwal_imunisasi_komposit" json:"jenis_vaksin_id"`
+	// JenisImunisasiID: imunisasi yang dijadwalkan (FK ke jenis_imunisasi).
+	JenisImunisasiID uuid.UUID `gorm:"column:jenis_vaksin_id;type:uuid;not null;uniqueIndex:ux_jadwal_imunisasi_komposit" json:"jenis_vaksin_id"`
 
 	// DosisKe: urutan dosis (1, 2, 3, ...).
 	DosisKe int16 `gorm:"column:dosis_ke;not null;uniqueIndex:ux_jadwal_imunisasi_komposit" json:"dosis_ke"`
@@ -63,8 +63,8 @@ type JadwalImunisasi struct {
 	// Keterangan: catatan khusus dosis, mis. "Kurang dari 24 jam setelah lahir".
 	Keterangan string `gorm:"column:keterangan;type:text" json:"keterangan"`
 
-	// JenisVaksin: relasi ke master jenis vaksin.
-	JenisVaksin *JenisVaksin `gorm:"foreignKey:JenisVaksinID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"jenis_vaksin,omitempty"`
+	// JenisImunisasi: relasi ke master jenis imunisasi.
+	JenisImunisasi *JenisImunisasi `gorm:"foreignKey:JenisVaksinID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"jenis_vaksin,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `gorm:"index" json:"updated_at"`

@@ -78,7 +78,7 @@ class _BidanHomeState extends State<BidanHome> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const SemuaBalitaPage(prefix: '/bidan', bisaKelolaVaksin: true),
+        builder: (_) => const SemuaBalitaPage(prefix: '/bidan', bisaKelolaImunisasi: true),
       ),
     );
   }

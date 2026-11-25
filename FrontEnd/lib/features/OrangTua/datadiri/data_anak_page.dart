@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../service/vaksin_service.dart';
+import '../../../service/imunisasi_service.dart';
 import 'data_orang_tua_page.dart';
 
 const _hijauTua = kHijauHeader;
@@ -146,19 +146,19 @@ class _DataAnakPageState extends State<DataAnakPage> {
       context,
       awal == null ? 'Data anak ditambahkan' : 'Data anak diperbarui',
     );
-    // Anak baru: riwayat vaksin dicatat bidan saat kunjungan pertama.
+    // Anak baru: riwayat imunisasi dicatat bidan saat kunjungan pertama.
     if (awal == null) await _infoBukuKia(hasil.nama);
     _muat();
   }
 
-  /// Info untuk orang tua: riwayat vaksin anak dicatat bidan, bukan diisi sendiri.
+  /// Info untuk orang tua: riwayat imunisasi anak dicatat bidan, bukan diisi sendiri.
   Future<void> _infoBukuKia(String nama) => showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Riwayat Vaksin Anak'),
+          title: const Text('Riwayat Imunisasi Anak'),
           content: Text(
-            'Bawa Buku KIA atau kartu vaksin $nama saat pertama kali ke posyandu. '
-            'Bidan akan mencatat vaksin yang sudah pernah diterima anak.',
+            'Bawa Buku KIA atau kartu imunisasi $nama saat pertama kali ke posyandu. '
+            'Bidan akan mencatat imunisasi yang sudah pernah diterima anak.',
             style: const TextStyle(fontSize: 16, height: 1.4),
           ),
           actions: [
@@ -227,7 +227,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
   }
 
   Widget _kartuAnak(DataAnak anak) {
-    final belumDicatat = anak.statusRiwayatVaksin != StatusRiwayatVaksin.dikonfirmasi;
+    final belumDicatat = anak.statusRiwayatImunisasi != StatusRiwayatImunisasi.dikonfirmasi;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
@@ -258,7 +258,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                   children: [
                     const SizedBox(
                       width: 130,
-                      child: Text('Riwayat Vaksin',
+                      child: Text('Riwayat Imunisasi',
                           style: TextStyle(
                               fontSize: 15.5, fontWeight: FontWeight.w600, color: kTeksGelap)),
                     ),
@@ -267,7 +267,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                             fontSize: 15.5, fontWeight: FontWeight.w600, color: kTeksGelap)),
                     Expanded(
                       child: Text(
-                        StatusRiwayatVaksin.label(anak.statusRiwayatVaksin),
+                        StatusRiwayatImunisasi.label(anak.statusRiwayatImunisasi),
                         style: TextStyle(
                           fontSize: 15.5,
                           fontWeight: FontWeight.w700,
@@ -282,7 +282,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                   // Anak arsip hanya dapat dilihat; riwayat tetap ada di menu Riwayat.
                   const Text(
                     'Data anak ini sudah tidak aktif di posyandu. '
-                    'Riwayat penimbangan dan vaksin tetap dapat dilihat.',
+                    'Riwayat penimbangan dan imunisasi tetap dapat dilihat.',
                     style: TextStyle(fontSize: 14.5, height: 1.4, color: AppColors.teksRedup),
                   )
                 else

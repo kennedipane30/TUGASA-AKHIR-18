@@ -224,7 +224,7 @@ class _SkdnViewState extends State<SkdnView> {
           prefix: widget.prefix,
           anakId: a.anakId,
           nama: a.nama,
-          bisaKelolaVaksin: widget.prefix == '/bidan',
+          bisaKelolaImunisasi: widget.prefix == '/bidan',
           tabAwal: 1,
         ),
       ),

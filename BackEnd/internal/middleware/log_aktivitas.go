@@ -77,13 +77,13 @@ var petaAksi = map[string]infoAksi{
 
 	// bidan
 	"PUT /bidan/pendaftaran/:id/catatan":             {"Menyimpan catatan pemeriksaan", "Pemeriksaan"},
-	"POST /bidan/vaksin/riwayat":                     {"Mencatat vaksin dari luar posyandu", "Imunisasi"},
-	"DELETE /bidan/vaksin/riwayat/:id":               {"Membatalkan catatan vaksin", "Imunisasi"},
-	"PUT /bidan/vaksin/riwayat/:id/konfirmasi":       {"Mengonfirmasi riwayat vaksin", "Imunisasi"},
+	"POST /bidan/vaksin/riwayat":                     {"Mencatat imunisasi dari luar posyandu", "Imunisasi"},
+	"DELETE /bidan/vaksin/riwayat/:id":               {"Membatalkan catatan imunisasi", "Imunisasi"},
+	"PUT /bidan/vaksin/riwayat/:id/konfirmasi":       {"Mengonfirmasi riwayat imunisasi", "Imunisasi"},
 	"PUT /bidan/vaksin/riwayat/:id/kipi":             {"Menindaklanjuti reaksi imunisasi", "Imunisasi"},
-	"POST /bidan/vaksin/anak/:id/konfirmasi-selesai": {"Menyelesaikan konfirmasi vaksin anak", "Imunisasi"},
-	"POST /bidan/vaksin/anak/:id/riwayat-awal":       {"Mencatat riwayat vaksin anak", "Imunisasi"},
-	"DELETE /bidan/vaksin/mandiri/:id":               {"Menghapus catatan vaksin mandiri", "Imunisasi"},
+	"POST /bidan/vaksin/anak/:id/konfirmasi-selesai": {"Menyelesaikan konfirmasi imunisasi anak", "Imunisasi"},
+	"POST /bidan/vaksin/anak/:id/riwayat-awal":       {"Mencatat riwayat imunisasi anak", "Imunisasi"},
+	"DELETE /bidan/vaksin/mandiri/:id":               {"Menghapus catatan imunisasi mandiri", "Imunisasi"},
 }
 
 var polaParam = regexp.MustCompile(`:[A-Za-z_]+`)

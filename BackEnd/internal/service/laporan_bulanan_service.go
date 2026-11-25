@@ -13,7 +13,7 @@ import (
 // LAPORAN BULANAN POSYANDU (sekretaris & bidan)
 //
 // Menggabungkan data yang sudah ada (rekap gizi, SKDN, kehadiran, suplemen)
-// ditambah imunisasi per jenis vaksin, untuk satu bulan.
+// ditambah imunisasi per jenis imunisasi, untuk satu bulan.
 // ============================================================================
 
 type LaporanBulananService struct {

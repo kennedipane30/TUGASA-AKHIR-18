@@ -13,7 +13,7 @@ import 'pendaftaran/pendaftaran_page.dart';
 import 'riwayat/grafik_page.dart';
 import 'riwayat/pemeriksaan_page.dart';
 import 'rujukan/rujukan_anak_page.dart';
-import 'vaksin/vaksin_page.dart';
+import 'imunisasi/imunisasi_page.dart';
 
 DateTime _tambahBulan(DateTime d, int n) {
   final total = d.month - 1 + n;
@@ -194,10 +194,10 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     );
   }
 
-  void _bukaVaksin() {
+  void _bukaImunisasi() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const OrangTuaVaksinPage()),
+      MaterialPageRoute(builder: (_) => const OrangTuaImunisasiPage()),
     );
   }
 
@@ -510,11 +510,11 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           onTap: _bukaGrafik,
         ),
         ItemLayananHome(
-          aset: 'vaksin_anak.png',
+          aset: 'imunisasi_anak.png',
           cadangan: Icons.vaccines_rounded,
           warna: const Color(0xFF2563EB),
-          judul: 'Vaksin &\nImunisasi',
-          onTap: _bukaVaksin,
+          judul: 'Imunisasi\nAnak',
+          onTap: _bukaImunisasi,
         ),
         ItemLayananHome(
           aset: 'rujukan_anak.png',

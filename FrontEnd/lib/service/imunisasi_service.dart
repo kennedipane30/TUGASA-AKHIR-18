@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import '../core/config/api_client.dart';
 
 // ============================================================================
-// MODEL VAKSIN
+// MODEL IMUNISASI
 //
 // Jadwal imunisasi (master Kemenkes) berlaku untuk semua anak. Jadwal per anak
 // dihitung server dari tanggal lahir + riwayat, lengkap dengan status:
@@ -31,10 +31,10 @@ String _tglApi(DateTime d) => '${d.year.toString().padLeft(4, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
 /// Tanggal untuk dikirim ke server (YYYY-MM-DD).
-String tanggalApiVaksin(DateTime d) => _tglApi(d);
+String tanggalApiImunisasi(DateTime d) => _tglApi(d);
 
-/// Status riwayat vaksin anak sebelum dilayani posyandu.
-class StatusRiwayatVaksin {
+/// Status riwayat imunisasi anak sebelum dilayani posyandu.
+class StatusRiwayatImunisasi {
   static const belumDitanya = 'belum_ditanya';
   static const belumPernah = 'belum_pernah';
   static const dilaporkan = 'dilaporkan';
@@ -73,8 +73,8 @@ class KondisiImunisasi {
   }
 }
 
-/// Status dosis vaksin pada jadwal anak.
-class StatusVaksin {
+/// Status dosis imunisasi pada jadwal anak.
+class StatusImunisasi {
   static const sudah = 'sudah';
   static const jatuhTempo = 'jatuh_tempo';
   static const terlambat = 'terlambat';
@@ -129,7 +129,7 @@ String usiaDariLahir(DateTime lahir, DateTime pada) {
   return sisa == 0 ? '$tahun tahun' : '$tahun tahun $sisa bulan';
 }
 
-class JenisVaksinInfo {
+class JenisImunisasiInfo {
   final String id;
   final String kode;
   final String nama;
@@ -137,7 +137,7 @@ class JenisVaksinInfo {
   final String caraPemberian;
   final bool khususDaerah;
 
-  const JenisVaksinInfo({
+  const JenisImunisasiInfo({
     required this.id,
     required this.kode,
     required this.nama,
@@ -146,7 +146,7 @@ class JenisVaksinInfo {
     required this.khususDaerah,
   });
 
-  factory JenisVaksinInfo.fromJson(Map<String, dynamic> j) => JenisVaksinInfo(
+  factory JenisImunisasiInfo.fromJson(Map<String, dynamic> j) => JenisImunisasiInfo(
         id: _s(j['id']),
         kode: _s(j['kode']),
         nama: _s(j['nama']).isEmpty ? '-' : _s(j['nama']),
@@ -159,7 +159,7 @@ class JenisVaksinInfo {
 /// Satu dosis pada jadwal imunisasi master.
 class JadwalImunisasi {
   final String id;
-  final JenisVaksinInfo jenis;
+  final JenisImunisasiInfo jenis;
   final int dosisKe;
   final int jumlahDosis;
   final String kelompok; // dasar | lanjutan
@@ -186,7 +186,7 @@ class JadwalImunisasi {
 
   factory JadwalImunisasi.fromJson(Map<String, dynamic> j) => JadwalImunisasi(
         id: _s(j['id']),
-        jenis: JenisVaksinInfo.fromJson(_m(j['jenis_vaksin'])),
+        jenis: JenisImunisasiInfo.fromJson(_m(j['jenis_vaksin'])),
         dosisKe: _i(j['dosis_ke']),
         jumlahDosis: _i(j['jumlah_dosis']),
         kelompok: _s(j['kelompok']),
@@ -206,9 +206,9 @@ class JadwalImunisasi {
   String get kunci => '${jenis.id}|$dosisKe';
 }
 
-class RiwayatVaksin {
+class RiwayatImunisasi {
   final String id;
-  final JenisVaksinInfo jenis;
+  final JenisImunisasiInfo jenis;
   final int dosisKe;
   final DateTime? tanggal;
   final int usiaBulan;
@@ -227,7 +227,7 @@ class RiwayatVaksin {
   final DateTime? kipiDilaporkanPada;
   final String kipiTindakLanjut;
 
-  const RiwayatVaksin({
+  const RiwayatImunisasi({
     required this.id,
     required this.jenis,
     required this.dosisKe,
@@ -249,9 +249,9 @@ class RiwayatVaksin {
     this.kipiTindakLanjut = '',
   });
 
-  factory RiwayatVaksin.fromJson(Map<String, dynamic> j) => RiwayatVaksin(
+  factory RiwayatImunisasi.fromJson(Map<String, dynamic> j) => RiwayatImunisasi(
         id: _s(j['id']),
-        jenis: JenisVaksinInfo.fromJson(_m(j['jenis_vaksin'])),
+        jenis: JenisImunisasiInfo.fromJson(_m(j['jenis_vaksin'])),
         dosisKe: _i(j['dosis_ke']),
         tanggal: _tgl(j['tanggal_pemberian']),
         usiaBulan: _i(j['usia_bulan']),
@@ -284,18 +284,18 @@ class RiwayatVaksin {
     return 'Posyandu';
   }
 
-  /// Nama vaksin lengkap dengan dosis, mis. "Polio Tetes (OPV) · Dosis 1".
+  /// Nama imunisasi lengkap dengan dosis, mis. "Polio Tetes (OPV) · Dosis 1".
   String get namaDosis => '${jenis.nama} · Dosis $dosisKe';
 }
 
-/// Satu dosis pada jadwal vaksin anak, lengkap dengan status.
-class JadwalVaksinAnak {
+/// Satu dosis pada jadwal imunisasi anak, lengkap dengan status.
+class JadwalImunisasiAnak {
   final JadwalImunisasi jadwal;
   final DateTime? tanggalJadwal;
   final String status;
   final String labelStatus;
   final bool opsional;
-  final RiwayatVaksin? riwayat;
+  final RiwayatImunisasi? riwayat;
 
   /// Tanggal posyandu tempat dosis ini diberikan (null bila jadwal belum dibuat).
   final DateTime? tanggalPosyandu;
@@ -305,7 +305,7 @@ class JadwalVaksinAnak {
   final bool susulan;
   final bool keFaskes;
 
-  const JadwalVaksinAnak({
+  const JadwalImunisasiAnak({
     required this.jadwal,
     required this.tanggalJadwal,
     required this.status,
@@ -320,13 +320,13 @@ class JadwalVaksinAnak {
     this.keFaskes = false,
   });
 
-  factory JadwalVaksinAnak.fromJson(Map<String, dynamic> j) => JadwalVaksinAnak(
+  factory JadwalImunisasiAnak.fromJson(Map<String, dynamic> j) => JadwalImunisasiAnak(
         jadwal: JadwalImunisasi.fromJson(j),
         tanggalJadwal: _tgl(j['tanggal_jadwal']),
         status: _s(j['status']),
         labelStatus: _s(j['label_status']),
         opsional: _b(j['opsional']),
-        riwayat: j['riwayat'] is Map ? RiwayatVaksin.fromJson(_m(j['riwayat'])) : null,
+        riwayat: j['riwayat'] is Map ? RiwayatImunisasi.fromJson(_m(j['riwayat'])) : null,
         tanggalPosyandu: _tgl(j['tanggal_posyandu']),
         menungguJadwal: _b(j['menunggu_jadwal']),
         perkiraanBulan: _s(j['perkiraan_bulan']),
@@ -344,11 +344,11 @@ class JadwalVaksinAnak {
     return labelStatus;
   }
 
-  bool get sudah => status == StatusVaksin.sudah;
+  bool get sudah => status == StatusImunisasi.sudah;
 
   /// Boleh diberikan hari ini (sesuai usia dan urutan dosis).
   bool get bisaDiberikan =>
-      status == StatusVaksin.jatuhTempo || status == StatusVaksin.terlambat;
+      status == StatusImunisasi.jatuhTempo || status == StatusImunisasi.terlambat;
 }
 
 class SuplemenRiwayat {
@@ -412,7 +412,7 @@ String namaSuplemen(String jenis) {
   return jenis.isEmpty ? '-' : jenis;
 }
 
-class RingkasanVaksin {
+class RingkasanImunisasi {
   final int totalDosis;
   final int sudah;
   final int jatuhTempo;
@@ -422,7 +422,7 @@ class RingkasanVaksin {
   final bool dasarLengkap;
   final bool lanjutanLengkap;
 
-  const RingkasanVaksin({
+  const RingkasanImunisasi({
     required this.totalDosis,
     required this.sudah,
     required this.jatuhTempo,
@@ -433,7 +433,7 @@ class RingkasanVaksin {
     required this.lanjutanLengkap,
   });
 
-  factory RingkasanVaksin.fromJson(Map<String, dynamic> j) => RingkasanVaksin(
+  factory RingkasanImunisasi.fromJson(Map<String, dynamic> j) => RingkasanImunisasi(
         totalDosis: _i(j['total_dosis']),
         sudah: _i(j['sudah']),
         jatuhTempo: _i(j['jatuh_tempo']),
@@ -445,58 +445,58 @@ class RingkasanVaksin {
       );
 }
 
-class AnakVaksinInfo {
+class AnakImunisasiInfo {
   final String id;
   final String nama;
   final String jenisKelamin;
   final DateTime? tanggalLahir;
   final int usiaBulan;
   final String usiaTeks;
-  final String statusRiwayatVaksin;
+  final String statusRiwayatImunisasi;
   final int menungguKonfirmasi;
 
-  const AnakVaksinInfo({
+  const AnakImunisasiInfo({
     required this.id,
     required this.nama,
     required this.jenisKelamin,
     required this.tanggalLahir,
     required this.usiaBulan,
     required this.usiaTeks,
-    this.statusRiwayatVaksin = StatusRiwayatVaksin.belumDitanya,
+    this.statusRiwayatImunisasi = StatusRiwayatImunisasi.belumDitanya,
     this.menungguKonfirmasi = 0,
   });
 
-  factory AnakVaksinInfo.fromJson(Map<String, dynamic> j) => AnakVaksinInfo(
+  factory AnakImunisasiInfo.fromJson(Map<String, dynamic> j) => AnakImunisasiInfo(
         id: _s(j['id']),
         nama: _s(j['nama']),
         jenisKelamin: _s(j['jenis_kelamin']),
         tanggalLahir: _tgl(j['tanggal_lahir']),
         usiaBulan: _i(j['usia_bulan']),
         usiaTeks: _s(j['usia_teks']),
-        statusRiwayatVaksin: _s(j['status_riwayat_vaksin']).isEmpty
-            ? StatusRiwayatVaksin.belumDitanya
+        statusRiwayatImunisasi: _s(j['status_riwayat_vaksin']).isEmpty
+            ? StatusRiwayatImunisasi.belumDitanya
             : _s(j['status_riwayat_vaksin']),
         menungguKonfirmasi: _i(j['menunggu_konfirmasi']),
       );
 
-  bool get riwayatDikonfirmasi => statusRiwayatVaksin == StatusRiwayatVaksin.dikonfirmasi;
+  bool get riwayatDikonfirmasi => statusRiwayatImunisasi == StatusRiwayatImunisasi.dikonfirmasi;
 }
 
-/// Kartu vaksin anak: jadwal + status, riwayat vaksin, riwayat suplemen.
-/// Vaksin di luar jadwal program (mis. Rotavirus, PCV, Influenza), dicatat bidan.
+/// Kartu imunisasi anak: jadwal + status, riwayat imunisasi, riwayat suplemen.
+/// Imunisasi di luar jadwal program (mis. Rotavirus, PCV, Influenza), dicatat bidan.
 /// Hanya riwayat: tidak memengaruhi jadwal imunisasi program.
-class VaksinMandiri {
+class ImunisasiMandiri {
   final String id;
-  final String namaVaksin;
+  final String namaImunisasi;
   final int dosisKe;
   final DateTime? tanggal;
   final String usiaTeks;
   final String tempat;
   final String fotoBukti;
 
-  const VaksinMandiri({
+  const ImunisasiMandiri({
     required this.id,
-    required this.namaVaksin,
+    required this.namaImunisasi,
     required this.dosisKe,
     required this.tanggal,
     required this.usiaTeks,
@@ -504,11 +504,11 @@ class VaksinMandiri {
     required this.fotoBukti,
   });
 
-  String get namaDosis => '$namaVaksin dosis $dosisKe';
+  String get namaDosis => '$namaImunisasi dosis $dosisKe';
 
-  factory VaksinMandiri.fromJson(Map<String, dynamic> j) => VaksinMandiri(
+  factory ImunisasiMandiri.fromJson(Map<String, dynamic> j) => ImunisasiMandiri(
         id: _s(j['id']),
-        namaVaksin: _s(j['nama_vaksin']),
+        namaImunisasi: _s(j['nama_vaksin']),
         dosisKe: _i(j['dosis_ke']),
         tanggal: _tgl(j['tanggal_pemberian']),
         usiaTeks: _s(j['usia_teks']),
@@ -517,73 +517,73 @@ class VaksinMandiri {
       );
 }
 
-class KartuVaksin {
-  final AnakVaksinInfo anak;
-  final RingkasanVaksin ringkasan;
-  final List<JadwalVaksinAnak> jadwal;
-  final List<RiwayatVaksin> riwayat;
+class KartuImunisasi {
+  final AnakImunisasiInfo anak;
+  final RingkasanImunisasi ringkasan;
+  final List<JadwalImunisasiAnak> jadwal;
+  final List<RiwayatImunisasi> riwayat;
   final List<SuplemenRiwayat> suplemen;
-  final List<VaksinMandiri> vaksinMandiri;
+  final List<ImunisasiMandiri> imunisasiMandiri;
 
-  const KartuVaksin({
+  const KartuImunisasi({
     required this.anak,
     required this.ringkasan,
     required this.jadwal,
     required this.riwayat,
     required this.suplemen,
-    this.vaksinMandiri = const [],
+    this.imunisasiMandiri = const [],
   });
 
-  factory KartuVaksin.fromJson(Map<String, dynamic> j) => KartuVaksin(
-        anak: AnakVaksinInfo.fromJson(_m(j['anak'])),
-        ringkasan: RingkasanVaksin.fromJson(_m(j['ringkasan'])),
-        jadwal: _l(j['jadwal']).map(JadwalVaksinAnak.fromJson).toList(),
-        riwayat: _l(j['riwayat']).map(RiwayatVaksin.fromJson).toList(),
+  factory KartuImunisasi.fromJson(Map<String, dynamic> j) => KartuImunisasi(
+        anak: AnakImunisasiInfo.fromJson(_m(j['anak'])),
+        ringkasan: RingkasanImunisasi.fromJson(_m(j['ringkasan'])),
+        jadwal: _l(j['jadwal']).map(JadwalImunisasiAnak.fromJson).toList(),
+        riwayat: _l(j['riwayat']).map(RiwayatImunisasi.fromJson).toList(),
         suplemen: _l(j['suplemen']).map(SuplemenRiwayat.fromJson).toList(),
-        vaksinMandiri: _l(j['vaksin_mandiri']).map(VaksinMandiri.fromJson).toList(),
+        imunisasiMandiri: _l(j['vaksin_mandiri']).map(ImunisasiMandiri.fromJson).toList(),
       );
 
   /// Dosis yang boleh diberikan hari ini.
-  List<JadwalVaksinAnak> get dianjurkan => jadwal.where((e) => e.bisaDiberikan).toList();
+  List<JadwalImunisasiAnak> get dianjurkan => jadwal.where((e) => e.bisaDiberikan).toList();
 }
 
-class StatistikJenisVaksin {
-  final JenisVaksinInfo jenis;
+class StatistikJenisImunisasi {
+  final JenisImunisasiInfo jenis;
   final int jumlahDosis;
   final int jumlahAnak;
   final int dosisPerAnak;
 
-  const StatistikJenisVaksin({
+  const StatistikJenisImunisasi({
     required this.jenis,
     required this.jumlahDosis,
     required this.jumlahAnak,
     required this.dosisPerAnak,
   });
 
-  factory StatistikJenisVaksin.fromJson(Map<String, dynamic> j) => StatistikJenisVaksin(
-        jenis: JenisVaksinInfo.fromJson(_m(j['jenis_vaksin'])),
+  factory StatistikJenisImunisasi.fromJson(Map<String, dynamic> j) => StatistikJenisImunisasi(
+        jenis: JenisImunisasiInfo.fromJson(_m(j['jenis_vaksin'])),
         jumlahDosis: _i(j['jumlah_dosis']),
         jumlahAnak: _i(j['jumlah_anak']),
         dosisPerAnak: _i(j['dosis_per_anak']),
       );
 }
 
-class StatistikVaksin {
+class StatistikImunisasi {
   final String posyandu;
   final int jumlahBalita;
   final int totalDiberikan;
-  final int totalAnakDivaksin;
+  final int totalAnakDiimunisasi;
   final int anakJatuhTempo;
   final int anakTerlambat;
   final int anakDasarLengkap;
   final int anakUsia12Bulan;
-  final List<StatistikJenisVaksin> jenis;
+  final List<StatistikJenisImunisasi> jenis;
 
-  const StatistikVaksin({
+  const StatistikImunisasi({
     required this.posyandu,
     required this.jumlahBalita,
     required this.totalDiberikan,
-    required this.totalAnakDivaksin,
+    required this.totalAnakDiimunisasi,
     required this.anakJatuhTempo,
     required this.anakTerlambat,
     required this.anakDasarLengkap,
@@ -591,16 +591,16 @@ class StatistikVaksin {
     required this.jenis,
   });
 
-  factory StatistikVaksin.fromJson(Map<String, dynamic> j) => StatistikVaksin(
+  factory StatistikImunisasi.fromJson(Map<String, dynamic> j) => StatistikImunisasi(
         posyandu: _s(j['posyandu']),
         jumlahBalita: _i(j['jumlah_balita']),
         totalDiberikan: _i(j['total_diberikan']),
-        totalAnakDivaksin: _i(j['total_anak_divaksin']),
+        totalAnakDiimunisasi: _i(j['total_anak_divaksin']),
         anakJatuhTempo: _i(j['anak_jatuh_tempo']),
         anakTerlambat: _i(j['anak_terlambat']),
         anakDasarLengkap: _i(j['anak_dasar_lengkap']),
         anakUsia12Bulan: _i(j['anak_usia_12_bulan']),
-        jenis: _l(j['jenis']).map(StatistikJenisVaksin.fromJson).toList(),
+        jenis: _l(j['jenis']).map(StatistikJenisImunisasi.fromJson).toList(),
       );
 
   /// Persentase Imunisasi Dasar Lengkap pada anak usia >= 12 bulan.
@@ -611,7 +611,7 @@ class StatistikVaksin {
 // SERVICE
 // ============================================================================
 
-class VaksinService {
+class ImunisasiService {
   String _pesanError(DioException e) {
     final data = e.response?.data;
     if (data is Map && data['error'] != null) return data['error'].toString();
@@ -664,11 +664,11 @@ class VaksinService {
     }
   }
 
-  /// Kartu vaksin anak: jadwal dengan status, riwayat vaksin, dan suplemen.
-  Future<KartuVaksin> kartuAnak(String anakId) async {
+  /// Kartu imunisasi anak: jadwal dengan status, riwayat imunisasi, dan suplemen.
+  Future<KartuImunisasi> kartuAnak(String anakId) async {
     try {
       final res = await ApiClient.dio.get('/vaksin/anak/$anakId');
-      return KartuVaksin.fromJson(_m(_data(res.data)));
+      return KartuImunisasi.fromJson(_m(_data(res.data)));
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }
@@ -676,7 +676,7 @@ class VaksinService {
 
   // ---------------------------------------------------------------- foto bukti
 
-  /// Unggah foto bukti vaksin dari luar; mengembalikan nama file di server.
+  /// Unggah foto bukti imunisasi dari luar; mengembalikan nama file di server.
   Future<String> unggahBukti(String path) async {
     try {
       final nama = path.split(RegExp(r'[\\/]')).last;
@@ -714,10 +714,10 @@ class VaksinService {
 
   // ---------------------------------------------------------------- bidan
 
-  /// Catat vaksin yang diberikan di luar posyandu (berdasarkan keterangan orang tua).
+  /// Catat imunisasi yang diberikan di luar posyandu (berdasarkan keterangan orang tua).
   Future<void> catatRiwayat({
     required String anakId,
-    required String jenisVaksinId,
+    required String jenisImunisasiId,
     required int dosisKe,
     required DateTime tanggal,
     String tempat = '',
@@ -730,7 +730,7 @@ class VaksinService {
     try {
       await ApiClient.dio.post('/bidan/vaksin/riwayat', data: {
         'anak_id': anakId,
-        'jenis_vaksin_id': jenisVaksinId,
+        'jenis_vaksin_id': jenisImunisasiId,
         'dosis_ke': dosisKe,
         'tanggal_pemberian': _tglApi(tanggal),
         'tempat': tempat,
@@ -745,7 +745,7 @@ class VaksinService {
     }
   }
 
-  /// Benarkan laporan vaksin orang tua; [tanggal] diisi bila tanggal perlu diperbaiki.
+  /// Benarkan laporan imunisasi orang tua; [tanggal] diisi bila tanggal perlu diperbaiki.
   Future<void> konfirmasiRiwayat(
     String riwayatId, {
     DateTime? tanggal,
@@ -763,11 +763,11 @@ class VaksinService {
     }
   }
 
-  /// Bidan mencatat riwayat vaksin anak sebelum posyandu (kunjungan pertama).
+  /// Bidan mencatat riwayat imunisasi anak sebelum posyandu (kunjungan pertama).
   /// [status]: 'sudah' | 'belum_pernah'.
-  /// [items]: vaksin program yang dicentang {jenis_vaksin_id, dosis_ke, tanggal_pemberian, tempat, foto_bukti}.
-  /// [mandiri]: vaksin di luar program {nama_vaksin, dosis_ke, tanggal_pemberian, tempat, foto_bukti}.
-  Future<KartuVaksin> catatRiwayatAwal({
+  /// [items]: imunisasi program yang dicentang {jenis_imunisasi_id, dosis_ke, tanggal_pemberian, tempat, foto_bukti}.
+  /// [mandiri]: imunisasi di luar program {nama_imunisasi, dosis_ke, tanggal_pemberian, tempat, foto_bukti}.
+  Future<KartuImunisasi> catatRiwayatAwal({
     required String anakId,
     required String status,
     List<Map<String, dynamic>> items = const [],
@@ -779,14 +779,14 @@ class VaksinService {
         'items': items,
         'mandiri': mandiri,
       });
-      return KartuVaksin.fromJson(_m(_data(res.data)));
+      return KartuImunisasi.fromJson(_m(_data(res.data)));
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }
   }
 
-  /// Hapus catatan vaksin di luar program yang salah (bidan).
-  Future<void> hapusVaksinMandiri(String id) async {
+  /// Hapus catatan imunisasi di luar program yang salah (bidan).
+  Future<void> hapusImunisasiMandiri(String id) async {
     try {
       await ApiClient.dio.delete('/bidan/vaksin/mandiri/$id');
     } on DioException catch (e) {
@@ -794,7 +794,7 @@ class VaksinService {
     }
   }
 
-  /// Riwayat vaksin anak sudah benar; imunisasi di posyandu dapat diberikan.
+  /// Riwayat imunisasi anak sudah benar; imunisasi di posyandu dapat diberikan.
   Future<void> selesaiKonfirmasi(String anakId) async {
     try {
       await ApiClient.dio.post('/bidan/vaksin/anak/$anakId/konfirmasi-selesai');
@@ -825,10 +825,10 @@ class VaksinService {
 
   // ---------------------------------------------------------------- sekretaris
 
-  Future<StatistikVaksin> statistik() async {
+  Future<StatistikImunisasi> statistik() async {
     try {
       final res = await ApiClient.dio.get('/sekretaris/vaksin/statistik');
-      return StatistikVaksin.fromJson(_m(_data(res.data)));
+      return StatistikImunisasi.fromJson(_m(_data(res.data)));
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }

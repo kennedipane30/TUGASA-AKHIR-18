@@ -13,7 +13,7 @@ import '../auth/auth_provider.dart';
 import 'akun/kelola_akun_page.dart';
 import '../../core/pages/balita/semua_balita_page.dart';
 import '../../core/pages/rekap/rekap_posyandu_page.dart';
-import 'vaksin/vaksin_page.dart';
+import 'imunisasi/imunisasi_page.dart';
 import 'log_aktivitas/log_aktivitas_page.dart';
 import 'laporan_bulanan/laporan_bulanan_page.dart';
 
@@ -75,10 +75,10 @@ class _AdminHomeState extends State<AdminHome> {
     }
   }
 
-  void _bukaVaksin() {
+  void _bukaImunisasi() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const AdminVaksinPage()),
+      MaterialPageRoute(builder: (_) => const AdminImunisasiPage()),
     );
   }
 
@@ -305,11 +305,11 @@ class _AdminHomeState extends State<AdminHome> {
           onTap: _bukaQr,
         ),
         ItemLayananHome(
-          aset: 'vaksin_anak.png',
+          aset: 'imunisasi_anak.png',
           cadangan: Icons.vaccines_outlined,
           warna: AppColors.hijau,
-          judul: 'Vaksin &\nImunisasi',
-          onTap: _bukaVaksin,
+          judul: 'Imunisasi\nAnak',
+          onTap: _bukaImunisasi,
         ),
         ItemLayananHome(
           aset: 'pengumuman.png',

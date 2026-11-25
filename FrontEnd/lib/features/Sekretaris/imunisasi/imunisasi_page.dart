@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
-import '../../../service/vaksin_service.dart';
+import '../../../service/imunisasi_service.dart';
 
 const _hijauHeader = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
@@ -105,16 +105,16 @@ Widget _judulTebal(String teks) {
 
 /// Sekretaris: rekap imunisasi posyandu (cakupan, anak terlambat, jumlah dosis per jenis)
 /// dan jadwal imunisasi rutin yang berlaku.
-class AdminVaksinPage extends StatefulWidget {
-  const AdminVaksinPage({super.key});
+class AdminImunisasiPage extends StatefulWidget {
+  const AdminImunisasiPage({super.key});
 
   @override
-  State<AdminVaksinPage> createState() => _AdminVaksinPageState();
+  State<AdminImunisasiPage> createState() => _AdminImunisasiPageState();
 }
 
-class _AdminVaksinPageState extends State<AdminVaksinPage> {
-  final _svc = VaksinService();
-  StatistikVaksin? _data;
+class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
+  final _svc = ImunisasiService();
+  StatistikImunisasi? _data;
   List<JadwalImunisasi> _jadwal = [];
   bool _loading = true;
   String? _error;
@@ -134,7 +134,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
       final hasil = await Future.wait([_svc.statistik(), _svc.jadwalMaster()]);
       if (!mounted) return;
       setState(() {
-        _data = hasil[0] as StatistikVaksin;
+        _data = hasil[0] as StatistikImunisasi;
         _jadwal = hasil[1] as List<JadwalImunisasi>;
         _loading = false;
       });
@@ -148,7 +148,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
   // Tombol kembali hanya muncul bila ada halaman sebelumnya.
   // -------------------------------------------------------------------------
   Widget _header() {
@@ -167,7 +167,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
               // Judul di tengah
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
-                child: _judulTebal('Data Vaksin & Imunisasi'),
+                child: _judulTebal('Data Imunisasi'),
               ),
               // Tombol kembali di kiri
               if (bisaKembali)
@@ -234,7 +234,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
     );
   }
 
-  Widget _isi(StatistikVaksin d) {
+  Widget _isi(StatistikImunisasi d) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -274,7 +274,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
                   _kotak('Dosis\nDiberikan', '${d.totalDiberikan}',
                       const Color(0xFFE6F8EF), const Color(0xFFBDEBD3), const Color(0xFF059669)),
                   const SizedBox(width: 8),
-                  _kotak('Anak\nDivaksin', '${d.totalAnakDivaksin}',
+                  _kotak('Anak\nDiimunisasi', '${d.totalAnakDiimunisasi}',
                       const Color(0xFFE3F2FD), const Color(0xFFBFDFF7), const Color(0xFF2563EB)),
                   const SizedBox(width: 8),
                   _kotak('Balita\nAktif', '${d.jumlahBalita}',
@@ -284,7 +284,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  _kotak('Saatnya Divaksin', '${d.anakJatuhTempo}',
+                  _kotak('Saatnya Diimunisasi', '${d.anakJatuhTempo}',
                       const Color(0xFFFFF4DC), const Color(0xFFF9E0A8), const Color(0xFFD97706)),
                   const SizedBox(width: 8),
                   _kotak('Anak Terlambat', '${d.anakTerlambat}',
@@ -295,13 +295,13 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
           ),
         ),
         _kartu(
-          judul: 'Jumlah Pemberian per Vaksin',
+          judul: 'Jumlah Pemberian per Imunisasi',
           kanan: '${d.jenis.length} jenis',
           child: d.jenis.isEmpty
               ? const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Center(
-                    child: Text('Belum ada data jenis vaksin',
+                    child: Text('Belum ada data jenis imunisasi',
                         style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
                   ),
                 )
@@ -344,7 +344,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
     );
   }
 
-  Widget _barisJenis(StatistikJenisVaksin e, int jumlahBalita) {
+  Widget _barisJenis(StatistikJenisImunisasi e, int jumlahBalita) {
     final belum = (jumlahBalita - e.jumlahAnak) < 0 ? 0 : jumlahBalita - e.jumlahAnak;
     return Container(
       width: double.infinity,
@@ -399,7 +399,7 @@ class _AdminVaksinPageState extends State<AdminVaksinPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _baris('Usia', g.key, lebar: 108),
-                _baris('Jenis vaksin', g.value.map((j) => j.namaDosis).join(', '), lebar: 108),
+                _baris('Jenis imunisasi', g.value.map((j) => j.namaDosis).join(', '), lebar: 108),
               ],
             ),
           ),

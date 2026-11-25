@@ -13,15 +13,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type VaksinHandler struct{ svc *service.VaksinService }
+type ImunisasiHandler struct{ svc *service.ImunisasiService }
 
-func NewVaksinHandler(svc *service.VaksinService) *VaksinHandler { return &VaksinHandler{svc} }
+func NewImunisasiHandler(svc *service.ImunisasiService) *ImunisasiHandler { return &ImunisasiHandler{svc} }
 
-func (h *VaksinHandler) gagal(c *gin.Context, err error) {
+func (h *ImunisasiHandler) gagal(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, service.ErrAnakTidakAda):
 		c.JSON(http.StatusNotFound, gin.H{"error": "anak tidak ditemukan"})
-	case errors.Is(err, service.ErrRiwayatVaksinTidakAda):
+	case errors.Is(err, service.ErrRiwayatImunisasiTidakAda):
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	default:
 		tulisError(c, err)
@@ -30,8 +30,8 @@ func (h *VaksinHandler) gagal(c *gin.Context, err error) {
 
 // ---------------------------------------------------------------- semua role
 
-// GET /vaksin/jadwal : jadwal imunisasi rutin (master, berlaku untuk semua anak).
-func (h *VaksinHandler) JadwalMaster(c *gin.Context) {
+// GET /imunisasi/jadwal : jadwal imunisasi rutin (master, berlaku untuk semua anak).
+func (h *ImunisasiHandler) JadwalMaster(c *gin.Context) {
 	data, err := h.svc.ListJadwalMaster()
 	if err != nil {
 		h.gagal(c, err)
@@ -40,9 +40,9 @@ func (h *VaksinHandler) JadwalMaster(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
-// GET /vaksin/anak/:anak_id : kartu vaksin anak (jadwal + status, riwayat vaksin, suplemen).
+// GET /imunisasi/anak/:anak_id : kartu imunisasi anak (jadwal + status, riwayat imunisasi, suplemen).
 // Bidan, kader, sekretaris: anak di posyandunya. Orang tua: anak di keluarganya.
-func (h *VaksinHandler) KartuAnak(c *gin.Context) {
+func (h *ImunisasiHandler) KartuAnak(c *gin.Context) {
 	anakID, ok := idParam(c, "anak_id")
 	if !ok {
 		return
@@ -55,12 +55,12 @@ func (h *VaksinHandler) KartuAnak(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
-// ---------------------------------------------------------------- foto bukti vaksin
+// ---------------------------------------------------------------- foto bukti imunisasi
 
 const maksUkuranBukti = 3 << 20 // 3 MB
 
-// POST /vaksin/bukti (multipart, field "file") : unggah foto bukti vaksin dari luar (orang tua, bidan).
-func (h *VaksinHandler) UnggahBukti(c *gin.Context) {
+// POST /imunisasi/bukti (multipart, field "file") : unggah foto bukti imunisasi dari luar (orang tua, bidan).
+func (h *ImunisasiHandler) UnggahBukti(c *gin.Context) {
 	role := c.GetString("role")
 	if role != "orang_tua" && role != "bidan" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "akses ditolak"})
@@ -109,8 +109,8 @@ func (h *VaksinHandler) UnggahBukti(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": gin.H{"nama": nama}})
 }
 
-// GET /vaksin/bukti/:nama : tampilkan foto bukti (hanya pengguna yang login).
-func (h *VaksinHandler) AmbilBukti(c *gin.Context) {
+// GET /imunisasi/bukti/:nama : tampilkan foto bukti (hanya pengguna yang login).
+func (h *ImunisasiHandler) AmbilBukti(c *gin.Context) {
 	nama := c.Param("nama")
 	if !service.NamaBuktiValid(nama) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "foto tidak ditemukan"})
@@ -127,8 +127,8 @@ func (h *VaksinHandler) AmbilBukti(c *gin.Context) {
 
 // ---------------------------------------------------------------- orang tua
 
-// POST /vaksin/riwayat/:id/kipi : orang tua melaporkan reaksi setelah imunisasi.
-func (h *VaksinHandler) LaporKipi(c *gin.Context) {
+// POST /imunisasi/riwayat/:id/kipi : orang tua melaporkan reaksi setelah imunisasi.
+func (h *ImunisasiHandler) LaporKipi(c *gin.Context) {
 	id, ok := idParam(c, "id")
 	if !ok {
 		return
@@ -148,15 +148,15 @@ func (h *VaksinHandler) LaporKipi(c *gin.Context) {
 
 // ---------------------------------------------------------------- bidan
 
-// POST /bidan/vaksin/riwayat : catat vaksin yang diberikan di luar posyandu.
-func (h *VaksinHandler) CatatRiwayat(c *gin.Context) {
+// POST /bidan/imunisasi/riwayat : catat imunisasi yang diberikan di luar posyandu.
+func (h *ImunisasiHandler) CatatRiwayat(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
 	var in service.CatatRiwayatInput
 	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "data vaksin belum lengkap atau tidak valid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "data imunisasi belum lengkap atau tidak valid"})
 		return
 	}
 	data, err := h.svc.CatatRiwayat(c.GetUint("user_id"), pos, in)
@@ -167,8 +167,8 @@ func (h *VaksinHandler) CatatRiwayat(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": data})
 }
 
-// DELETE /bidan/vaksin/riwayat/:id : batalkan catatan vaksin dari luar / laporan orang tua.
-func (h *VaksinHandler) HapusRiwayat(c *gin.Context) {
+// DELETE /bidan/imunisasi/riwayat/:id : batalkan catatan imunisasi dari luar / laporan orang tua.
+func (h *ImunisasiHandler) HapusRiwayat(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
@@ -181,11 +181,11 @@ func (h *VaksinHandler) HapusRiwayat(c *gin.Context) {
 		h.gagal(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "riwayat vaksin dihapus"})
+	c.JSON(http.StatusOK, gin.H{"message": "riwayat imunisasi dihapus"})
 }
 
-// PUT /bidan/vaksin/riwayat/:id/konfirmasi : benarkan (dan perbaiki) laporan vaksin orang tua.
-func (h *VaksinHandler) KonfirmasiRiwayat(c *gin.Context) {
+// PUT /bidan/imunisasi/riwayat/:id/konfirmasi : benarkan (dan perbaiki) laporan imunisasi orang tua.
+func (h *ImunisasiHandler) KonfirmasiRiwayat(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
@@ -207,8 +207,8 @@ func (h *VaksinHandler) KonfirmasiRiwayat(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
-// POST /bidan/vaksin/anak/:anak_id/konfirmasi-selesai : riwayat vaksin anak sudah benar.
-func (h *VaksinHandler) SelesaiKonfirmasi(c *gin.Context) {
+// POST /bidan/imunisasi/anak/:anak_id/konfirmasi-selesai : riwayat imunisasi anak sudah benar.
+func (h *ImunisasiHandler) SelesaiKonfirmasi(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
@@ -225,8 +225,8 @@ func (h *VaksinHandler) SelesaiKonfirmasi(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
-// PUT /bidan/vaksin/riwayat/:id/kipi : catat tindak lanjut reaksi setelah imunisasi.
-func (h *VaksinHandler) TindakLanjutKipi(c *gin.Context) {
+// PUT /bidan/imunisasi/riwayat/:id/kipi : catat tindak lanjut reaksi setelah imunisasi.
+func (h *ImunisasiHandler) TindakLanjutKipi(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
@@ -250,8 +250,8 @@ func (h *VaksinHandler) TindakLanjutKipi(c *gin.Context) {
 
 // ---------------------------------------------------------------- sekretaris
 
-// GET /sekretaris/vaksin/statistik : rekap imunisasi posyandu sekretaris.
-func (h *VaksinHandler) Statistik(c *gin.Context) {
+// GET /sekretaris/imunisasi/statistik : rekap imunisasi posyandu sekretaris.
+func (h *ImunisasiHandler) Statistik(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return

@@ -186,7 +186,7 @@ class _HasilAnakPage extends StatefulWidget {
 
 class _HasilAnakPageState extends State<_HasilAnakPage> {
   Map<String, dynamic>? _d;
-  Map<String, String> _namaVaksin = {};
+  Map<String, String> _namaImunisasi = {};
   bool _memuat = true;
   String? _gagal;
 
@@ -225,7 +225,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
 
       setState(() {
         _d = d is Map ? Map<String, dynamic>.from(d) : null;
-        _namaVaksin = peta;
+        _namaImunisasi = peta;
         _gagal = null;
         _memuat = false;
       });
@@ -456,7 +456,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
       ),
       if (imun.isNotEmpty)
         _kartu(
-          title: 'Vaksin & Imunisasi',
+          title: 'Imunisasi',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -467,7 +467,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${_namaVaksin[_teks(v['jenis_vaksin_id'])] ?? 'Vaksin'} · Dosis ${_teks(v['dosis_ke'])}',
+                        '${_namaImunisasi[_teks(v['jenis_imunisasi_id'])] ?? 'Imunisasi'} · Dosis ${_teks(v['dosis_ke'])}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 17,

@@ -111,9 +111,9 @@ func (h *PelayananHandler) SimpanCatatan(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": d})
 }
 
-// GET /vaksin  (daftar jenis vaksin untuk pilihan bidan)
-func (h *PelayananHandler) ListVaksin(c *gin.Context) {
-	list, err := h.svc.ListVaksin()
+// GET /imunisasi  (daftar jenis imunisasi untuk pilihan bidan)
+func (h *PelayananHandler) ListJenisImunisasi(c *gin.Context) {
+	list, err := h.svc.ListJenisImunisasi()
 	if err != nil {
 		tulisError(c, err)
 		return

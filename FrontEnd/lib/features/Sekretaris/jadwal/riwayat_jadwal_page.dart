@@ -116,7 +116,7 @@ class _AdminRiwayatJadwalPageState extends State<AdminRiwayatJadwalPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
   // -------------------------------------------------------------------------
   Widget _header() {
     return Container(

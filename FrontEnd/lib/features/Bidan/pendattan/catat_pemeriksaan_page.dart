@@ -10,10 +10,10 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../../core/widgets/status_gizi_widget.dart';
 import '../../../service/kbm_model.dart';
-import '../../../service/vaksin_service.dart';
+import '../../../service/imunisasi_service.dart';
 import '../../OrangTua/pendaftaran/pendaftaran_page.dart' show RencanaAnakJadwal;
-import '../vaksin/vaksin_anak_page.dart';
-import '../vaksin/vaksin_lihat_body.dart' show tampilkanBuktiVaksin;
+import '../imunisasi/imunisasi_anak_page.dart';
+import '../imunisasi/imunisasi_lihat_body.dart' show tampilkanBuktiImunisasi;
 
 part 'form_pemeriksaan.dart';
 part 'kartu_pemeriksaan.dart';
@@ -21,7 +21,7 @@ part 'edit_pemeriksaan_page.dart';
 
 // ---------------------------------------------------------------------------
 // HALAMAN CATAT PEMERIKSAAN (anak yang belum memiliki catatan bidan)
-// Vaksin & suplemen sesuai jadwal dicentang otomatis.
+// Imunisasi & suplemen sesuai jadwal dicentang otomatis.
 // ---------------------------------------------------------------------------
 class CatatPemeriksaanPage extends StatefulWidget {
   final String pendaftaranId;
@@ -87,30 +87,30 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
         _saranGizi.text = c['saran_gizi']?.toString() ?? '';
       }
 
-      // Riwayat vaksin sebelum posyandu.
+      // Riwayat imunisasi sebelum posyandu.
       final status = detail['status_riwayat_vaksin']?.toString() ?? '';
-      final luar = <RiwayatVaksin>[];
+      final luar = <RiwayatImunisasi>[];
       final rl = detail['riwayat_luar'];
       if (rl is List) {
         for (final e in rl) {
-          if (e is Map) luar.add(RiwayatVaksin.fromJson(Map<String, dynamic>.from(e)));
+          if (e is Map) luar.add(RiwayatImunisasi.fromJson(Map<String, dynamic>.from(e)));
         }
       }
 
-      // Vaksin yang sudah tersimpan pada kunjungan ini.
-      for (final v in _vaksinDipilih.values) {
+      // Imunisasi yang sudah tersimpan pada kunjungan ini.
+      for (final v in _imunisasiDipilih.values) {
         v.dispose();
       }
-      _vaksinDipilih.clear();
-      _vaksinSesiIni.clear();
+      _imunisasiDipilih.clear();
+      _imunisasiSesiIni.clear();
       _kondisi = null;
       final imun = detail['imunisasi'];
       if (imun is List) {
         for (final e in imun) {
           if (e is Map && e['jenis_vaksin_id'] != null) {
-            final k = '${e['jenis_vaksin_id']}|${e['dosis_ke']}';
-            _vaksinDipilih[k] = _PilihVaksin();
-            _vaksinSesiIni.add(k);
+            final k = '${e['jenis_imunisasi_id']}|${e['dosis_ke']}';
+            _imunisasiDipilih[k] = _PilihImunisasi();
+            _imunisasiSesiIni.add(k);
           }
         }
       }
@@ -149,19 +149,19 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
         }
       }
 
-      // Catatan belum pernah disimpan: vaksin & suplemen sesuai jadwal dipilih otomatis.
+      // Catatan belum pernah disimpan: imunisasi & suplemen sesuai jadwal dipilih otomatis.
       final rRaw = detail['rencana'];
       final rencana = rRaw is Map ? RencanaAnakJadwal.fromApi(Map<String, dynamic>.from(rRaw)) : null;
       final usiaBln = int.tryParse(detail['usia_bulan']?.toString() ?? '') ?? 0;
       var otomatis = false;
       if (rencana != null && c is! Map) {
-        // Anak sakit menurut kader: vaksin tidak dicentang otomatis (imunisasi ditunda).
-        if (status == StatusRiwayatVaksin.dikonfirmasi && !sakitKader) {
+        // Anak sakit menurut kader: imunisasi tidak dicentang otomatis (imunisasi ditunda).
+        if (status == StatusRiwayatImunisasi.dikonfirmasi && !sakitKader) {
           for (final it in rencana.imunisasi) {
-            if (it.jenisVaksinId.isEmpty) continue;
-            final k = '${it.jenisVaksinId}|${it.dosisKe}';
-            if (!_vaksinDipilih.containsKey(k)) {
-              _vaksinDipilih[k] = _PilihVaksin();
+            if (it.jenisImunisasiId.isEmpty) continue;
+            final k = '${it.jenisImunisasiId}|${it.dosisKe}';
+            if (!_imunisasiDipilih.containsKey(k)) {
+              _imunisasiDipilih[k] = _PilihImunisasi();
               otomatis = true;
             }
           }
@@ -183,13 +183,13 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
             'sehingga imunisasi ditunda sampai anak sehat.';
       }
 
-      // Kartu vaksin anak (jadwal + status).
-      KartuVaksin? kartu;
+      // Kartu imunisasi anak (jadwal + status).
+      KartuImunisasi? kartu;
       String? gagalKartu;
       final anakId = (detail['anak'] is Map) ? (detail['anak']['id']?.toString() ?? '') : '';
       if (anakId.isNotEmpty) {
         try {
-          kartu = await _svcVaksin.kartuAnak(anakId);
+          kartu = await _svcImunisasi.kartuAnak(anakId);
         } catch (e) {
           gagalKartu = _pesanError(e);
         }
@@ -199,7 +199,7 @@ class _CatatPemeriksaanState extends State<CatatPemeriksaanPage>
       setState(() {
         _detail = detail;
         _mulaiSesi = mulaiSesi;
-        _statusRiwayat = status.isEmpty ? StatusRiwayatVaksin.belumDitanya : status;
+        _statusRiwayat = status.isEmpty ? StatusRiwayatImunisasi.belumDitanya : status;
         _riwayatLuar = luar;
         _kartu = kartu;
         _gagalKartu = gagalKartu;

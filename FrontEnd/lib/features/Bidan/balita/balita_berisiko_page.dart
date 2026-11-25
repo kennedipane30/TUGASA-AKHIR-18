@@ -80,7 +80,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
           prefix: '/bidan',
           anakId: a.balita.anakId,
           nama: a.balita.nama,
-          bisaKelolaVaksin: true,
+          bisaKelolaImunisasi: true,
         ),
       ),
     );

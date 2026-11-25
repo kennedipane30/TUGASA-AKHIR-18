@@ -246,7 +246,7 @@ class DataAnak {
   String kodeQr;
   String nama, nik, tglLahir, jk, beratLahir, panjangLahir; // tglLahir: dd/mm/yyyy
   // belum_ditanya | belum_pernah | dilaporkan | perlu_ditanyakan | dikonfirmasi
-  String statusRiwayatVaksin;
+  String statusRiwayatImunisasi;
 
   /// aktif | arsip (diarsipkan kader: pindah / meninggal, atau otomatis: lulus balita)
   String status;
@@ -264,7 +264,7 @@ class DataAnak {
     this.jk = '',
     this.beratLahir = '',
     this.panjangLahir = '',
-    this.statusRiwayatVaksin = 'belum_ditanya',
+    this.statusRiwayatImunisasi = 'belum_ditanya',
     this.status = 'aktif',
     this.tglArsip = '',
     this.alasanArsip = '',
@@ -279,7 +279,7 @@ class DataAnak {
         jk: j['jenis_kelamin']?.toString() ?? '',
         beratLahir: angka(j['berat_lahir_kg']),
         panjangLahir: angka(j['panjang_lahir_cm']),
-        statusRiwayatVaksin: (j['status_riwayat_vaksin']?.toString() ?? '').isEmpty
+        statusRiwayatImunisasi: (j['status_riwayat_vaksin']?.toString() ?? '').isEmpty
             ? 'belum_ditanya'
             : j['status_riwayat_vaksin'].toString(),
         status: j['status']?.toString() ?? 'aktif',

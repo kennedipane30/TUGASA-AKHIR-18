@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/posyandu.dart';
-import '../../../service/vaksin_service.dart';
+import '../../../service/imunisasi_service.dart';
 import '../../auth/auth_provider.dart';
-import 'vaksin_anak_lihat_page.dart';
+import 'imunisasi_anak_lihat_page.dart';
 
 const _hijauHeader = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
@@ -80,16 +80,16 @@ const _tautanDetail = Text(
 );
 
 /// Kader: cari anak (hanya posyandu kader sendiri)
-/// lalu lihat jadwal imunisasi, riwayat vaksin, dan suplemennya.
-class KaderVaksinPage extends StatefulWidget {
-  const KaderVaksinPage({super.key});
+/// lalu lihat jadwal imunisasi, riwayat imunisasi, dan suplemennya.
+class KaderImunisasiPage extends StatefulWidget {
+  const KaderImunisasiPage({super.key});
 
   @override
-  State<KaderVaksinPage> createState() => _KaderVaksinPageState();
+  State<KaderImunisasiPage> createState() => _KaderImunisasiPageState();
 }
 
-class _KaderVaksinPageState extends State<KaderVaksinPage> {
-  final _svc = VaksinService();
+class _KaderImunisasiPageState extends State<KaderImunisasiPage> {
+  final _svc = ImunisasiService();
   final _cari = TextEditingController();
 
   List<AnakRingkas> _hasil = [];
@@ -143,7 +143,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VaksinAnakLihatPage(
+        builder: (_) => ImunisasiAnakLihatPage(
           anakId: a.id,
           namaAnak: a.nama,
           usia: a.usia,
@@ -168,7 +168,7 @@ class _KaderVaksinPageState extends State<KaderVaksinPage> {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
-                child: _judulTebal('Vaksin & Imunisasi'),
+                child: _judulTebal('Imunisasi'),
               ),
               Align(
                 alignment: Alignment.centerLeft,

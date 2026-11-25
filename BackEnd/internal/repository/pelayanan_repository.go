@@ -75,8 +75,8 @@ func (r *PelayananRepository) ListPemeriksaan(pendaftaranIDs []uuid.UUID) ([]mod
 
 // ---------------------------------------------------------------- imunisasi dan suplemen
 
-func (r *PelayananRepository) ListVaksin() ([]models.JenisVaksin, error) {
-	list := []models.JenisVaksin{}
+func (r *PelayananRepository) ListJenisImunisasi() ([]models.JenisImunisasi, error) {
+	list := []models.JenisImunisasi{}
 	err := r.db.Where("is_active = ?", true).Order("nama").Find(&list).Error
 	return list, err
 }
@@ -122,13 +122,13 @@ func (r *PelayananRepository) ListImunisasi(pendaftaranIDs []uuid.UUID) ([]model
 	if len(pendaftaranIDs) == 0 {
 		return list, nil
 	}
-	err := r.db.Preload("JenisVaksin").Where("pendaftaran_id IN ?", pendaftaranIDs).Find(&list).Error
+	err := r.db.Preload("JenisImunisasi").Where("pendaftaran_id IN ?", pendaftaranIDs).Find(&list).Error
 	return list, err
 }
 
 func (r *PelayananRepository) ListImunisasiAnak(anakID uuid.UUID) ([]models.ImunisasiAnak, error) {
 	list := []models.ImunisasiAnak{}
-	err := r.db.Preload("JenisVaksin").Where("anak_id = ?", anakID).
+	err := r.db.Preload("JenisImunisasi").Where("anak_id = ?", anakID).
 		Order("tanggal_pemberian DESC").Find(&list).Error
 	return list, err
 }

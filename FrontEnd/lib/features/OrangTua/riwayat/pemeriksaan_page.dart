@@ -101,13 +101,13 @@ String _pesanError(Object e) {
   return 'Terjadi kesalahan: $e';
 }
 
-class _Vaksin {
+class _Imunisasi {
   final String nama;
   final int dosis;
   final String kondisi;
   final String catatan;
 
-  _Vaksin(this.nama, this.dosis, this.kondisi, this.catatan);
+  _Imunisasi(this.nama, this.dosis, this.kondisi, this.catatan);
 }
 
 class _Suplemen {
@@ -145,7 +145,7 @@ class _Pemeriksaan {
   final String saranAsuh;
   final DateTime? kunjunganUlang;
 
-  final List<_Vaksin> vaksin;
+  final List<_Imunisasi> imunisasi;
   final List<_Suplemen> suplemen;
   final Map<String, dynamic>? statusGizi;
 
@@ -173,7 +173,7 @@ class _Pemeriksaan {
     required this.saranGizi,
     required this.saranAsuh,
     required this.kunjunganUlang,
-    required this.vaksin,
+    required this.imunisasi,
     required this.suplemen,
     required this.statusGizi,
   });
@@ -186,7 +186,7 @@ class _Pemeriksaan {
 
   factory _Pemeriksaan.fromApi(
     Map<String, dynamic> j,
-    Map<String, String> namaVaksin,
+    Map<String, String> namaImunisasi,
     Map<String, DateTime> lahirAnak,
   ) {
     final u = j['pengukuran'] is Map
@@ -196,7 +196,7 @@ class _Pemeriksaan {
         ? Map<String, dynamic>.from(j['catatan'] as Map)
         : null;
 
-    final vaksin = <_Vaksin>[];
+    final imunisasi = <_Imunisasi>[];
     for (final e in (j['imunisasi'] as List? ?? [])) {
       if (e is! Map) continue;
       final id = _teks(e['jenis_vaksin_id']);
@@ -205,9 +205,9 @@ class _Pemeriksaan {
         'demam_ringan' => 'Demam ringan',
         final x => x,
       };
-      vaksin.add(
-        _Vaksin(
-          namaVaksin[id] ?? 'Vaksin',
+      imunisasi.add(
+        _Imunisasi(
+          namaImunisasi[id] ?? 'Imunisasi',
           int.tryParse(_teks(e['dosis_ke'])) ?? 1,
           kondisi,
           _teks(e['catatan']),
@@ -267,7 +267,7 @@ class _Pemeriksaan {
       saranGizi: _teks(c?['saran_gizi']),
       saranAsuh: _teks(c?['saran_pola_asuh']),
       kunjunganUlang: _tgl(c?['tanggal_kunjungan_ulang']),
-      vaksin: vaksin,
+      imunisasi: imunisasi,
       suplemen: suplemen,
       statusGizi: petaGizi(j['status_gizi']),
     );
@@ -476,7 +476,7 @@ class _OrangTuaPemeriksaanPageState
     _muat();
   }
 
-  Future<Map<String, String>> _muatNamaVaksin() async {
+  Future<Map<String, String>> _muatNamaImunisasi() async {
     try {
       final r = await ApiClient.dio.get(
         '/vaksin',
@@ -513,7 +513,7 @@ class _OrangTuaPemeriksaanPageState
 
   Future<void> _muat() async {
     try {
-      final namaVaksin = await _muatNamaVaksin();
+      final namaImunisasi = await _muatNamaImunisasi();
       final lahirAnak = await _muatTanggalLahir();
       final r = await ApiClient.dio.get(
         '/riwayat',
@@ -530,7 +530,7 @@ class _OrangTuaPemeriksaanPageState
             list.add(
               _Pemeriksaan.fromApi(
                 Map<String, dynamic>.from(e),
-                namaVaksin,
+                namaImunisasi,
                 lahirAnak,
               ),
             );

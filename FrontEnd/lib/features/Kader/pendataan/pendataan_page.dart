@@ -8,7 +8,7 @@ import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../../service/kbm_model.dart';
-import '../../../service/vaksin_service.dart' show usiaDariLahir;
+import '../../../service/imunisasi_service.dart' show usiaDariLahir;
 import '../../OrangTua/pendaftaran/pendaftaran_page.dart';
 import 'catat_pengukuran_page.dart';
 import 'edit_pengukuran_page.dart';
@@ -435,7 +435,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
   // -------------------------------------------------------------------------
   Widget _header() {
     return Container(

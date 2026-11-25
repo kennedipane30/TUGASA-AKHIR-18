@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../service/vaksin_service.dart';
-import '../../Bidan/vaksin/vaksin_lihat_body.dart';
+import '../../../service/imunisasi_service.dart';
+import '../../Bidan/imunisasi/imunisasi_lihat_body.dart';
 
 const _hijauHeader = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
@@ -39,17 +39,17 @@ Widget _judulTebal(String teks) {
   );
 }
 
-/// Orang tua: lihat jadwal imunisasi, riwayat vaksin, dan suplemen anak sendiri,
+/// Orang tua: lihat jadwal imunisasi, riwayat imunisasi, dan suplemen anak sendiri,
 /// serta melaporkan reaksi setelah imunisasi (diteruskan ke bidan).
-class OrangTuaVaksinPage extends StatefulWidget {
-  const OrangTuaVaksinPage({super.key});
+class OrangTuaImunisasiPage extends StatefulWidget {
+  const OrangTuaImunisasiPage({super.key});
 
   @override
-  State<OrangTuaVaksinPage> createState() => _OrangTuaVaksinPageState();
+  State<OrangTuaImunisasiPage> createState() => _OrangTuaImunisasiPageState();
 }
 
-class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
-  final _svc = VaksinService();
+class _OrangTuaImunisasiPageState extends State<OrangTuaImunisasiPage> {
+  final _svc = ImunisasiService();
 
   List<AnakRingkas> _anak = [];
   AnakRingkas? _dipilih;
@@ -99,7 +99,7 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
               // Judul di tengah
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
-                child: _judulTebal('Vaksin & Imunisasi'),
+                child: _judulTebal('Imunisasi'),
               ),
               // Tombol kembali di kiri
               Align(
@@ -180,7 +180,7 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
           const Padding(
             padding: EdgeInsets.fromLTRB(14, 10, 14, 12),
             child: Text(
-              'Jadwal imunisasi, riwayat vaksin, dan suplemen anak.',
+              'Jadwal imunisasi, riwayat imunisasi, dan suplemen anak.',
               style: TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFF374151)),
             ),
           ),
@@ -254,7 +254,7 @@ class _OrangTuaVaksinPageState extends State<OrangTuaVaksinPage> {
           child: _kartuAnak(dipilih),
         ),
         Expanded(
-          child: VaksinLihatBody(
+          child: ImunisasiLihatBody(
             key: ValueKey(dipilih.id),
             anakId: dipilih.id,
             bisaLaporKipi: true,

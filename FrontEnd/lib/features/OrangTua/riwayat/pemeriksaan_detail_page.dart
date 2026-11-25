@@ -147,13 +147,13 @@ class _DetailRiwayatPage extends StatelessWidget {
                 ),
 
                 // Imunisasi
-                if (d.vaksin.isNotEmpty)
+                if (d.imunisasi.isNotEmpty)
                   _kartu(
-                    judul: 'Vaksin & Imunisasi',
-                    kanan: '${d.vaksin.length} vaksin',
+                    judul: 'Imunisasi',
+                    kanan: '${d.imunisasi.length} imunisasi',
                     child: Column(
                       children: [
-                        for (final v in d.vaksin)
+                        for (final v in d.imunisasi)
                           _item(v.nama, 'Dosis ${v.dosis}', [
                             if (v.kondisi.isNotEmpty) 'Kondisi: ${v.kondisi}',
                             if (v.catatan.isNotEmpty) 'Catatan: ${v.catatan}',

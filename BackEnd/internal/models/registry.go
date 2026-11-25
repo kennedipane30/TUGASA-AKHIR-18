@@ -26,10 +26,10 @@ func AllModels() []any {
 		&SuplemenAnak{},
 
 		// imunisasi
-		&JenisVaksin{},
+		&JenisImunisasi{},
 		&JadwalImunisasi{},
 		&ImunisasiAnak{},
-		&VaksinMandiriAnak{}, // vaksin di luar program (dicatat bidan)
+		&ImunisasiMandiriAnak{}, // imunisasi di luar program (dicatat bidan)
 
 		// notifikasi, perangkat & log aktivitas
 		&Notifikasi{},

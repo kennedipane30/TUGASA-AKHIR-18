@@ -24,11 +24,11 @@ import (
 
 type BalitaService struct {
 	repo   *repository.BalitaRepository
-	vaksin *repository.VaksinRepository
+	imunisasi *repository.ImunisasiRepository
 }
 
-func NewBalitaService(repo *repository.BalitaRepository, vaksin *repository.VaksinRepository) *BalitaService {
-	return &BalitaService{repo: repo, vaksin: vaksin}
+func NewBalitaService(repo *repository.BalitaRepository, imunisasi *repository.ImunisasiRepository) *BalitaService {
+	return &BalitaService{repo: repo, imunisasi: imunisasi}
 }
 
 type TimbangRingkas struct {
@@ -102,7 +102,7 @@ type BalitaItem struct {
 	JumlahTimbang    int             `json:"jumlah_timbang"`
 	Terakhir         *TimbangRingkas `json:"terakhir"`
 	BulanTidakDatang int             `json:"bulan_tidak_datang"` // -1 = belum pernah ditimbang
-	Vaksin           RingkasanVaksin `json:"vaksin"`
+	Imunisasi           RingkasanImunisasi `json:"vaksin"`
 }
 
 type RingkasBalita struct {
@@ -115,7 +115,7 @@ type RingkasBalita struct {
 	MasalahGizi int `json:"masalah_gizi"`
 	Stunting    int `json:"stunting"`
 	DuaTBgm     int `json:"dua_t_bgm"`
-	VaksinTelat int `json:"vaksin_terlambat"`
+	ImunisasiTelat int `json:"vaksin_terlambat"`
 	BelumPernah int `json:"belum_pernah"`
 }
 
@@ -166,7 +166,7 @@ type dataBalita struct {
 	ukur   map[uuid.UUID][]models.Pengukuran
 	gizi   map[uuid.UUID]models.StatusGizi
 	nilai  map[uuid.UUID]models.PenilaianTimbang
-	vaksin map[uuid.UUID][]models.ImunisasiAnak
+	imunisasi map[uuid.UUID][]models.ImunisasiAnak
 	master []models.JadwalImunisasi
 }
 
@@ -183,7 +183,7 @@ func (s *BalitaService) muatData(anak []models.Anak) (*dataBalita, error) {
 		ukur:   map[uuid.UUID][]models.Pengukuran{},
 		gizi:   map[uuid.UUID]models.StatusGizi{},
 		nilai:  map[uuid.UUID]models.PenilaianTimbang{},
-		vaksin: map[uuid.UUID][]models.ImunisasiAnak{},
+		imunisasi: map[uuid.UUID][]models.ImunisasiAnak{},
 	}
 	uids := make([]uuid.UUID, 0, len(ukur))
 	for _, u := range ukur {
@@ -204,15 +204,15 @@ func (s *BalitaService) muatData(anak []models.Anak) (*dataBalita, error) {
 	for _, n := range nl {
 		d.nilai[n.PengukuranID] = n
 	}
-	if d.master, err = s.vaksin.ListJadwalMaster(); err != nil {
+	if d.master, err = s.imunisasi.ListJadwalMaster(); err != nil {
 		return nil, err
 	}
-	vl, err := s.vaksin.ListRiwayatBanyakAnak(ids)
+	vl, err := s.imunisasi.ListRiwayatBanyakAnak(ids)
 	if err != nil {
 		return nil, err
 	}
 	for _, v := range vl {
-		d.vaksin[v.AnakID] = append(d.vaksin[v.AnakID], v)
+		d.imunisasi[v.AnakID] = append(d.imunisasi[v.AnakID], v)
 	}
 	return d, nil
 }
@@ -243,7 +243,7 @@ func (d *dataBalita) item(a *models.Anak, hari time.Time) BalitaItem {
 		it.Terakhir = &t
 		it.BulanTidakDatang = indeksBulan(hari) - indeksBulan(x.TanggalUkur)
 	}
-	_, it.Vaksin = hitungJadwal(a, d.master, d.vaksin[a.ID], hari)
+	_, it.Imunisasi = hitungJadwal(a, d.master, d.imunisasi[a.ID], hari)
 	return it
 }
 
@@ -312,8 +312,8 @@ func (s *BalitaService) Daftar(pos, cari string, semua bool) (*DaftarBalitaResp,
 				r.DuaTBgm++
 			}
 		}
-		if it.Vaksin.Terlambat > 0 {
-			r.VaksinTelat++
+		if it.Imunisasi.Terlambat > 0 {
+			r.ImunisasiTelat++
 		}
 	}
 	sort.SliceStable(out.Balita, func(i, j int) bool {
@@ -456,9 +456,9 @@ func (s *BalitaService) muatKunjungan(ukur []models.Pengukuran) (map[uuid.UUID]*
 		if x.PendaftaranID == nil {
 			continue
 		}
-		nama := "Vaksin"
-		if x.JenisVaksin != nil && x.JenisVaksin.Nama != "" {
-			nama = x.JenisVaksin.Nama
+		nama := "Imunisasi"
+		if x.JenisImunisasi != nil && x.JenisImunisasi.Nama != "" {
+			nama = x.JenisImunisasi.Nama
 		}
 		petaImun[*x.PendaftaranID] = append(petaImun[*x.PendaftaranID],
 			PemberianRingkas{Nama: nama, Keterangan: fmt.Sprintf("Dosis %d", x.DosisKe)})

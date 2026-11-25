@@ -40,7 +40,7 @@ type masterDosis struct {
 	ket      string
 }
 
-type masterVaksin struct {
+type masterJenisImunisasi struct {
 	kode, nama, penyakit, cara, ket string
 	urutan                          int16
 	khususDaerah                    bool
@@ -49,7 +49,7 @@ type masterVaksin struct {
 
 func i16(v int16) *int16 { return &v }
 
-var masterImunisasi = []masterVaksin{
+var masterImunisasi = []masterJenisImunisasi{
 	{
 		kode: "HB0", nama: "Hepatitis B (HB0)", urutan: 1,
 		penyakit: "Hepatitis B", cara: "Suntik intramuskular (paha)",
@@ -140,69 +140,69 @@ var masterImunisasi = []masterVaksin{
 // ============================================================================
 
 const (
-	StatusVaksinSudah     = "sudah"          // sudah diberikan
-	StatusVaksinBelum     = "belum_waktunya" // usia belum cukup
-	StatusVaksinJatuhTemp = "jatuh_tempo"    // saatnya diberikan
-	StatusVaksinTerlambat = "terlambat"      // lewat dari jadwal, masih bisa dikejar
-	StatusVaksinTerlewat  = "terlewat"       // lewat batas usia, tidak diberikan lagi
-	StatusVaksinMenunggu  = "menunggu"       // menunggu dosis sebelumnya
+	StatusImunisasiSudah     = "sudah"          // sudah diberikan
+	StatusImunisasiBelum     = "belum_waktunya" // usia belum cukup
+	StatusImunisasiJatuhTemp = "jatuh_tempo"    // saatnya diberikan
+	StatusImunisasiTerlambat = "terlambat"      // lewat dari jadwal, masih bisa dikejar
+	StatusImunisasiTerlewat  = "terlewat"       // lewat batas usia, tidak diberikan lagi
+	StatusImunisasiMenunggu  = "menunggu"       // menunggu dosis sebelumnya
 
-	vaksinTglLayout = "2006-01-02"
+	imunisasiTglLayout = "2006-01-02"
 )
 
-var ErrRiwayatVaksinTidakAda = errors.New("riwayat vaksin tidak ditemukan")
+var ErrRiwayatImunisasiTidakAda = errors.New("riwayat imunisasi tidak ditemukan")
 
 // batasHariHB0: HB0 hanya diberikan sampai usia 7 hari (di faskes, bukan di posyandu).
 const batasHariHB0 = 7
 
-type VaksinService struct {
-	repo  *repository.VaksinRepository
+type ImunisasiService struct {
+	repo  *repository.ImunisasiRepository
 	notif *NotifikasiService
 }
 
-func NewVaksinService(repo *repository.VaksinRepository) *VaksinService {
-	return &VaksinService{repo: repo}
+func NewImunisasiService(repo *repository.ImunisasiRepository) *ImunisasiService {
+	return &ImunisasiService{repo: repo}
 }
 
 // SetNotifikasi: laporan reaksi imunisasi (KIPI) dari orang tua dikirim ke bidan.
-func (s *VaksinService) SetNotifikasi(n *NotifikasiService) { s.notif = n }
+func (s *ImunisasiService) SetNotifikasi(n *NotifikasiService) { s.notif = n }
 
-// SiapkanMaster: isi/perbarui master jenis vaksin dan jadwal imunisasi (dipanggil saat server mulai).
-func (s *VaksinService) SiapkanMaster() {
+// SiapkanMaster: isi/perbarui master jenis imunisasi dan jadwal imunisasi (dipanggil saat server mulai).
+func (s *ImunisasiService) SiapkanMaster() {
 	kode := make([]string, 0, len(masterImunisasi))
 	for _, mv := range masterImunisasi {
 		kode = append(kode, strings.ToUpper(mv.kode))
-		j := &models.JenisVaksin{
+		j := &models.JenisImunisasi{
 			Kode: mv.kode, Nama: mv.nama, Penyakit: mv.penyakit, CaraPemberian: mv.cara,
 			Keterangan: mv.ket, JumlahDosis: int16(len(mv.dosis)), Urutan: mv.urutan,
 			KhususDaerah: mv.khususDaerah, IsActive: true,
 		}
 		if err := s.repo.SimpanJenis(j); err != nil {
-			log.Printf("vaksin: gagal menyimpan jenis %s: %v", mv.kode, err)
+			log.Printf("imunisasi: gagal menyimpan jenis %s: %v", mv.kode, err)
 			continue
 		}
 		for _, d := range mv.dosis {
 			jd := &models.JadwalImunisasi{
-				JenisVaksinID: j.ID, DosisKe: d.dosis, Kelompok: d.kelompok,
+				JenisImunisasiID: j.ID, DosisKe: d.dosis, Kelompok: d.kelompok,
 				UsiaMinBulan: d.min, UsiaIdealBulan: d.ideal, UsiaMaksBulan: d.maks,
 				JarakMinimalHari: d.jarak, Keterangan: d.ket,
 			}
 			if err := s.repo.SimpanJadwal(jd); err != nil {
-				log.Printf("vaksin: gagal menyimpan jadwal %s dosis %d: %v", mv.kode, d.dosis, err)
+				log.Printf("imunisasi: gagal menyimpan jadwal %s dosis %d: %v", mv.kode, d.dosis, err)
 			}
 		}
 		if err := s.repo.HapusJadwalLebih(j.ID, int16(len(mv.dosis))); err != nil {
-			log.Printf("vaksin: jadwal lama %s tidak dapat dihapus: %v", mv.kode, err)
+			log.Printf("imunisasi: jadwal lama %s tidak dapat dihapus: %v", mv.kode, err)
 		}
 	}
 	if err := s.repo.NonaktifkanSelain(kode); err != nil {
-		log.Printf("vaksin: gagal menonaktifkan jenis vaksin lama: %v", err)
+		log.Printf("imunisasi: gagal menonaktifkan jenis imunisasi lama: %v", err)
 	}
 }
 
 // ---------------------------------------------------------------- respons
 
-type JenisVaksinResp struct {
+type JenisImunisasiResp struct {
 	ID            uuid.UUID `json:"id"`
 	Kode          string    `json:"kode"`
 	Nama          string    `json:"nama"`
@@ -213,7 +213,7 @@ type JenisVaksinResp struct {
 
 type JadwalMasterResp struct {
 	ID               uuid.UUID       `json:"id"`
-	JenisVaksin      JenisVaksinResp `json:"jenis_vaksin"`
+	JenisImunisasi      JenisImunisasiResp `json:"jenis_vaksin"`
 	DosisKe          int16           `json:"dosis_ke"`
 	JumlahDosis      int16           `json:"jumlah_dosis"`
 	Kelompok         string          `json:"kelompok"`
@@ -231,7 +231,7 @@ type JadwalAnakItem struct {
 	Status        string             `json:"status"`
 	LabelStatus   string             `json:"label_status"`
 	Opsional      bool               `json:"opsional"`
-	Riwayat       *RiwayatVaksinResp `json:"riwayat"`
+	Riwayat       *RiwayatImunisasiResp `json:"riwayat"`
 
 	// Jadwal posyandu tempat dosis ini akan diberikan.
 	TanggalPosyandu string `json:"tanggal_posyandu"` // YYYY-MM-DD, kosong bila jadwal belum dibuat
@@ -242,9 +242,9 @@ type JadwalAnakItem struct {
 	KeFaskes        bool   `json:"ke_faskes"`        // harus diberikan di puskesmas/faskes
 }
 
-type RiwayatVaksinResp struct {
+type RiwayatImunisasiResp struct {
 	ID               uuid.UUID       `json:"id"`
-	JenisVaksin      JenisVaksinResp `json:"jenis_vaksin"`
+	JenisImunisasi      JenisImunisasiResp `json:"jenis_vaksin"`
 	DosisKe          int16           `json:"dosis_ke"`
 	TanggalPemberian string          `json:"tanggal_pemberian"`
 	UsiaBulan        int             `json:"usia_bulan"`
@@ -279,7 +279,7 @@ type SuplemenResp struct {
 	NamaPemberi string    `json:"nama_pemberi"`
 }
 
-type RingkasanVaksin struct {
+type RingkasanImunisasi struct {
 	TotalDosis      int  `json:"total_dosis"`
 	Sudah           int  `json:"sudah"`
 	JatuhTempo      int  `json:"jatuh_tempo"`
@@ -290,26 +290,26 @@ type RingkasanVaksin struct {
 	LanjutanLengkap bool `json:"lanjutan_lengkap"`
 }
 
-type AnakVaksinInfo struct {
+type AnakImunisasiInfo struct {
 	ID                  uuid.UUID `json:"id"`
 	Nama                string    `json:"nama"`
 	JenisKelamin        string    `json:"jenis_kelamin"`
 	TanggalLahir        string    `json:"tanggal_lahir"`
 	UsiaBulan           int       `json:"usia_bulan"`
 	UsiaTeks            string    `json:"usia_teks"`
-	StatusRiwayatVaksin string    `json:"status_riwayat_vaksin"`
+	StatusRiwayatImunisasi string    `json:"status_riwayat_vaksin"`
 	MenungguKonfirmasi  int64     `json:"menunggu_konfirmasi"`
 }
 
-type KartuVaksinResp struct {
-	Anak      AnakVaksinInfo      `json:"anak"`
-	Ringkasan RingkasanVaksin     `json:"ringkasan"`
+type KartuImunisasiResp struct {
+	Anak      AnakImunisasiInfo      `json:"anak"`
+	Ringkasan RingkasanImunisasi     `json:"ringkasan"`
 	Jadwal    []JadwalAnakItem    `json:"jadwal"`
-	Riwayat   []RiwayatVaksinResp `json:"riwayat"`
+	Riwayat   []RiwayatImunisasiResp `json:"riwayat"`
 	Suplemen  []SuplemenResp      `json:"suplemen"`
 
-	// VaksinMandiri: vaksin di luar jadwal program (dicatat bidan), hanya riwayat.
-	VaksinMandiri []VaksinMandiriResp `json:"vaksin_mandiri"`
+	// ImunisasiMandiri: imunisasi di luar jadwal program (dicatat bidan), hanya riwayat.
+	ImunisasiMandiri []ImunisasiMandiriResp `json:"vaksin_mandiri"`
 }
 
 // ---------------------------------------------------------------- helper
@@ -371,11 +371,11 @@ func tglSaja(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }
 
-func jenisResp(j *models.JenisVaksin) JenisVaksinResp {
+func jenisResp(j *models.JenisImunisasi) JenisImunisasiResp {
 	if j == nil {
-		return JenisVaksinResp{}
+		return JenisImunisasiResp{}
 	}
-	return JenisVaksinResp{
+	return JenisImunisasiResp{
 		ID: j.ID, Kode: j.Kode, Nama: j.Nama, Penyakit: j.Penyakit,
 		CaraPemberian: j.CaraPemberian, KhususDaerah: j.KhususDaerah,
 	}
@@ -388,17 +388,17 @@ func masterResp(j *models.JadwalImunisasi) JadwalMasterResp {
 		UsiaMaksBulan: j.UsiaMaksBulan, JarakMinimalHari: j.JarakMinimalHari,
 		Keterangan: j.Keterangan, LabelUsia: labelUsiaJadwal(j.UsiaIdealBulan),
 	}
-	if j.JenisVaksin != nil {
-		r.JenisVaksin = jenisResp(j.JenisVaksin)
-		r.JumlahDosis = j.JenisVaksin.JumlahDosis
+	if j.JenisImunisasi != nil {
+		r.JenisImunisasi = jenisResp(j.JenisImunisasi)
+		r.JumlahDosis = j.JenisImunisasi.JumlahDosis
 	}
 	return r
 }
 
-func riwayatResp(m *models.ImunisasiAnak, lahir time.Time) RiwayatVaksinResp {
-	r := RiwayatVaksinResp{
-		ID: m.ID, JenisVaksin: jenisResp(m.JenisVaksin), DosisKe: m.DosisKe,
-		TanggalPemberian: m.TanggalPemberian.Format(vaksinTglLayout),
+func riwayatResp(m *models.ImunisasiAnak, lahir time.Time) RiwayatImunisasiResp {
+	r := RiwayatImunisasiResp{
+		ID: m.ID, JenisImunisasi: jenisResp(m.JenisImunisasi), DosisKe: m.DosisKe,
+		TanggalPemberian: m.TanggalPemberian.Format(imunisasiTglLayout),
 		UsiaBulan:        usiaBulan(lahir, m.TanggalPemberian),
 		UsiaTeks:         usiaTeks(lahir, m.TanggalPemberian),
 		Tempat:           m.Tempat, KondisiAnak: m.KondisiAnak, Catatan: m.Catatan,
@@ -416,7 +416,7 @@ func riwayatResp(m *models.ImunisasiAnak, lahir time.Time) RiwayatVaksinResp {
 	if r.Tempat == "" && r.DariPosyandu {
 		r.Tempat = "Posyandu"
 	}
-	// Pemberi: bidan untuk posyandu; petugas luar (bila diisi) untuk vaksin dari luar.
+	// Pemberi: bidan untuk posyandu; petugas luar (bila diisi) untuk imunisasi dari luar.
 	switch {
 	case r.Sumber == models.SumberImunisasiPosyandu && m.DiberikanOlehUser != nil:
 		r.NamaPemberi = m.DiberikanOlehUser.Nama
@@ -429,7 +429,7 @@ func riwayatResp(m *models.ImunisasiAnak, lahir time.Time) RiwayatVaksinResp {
 func suplemenResp(m *models.SuplemenAnak, lahir time.Time) SuplemenResp {
 	r := SuplemenResp{
 		ID: m.ID, Nama: m.Jenis, Dosis: m.Dosis, Jumlah: m.Jumlah, Satuan: m.Satuan,
-		Keterangan: m.KeteranganDosis, Tanggal: m.Tanggal.Format(vaksinTglLayout),
+		Keterangan: m.KeteranganDosis, Tanggal: m.Tanggal.Format(imunisasiTglLayout),
 		UsiaTeks: usiaTeks(lahir, m.Tanggal), Catatan: m.Catatan,
 	}
 	if m.DiberikanOlehUser != nil {
@@ -457,7 +457,7 @@ type kunciDosis struct {
 
 // hitungJadwal: status setiap dosis untuk satu anak pada tanggal [hari].
 func hitungJadwal(anak *models.Anak, master []models.JadwalImunisasi,
-	riwayat []models.ImunisasiAnak, hari time.Time) ([]JadwalAnakItem, RingkasanVaksin) {
+	riwayat []models.ImunisasiAnak, hari time.Time) ([]JadwalAnakItem, RingkasanImunisasi) {
 
 	lahir := tglSaja(anak.TanggalLahir)
 	hari = tglSaja(hari)
@@ -466,17 +466,17 @@ func hitungJadwal(anak *models.Anak, master []models.JadwalImunisasi,
 	diberi := map[kunciDosis]*models.ImunisasiAnak{}
 	for i := range riwayat {
 		r := &riwayat[i]
-		diberi[kunciDosis{r.JenisVaksinID, r.DosisKe}] = r
+		diberi[kunciDosis{r.JenisImunisasiID, r.DosisKe}] = r
 	}
 
 	items := make([]JadwalAnakItem, 0, len(master))
-	var rk RingkasanVaksin
+	var rk RingkasanImunisasi
 	dasarLengkap, lanjutanLengkap := true, true
 
 	for i := range master {
 		j := &master[i]
 		it := JadwalAnakItem{JadwalMasterResp: masterResp(j)}
-		it.Opsional = j.JenisVaksin != nil && j.JenisVaksin.KhususDaerah
+		it.Opsional = j.JenisImunisasi != nil && j.JenisImunisasi.KhususDaerah
 
 		jadwal := lahir.AddDate(0, int(j.UsiaIdealBulan), 0)
 		mulai := lahir.AddDate(0, int(j.UsiaMinBulan), 0)
@@ -484,7 +484,7 @@ func hitungJadwal(anak *models.Anak, master []models.JadwalImunisasi,
 		var prev *models.ImunisasiAnak
 		adaPrev := true
 		if j.DosisKe > 1 {
-			prev = diberi[kunciDosis{j.JenisVaksinID, j.DosisKe - 1}]
+			prev = diberi[kunciDosis{j.JenisImunisasiID, j.DosisKe - 1}]
 			adaPrev = prev != nil
 			if prev != nil && j.JarakMinimalHari != nil {
 				boleh := tglSaja(prev.TanggalPemberian).AddDate(0, 0, int(*j.JarakMinimalHari))
@@ -496,13 +496,13 @@ func hitungJadwal(anak *models.Anak, master []models.JadwalImunisasi,
 				}
 			}
 		}
-		it.TanggalJadwal = jadwal.Format(vaksinTglLayout)
+		it.TanggalJadwal = jadwal.Format(imunisasiTglLayout)
 
-		hb0 := j.JenisVaksin != nil && strings.EqualFold(j.JenisVaksin.Kode, kodeHB0)
-		if r, ok := diberi[kunciDosis{j.JenisVaksinID, j.DosisKe}]; ok {
+		hb0 := j.JenisImunisasi != nil && strings.EqualFold(j.JenisImunisasi.Kode, kodeHB0)
+		if r, ok := diberi[kunciDosis{j.JenisImunisasiID, j.DosisKe}]; ok {
 			rr := riwayatResp(r, lahir)
 			it.Riwayat = &rr
-			it.Status = StatusVaksinSudah
+			it.Status = StatusImunisasiSudah
 			it.LabelStatus = "Sudah diberikan"
 			if r.StatusKonfirmasi == models.KonfirmasiImunisasiMenunggu {
 				it.LabelStatus = "Dilaporkan orang tua, menunggu konfirmasi bidan"
@@ -510,26 +510,26 @@ func hitungJadwal(anak *models.Anak, master []models.JadwalImunisasi,
 		} else if hb0 {
 			// HB0: diberikan di faskes paling lambat usia 7 hari, tidak dikejar setelahnya.
 			if hari.After(lahir.AddDate(0, 0, batasHariHB0)) {
-				it.Status = StatusVaksinTerlewat
+				it.Status = StatusImunisasiTerlewat
 				it.LabelStatus = "Lewat usia 7 hari, perlindungan Hepatitis B didapat dari DPT-HB-Hib"
 			} else {
-				it.Status = StatusVaksinJatuhTemp
+				it.Status = StatusImunisasiJatuhTemp
 				it.LabelStatus = "Diberikan di faskes, paling lambat usia 7 hari"
 				it.KeFaskes = true
 			}
 		} else {
 			switch {
 			case j.UsiaMaksBulan != nil && usia > int(*j.UsiaMaksBulan):
-				it.Status, it.LabelStatus = StatusVaksinTerlewat, "Lewat batas usia"
+				it.Status, it.LabelStatus = StatusImunisasiTerlewat, "Lewat batas usia"
 			case hari.Before(mulai):
-				it.Status, it.LabelStatus = StatusVaksinBelum, "Belum waktunya"
+				it.Status, it.LabelStatus = StatusImunisasiBelum, "Belum waktunya"
 			case !adaPrev:
-				it.Status = StatusVaksinMenunggu
+				it.Status = StatusImunisasiMenunggu
 				it.LabelStatus = fmt.Sprintf("Menunggu dosis ke-%d", j.DosisKe-1)
 			case !hari.After(jadwal.AddDate(0, 1, 0)):
-				it.Status, it.LabelStatus = StatusVaksinJatuhTemp, "Saatnya diberikan"
+				it.Status, it.LabelStatus = StatusImunisasiJatuhTemp, "Saatnya diberikan"
 			default:
-				it.Status = StatusVaksinTerlambat
+				it.Status = StatusImunisasiTerlambat
 				it.Susulan = true
 				it.LabelStatus = "Susulan, seharusnya " + notifTglIndo(jadwal)
 			}
@@ -538,16 +538,16 @@ func hitungJadwal(anak *models.Anak, master []models.JadwalImunisasi,
 		if !it.Opsional {
 			rk.TotalDosis++
 			switch it.Status {
-			case StatusVaksinSudah:
+			case StatusImunisasiSudah:
 				rk.Sudah++
-			case StatusVaksinJatuhTemp:
+			case StatusImunisasiJatuhTemp:
 				rk.JatuhTempo++
-			case StatusVaksinTerlambat:
+			case StatusImunisasiTerlambat:
 				rk.Terlambat++
-			case StatusVaksinTerlewat:
+			case StatusImunisasiTerlewat:
 				rk.Terlewat++
 			}
-			if it.Status != StatusVaksinSudah {
+			if it.Status != StatusImunisasiSudah {
 				if j.Kelompok == models.KelompokImunisasiLanjutan {
 					lanjutanLengkap = false
 				} else {
@@ -568,7 +568,7 @@ func hitungJadwal(anak *models.Anak, master []models.JadwalImunisasi,
 // ---------------------------------------------------------------- akses
 
 // CekAkses: staf (bidan, kader, sekretaris) hanya posyandu sendiri; orang tua hanya anaknya.
-func (s *VaksinService) CekAkses(anakID uuid.UUID, uid uint, role, pos string) (*models.Anak, error) {
+func (s *ImunisasiService) CekAkses(anakID uuid.UUID, uid uint, role, pos string) (*models.Anak, error) {
 	a, err := s.repo.GetAnak(anakID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrAnakTidakAda
@@ -598,19 +598,19 @@ func (s *VaksinService) CekAkses(anakID uuid.UUID, uid uint, role, pos string) (
 
 // ---------------------------------------------------------------- master
 
-func (s *VaksinService) ListJenis() ([]JenisVaksinResp, error) {
+func (s *ImunisasiService) ListJenis() ([]JenisImunisasiResp, error) {
 	list, err := s.repo.ListJenisAktif()
 	if err != nil {
 		return nil, err
 	}
-	out := make([]JenisVaksinResp, 0, len(list))
+	out := make([]JenisImunisasiResp, 0, len(list))
 	for i := range list {
 		out = append(out, jenisResp(&list[i]))
 	}
 	return out, nil
 }
 
-func (s *VaksinService) ListJadwalMaster() ([]JadwalMasterResp, error) {
+func (s *ImunisasiService) ListJadwalMaster() ([]JadwalMasterResp, error) {
 	list, err := s.repo.ListJadwalMaster()
 	if err != nil {
 		return nil, err
@@ -622,10 +622,10 @@ func (s *VaksinService) ListJadwalMaster() ([]JadwalMasterResp, error) {
 	return out, nil
 }
 
-// ---------------------------------------------------------------- kartu vaksin anak
+// ---------------------------------------------------------------- kartu imunisasi anak
 
-// KartuAnak: jadwal (dengan status), riwayat vaksin, dan riwayat suplemen satu anak.
-func (s *VaksinService) KartuAnak(anakID uuid.UUID, uid uint, role, pos string) (*KartuVaksinResp, error) {
+// KartuAnak: jadwal (dengan status), riwayat imunisasi, dan riwayat suplemen satu anak.
+func (s *ImunisasiService) KartuAnak(anakID uuid.UUID, uid uint, role, pos string) (*KartuImunisasiResp, error) {
 	anak, err := s.CekAkses(anakID, uid, role, pos)
 	if err != nil {
 		return nil, err
@@ -648,23 +648,23 @@ func (s *VaksinService) KartuAnak(anakID uuid.UUID, uid uint, role, pos string) 
 	jadwal, rk := hitungJadwal(anak, master, riwayat, hari)
 	s.aturJadwalPosyandu(anak, master, jadwal, hari)
 
-	status := anak.StatusRiwayatVaksin
+	status := anak.StatusRiwayatImunisasi
 	if status == "" {
-		status = models.RiwayatVaksinBelumDitanya
+		status = models.RiwayatImunisasiBelumDitanya
 	}
-	out := &KartuVaksinResp{
-		Anak: AnakVaksinInfo{
+	out := &KartuImunisasiResp{
+		Anak: AnakImunisasiInfo{
 			ID: anak.ID, Nama: anak.Nama, JenisKelamin: anak.JenisKelamin,
-			TanggalLahir: lahir.Format(vaksinTglLayout),
+			TanggalLahir: lahir.Format(imunisasiTglLayout),
 			UsiaBulan:    usiaBulan(lahir, hari), UsiaTeks: usiaTeks(lahir, hari),
-			StatusRiwayatVaksin: status,
+			StatusRiwayatImunisasi: status,
 			MenungguKonfirmasi:  s.repo.JumlahMenungguKonfirmasi(anak.ID),
 		},
 		Ringkasan:     rk,
 		Jadwal:        jadwal,
-		Riwayat:       make([]RiwayatVaksinResp, 0, len(riwayat)),
+		Riwayat:       make([]RiwayatImunisasiResp, 0, len(riwayat)),
 		Suplemen:      make([]SuplemenResp, 0, len(sup)),
-		VaksinMandiri: s.daftarVaksinMandiri(anak),
+		ImunisasiMandiri: s.daftarImunisasiMandiri(anak),
 	}
 	for i := len(riwayat) - 1; i >= 0; i-- { // terbaru di atas
 		out.Riwayat = append(out.Riwayat, riwayatResp(&riwayat[i], lahir))
@@ -680,7 +680,7 @@ func (s *VaksinService) KartuAnak(anakID uuid.UUID, uid uint, role, pos string) 
 // aturJadwalPosyandu: setiap dosis yang belum diberikan dipasangkan ke jadwal posyandu
 // pertama yang tanggalnya sudah memenuhi usia ideal, usia minimal, dan jarak minimal
 // dari dosis sebelumnya. Bila jadwal belum dibuat, ditampilkan perkiraan bulannya.
-func (s *VaksinService) aturJadwalPosyandu(anak *models.Anak, master []models.JadwalImunisasi,
+func (s *ImunisasiService) aturJadwalPosyandu(anak *models.Anak, master []models.JadwalImunisasi,
 	items []JadwalAnakItem, hari time.Time) {
 	hari = tglSaja(hari)
 	lahir := tglSaja(anak.TanggalLahir)
@@ -701,21 +701,21 @@ func (s *VaksinService) aturJadwalPosyandu(anak *models.Anak, master []models.Ja
 		}
 		it := &items[i]
 		j := &master[i]
-		k := kunciDosis{j.JenisVaksinID, j.DosisKe}
+		k := kunciDosis{j.JenisImunisasiID, j.DosisKe}
 
-		if it.Status == StatusVaksinSudah {
+		if it.Status == StatusImunisasiSudah {
 			if it.Riwayat != nil {
-				if t, err := time.Parse(vaksinTglLayout, it.Riwayat.TanggalPemberian); err == nil {
+				if t, err := time.Parse(imunisasiTglLayout, it.Riwayat.TanggalPemberian); err == nil {
 					rencana[k] = t
 				}
 			}
 			continue
 		}
-		if it.Opsional || it.Status == StatusVaksinTerlewat || it.KeFaskes {
+		if it.Opsional || it.Status == StatusImunisasiTerlewat || it.KeFaskes {
 			continue
 		}
 
-		awal, err := time.Parse(vaksinTglLayout, it.TanggalJadwal)
+		awal, err := time.Parse(imunisasiTglLayout, it.TanggalJadwal)
 		if err != nil {
 			continue
 		}
@@ -723,7 +723,7 @@ func (s *VaksinService) aturJadwalPosyandu(anak *models.Anak, master []models.Ja
 			awal = mulai
 		}
 		if j.DosisKe > 1 {
-			prev, ok := rencana[kunciDosis{j.JenisVaksinID, j.DosisKe - 1}]
+			prev, ok := rencana[kunciDosis{j.JenisImunisasiID, j.DosisKe - 1}]
 			if !ok {
 				continue
 			}
@@ -755,7 +755,7 @@ func (s *VaksinService) aturJadwalPosyandu(anak *models.Anak, master []models.Ja
 
 		switch {
 		case pilih != nil && (batas.IsZero() || pilih.Before(batas)):
-			it.TanggalPosyandu = pilih.Format(vaksinTglLayout)
+			it.TanggalPosyandu = pilih.Format(imunisasiTglLayout)
 			if pilih.Equal(hari) {
 				it.LabelPosyandu = "Diberikan di posyandu hari ini"
 			} else {
@@ -781,37 +781,37 @@ func (s *VaksinService) aturJadwalPosyandu(anak *models.Anak, master []models.Ja
 
 // ---------------------------------------------------------------- validasi pemberian
 
-type ItemVaksin struct {
-	JenisVaksinID uuid.UUID
+type ItemImunisasi struct {
+	JenisImunisasiID uuid.UUID
 	DosisKe       int16
 }
 
 // itemRiwayat: satu dosis beserta tanggal pemberiannya (untuk validasi berurutan).
 type itemRiwayat struct {
-	JenisVaksinID uuid.UUID
+	JenisImunisasiID uuid.UUID
 	DosisKe       int16
 	Tanggal       time.Time
 }
 
-// ValidasiPemberian: cek setiap vaksin yang akan dicatat untuk anak pada [tanggal].
+// ValidasiPemberian: cek setiap imunisasi yang akan dicatat untuk anak pada [tanggal].
 // kecualiPendaftaran: riwayat dari sesi ini diabaikan (karena akan diganti).
-func (s *VaksinService) ValidasiPemberian(anak *models.Anak, tanggal time.Time,
-	items []ItemVaksin, kecualiPendaftaran *uuid.UUID) error {
+func (s *ImunisasiService) ValidasiPemberian(anak *models.Anak, tanggal time.Time,
+	items []ItemImunisasi, kecualiPendaftaran *uuid.UUID) error {
 	list := make([]itemRiwayat, 0, len(items))
 	for _, it := range items {
-		list = append(list, itemRiwayat{JenisVaksinID: it.JenisVaksinID, DosisKe: it.DosisKe, Tanggal: tanggal})
+		list = append(list, itemRiwayat{JenisImunisasiID: it.JenisImunisasiID, DosisKe: it.DosisKe, Tanggal: tanggal})
 	}
 	return validasiRiwayat(s.repo, anak, list, kecualiPendaftaran, nil)
 }
 
-// validasiRiwayat: aturan pencatatan imunisasi (dipakai untuk posyandu, vaksin dari luar,
+// validasiRiwayat: aturan pencatatan imunisasi (dipakai untuk posyandu, imunisasi dari luar,
 // laporan orang tua, dan koreksi tanggal saat konfirmasi):
 //   - dosis ada dalam jadwal imunisasi dan belum pernah tercatat,
 //   - tanggal tidak sebelum lahir dan tidak di masa depan,
 //   - usia anak memenuhi usia minimal dan maksimal,
 //   - dosis sebelumnya sudah tercatat dan jarak minimal terpenuhi,
 //   - tidak bertentangan dengan dosis berikutnya yang sudah tercatat.
-func validasiRiwayat(repo *repository.VaksinRepository, anak *models.Anak, items []itemRiwayat,
+func validasiRiwayat(repo *repository.ImunisasiRepository, anak *models.Anak, items []itemRiwayat,
 	kecualiPendaftaran, kecualiRiwayat *uuid.UUID) error {
 	if len(items) == 0 {
 		return nil
@@ -822,7 +822,7 @@ func validasiRiwayat(repo *repository.VaksinRepository, anak *models.Anak, items
 	}
 	petaMaster := map[kunciDosis]*models.JadwalImunisasi{}
 	for i := range master {
-		petaMaster[kunciDosis{master[i].JenisVaksinID, master[i].DosisKe}] = &master[i]
+		petaMaster[kunciDosis{master[i].JenisImunisasiID, master[i].DosisKe}] = &master[i]
 	}
 	riwayat, err := repo.ListRiwayatAnak(anak.ID)
 	if err != nil {
@@ -837,13 +837,13 @@ func validasiRiwayat(repo *repository.VaksinRepository, anak *models.Anak, items
 		if kecualiRiwayat != nil && r.ID == *kecualiRiwayat {
 			continue
 		}
-		diberi[kunciDosis{r.JenisVaksinID, r.DosisKe}] = tglSaja(r.TanggalPemberian)
+		diberi[kunciDosis{r.JenisImunisasiID, r.DosisKe}] = tglSaja(r.TanggalPemberian)
 	}
 
 	urut := append([]itemRiwayat(nil), items...)
 	sort.SliceStable(urut, func(a, b int) bool {
-		if urut[a].JenisVaksinID != urut[b].JenisVaksinID {
-			return urut[a].JenisVaksinID.String() < urut[b].JenisVaksinID.String()
+		if urut[a].JenisImunisasiID != urut[b].JenisImunisasiID {
+			return urut[a].JenisImunisasiID.String() < urut[b].JenisImunisasiID.String()
 		}
 		return urut[a].DosisKe < urut[b].DosisKe
 	})
@@ -852,12 +852,12 @@ func validasiRiwayat(repo *repository.VaksinRepository, anak *models.Anak, items
 	hari := hariIni()
 	dipilih := map[kunciDosis]bool{}
 	for _, it := range urut {
-		k := kunciDosis{it.JenisVaksinID, it.DosisKe}
+		k := kunciDosis{it.JenisImunisasiID, it.DosisKe}
 		j, ok := petaMaster[k]
 		if !ok {
-			return validasi("vaksin dosis ke-%d tidak ada dalam jadwal imunisasi", it.DosisKe)
+			return validasi("imunisasi dosis ke-%d tidak ada dalam jadwal imunisasi", it.DosisKe)
 		}
-		nama := j.JenisVaksin.Nama
+		nama := j.JenisImunisasi.Nama
 		tanggal := tglSaja(it.Tanggal)
 		if dipilih[k] {
 			return validasi("%s dosis ke-%d dipilih lebih dari sekali", nama, it.DosisKe)
@@ -882,7 +882,7 @@ func validasiRiwayat(repo *repository.VaksinRepository, anak *models.Anak, items
 				nama, it.DosisKe, *j.UsiaMaksBulan, usiaTeks(lahir, tanggal))
 		}
 		if it.DosisKe > 1 {
-			prev, ada := diberi[kunciDosis{it.JenisVaksinID, it.DosisKe - 1}]
+			prev, ada := diberi[kunciDosis{it.JenisImunisasiID, it.DosisKe - 1}]
 			if !ada {
 				return validasi("%s dosis ke-%d belum tercatat, catat dosis tersebut lebih dulu", nama, it.DosisKe-1)
 			}
@@ -894,9 +894,9 @@ func validasiRiwayat(repo *repository.VaksinRepository, anak *models.Anak, items
 				}
 			}
 		}
-		if berikut, ada := diberi[kunciDosis{it.JenisVaksinID, it.DosisKe + 1}]; ada {
+		if berikut, ada := diberi[kunciDosis{it.JenisImunisasiID, it.DosisKe + 1}]; ada {
 			jarak := 0
-			if jb := petaMaster[kunciDosis{it.JenisVaksinID, it.DosisKe + 1}]; jb != nil && jb.JarakMinimalHari != nil {
+			if jb := petaMaster[kunciDosis{it.JenisImunisasiID, it.DosisKe + 1}]; jb != nil && jb.JarakMinimalHari != nil {
 				jarak = int(*jb.JarakMinimalHari)
 			}
 			if berikut.Before(tanggal.AddDate(0, 0, jarak)) {
@@ -909,11 +909,11 @@ func validasiRiwayat(repo *repository.VaksinRepository, anak *models.Anak, items
 	return nil
 }
 
-// ---------------------------------------------------------------- vaksin dari luar (bidan)
+// ---------------------------------------------------------------- imunisasi dari luar (bidan)
 
 type CatatRiwayatInput struct {
 	AnakID           uuid.UUID `json:"anak_id" binding:"required"`
-	JenisVaksinID    uuid.UUID `json:"jenis_vaksin_id" binding:"required"`
+	JenisImunisasiID    uuid.UUID `json:"jenis_vaksin_id" binding:"required"`
 	DosisKe          int16     `json:"dosis_ke" binding:"required"`
 	TanggalPemberian string    `json:"tanggal_pemberian" binding:"required"`
 	Tempat           string    `json:"tempat"`
@@ -932,9 +932,9 @@ func batasTeks(s string, maks int, nama string) (string, error) {
 	return s, nil
 }
 
-// CatatRiwayat: bidan mencatat vaksin yang diberikan di luar posyandu
+// CatatRiwayat: bidan mencatat imunisasi yang diberikan di luar posyandu
 // (berdasarkan keterangan orang tua saat konsultasi). Langsung dikonfirmasi.
-func (s *VaksinService) CatatRiwayat(bidanID uint, pos string, in CatatRiwayatInput) (*RiwayatVaksinResp, error) {
+func (s *ImunisasiService) CatatRiwayat(bidanID uint, pos string, in CatatRiwayatInput) (*RiwayatImunisasiResp, error) {
 	anak, err := s.CekAkses(in.AnakID, bidanID, "bidan", pos)
 	if err != nil {
 		return nil, err
@@ -942,7 +942,7 @@ func (s *VaksinService) CatatRiwayat(bidanID uint, pos string, in CatatRiwayatIn
 	if anak.Status != "aktif" {
 		return nil, konflik("anak sudah diarsipkan")
 	}
-	tgl, err := time.Parse(vaksinTglLayout, strings.TrimSpace(in.TanggalPemberian))
+	tgl, err := time.Parse(imunisasiTglLayout, strings.TrimSpace(in.TanggalPemberian))
 	if err != nil {
 		return nil, validasi("tanggal pemberian harus berformat YYYY-MM-DD")
 	}
@@ -951,7 +951,7 @@ func (s *VaksinService) CatatRiwayat(bidanID uint, pos string, in CatatRiwayatIn
 		return nil, err
 	}
 	if tempat == "" {
-		return nil, validasi("tempat pemberian vaksin wajib diisi (mis. RSUD Porsea, Puskesmas Balige)")
+		return nil, validasi("tempat pemberian imunisasi wajib diisi (mis. RSUD Porsea, Puskesmas Balige)")
 	}
 	batch, err := batasTeks(in.NomorBatch, 50, "nomor batch")
 	if err != nil {
@@ -965,14 +965,14 @@ func (s *VaksinService) CatatRiwayat(bidanID uint, pos string, in CatatRiwayatIn
 	if err != nil {
 		return nil, err
 	}
-	item := []itemRiwayat{{JenisVaksinID: in.JenisVaksinID, DosisKe: in.DosisKe, Tanggal: tgl}}
+	item := []itemRiwayat{{JenisImunisasiID: in.JenisImunisasiID, DosisKe: in.DosisKe, Tanggal: tgl}}
 	if err := validasiRiwayat(s.repo, anak, item, nil, nil); err != nil {
 		return nil, err
 	}
 	now := time.Now()
 	oleh := bidanID
 	m := &models.ImunisasiAnak{
-		AnakID: anak.ID, JenisVaksinID: in.JenisVaksinID, DosisKe: in.DosisKe,
+		AnakID: anak.ID, JenisImunisasiID: in.JenisImunisasiID, DosisKe: in.DosisKe,
 		TanggalPemberian: tglSaja(tgl), Tempat: tempat,
 		Sumber: models.SumberImunisasiLuar, StatusKonfirmasi: models.KonfirmasiImunisasiOK,
 		NomorBatch: batch, PemberiLuar: pemberi, FotoBukti: foto,
@@ -990,12 +990,12 @@ func (s *VaksinService) CatatRiwayat(bidanID uint, pos string, in CatatRiwayatIn
 	return &r, nil
 }
 
-// HapusRiwayat: koreksi / batalkan catatan vaksin dari luar atau laporan orang tua.
-// Vaksin dari sesi posyandu diubah lewat catatan bidan pada sesi tersebut.
-func (s *VaksinService) HapusRiwayat(bidanID uint, pos string, id uuid.UUID) error {
+// HapusRiwayat: koreksi / batalkan catatan imunisasi dari luar atau laporan orang tua.
+// Imunisasi dari sesi posyandu diubah lewat catatan bidan pada sesi tersebut.
+func (s *ImunisasiService) HapusRiwayat(bidanID uint, pos string, id uuid.UUID) error {
 	m, err := s.repo.GetRiwayat(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return ErrRiwayatVaksinTidakAda
+		return ErrRiwayatImunisasiTidakAda
 	}
 	if err != nil {
 		return err
@@ -1004,19 +1004,19 @@ func (s *VaksinService) HapusRiwayat(bidanID uint, pos string, id uuid.UUID) err
 		return err
 	}
 	if m.PendaftaranID != nil {
-		return konflik("vaksin ini dicatat pada sesi posyandu, ubah melalui catatan bidan pada sesi tersebut")
+		return konflik("imunisasi ini dicatat pada sesi posyandu, ubah melalui catatan bidan pada sesi tersebut")
 	}
-	if s.repo.RiwayatAda(m.AnakID, m.JenisVaksinID, m.DosisKe+1, nil) {
+	if s.repo.RiwayatAda(m.AnakID, m.JenisImunisasiID, m.DosisKe+1, nil) {
 		return konflik("dosis berikutnya sudah tercatat, hapus dosis berikutnya terlebih dahulu")
 	}
 	return s.repo.DeleteRiwayat(id)
 }
 
 // ---------------------------------------------------------------- riwayat awal (dicatat bidan)
-// Lihat vaksin_riwayat_awal_service.go. Orang tua tidak lagi mengisi riwayat vaksin.
+// Lihat imunisasi_riwayat_awal_service.go. Orang tua tidak lagi mengisi riwayat imunisasi.
 
 type RiwayatAwalItem struct {
-	JenisVaksinID    uuid.UUID `json:"jenis_vaksin_id" binding:"required"`
+	JenisImunisasiID    uuid.UUID `json:"jenis_vaksin_id" binding:"required"`
 	DosisKe          int16     `json:"dosis_ke" binding:"required"`
 	TanggalPemberian string    `json:"tanggal_pemberian" binding:"required"`
 	Tempat           string    `json:"tempat"`
@@ -1032,11 +1032,11 @@ type KonfirmasiRiwayatInput struct {
 	PemberiLuar      string `json:"pemberi_luar"`
 }
 
-// KonfirmasiRiwayat: bidan membenarkan (dan bila perlu memperbaiki) laporan vaksin orang tua.
-func (s *VaksinService) KonfirmasiRiwayat(bidanID uint, pos string, id uuid.UUID, in KonfirmasiRiwayatInput) (*RiwayatVaksinResp, error) {
+// KonfirmasiRiwayat: bidan membenarkan (dan bila perlu memperbaiki) laporan imunisasi orang tua.
+func (s *ImunisasiService) KonfirmasiRiwayat(bidanID uint, pos string, id uuid.UUID, in KonfirmasiRiwayatInput) (*RiwayatImunisasiResp, error) {
 	m, err := s.repo.GetRiwayat(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrRiwayatVaksinTidakAda
+		return nil, ErrRiwayatImunisasiTidakAda
 	}
 	if err != nil {
 		return nil, err
@@ -1046,14 +1046,14 @@ func (s *VaksinService) KonfirmasiRiwayat(bidanID uint, pos string, id uuid.UUID
 		return nil, err
 	}
 	if m.PendaftaranID != nil {
-		return nil, konflik("vaksin dari sesi posyandu tidak perlu dikonfirmasi")
+		return nil, konflik("imunisasi dari sesi posyandu tidak perlu dikonfirmasi")
 	}
 	if t := strings.TrimSpace(in.TanggalPemberian); t != "" {
-		tgl, err := time.Parse(vaksinTglLayout, t)
+		tgl, err := time.Parse(imunisasiTglLayout, t)
 		if err != nil {
 			return nil, validasi("tanggal pemberian harus berformat YYYY-MM-DD")
 		}
-		item := []itemRiwayat{{JenisVaksinID: m.JenisVaksinID, DosisKe: m.DosisKe, Tanggal: tgl}}
+		item := []itemRiwayat{{JenisImunisasiID: m.JenisImunisasiID, DosisKe: m.DosisKe, Tanggal: tgl}}
 		if err := validasiRiwayat(s.repo, anak, item, nil, &m.ID); err != nil {
 			return nil, err
 		}
@@ -1091,31 +1091,31 @@ func (s *VaksinService) KonfirmasiRiwayat(bidanID uint, pos string, id uuid.UUID
 	return &r, nil
 }
 
-// SelesaiKonfirmasi: bidan menyatakan riwayat vaksin anak sudah benar.
+// SelesaiKonfirmasi: bidan menyatakan riwayat imunisasi anak sudah benar.
 // Setelah ini imunisasi di posyandu dapat diberikan.
-func (s *VaksinService) SelesaiKonfirmasi(bidanID uint, pos string, anakID uuid.UUID) (*KartuVaksinResp, error) {
+func (s *ImunisasiService) SelesaiKonfirmasi(bidanID uint, pos string, anakID uuid.UUID) (*KartuImunisasiResp, error) {
 	anak, err := s.CekAkses(anakID, bidanID, "bidan", pos)
 	if err != nil {
 		return nil, err
 	}
 	if n := s.repo.JumlahMenungguKonfirmasi(anak.ID); n > 0 {
-		return nil, konflik("masih ada %d vaksin laporan orang tua yang belum dikonfirmasi atau dibatalkan", n)
+		return nil, konflik("masih ada %d imunisasi laporan orang tua yang belum dikonfirmasi atau dibatalkan", n)
 	}
 	now := time.Now()
 	oleh := bidanID
-	if err := s.repo.SimpanStatusRiwayat(anak.ID, models.RiwayatVaksinDikonfirmasi, &oleh, &now); err != nil {
+	if err := s.repo.SimpanStatusRiwayat(anak.ID, models.RiwayatImunisasiDikonfirmasi, &oleh, &now); err != nil {
 		return nil, err
 	}
 	return s.KartuAnak(anak.ID, bidanID, "bidan", pos)
 }
 
-// RiwayatLuar: catatan vaksin selain dari sesi posyandu (untuk kartu konfirmasi bidan).
-func (s *VaksinService) RiwayatLuar(anak *models.Anak) ([]RiwayatVaksinResp, error) {
+// RiwayatLuar: catatan imunisasi selain dari sesi posyandu (untuk kartu konfirmasi bidan).
+func (s *ImunisasiService) RiwayatLuar(anak *models.Anak) ([]RiwayatImunisasiResp, error) {
 	list, err := s.repo.ListRiwayatAnak(anak.ID)
 	if err != nil {
 		return nil, err
 	}
-	out := []RiwayatVaksinResp{}
+	out := []RiwayatImunisasiResp{}
 	for i := range list {
 		if list[i].PendaftaranID != nil {
 			continue
@@ -1132,10 +1132,10 @@ type LaporKipiInput struct {
 }
 
 // LaporKipi: orang tua melaporkan reaksi anak setelah imunisasi; diteruskan ke bidan.
-func (s *VaksinService) LaporKipi(uid uint, id uuid.UUID, in LaporKipiInput) (*RiwayatVaksinResp, error) {
+func (s *ImunisasiService) LaporKipi(uid uint, id uuid.UUID, in LaporKipiInput) (*RiwayatImunisasiResp, error) {
 	m, err := s.repo.GetRiwayat(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrRiwayatVaksinTidakAda
+		return nil, ErrRiwayatImunisasiTidakAda
 	}
 	if err != nil {
 		return nil, err
@@ -1175,10 +1175,10 @@ type TindakLanjutKipiInput struct {
 }
 
 // TindakLanjutKipi: bidan mencatat reaksi (bila belum) dan tindak lanjutnya.
-func (s *VaksinService) TindakLanjutKipi(bidanID uint, pos string, id uuid.UUID, in TindakLanjutKipiInput) (*RiwayatVaksinResp, error) {
+func (s *ImunisasiService) TindakLanjutKipi(bidanID uint, pos string, id uuid.UUID, in TindakLanjutKipiInput) (*RiwayatImunisasiResp, error) {
 	m, err := s.repo.GetRiwayat(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrRiwayatVaksinTidakAda
+		return nil, ErrRiwayatImunisasiTidakAda
 	}
 	if err != nil {
 		return nil, err
@@ -1220,12 +1220,12 @@ func (s *VaksinService) TindakLanjutKipi(bidanID uint, pos string, id uuid.UUID,
 	return &r, nil
 }
 
-// ---------------------------------------------------------------- foto bukti vaksin
+// ---------------------------------------------------------------- foto bukti imunisasi
 
 var polaNamaBukti = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|jpeg|png)$`)
 
-// FolderBukti: lokasi penyimpanan foto bukti vaksin di server.
-const FolderBukti = "uploads/bukti_vaksin"
+// FolderBukti: lokasi penyimpanan foto bukti imunisasi di server.
+const FolderBukti = "uploads/bukti_imunisasi"
 
 func cekNamaBukti(nama string) (string, error) {
 	nama = strings.TrimSpace(nama)
@@ -1244,17 +1244,17 @@ func NamaBuktiValid(nama string) bool { return polaNamaBukti.MatchString(nama) }
 // ---------------------------------------------------------------- statistik (sekretaris)
 
 type StatistikJenisItem struct {
-	JenisVaksin  JenisVaksinResp `json:"jenis_vaksin"`
+	JenisImunisasi  JenisImunisasiResp `json:"jenis_vaksin"`
 	JumlahDosis  int             `json:"jumlah_dosis"`
 	JumlahAnak   int             `json:"jumlah_anak"`
 	DosisPerAnak int16           `json:"dosis_per_anak"`
 }
 
-type StatistikVaksinResp struct {
+type StatistikImunisasiResp struct {
 	Posyandu          string               `json:"posyandu"`
 	JumlahBalita      int                  `json:"jumlah_balita"`
 	TotalDiberikan    int                  `json:"total_diberikan"`
-	TotalAnakDivaksin int                  `json:"total_anak_divaksin"`
+	TotalAnakDiimunisasi int                  `json:"total_anak_divaksin"`
 	AnakJatuhTempo    int                  `json:"anak_jatuh_tempo"`
 	AnakTerlambat     int                  `json:"anak_terlambat"`
 	AnakDasarLengkap  int                  `json:"anak_dasar_lengkap"`
@@ -1262,7 +1262,7 @@ type StatistikVaksinResp struct {
 	Jenis             []StatistikJenisItem `json:"jenis"`
 }
 
-func (s *VaksinService) Statistik(pos string) (*StatistikVaksinResp, error) {
+func (s *ImunisasiService) Statistik(pos string) (*StatistikImunisasiResp, error) {
 	if pos == "" {
 		return nil, terlarang("akun belum terhubung ke posyandu")
 	}
@@ -1291,15 +1291,15 @@ func (s *VaksinService) Statistik(pos string) (*StatistikVaksinResp, error) {
 	anakJenis := map[uuid.UUID]map[uuid.UUID]bool{}
 	for _, r := range semua {
 		perAnak[r.AnakID] = append(perAnak[r.AnakID], r)
-		dosisJenis[r.JenisVaksinID]++
-		if anakJenis[r.JenisVaksinID] == nil {
-			anakJenis[r.JenisVaksinID] = map[uuid.UUID]bool{}
+		dosisJenis[r.JenisImunisasiID]++
+		if anakJenis[r.JenisImunisasiID] == nil {
+			anakJenis[r.JenisImunisasiID] = map[uuid.UUID]bool{}
 		}
-		anakJenis[r.JenisVaksinID][r.AnakID] = true
+		anakJenis[r.JenisImunisasiID][r.AnakID] = true
 	}
 
 	hari := hariIni()
-	out := &StatistikVaksinResp{Posyandu: pos, TotalDiberikan: len(semua), TotalAnakDivaksin: len(perAnak)}
+	out := &StatistikImunisasiResp{Posyandu: pos, TotalDiberikan: len(semua), TotalAnakDiimunisasi: len(perAnak)}
 	for i := range anakList {
 		a := &anakList[i]
 		usia := usiaBulan(a.TanggalLahir, hari)
@@ -1324,7 +1324,7 @@ func (s *VaksinService) Statistik(pos string) (*StatistikVaksinResp, error) {
 	for i := range jenis {
 		j := &jenis[i]
 		out.Jenis = append(out.Jenis, StatistikJenisItem{
-			JenisVaksin: jenisResp(j), JumlahDosis: dosisJenis[j.ID],
+			JenisImunisasi: jenisResp(j), JumlahDosis: dosisJenis[j.ID],
 			JumlahAnak: len(anakJenis[j.ID]), DosisPerAnak: j.JumlahDosis,
 		})
 	}

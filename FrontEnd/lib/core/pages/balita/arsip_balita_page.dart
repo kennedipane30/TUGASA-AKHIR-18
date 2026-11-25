@@ -51,7 +51,7 @@ Future<bool> konfirmasiArsip(BuildContext context, String nama, IsianArsip isian
       content: Text(
         '$nama (${isian.alasanTeks}, ${isian.tanggal}) tidak akan muncul lagi '
         'di pendaftaran, pendataan, dan rekap posyandu.\n\n'
-        'Riwayat penimbangan dan vaksin tetap tersimpan. '
+        'Riwayat penimbangan dan imunisasi tetap tersimpan. '
         'Data dapat dilihat di Semua Balita > Diarsipkan dan diaktifkan kembali bila salah arsip.',
         style: const TextStyle(fontSize: 15, height: 1.4, color: kkTeksGelap),
       ),
@@ -269,7 +269,7 @@ class _FormArsipState extends State<_FormArsip> {
                   ),
                   child: const Text(
                     'Anak yang diarsipkan tidak muncul lagi di pendaftaran, pendataan, dan '
-                    'rekap. Riwayat penimbangan dan vaksin tetap tersimpan.',
+                    'rekap. Riwayat penimbangan dan imunisasi tetap tersimpan.',
                     style: TextStyle(fontSize: 14, height: 1.35, color: Color(0xFF9A3412)),
                   ),
                 ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
-import 'vaksin_lihat_body.dart';
+import 'imunisasi_lihat_body.dart';
 
 const _hijauHeader = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
@@ -29,15 +29,15 @@ Widget _judulTebal(String teks) {
   );
 }
 
-/// Halaman vaksin (hanya lihat) untuk satu anak yang sudah dipilih.
-/// Bidan: riwayat vaksin yang sudah diterima dan suplemen anak, serta pencatatan
-/// vaksin yang diberikan di luar posyandu.
-class BidanVaksinAnakPage extends StatelessWidget {
+/// Halaman imunisasi (hanya lihat) untuk satu anak yang sudah dipilih.
+/// Bidan: riwayat imunisasi yang sudah diterima dan suplemen anak, serta pencatatan
+/// imunisasi yang diberikan di luar posyandu.
+class BidanImunisasiAnakPage extends StatelessWidget {
   final String anakId;
   final String namaAnak;
   final String usia;
 
-  const BidanVaksinAnakPage({
+  const BidanImunisasiAnakPage({
     super.key,
     required this.anakId,
     required this.namaAnak,
@@ -60,7 +60,7 @@ class BidanVaksinAnakPage extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 56),
-                child: _judulTebal('Vaksin & Imunisasi'),
+                child: _judulTebal('Imunisasi'),
               ),
               Align(
                 alignment: Alignment.centerLeft,
@@ -134,7 +134,7 @@ class BidanVaksinAnakPage extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.fromLTRB(14, 10, 14, 12),
               child: Text(
-                'Riwayat vaksin yang sudah diterima dan suplemen anak.',
+                'Riwayat imunisasi yang sudah diterima dan suplemen anak.',
                 style: TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFF374151)),
               ),
             ),
@@ -158,7 +158,7 @@ class BidanVaksinAnakPage extends StatelessWidget {
           children: [
             _header(context),
             _kartuAnak(),
-            Expanded(child: VaksinLihatBody(anakId: anakId, bisaKelola: true, hanyaRiwayat: true)),
+            Expanded(child: ImunisasiLihatBody(anakId: anakId, bisaKelola: true, hanyaRiwayat: true)),
           ],
         ),
       ),

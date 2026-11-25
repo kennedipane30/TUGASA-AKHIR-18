@@ -96,7 +96,7 @@ class JadwalItem {
 final Options opsiJadwal = Options(receiveTimeout: const Duration(seconds: 15));
 
 const hijauTombolJadwal = Color(0xFF065F46); // tombol, sama dengan warna header
-const warnaHeaderJadwal = Color(0xFF065F46); // warna header (sama dengan halaman vaksin)
+const warnaHeaderJadwal = Color(0xFF065F46); // warna header (sama dengan halaman imunisasi)
 const teksGelapJadwal = Color(0xFF1F2937);
 
 /// Garis tepi kartu & kolom isian: hitam lembut (tidak mencolok).
@@ -389,7 +389,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
   // Tombol kembali hanya muncul bila ada halaman sebelumnya.
   // -------------------------------------------------------------------------
   Widget _header() {

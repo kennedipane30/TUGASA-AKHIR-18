@@ -194,12 +194,12 @@ Future<Uint8List> buatPdfLaporanBulananSekretaris({
     _bagian('IV', 'Imunisasi yang Diberikan'),
     if (data.imunisasi.isEmpty)
       _tabel([
-        ['Jenis vaksin', 'Jumlah anak'],
+        ['Jenis imunisasi', 'Jumlah anak'],
         ['Tidak ada imunisasi di posyandu bulan ini', '0'],
       ], [130, 44], tengah: {1})
     else
       _tabel([
-        ['Jenis vaksin', 'Jumlah anak'],
+        ['Jenis imunisasi', 'Jumlah anak'],
         for (final v in data.imunisasi) [v.nama, '${v.jumlah}'],
         ['Total pemberian', '${data.totalImunisasi}'],
       ], [130, 44], tengah: {1}, barisTebal: {data.imunisasi.length + 1}),

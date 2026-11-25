@@ -26,7 +26,7 @@ func (r *LaporanBulananRepository) JadwalRentang(pos string, dari, sampai time.T
 }
 
 // ImunisasiPerJenis: jumlah imunisasi yang diberikan di posyandu (sudah dikonfirmasi)
-// dalam [dari, sampai), dikelompokkan per jenis vaksin.
+// dalam [dari, sampai), dikelompokkan per jenis imunisasi.
 type ImunisasiPerJenis struct {
 	Nama   string
 	Jumlah int

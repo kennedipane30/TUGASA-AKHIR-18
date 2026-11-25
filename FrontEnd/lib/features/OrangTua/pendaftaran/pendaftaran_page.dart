@@ -15,7 +15,7 @@ import 'kartu_antrean_page.dart';
 class RencanaItemJadwal {
   final String jenis; // imunisasi | vitamin_a | obat_cacing
   final String kode;
-  final String jenisVaksinId; // hanya untuk imunisasi
+  final String jenisImunisasiId; // hanya untuk imunisasi
   final String nama;
   final int dosisKe;
   final String keterangan;
@@ -24,7 +24,7 @@ class RencanaItemJadwal {
   RencanaItemJadwal({
     required this.jenis,
     required this.kode,
-    this.jenisVaksinId = '',
+    this.jenisImunisasiId = '',
     required this.nama,
     required this.dosisKe,
     required this.keterangan,
@@ -34,7 +34,7 @@ class RencanaItemJadwal {
   factory RencanaItemJadwal.fromApi(Map<String, dynamic> j) => RencanaItemJadwal(
         jenis: j['jenis']?.toString() ?? '',
         kode: j['kode']?.toString() ?? '',
-        jenisVaksinId: j['jenis_vaksin_id']?.toString() ?? '',
+        jenisImunisasiId: j['jenis_vaksin_id']?.toString() ?? '',
         nama: j['nama']?.toString() ?? '',
         dosisKe: int.tryParse(j['dosis_ke']?.toString() ?? '') ?? 0,
         keterangan: j['keterangan']?.toString() ?? '',
@@ -605,7 +605,7 @@ class _OrangTuaPendaftaranPageState
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
   // -------------------------------------------------------------------------
   Widget _header() {
     return Container(

@@ -2,7 +2,7 @@ part of 'catat_pemeriksaan_page.dart';
 
 // ===========================================================================
 // TAMPILAN FORM PEMERIKSAAN BIDAN
-// Data anak, status gizi, riwayat vaksin, imunisasi hari ini, suplemen.
+// Data anak, status gizi, riwayat imunisasi, imunisasi hari ini, suplemen.
 // ===========================================================================
 mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
   Widget _isi() {
@@ -73,13 +73,13 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
               if (anakId.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 tombolGarisBidan(
-                  'Riwayat Vaksin',
+                  'Riwayat Imunisasi',
                   ikon: Icons.vaccines_outlined,
                   onPressed: () async {
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => BidanVaksinAnakPage(anakId: anakId, namaAnak: nama, usia: usiaTeks),
+                        builder: (_) => BidanImunisasiAnakPage(anakId: anakId, namaAnak: nama, usia: usiaTeks),
                       ),
                     );
                     _muat();
@@ -119,15 +119,15 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
   }
 
   // -------------------------------------------------------------------------
-  // KARTU RIWAYAT VAKSIN SEBELUM POSYANDU (dicatat bidan sekali, kunjungan pertama)
+  // KARTU RIWAYAT IMUNISASI SEBELUM POSYANDU (dicatat bidan sekali, kunjungan pertama)
   // -------------------------------------------------------------------------
   Widget _kartuRiwayat() {
-    const pesan = 'Kunjungan pertama anak. Tanyakan kepada orang tua dan lihat Buku KIA: vaksin apa saja '
+    const pesan = 'Kunjungan pertama anak. Tanyakan kepada orang tua dan lihat Buku KIA: imunisasi apa saja '
         'yang pernah diterima anak di luar posyandu (rumah sakit, puskesmas, klinik, bidan praktik).';
     final menunggu = _riwayatLuar.where((r) => r.menungguKonfirmasi).length;
 
     return kartuBidan(
-      judul: 'Riwayat Vaksin Sebelum Posyandu',
+      judul: 'Riwayat Imunisasi Sebelum Posyandu',
       kanan: 'Wajib',
       warnaKanan: AppColors.kuning,
       child: Column(
@@ -138,14 +138,14 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
           if (_riwayatLuar.isNotEmpty) ...[
             const Padding(
               padding: EdgeInsets.only(bottom: 6),
-              child: Text('Catatan vaksin yang sudah ada:',
+              child: Text('Catatan imunisasi yang sudah ada:',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _teksGelap)),
             ),
             for (final r in _riwayatLuar) _barisRiwayatLuar(r),
           ],
           const SizedBox(height: 4),
           tombolHijauBidan(
-            menunggu > 0 ? 'Cek $menunggu catatan di atas dahulu' : 'Catat Riwayat Vaksin',
+            menunggu > 0 ? 'Cek $menunggu catatan di atas dahulu' : 'Catat Riwayat Imunisasi',
             ikon: Icons.fact_check_outlined,
             onPressed: (_prosesRiwayat || menunggu > 0) ? null : _catatRiwayatAwal,
           ),
@@ -154,7 +154,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
     );
   }
 
-  Widget _barisRiwayatLuar(RiwayatVaksin r) {
+  Widget _barisRiwayatLuar(RiwayatImunisasi r) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
@@ -198,7 +198,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
             children: [
               if (r.fotoBukti.isNotEmpty)
                 TextButton.icon(
-                  onPressed: () => tampilkanBuktiVaksin(context, r.fotoBukti),
+                  onPressed: () => tampilkanBuktiImunisasi(context, r.fotoBukti),
                   icon: const Icon(Icons.image_outlined, size: 18),
                   label: const Text('Lihat bukti'),
                 ),
@@ -232,11 +232,11 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
   Widget _kartuImunisasi() {
     if (!_riwayatOk) {
       return kartuBidan(
-        judul: 'Vaksin & Imunisasi Hari Ini',
+        judul: 'Imunisasi Hari Ini',
         kanan: 'Terkunci',
         warnaKanan: AppColors.teksRedup,
         child: const Text(
-          'Catat riwayat vaksin anak di atas terlebih dahulu agar tidak ada vaksin yang diberikan dua kali.',
+          'Catat riwayat imunisasi anak di atas terlebih dahulu agar tidak ada imunisasi yang diberikan dua kali.',
           style: TextStyle(fontSize: 16.5, color: AppColors.teksRedup),
         ),
       );
@@ -245,7 +245,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
     final k = _kartu;
     if (k == null) {
       return kartuBidan(
-        judul: 'Vaksin & Imunisasi Hari Ini',
+        judul: 'Imunisasi Hari Ini',
         child: Column(
           children: [
             Text(
@@ -264,22 +264,22 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
     }
 
     final calon = k.jadwal
-        .where((e) => (e.bisaDiberikan && !e.keFaskes) || _vaksinSesiIni.contains(e.jadwal.kunci))
+        .where((e) => (e.bisaDiberikan && !e.keFaskes) || _imunisasiSesiIni.contains(e.jadwal.kunci))
         .toList();
-    final faskes = k.jadwal.where((e) => !e.sudah && e.keFaskes && e.status != StatusVaksin.terlewat).toList();
+    final faskes = k.jadwal.where((e) => !e.sudah && e.keFaskes && e.status != StatusImunisasi.terlewat).toList();
     final sakit = _kondisi == KondisiImunisasi.sakit;
 
     return kartuBidan(
-      judul: 'Vaksin & Imunisasi Hari Ini',
-      kanan: '${_vaksinDipilih.length} dipilih',
+      judul: 'Imunisasi Hari Ini',
+      kanan: '${_imunisasiDipilih.length} dipilih',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_otomatis && _vaksinDipilih.isNotEmpty)
-            _info('Vaksin sesuai jadwal sudah dicentang otomatis. Hapus centang bila tidak diberikan.',
+          if (_otomatis && _imunisasiDipilih.isNotEmpty)
+            _info('Imunisasi sesuai jadwal sudah dicentang otomatis. Hapus centang bila tidak diberikan.',
                 ikon: Icons.auto_awesome, bg: AppColors.hijauMuda, fg: AppColors.hijau),
           if (calon.isEmpty)
-            const Text('Tidak ada vaksin yang perlu diberikan hari ini.',
+            const Text('Tidak ada imunisasi yang perlu diberikan hari ini.',
                 style: TextStyle(fontSize: 16.5, color: AppColors.teksRedup))
           else ...[
             // Kondisi anak diambil dari pendataan kader (Kondisi Anak: "Sedang sakit").
@@ -309,7 +309,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
             else
               const Padding(
                 padding: EdgeInsets.only(bottom: 8),
-                child: Text('Centang vaksin yang diberikan hari ini.',
+                child: Text('Centang imunisasi yang diberikan hari ini.',
                     style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
               ),
             for (final e in calon) _barisCalon(e, terkunci: sakit),
@@ -325,11 +325,11 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
     );
   }
 
-  Widget _barisCalon(JadwalVaksinAnak e, {required bool terkunci}) {
+  Widget _barisCalon(JadwalImunisasiAnak e, {required bool terkunci}) {
     final kunci = e.jadwal.kunci;
-    final pilih = _vaksinDipilih[kunci];
+    final pilih = _imunisasiDipilih[kunci];
     final dipilih = pilih != null;
-    final tersimpan = _vaksinSesiIni.contains(kunci);
+    final tersimpan = _imunisasiSesiIni.contains(kunci);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -351,9 +351,9 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
                 ? null
                 : (v) => setState(() {
                       if (v == true) {
-                        _vaksinDipilih[kunci] = _PilihVaksin();
+                        _imunisasiDipilih[kunci] = _PilihImunisasi();
                       } else {
-                        _vaksinDipilih.remove(kunci)?.dispose();
+                        _imunisasiDipilih.remove(kunci)?.dispose();
                       }
                     }),
             title: Column(
@@ -448,8 +448,8 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
     );
   }
 
-  Widget _barisLaporanOrtu(RiwayatVaksin r) {
-    final tglVaksin = r.tanggal == null ? '' : formatTanggal(r.tanggal!);
+  Widget _barisLaporanOrtu(RiwayatImunisasi r) {
+    final tglImunisasi = r.tanggal == null ? '' : formatTanggal(r.tanggal!);
     final tglLapor = r.kipiDilaporkanPada == null ? '' : formatTanggal(r.kipiDilaporkanPada!);
     return Container(
       width: double.infinity,
@@ -465,12 +465,12 @@ mixin _KartuPemeriksaan<T extends StatefulWidget> on _FormPemeriksaan<T> {
         children: [
           Text(r.namaDosis,
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16.5, color: _teksGelap)),
-          if (tglVaksin.isNotEmpty || tglLapor.isNotEmpty)
+          if (tglImunisasi.isNotEmpty || tglLapor.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 [
-                  if (tglVaksin.isNotEmpty) 'Diimunisasi $tglVaksin',
+                  if (tglImunisasi.isNotEmpty) 'Diimunisasi $tglImunisasi',
                   if (tglLapor.isNotEmpty) 'dilaporkan $tglLapor',
                 ].join(' · '),
                 style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup),

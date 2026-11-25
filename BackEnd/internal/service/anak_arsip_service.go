@@ -21,7 +21,7 @@ import (
 //   - Otomatis (sistem) : anak berusia 60 bulan -> "Lulus balita (usia 5 tahun)".
 //
 // Anak arsip tidak muncul lagi di pendaftaran, pendataan, daftar balita,
-// deteksi dini, rekap, dan pengingat. Riwayat pemeriksaan, kartu vaksin, dan
+// deteksi dini, rekap, dan pengingat. Riwayat pemeriksaan, kartu imunisasi, dan
 // rujukan tetap tersimpan dan dapat dilihat.
 // ============================================================================
 

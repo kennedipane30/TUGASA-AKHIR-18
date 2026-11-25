@@ -309,7 +309,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
   // Tanpa tombol kembali, sama seperti sebelumnya (halaman tab).
   // -------------------------------------------------------------------------
   Widget _header() {

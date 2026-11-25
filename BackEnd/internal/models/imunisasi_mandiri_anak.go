@@ -7,17 +7,17 @@ import (
 	"gorm.io/gorm"
 )
 
-// VaksinMandiriAnak: vaksin di luar jadwal imunisasi program (mis. Rotavirus, PCV,
+// ImunisasiMandiriAnak: imunisasi di luar jadwal imunisasi program (mis. Rotavirus, PCV,
 // Influenza, Varisela, Hepatitis A) yang pernah diterima anak di RS, puskesmas,
 // klinik, atau bidan praktik. Dicatat bidan saat kunjungan pertama anak.
 // Hanya catatan riwayat: tidak memengaruhi jadwal imunisasi program.
-type VaksinMandiriAnak struct {
+type ImunisasiMandiriAnak struct {
 	ID     uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	AnakID uuid.UUID `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
 	Anak   *Anak     `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 
-	// NamaVaksin: nama vaksin sesuai keterangan / Buku KIA, mis. "Rotavirus".
-	NamaVaksin string `gorm:"column:nama_vaksin;size:100;not null" json:"nama_vaksin"`
+	// NamaImunisasi: nama imunisasi sesuai keterangan / Buku KIA, mis. "Rotavirus".
+	NamaImunisasi string `gorm:"column:nama_vaksin;size:100;not null" json:"nama_vaksin"`
 	DosisKe    int16  `gorm:"column:dosis_ke;not null;default:1" json:"dosis_ke"`
 
 	TanggalPemberian time.Time `gorm:"column:tanggal_pemberian;type:date;not null" json:"tanggal_pemberian"`
@@ -35,9 +35,9 @@ type VaksinMandiriAnak struct {
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func (VaksinMandiriAnak) TableName() string { return "vaksin_mandiri_anak" }
+func (ImunisasiMandiriAnak) TableName() string { return "vaksin_mandiri_anak" }
 
-func (m *VaksinMandiriAnak) BeforeCreate(*gorm.DB) error {
+func (m *ImunisasiMandiriAnak) BeforeCreate(*gorm.DB) error {
 	if m.ID == uuid.Nil {
 		m.ID = uuid.New()
 	}

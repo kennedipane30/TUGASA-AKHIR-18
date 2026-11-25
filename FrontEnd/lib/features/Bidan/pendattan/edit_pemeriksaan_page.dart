@@ -68,30 +68,30 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
         _saranGizi.text = c['saran_gizi']?.toString() ?? '';
       }
 
-      // Riwayat vaksin sebelum posyandu.
+      // Riwayat imunisasi sebelum posyandu.
       final status = detail['status_riwayat_vaksin']?.toString() ?? '';
-      final luar = <RiwayatVaksin>[];
+      final luar = <RiwayatImunisasi>[];
       final rl = detail['riwayat_luar'];
       if (rl is List) {
         for (final e in rl) {
-          if (e is Map) luar.add(RiwayatVaksin.fromJson(Map<String, dynamic>.from(e)));
+          if (e is Map) luar.add(RiwayatImunisasi.fromJson(Map<String, dynamic>.from(e)));
         }
       }
 
-      // Vaksin yang sudah tersimpan pada kunjungan ini.
-      for (final v in _vaksinDipilih.values) {
+      // Imunisasi yang sudah tersimpan pada kunjungan ini.
+      for (final v in _imunisasiDipilih.values) {
         v.dispose();
       }
-      _vaksinDipilih.clear();
-      _vaksinSesiIni.clear();
+      _imunisasiDipilih.clear();
+      _imunisasiSesiIni.clear();
       _kondisi = null;
       final imun = detail['imunisasi'];
       if (imun is List) {
         for (final e in imun) {
           if (e is Map && e['jenis_vaksin_id'] != null) {
-            final k = '${e['jenis_vaksin_id']}|${e['dosis_ke']}';
-            _vaksinDipilih[k] = _PilihVaksin();
-            _vaksinSesiIni.add(k);
+            final k = '${e['jenis_imunisasi_id']}|${e['dosis_ke']}';
+            _imunisasiDipilih[k] = _PilihImunisasi();
+            _imunisasiSesiIni.add(k);
           }
         }
       }
@@ -133,13 +133,13 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
       // Form suplemen langsung tampil (satu baris kosong bila belum ada suplemen).
       _siapkanFormSuplemen();
 
-      // Kartu vaksin anak (jadwal + status).
-      KartuVaksin? kartu;
+      // Kartu imunisasi anak (jadwal + status).
+      KartuImunisasi? kartu;
       String? gagalKartu;
       final anakId = (detail['anak'] is Map) ? (detail['anak']['id']?.toString() ?? '') : '';
       if (anakId.isNotEmpty) {
         try {
-          kartu = await _svcVaksin.kartuAnak(anakId);
+          kartu = await _svcImunisasi.kartuAnak(anakId);
         } catch (e) {
           gagalKartu = _pesanError(e);
         }
@@ -149,7 +149,7 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
       setState(() {
         _detail = detail;
         _mulaiSesi = mulaiSesi;
-        _statusRiwayat = status.isEmpty ? StatusRiwayatVaksin.belumDitanya : status;
+        _statusRiwayat = status.isEmpty ? StatusRiwayatImunisasi.belumDitanya : status;
         _riwayatLuar = luar;
         _kartu = kartu;
         _gagalKartu = gagalKartu;

@@ -2,7 +2,7 @@ part of 'catat_pemeriksaan_page.dart';
 
 // ===========================================================================
 // BAGIAN BERSAMA HALAMAN CATAT & EDIT PEMERIKSAAN
-// Helper, model baris suplemen/vaksin, state form, simpan, dan riwayat vaksin
+// Helper, model baris suplemen/imunisasi, state form, simpan, dan riwayat imunisasi
 // sebelum posyandu (dicatat bidan pada kunjungan pertama anak).
 // ===========================================================================
 
@@ -435,10 +435,10 @@ _BarisSuplemen _obatCacing(int usia) => _BarisSuplemen(
       tetap: true,
     );
 
-/// Vaksin yang dipilih hari ini. Nomor batch dan reaksi tidak diisi lagi di sini:
+/// Imunisasi yang dipilih hari ini. Nomor batch dan reaksi tidak diisi lagi di sini:
 /// reaksi setelah imunisasi dilaporkan orang tua (tampil di kunjungan berikutnya).
-class _PilihVaksin {
-  _PilihVaksin();
+class _PilihImunisasi {
+  _PilihImunisasi();
 
   void dispose() {}
 }
@@ -469,10 +469,10 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
   bool get modeEdit;
   Future<void> _muat();
 
-  final _svcVaksin = VaksinService();
+  final _svcImunisasi = ImunisasiService();
 
   Map<String, dynamic>? _detail;
-  KartuVaksin? _kartu;
+  KartuImunisasi? _kartu;
   String? _gagalKartu;
   bool _memuat = true;
   bool _kirim = false;
@@ -482,28 +482,28 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
   final _catatanOrtu = TextEditingController();
   final _saranGizi = TextEditingController();
 
-  /// Riwayat vaksin sebelum posyandu.
-  String _statusRiwayat = StatusRiwayatVaksin.belumDitanya;
-  List<RiwayatVaksin> _riwayatLuar = [];
+  /// Riwayat imunisasi sebelum posyandu.
+  String _statusRiwayat = StatusRiwayatImunisasi.belumDitanya;
+  List<RiwayatImunisasi> _riwayatLuar = [];
 
-  /// Vaksin yang dipilih hari ini, kunci "jenisVaksinId|dosisKe".
-  final Map<String, _PilihVaksin> _vaksinDipilih = {};
+  /// Imunisasi yang dipilih hari ini, kunci "jenisImunisasiId|dosisKe".
+  final Map<String, _PilihImunisasi> _imunisasiDipilih = {};
 
-  /// Vaksin yang sudah tersimpan pada kunjungan ini (saat catatan diubah).
-  final Set<String> _vaksinSesiIni = {};
+  /// Imunisasi yang sudah tersimpan pada kunjungan ini (saat catatan diubah).
+  final Set<String> _imunisasiSesiIni = {};
 
   /// Kondisi anak sebelum imunisasi: sehat | demam_ringan | sakit.
   String? _kondisi;
 
   final List<_BarisSuplemen> _suplemen = [];
 
-  /// Vaksin & suplemen dipilih otomatis sesuai jadwal (catatan belum pernah disimpan).
+  /// Imunisasi & suplemen dipilih otomatis sesuai jadwal (catatan belum pernah disimpan).
   bool _otomatis = false;
 
   DateTime? _mulaiSesi;
   Timer? _jam;
 
-  bool get _riwayatOk => _statusRiwayat == StatusRiwayatVaksin.dikonfirmasi;
+  bool get _riwayatOk => _statusRiwayat == StatusRiwayatImunisasi.dikonfirmasi;
 
   /// Mode ubah dan jadwal posyandu sudah selesai: catatan hanya dapat dilihat.
   bool get _jadwalSelesai => modeEdit && _detail?['jadwal_selesai'] == true;
@@ -521,7 +521,7 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     for (final c in [_catatanOrtu, _saranGizi]) {
       c.dispose();
     }
-    for (final v in _vaksinDipilih.values) {
+    for (final v in _imunisasiDipilih.values) {
       v.dispose();
     }
     for (final s in _suplemen) {
@@ -566,14 +566,14 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
 
   /// Laporan reaksi dari orang tua (setelah imunisasi pada kunjungan sebelumnya)
   /// yang belum ditindaklanjuti bidan. Bila orang tua tidak melapor, dianggap normal.
-  List<RiwayatVaksin> get _laporanOrtu {
+  List<RiwayatImunisasi> get _laporanOrtu {
     final k = _kartu;
     if (k == null) return const [];
     return k.riwayat
         .where((r) =>
             r.reaksiKipi.trim().isNotEmpty &&
             r.kipiTindakLanjut.trim().isEmpty &&
-            !_vaksinSesiIni.contains('${r.jenis.id}|${r.dosisKe}'))
+            !_imunisasiSesiIni.contains('${r.jenis.id}|${r.dosisKe}'))
         .toList();
   }
 
@@ -608,15 +608,15 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
       _snack('Sesi belum dimulai. Pendataan dapat dilakukan mulai pukul ${_jamMenit(mulai)} WIB');
       return;
     }
-    if (_vaksinDipilih.isNotEmpty) {
+    if (_imunisasiDipilih.isNotEmpty) {
       if (!_riwayatOk) {
-        _snack('Catat riwayat vaksin anak terlebih dahulu');
+        _snack('Catat riwayat imunisasi anak terlebih dahulu');
         return;
       }
-      // Kondisi mengikuti pendataan kader; anak sakit tidak boleh mendapat vaksin baru.
+      // Kondisi mengikuti pendataan kader; anak sakit tidak boleh mendapat imunisasi baru.
       if (_kondisi == KondisiImunisasi.sakit &&
-          _vaksinDipilih.keys.any((k) => !_vaksinSesiIni.contains(k))) {
-        _snack('Anak sedang sakit (pendataan kader). Hapus centang vaksin dan tunda imunisasi.');
+          _imunisasiDipilih.keys.any((k) => !_imunisasiSesiIni.contains(k))) {
+        _snack('Anak sedang sakit (pendataan kader). Hapus centangnya dan tunda imunisasi.');
         return;
       }
     }
@@ -641,7 +641,7 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
           'catatan_evaluasi': _catatanOrtu.text.trim(),
           'saran_gizi': _saranGizi.text.trim(),
           'vaksin': [
-            for (final e in _vaksinDipilih.entries)
+            for (final e in _imunisasiDipilih.entries)
               {
                 'jenis_vaksin_id': e.key.split('|').first,
                 'dosis_ke': int.tryParse(e.key.split('|').last) ?? 1,
@@ -673,7 +673,7 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
   }
 
   // -------------------------------------------------------------------------
-  // RIWAYAT VAKSIN SEBELUM POSYANDU
+  // RIWAYAT IMUNISASI SEBELUM POSYANDU
   // -------------------------------------------------------------------------
   Future<void> _jalankan(Future<void> Function() aksi, String sukses) async {
     if (_prosesRiwayat) return;
@@ -689,10 +689,10 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     }
   }
 
-  Future<void> _benarkan(RiwayatVaksin r) =>
-      _jalankan(() => _svcVaksin.konfirmasiRiwayat(r.id), '${r.namaDosis} dikonfirmasi');
+  Future<void> _benarkan(RiwayatImunisasi r) =>
+      _jalankan(() => _svcImunisasi.konfirmasiRiwayat(r.id), '${r.namaDosis} dikonfirmasi');
 
-  Future<void> _ubahTanggal(RiwayatVaksin r) async {
+  Future<void> _ubahTanggal(RiwayatImunisasi r) async {
     final lahir = _lahir ?? DateTime(2000);
     final t = await showDatePicker(
       context: context,
@@ -703,19 +703,19 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     );
     if (t == null) return;
     await _jalankan(
-      () => _svcVaksin.konfirmasiRiwayat(r.id, tanggal: t),
+      () => _svcImunisasi.konfirmasiRiwayat(r.id, tanggal: t),
       'Tanggal diperbaiki dan dikonfirmasi',
     );
   }
 
-  Future<void> _batalkan(RiwayatVaksin r) async {
+  Future<void> _batalkan(RiwayatImunisasi r) async {
     final ya = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Batalkan catatan vaksin?'),
+        title: const Text('Batalkan catatan imunisasi?'),
         content: Text(
           '${r.namaDosis} akan dihapus dari riwayat. Gunakan bila orang tua menyatakan '
-          'anak ternyata belum menerima vaksin ini.',
+          'anak ternyata belum menerima imunisasi ini.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tidak')),
@@ -724,12 +724,12 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
       ),
     );
     if (ya != true) return;
-    await _jalankan(() => _svcVaksin.hapusRiwayat(r.id), 'Catatan vaksin dibatalkan');
+    await _jalankan(() => _svcImunisasi.hapusRiwayat(r.id), 'Catatan imunisasi dibatalkan');
   }
 
   /// Bidan mencatat tindak lanjut atas reaksi yang dilaporkan orang tua.
   /// Setelah tersimpan, laporan tidak tampil lagi di atas form pemeriksaan.
-  Future<void> _isiTindakLanjut(RiwayatVaksin r) async {
+  Future<void> _isiTindakLanjut(RiwayatImunisasi r) async {
     final isian = TextEditingController();
     final tindak = await showDialog<String>(
       context: context,
@@ -768,13 +768,13 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     );
     if (tindak == null || tindak.isEmpty) return;
     await _jalankan(
-      () => _svcVaksin.tindakLanjutKipi(r.id, reaksi: r.reaksiKipi, tindakLanjut: tindak),
+      () => _svcImunisasi.tindakLanjutKipi(r.id, reaksi: r.reaksiKipi, tindakLanjut: tindak),
       'Tindak lanjut tersimpan',
     );
   }
 
-  /// Kunjungan pertama: bidan mencatat riwayat vaksin anak sebelum posyandu
-  /// (belum pernah / sudah pernah + daftar centang + vaksin mandiri).
+  /// Kunjungan pertama: bidan mencatat riwayat imunisasi anak sebelum posyandu
+  /// (belum pernah / sudah pernah + daftar centang + imunisasi mandiri).
   Future<void> _catatRiwayatAwal() async {
     final lahir = _lahir;
     if (lahir == null) {
@@ -792,7 +792,7 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => _FormRiwayatVaksinAwal(
+      builder: (_) => _FormRiwayatImunisasiAwal(
         anakId: _anakId,
         nama: _kartu?.anak.nama ?? '',
         lahir: lahir,
@@ -801,7 +801,7 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
       ),
     );
     if (hasil == true) {
-      _snack('Riwayat vaksin anak tersimpan');
+      _snack('Riwayat imunisasi anak tersimpan');
       _muat();
     }
   }
@@ -831,13 +831,13 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
 }
 
 // ---------------------------------------------------------------------------
-// FORM RIWAYAT VAKSIN SEBELUM POSYANDU (bidan, kunjungan pertama anak)
-//   - Belum pernah divaksin, atau
-//   - Sudah pernah: centang dosis vaksin program + "vaksin mandiri" di luar daftar.
+// FORM RIWAYAT IMUNISASI SEBELUM POSYANDU (bidan, kunjungan pertama anak)
+//   - Belum pernah diimunisasi, atau
+//   - Sudah pernah: centang dosis imunisasi program + "imunisasi mandiri" di luar daftar.
 // Data langsung sah. Dosis yang sudah tercatat tampil terkunci (tidak dobel).
 // ---------------------------------------------------------------------------
 
-/// Isian satu dosis vaksin program yang dicentang.
+/// Isian satu dosis imunisasi program yang dicentang.
 class _DosisAwal {
   DateTime? tanggal;
   final tempat = TextEditingController();
@@ -847,8 +847,8 @@ class _DosisAwal {
   void dispose() => tempat.dispose();
 }
 
-/// Isian satu vaksin di luar daftar program.
-class _VaksinMandiriAwal {
+/// Isian satu imunisasi di luar daftar program.
+class _ImunisasiMandiriAwal {
   final nama = TextEditingController();
   int dosis = 1;
   DateTime? tanggal;
@@ -862,18 +862,18 @@ class _VaksinMandiriAwal {
   }
 }
 
-class _FormRiwayatVaksinAwal extends StatefulWidget {
+class _FormRiwayatImunisasiAwal extends StatefulWidget {
   final String anakId;
   final String nama;
   final DateTime lahir;
 
-  /// Kunci "jenisVaksinId|dosisKe" yang sudah tercatat.
+  /// Kunci "jenisImunisasiId|dosisKe" yang sudah tercatat.
   final Set<String> sudahTercatat;
 
-  /// Sudah ada catatan vaksin dari luar posyandu (mis. laporan lama yang sudah dibenarkan).
+  /// Sudah ada catatan imunisasi dari luar posyandu (mis. laporan lama yang sudah dibenarkan).
   final bool adaRiwayatLuar;
 
-  const _FormRiwayatVaksinAwal({
+  const _FormRiwayatImunisasiAwal({
     required this.anakId,
     required this.nama,
     required this.lahir,
@@ -882,16 +882,16 @@ class _FormRiwayatVaksinAwal extends StatefulWidget {
   });
 
   @override
-  State<_FormRiwayatVaksinAwal> createState() => _FormRiwayatVaksinAwalState();
+  State<_FormRiwayatImunisasiAwal> createState() => _FormRiwayatImunisasiAwalState();
 }
 
-class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
-  final _svc = VaksinService();
+class _FormRiwayatImunisasiAwalState extends State<_FormRiwayatImunisasiAwal> {
+  final _svc = ImunisasiService();
   String _status = ''; // sudah | belum_pernah
   List<JadwalImunisasi> _master = [];
   bool _memuatMaster = false;
   final Map<String, _DosisAwal> _dipilih = {};
-  final List<_VaksinMandiriAwal> _mandiri = [];
+  final List<_ImunisasiMandiriAwal> _mandiri = [];
   bool _menyimpan = false;
   String? _galat;
 
@@ -996,7 +996,7 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
     });
   }
 
-  Future<void> _fotoMandiri(_VaksinMandiriAwal v) async {
+  Future<void> _fotoMandiri(_ImunisasiMandiriAwal v) async {
     setState(() => v.mengunggah = true);
     final nama = await _unggahFoto();
     if (!mounted) return;
@@ -1008,7 +1008,7 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
 
   Future<void> _simpan() async {
     if (_status.isEmpty) {
-      setState(() => _galat = 'Pilih: belum pernah atau sudah pernah divaksin');
+      setState(() => _galat = 'Pilih: belum pernah atau sudah pernah diimunisasi');
       return;
     }
     final items = <Map<String, dynamic>>[];
@@ -1017,7 +1017,7 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
       for (final e in _dipilih.entries) {
         final d = e.value;
         if (d.tanggal == null || d.tempat.text.trim().isEmpty) {
-          setState(() => _galat = 'Isi tanggal dan tempat untuk setiap vaksin yang dicentang');
+          setState(() => _galat = 'Isi tanggal dan tempat untuk setiap imunisasi yang dicentang');
           return;
         }
         if (d.mengunggah) {
@@ -1027,7 +1027,7 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
         items.add({
           'jenis_vaksin_id': e.key.split('|').first,
           'dosis_ke': int.tryParse(e.key.split('|').last) ?? 1,
-          'tanggal_pemberian': tanggalApiVaksin(d.tanggal!),
+          'tanggal_pemberian': tanggalApiImunisasi(d.tanggal!),
           'tempat': d.tempat.text.trim(),
           'foto_bukti': d.foto,
         });
@@ -1036,7 +1036,7 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
       for (final v in _mandiri) {
         final nama = v.nama.text.trim();
         if (nama.isEmpty || v.tanggal == null || v.tempat.text.trim().isEmpty) {
-          setState(() => _galat = 'Isi nama vaksin, tanggal, dan tempat untuk setiap vaksin mandiri');
+          setState(() => _galat = 'Isi nama imunisasi, tanggal, dan tempat untuk setiap imunisasi mandiri');
           return;
         }
         if (v.mengunggah) {
@@ -1050,13 +1050,13 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
         mandiri.add({
           'nama_vaksin': nama,
           'dosis_ke': v.dosis,
-          'tanggal_pemberian': tanggalApiVaksin(v.tanggal!),
+          'tanggal_pemberian': tanggalApiImunisasi(v.tanggal!),
           'tempat': v.tempat.text.trim(),
           'foto_bukti': v.foto,
         });
       }
       if (items.isEmpty && mandiri.isEmpty && !widget.adaRiwayatLuar) {
-        setState(() => _galat = 'Centang minimal satu vaksin atau tambahkan vaksin mandiri');
+        setState(() => _galat = 'Centang minimal satu imunisasi atau tambahkan imunisasi mandiri');
         return;
       }
     }
@@ -1113,7 +1113,7 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
     );
   }
 
-  /// Baris tanggal + tempat + foto (dipakai dosis program & vaksin mandiri).
+  /// Baris tanggal + tempat + foto (dipakai dosis program & imunisasi mandiri).
   Widget _isianDosis({
     required DateTime? tanggal,
     required VoidCallback onTanggal,
@@ -1152,7 +1152,7 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
     );
   }
 
-  Widget _barisVaksin(JadwalImunisasi j) {
+  Widget _barisImunisasi(JadwalImunisasi j) {
     final tercatat = widget.sudahTercatat.contains(j.kunci);
     final d = _dipilih[j.kunci];
     return Container(
@@ -1224,7 +1224,7 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
           Row(
             children: [
               Expanded(
-                child: Text('Vaksin mandiri ${i + 1}',
+                child: Text('Imunisasi mandiri ${i + 1}',
                     style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _teksGelap)),
               ),
               IconButton(
@@ -1242,7 +1242,7 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
                   controller: v.nama,
                   maxLength: 100,
                   textCapitalization: TextCapitalization.words,
-                  decoration: dekorFormBidan('Nama vaksin * (mis. Rotavirus, PCV)', ikon: Icons.vaccines_outlined)
+                  decoration: dekorFormBidan('Nama imunisasi * (mis. Rotavirus, PCV)', ikon: Icons.vaccines_outlined)
                       .copyWith(counterText: ''),
                 ),
                 const SizedBox(height: 8),
@@ -1283,19 +1283,19 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('RIWAYAT VAKSIN SEBELUM POSYANDU',
+            const Text('RIWAYAT IMUNISASI SEBELUM POSYANDU',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _teksGelap)),
             const SizedBox(height: 6),
             Container(height: 3, color: aksenKartuBidan),
             const SizedBox(height: 10),
             Text(
-              'Apakah ${widget.nama.isEmpty ? 'anak' : widget.nama} sudah pernah menerima vaksin sebelum ke posyandu '
+              'Apakah ${widget.nama.isEmpty ? 'anak' : widget.nama} sudah pernah menerima imunisasi sebelum ke posyandu '
               '(rumah sakit, puskesmas, klinik, atau bidan praktik)? Cocokkan dengan Buku KIA.',
               style: const TextStyle(fontSize: 16, color: AppColors.teksRedup, height: 1.4),
             ),
             const SizedBox(height: 14),
-            _opsi('belum_pernah', 'Belum pernah', 'Anak belum pernah divaksin', Icons.block_outlined),
-            _opsi('sudah', 'Sudah pernah', 'Centang vaksin yang sudah diterima', Icons.vaccines_outlined),
+            _opsi('belum_pernah', 'Belum pernah', 'Anak belum pernah diimunisasi', Icons.block_outlined),
+            _opsi('sudah', 'Sudah pernah', 'Centang imunisasi yang sudah diterima', Icons.vaccines_outlined),
             if (_status == 'sudah') ...[
               const SizedBox(height: 6),
               if (_memuatMaster)
@@ -1304,9 +1304,9 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               else
-                for (final j in _master) _barisVaksin(j),
+                for (final j in _master) _barisImunisasi(j),
               const SizedBox(height: 10),
-              const Text('VAKSIN MANDIRI (DI LUAR PROGRAM)',
+              const Text('IMUNISASI MANDIRI (DI LUAR PROGRAM)',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: _teksGelap)),
               const SizedBox(height: 4),
               const Text('Mis. Rotavirus, PCV, Influenza, Varisela, Hepatitis A.',
@@ -1314,9 +1314,9 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
               const SizedBox(height: 8),
               for (var i = 0; i < _mandiri.length; i++) _barisMandiri(i),
               tombolGarisBidan(
-                'Tambah Vaksin Mandiri',
+                'Tambah Imunisasi Mandiri',
                 ikon: Icons.add,
-                onPressed: () => setState(() => _mandiri.add(_VaksinMandiriAwal())),
+                onPressed: () => setState(() => _mandiri.add(_ImunisasiMandiriAwal())),
               ),
             ],
             if (_galat != null)
@@ -1334,7 +1334,7 @@ class _FormRiwayatVaksinAwalState extends State<_FormRiwayatVaksinAwal> {
                 border: Border.all(color: garisKartuBidan, width: 1.2),
               ),
               child: const Text(
-                'Vaksin yang dicatat langsung sah dan tidak akan diberikan lagi di posyandu. '
+                'Imunisasi yang dicatat langsung sah dan tidak akan diberikan lagi di posyandu. '
                 'Bagian ini hanya diisi sekali, pada kunjungan pertama anak.',
                 style: TextStyle(fontSize: 15, height: 1.4),
               ),

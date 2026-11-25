@@ -7,21 +7,21 @@ import (
 	"gorm.io/gorm"
 )
 
-// Status riwayat vaksin anak sebelum dilayani di posyandu.
+// Status riwayat imunisasi anak sebelum dilayani di posyandu.
 //
-//	belum_ditanya    : orang tua belum mengisi riwayat vaksin (data lama / walk-in).
-//	belum_pernah     : orang tua menyatakan anak belum pernah divaksin.
-//	dilaporkan       : orang tua melaporkan vaksin yang sudah diterima di luar posyandu.
+//	belum_ditanya    : orang tua belum mengisi riwayat imunisasi (data lama / walk-in).
+//	belum_pernah     : orang tua menyatakan anak belum pernah diimunisasi.
+//	dilaporkan       : orang tua melaporkan imunisasi yang sudah diterima di luar posyandu.
 //	perlu_ditanyakan : orang tua lupa / tidak tahu, bidan wajib menanyakan.
 //	dikonfirmasi     : bidan sudah mengonfirmasi riwayat langsung ke orang tua.
 //
 // Imunisasi di posyandu hanya boleh diberikan bila status = dikonfirmasi.
 const (
-	RiwayatVaksinBelumDitanya    = "belum_ditanya"
-	RiwayatVaksinBelumPernah     = "belum_pernah"
-	RiwayatVaksinDilaporkan      = "dilaporkan"
-	RiwayatVaksinPerluDitanyakan = "perlu_ditanyakan"
-	RiwayatVaksinDikonfirmasi    = "dikonfirmasi"
+	RiwayatImunisasiBelumDitanya    = "belum_ditanya"
+	RiwayatImunisasiBelumPernah     = "belum_pernah"
+	RiwayatImunisasiDilaporkan      = "dilaporkan"
+	RiwayatImunisasiPerluDitanyakan = "perlu_ditanyakan"
+	RiwayatImunisasiDikonfirmasi    = "dikonfirmasi"
 )
 
 // Status data anak di posyandu.
@@ -59,8 +59,8 @@ type Anak struct {
 	TanggalArsip   *time.Time `gorm:"column:tanggal_arsip;type:date" json:"tanggal_arsip,omitempty"`
 	AlasanArsip    string     `gorm:"column:alasan_arsip;size:100" json:"alasan_arsip,omitempty"`
 
-	// Riwayat vaksin sebelum posyandu: dicatat bidan pada kunjungan pertama.
-	StatusRiwayatVaksin     string     `gorm:"column:status_riwayat_vaksin;size:20;not null;default:'belum_ditanya'" json:"status_riwayat_vaksin"`
+	// Riwayat imunisasi sebelum posyandu: dicatat bidan pada kunjungan pertama.
+	StatusRiwayatImunisasi     string     `gorm:"column:status_riwayat_vaksin;size:20;not null;default:'belum_ditanya'" json:"status_riwayat_vaksin"`
 	RiwayatDikonfirmasiOleh *uint      `gorm:"column:riwayat_dikonfirmasi_oleh" json:"riwayat_dikonfirmasi_oleh,omitempty"`
 	RiwayatDikonfirmasiPada *time.Time `gorm:"column:riwayat_dikonfirmasi_pada" json:"riwayat_dikonfirmasi_pada,omitempty"`
 
@@ -80,13 +80,13 @@ func (a *Anak) BeforeCreate(*gorm.DB) error {
 	if a.KodeQR == "" {
 		a.KodeQR = "PSY-" + a.ID.String()
 	}
-	if a.StatusRiwayatVaksin == "" {
-		a.StatusRiwayatVaksin = RiwayatVaksinBelumDitanya
+	if a.StatusRiwayatImunisasi == "" {
+		a.StatusRiwayatImunisasi = RiwayatImunisasiBelumDitanya
 	}
 	return nil
 }
 
-// RiwayatVaksinDikonfirmasi: true bila bidan sudah mengonfirmasi riwayat vaksin anak.
-func (a *Anak) RiwayatVaksinSudahDikonfirmasi() bool {
-	return a.StatusRiwayatVaksin == RiwayatVaksinDikonfirmasi
+// RiwayatImunisasiDikonfirmasi: true bila bidan sudah mengonfirmasi riwayat imunisasi anak.
+func (a *Anak) RiwayatImunisasiSudahDikonfirmasi() bool {
+	return a.StatusRiwayatImunisasi == RiwayatImunisasiDikonfirmasi
 }

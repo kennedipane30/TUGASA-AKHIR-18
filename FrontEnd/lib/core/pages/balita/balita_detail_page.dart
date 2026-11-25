@@ -4,16 +4,16 @@ import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common_widgets.dart';
 import '../../../service/balita_service.dart';
-import '../../../service/vaksin_service.dart' show namaSuplemen;
-import '../../../features/Bidan/vaksin/vaksin_lihat_body.dart';
+import '../../../service/imunisasi_service.dart' show namaSuplemen;
+import '../../../features/Bidan/imunisasi/imunisasi_lihat_body.dart';
 import '../rekap/rekap_posyandu_page.dart';
 import 'arsip_balita_page.dart';
 import 'semua_balita_page.dart' show labelTimbang;
 import '../../theme/app_colors.dart';
 
 /// Detail satu balita: profil & keluarga, riwayat penimbangan (beserta catatan
-/// kader, catatan bidan, imunisasi, dan suplemen tiap kunjungan), dan vaksin.
-/// [tabAwal] 0 = Profil, 1 = Penimbangan (kunjungan terbaru langsung terbuka), 2 = Vaksin.
+/// kader, catatan bidan, imunisasi, dan suplemen tiap kunjungan), dan imunisasi.
+/// [tabAwal] 0 = Profil, 1 = Penimbangan (kunjungan terbaru langsung terbuka), 2 = Imunisasi.
 const _biru = Color(0xFF2563EB);
 const _biruMuda = Color(0xFFE3F2FD);
 const _biruGaris = Color(0xFFBFDFF7);
@@ -89,7 +89,7 @@ class BalitaDetailPage extends StatefulWidget {
   final String prefix;
   final String anakId;
   final String nama;
-  final bool bisaKelolaVaksin;
+  final bool bisaKelolaImunisasi;
   final int tabAwal;
 
   const BalitaDetailPage({
@@ -97,7 +97,7 @@ class BalitaDetailPage extends StatefulWidget {
     required this.prefix,
     required this.anakId,
     required this.nama,
-    this.bisaKelolaVaksin = false,
+    this.bisaKelolaImunisasi = false,
     this.tabAwal = 0,
   });
 
@@ -187,7 +187,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         children: [
           const Text(
             'Arsipkan bila anak pindah domisili atau meninggal. Riwayat penimbangan '
-            'dan vaksin tetap tersimpan.',
+            'dan imunisasi tetap tersimpan.',
             style: TextStyle(fontSize: 15, height: 1.4, color: AppColors.teksRedup),
           ),
           const SizedBox(height: 12),
@@ -236,7 +236,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    const label = ['Profil', 'Penimbangan', 'Vaksin'];
+    const label = ['Profil', 'Penimbangan', 'Imunisasi'];
     return Scaffold(
       backgroundColor: AppColors.latar,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -262,7 +262,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
             ),
             Expanded(
               child: _tab == 2
-                  ? VaksinLihatBody(anakId: widget.anakId, bisaKelola: widget.bisaKelolaVaksin)
+                  ? ImunisasiLihatBody(anakId: widget.anakId, bisaKelola: widget.bisaKelolaImunisasi)
                   : _loading
                       ? const Center(child: CircularProgressIndicator())
                       : _error != null
@@ -428,15 +428,15 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
               : _ringkasTimbang(r.terakhir!, r.tanggalLahir),
         ),
         _kartu(
-          judul: 'Vaksin & Imunisasi',
-          kanan: '${r.vaksin.persen}%',
+          judul: 'Imunisasi',
+          kanan: '${r.imunisasi.persen}%',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
-                  value: r.vaksin.totalDosis == 0 ? 0 : r.vaksin.sudah / r.vaksin.totalDosis,
+                  value: r.imunisasi.totalDosis == 0 ? 0 : r.imunisasi.sudah / r.imunisasi.totalDosis,
                   minHeight: 8,
                   backgroundColor: AppColors.latar,
                   color: AppColors.hijau,
@@ -444,8 +444,8 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                '${r.vaksin.sudah} dari ${r.vaksin.totalDosis} dosis · '
-                '${r.vaksin.jatuhTempo} saatnya diberikan · ${r.vaksin.terlambat} terlambat',
+                '${r.imunisasi.sudah} dari ${r.imunisasi.totalDosis} dosis · '
+                '${r.imunisasi.jatuhTempo} saatnya diberikan · ${r.imunisasi.terlambat} terlambat',
                 style: const TextStyle(fontSize: 15.5),
               ),
               const SizedBox(height: 8),
@@ -455,7 +455,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                   onTap: () => setState(() => _tab = 2),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: _tautan('Lihat jadwal & riwayat vaksin'),
+                    child: _tautan('Lihat jadwal & riwayat imunisasi'),
                   ),
                 ),
               ),

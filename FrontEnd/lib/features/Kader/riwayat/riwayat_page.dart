@@ -211,7 +211,7 @@ Widget _judulTebal(String teks) {
 }
 
 // ---------------------------------------------------------------------------
-// HEADER (sama seperti halaman Vaksin Anak: polos, judul di tengah)
+// HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
 // Dipakai oleh ketiga halaman riwayat.
 // ---------------------------------------------------------------------------
 

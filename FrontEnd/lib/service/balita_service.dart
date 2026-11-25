@@ -222,7 +222,7 @@ class TimbangRingkas {
   bool get perluPerhatian => duaT || bgm;
 }
 
-class VaksinRingkas {
+class ImunisasiRingkas {
   final int totalDosis;
   final int sudah;
   final int jatuhTempo;
@@ -230,7 +230,7 @@ class VaksinRingkas {
   final int persen;
   final bool dasarLengkap;
 
-  const VaksinRingkas({
+  const ImunisasiRingkas({
     required this.totalDosis,
     required this.sudah,
     required this.jatuhTempo,
@@ -239,7 +239,7 @@ class VaksinRingkas {
     required this.dasarLengkap,
   });
 
-  factory VaksinRingkas.fromJson(Map<String, dynamic> j) => VaksinRingkas(
+  factory ImunisasiRingkas.fromJson(Map<String, dynamic> j) => ImunisasiRingkas(
         totalDosis: _i(j['total_dosis']),
         sudah: _i(j['sudah']),
         jatuhTempo: _i(j['jatuh_tempo']),
@@ -261,7 +261,7 @@ class BalitaItem {
   final int jumlahTimbang;
   final TimbangRingkas? terakhir;
   final int bulanTidakDatang; // -1 = belum pernah ditimbang
-  final VaksinRingkas vaksin;
+  final ImunisasiRingkas imunisasi;
 
   /// Hanya terisi untuk anak arsip (pindah, meninggal, lulus balita).
   final DateTime? tanggalArsip;
@@ -279,7 +279,7 @@ class BalitaItem {
     required this.jumlahTimbang,
     required this.terakhir,
     required this.bulanTidakDatang,
-    required this.vaksin,
+    required this.imunisasi,
     this.tanggalArsip,
     this.alasanArsip = '',
   });
@@ -296,7 +296,7 @@ class BalitaItem {
         jumlahTimbang: _i(j['jumlah_timbang']),
         terakhir: j['terakhir'] is Map ? TimbangRingkas.fromJson(_m(j['terakhir'])) : null,
         bulanTidakDatang: _i(j['bulan_tidak_datang']),
-        vaksin: VaksinRingkas.fromJson(_m(j['vaksin'])),
+        imunisasi: ImunisasiRingkas.fromJson(_m(j['vaksin'])),
         tanggalArsip: _tgl(j['tanggal_arsip']),
         alasanArsip: _s(j['alasan_arsip']),
       );
@@ -318,7 +318,7 @@ class RingkasBalita {
   final int masalahGizi;
   final int stunting;
   final int duaTBgm;
-  final int vaksinTerlambat;
+  final int imunisasiTerlambat;
   final int belumPernah;
 
   const RingkasBalita({
@@ -331,7 +331,7 @@ class RingkasBalita {
     required this.masalahGizi,
     required this.stunting,
     required this.duaTBgm,
-    required this.vaksinTerlambat,
+    required this.imunisasiTerlambat,
     required this.belumPernah,
   });
 
@@ -345,7 +345,7 @@ class RingkasBalita {
         masalahGizi: _i(j['masalah_gizi']),
         stunting: _i(j['stunting']),
         duaTBgm: _i(j['dua_t_bgm']),
-        vaksinTerlambat: _i(j['vaksin_terlambat']),
+        imunisasiTerlambat: _i(j['vaksin_terlambat']),
         belumPernah: _i(j['belum_pernah']),
       );
 }
