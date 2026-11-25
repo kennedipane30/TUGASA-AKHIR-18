@@ -17,9 +17,9 @@ import '../imunisasi/imunisasi_anak_page.dart';
 import '../imunisasi/imunisasi_lihat_body.dart' show tampilkanBuktiImunisasi;
 
 part 'form_pemeriksaan.dart';
-part 'form_suplemen.dart';
-part 'form_imunisasi.dart';
-part 'form_kpsp.dart';
+part 'form_suplemen_page.dart';
+part 'form_imunisasi_page.dart';
+part 'form_kpsp_page.dart';
 part 'kartu_pemeriksaan.dart';
 part 'edit_pemeriksaan_page.dart';
 

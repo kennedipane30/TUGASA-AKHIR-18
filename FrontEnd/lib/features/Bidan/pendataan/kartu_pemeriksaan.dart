@@ -453,7 +453,6 @@ mixin _KartuPemeriksaan<T extends StatefulWidget>
             judul: 'Status Gizi',
             child: KotakStatusGizi(d['status_gizi']),
           ),
-        if (!_riwayatOk) _kartuRiwayat(),
         kartuBidan(
           judul: 'Hasil Pemeriksaan',
           child: Column(
@@ -469,121 +468,18 @@ mixin _KartuPemeriksaan<T extends StatefulWidget>
             ],
           ),
         ),
-        _kartuImunisasi(),
+        // Urutan pendataan bidan: pemeriksaan -> KPSP -> imunisasi -> suplemen.
         _kartuKpsp(),
+        // Kunjungan pertama anak: riwayat imunisasi sebelum posyandu ditanyakan
+        // lebih dulu, karena menentukan imunisasi mana yang boleh diberikan hari ini.
+        if (!_riwayatOk) _kartuRiwayat(),
+        _kartuImunisasi(),
         _kartuSuplemen(),
         const SizedBox(height: 8),
       ],
     );
   }
 
-  // -------------------------------------------------------------------------
-  // KARTU RIWAYAT IMUNISASI SEBELUM POSYANDU (dicatat bidan sekali, kunjungan pertama)
-  // -------------------------------------------------------------------------
-  Widget _kartuRiwayat() {
-    const pesan = 'Kunjungan pertama anak. Tanyakan kepada orang tua dan lihat Buku KIA: imunisasi apa saja '
-        'yang pernah diterima anak di luar posyandu (rumah sakit, puskesmas, klinik, bidan praktik).';
-    final menunggu = _riwayatLuar.where((r) => r.menungguKonfirmasi).length;
-
-    return kartuBidan(
-      judul: 'Riwayat Imunisasi Sebelum Posyandu',
-      kanan: 'Wajib',
-      warnaKanan: AppColors.kuning,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _info(pesan, ikon: Icons.record_voice_over_outlined, bg: AppColors.kuningMuda, fg: AppColors.kuning),
-          // catatan lama (mis. laporan orang tua sebelum fitur ini diubah): dicek dahulu
-          if (_riwayatLuar.isNotEmpty) ...[
-            const Padding(
-              padding: EdgeInsets.only(bottom: 6),
-              child: Text('Catatan imunisasi yang sudah ada:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _teksGelap)),
-            ),
-            for (final r in _riwayatLuar) _barisRiwayatLuar(r),
-          ],
-          const SizedBox(height: 4),
-          tombolHijauBidan(
-            menunggu > 0 ? 'Cek $menunggu catatan di atas dahulu' : 'Catat Riwayat Imunisasi',
-            ikon: Icons.fact_check_outlined,
-            onPressed: (_prosesRiwayat || menunggu > 0) ? null : _catatRiwayatAwal,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _barisRiwayatLuar(RiwayatImunisasi r) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: r.menungguKonfirmasi ? AppColors.kuning : garisKartuBidan, width: 1.2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(r.namaDosis,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _teksGelap)),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                r.menungguKonfirmasi ? 'Perlu dicek' : 'Tercatat',
-                style: TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w600,
-                  color: r.menungguKonfirmasi ? AppColors.kuning : _hijauHeader,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            [
-              if (r.tanggal != null) formatTanggal(r.tanggal!),
-              if (r.tempat.isNotEmpty) r.tempat,
-              r.labelSumber,
-            ].join(' · '),
-            style: const TextStyle(fontSize: 16, color: AppColors.teksRedup),
-          ),
-          Wrap(
-            spacing: 4,
-            children: [
-              if (r.fotoBukti.isNotEmpty)
-                TextButton.icon(
-                  onPressed: () => tampilkanBuktiImunisasi(context, r.fotoBukti),
-                  icon: const Icon(Icons.image_outlined, size: 18),
-                  label: const Text('Lihat bukti'),
-                ),
-              if (r.menungguKonfirmasi) ...[
-                TextButton.icon(
-                  onPressed: _prosesRiwayat ? null : () => _benarkan(r),
-                  icon: const Icon(Icons.check, size: 18),
-                  label: const Text('Benar'),
-                ),
-                TextButton.icon(
-                  onPressed: _prosesRiwayat ? null : () => _ubahTanggal(r),
-                  icon: const Icon(Icons.edit_calendar_outlined, size: 18),
-                  label: const Text('Ubah tanggal'),
-                ),
-              ],
-              TextButton.icon(
-                onPressed: _prosesRiwayat ? null : () => _batalkan(r),
-                icon: const Icon(Icons.close, size: 18, color: AppColors.merah),
-                label: const Text('Batalkan', style: TextStyle(color: AppColors.merah)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   // -------------------------------------------------------------------------
   // LAPORAN ORANG TUA SETELAH IMUNISASI (tampil di atas form pemeriksaan)
