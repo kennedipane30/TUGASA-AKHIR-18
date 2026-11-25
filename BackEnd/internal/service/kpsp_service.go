@@ -1,6 +1,19 @@
 package service
 
+// KPSP (Kuesioner Pra Skrining Perkembangan): skrining perkembangan anak,
+// 10 pertanyaan per kelompok umur.
+//
+// Dua bagian dalam satu berkas:
+//   - KpspService: membaca lembar pertanyaan sesuai umur anak.
+//   - KpspInput & rakitKpsp: memeriksa isian bidan lalu menyusunnya menjadi
+//     satu lembar hasil. Penyimpanannya ikut PelayananService.SimpanCatatan,
+//     supaya satu tombol Simpan menyimpan pemeriksaan, imunisasi, suplemen,
+//     dan KPSP sekaligus dalam satu transaksi.
+
 import (
+	"strings"
+	"time"
+
 	"posyandu-api/internal/models"
 	"posyandu-api/internal/repository"
 )
@@ -55,4 +68,88 @@ func (s *KpspService) Lembar(usiaAnakBulan int) (*LembarKpsp, error) {
 	}
 	hasil.Pertanyaan = list
 	return hasil, nil
+}
+// Fitur KPSP (Kuesioner Pra Skrining Perkembangan): isian 10 pertanyaan yang
+// diisi bidan pada kartu KPSP, lalu disimpan bersama catatan pemeriksaan.
+//
+// Pembacaan daftar pertanyaannya ada di kpsp_service.go.
+
+
+// KpspInput adalah satu lembar KPSP yang diisi bidan. Jawaban berisi 10 baris
+// (nomor 1-10) berisi true bila dijawab "Ya". Hasil S/M/P dihitung di server
+// dari jumlah jawaban "Ya", tidak dikirim aplikasi, agar tidak bisa dipalsukan.
+type KpspInput struct {
+	UsiaBulan int16              `json:"usia_bulan"`
+	Jawaban   []KpspJawabanInput `json:"jawaban"`
+	Catatan   string             `json:"catatan"`
+}
+
+type KpspJawabanInput struct {
+	Nomor int16 `json:"nomor"`
+	Ya    bool  `json:"ya"`
+}
+
+// rakitKpsp memeriksa isian KPSP dari aplikasi lalu menyusunnya menjadi satu
+// lembar HasilKpsp siap simpan. Mengembalikan nil bila bidan tidak mengisi KPSP
+// pada kunjungan ini, sehingga lembar lama (bila ada) ikut terhapus.
+//
+// Hasil S/M/P SELALU dihitung di server dari jumlah jawaban "Ya", tidak diambil
+// dari aplikasi, supaya penilaian tidak dapat dipalsukan dari sisi klien.
+func (s *PelayananService) rakitKpsp(bidanID uint, p *models.Pendaftaran, tanggal time.Time, in *KpspInput) (*models.HasilKpsp, error) {
+	if in == nil {
+		return nil, nil
+	}
+	usiaAnak := usiaBulan(p.Anak.TanggalLahir, tanggal)
+	kelompok, berlaku := models.KelompokUsiaKpsp(usiaAnak)
+	if !berlaku {
+		return nil, validasi("KPSP hanya untuk anak usia 3-72 bulan (usia anak %s)",
+			usiaTeks(p.Anak.TanggalLahir, tanggal))
+	}
+	// Kelompok umur ditentukan server dari tanggal lahir anak; nilai dari
+	// aplikasi hanya diterima bila sama, agar lembar tidak tertukar.
+	if in.UsiaBulan != 0 && in.UsiaBulan != kelompok {
+		return nil, validasi("kelompok umur KPSP tidak sesuai usia anak (seharusnya %d bulan)", kelompok)
+	}
+	if len(in.Jawaban) != 10 {
+		return nil, validasi("KPSP harus berisi 10 jawaban, diterima %d", len(in.Jawaban))
+	}
+	if len(strings.TrimSpace(in.Catatan)) > 500 {
+		return nil, validasi("catatan KPSP maksimal 500 karakter")
+	}
+
+	ada := map[int16]bool{}
+	jumlahYa := 0
+	jawaban := make([]models.JawabanKpsp, 0, 10)
+	for _, j := range in.Jawaban {
+		if j.Nomor < 1 || j.Nomor > 10 {
+			return nil, validasi("nomor pertanyaan KPSP harus 1-10, diterima %d", j.Nomor)
+		}
+		if ada[j.Nomor] {
+			return nil, validasi("jawaban KPSP nomor %d dikirim lebih dari sekali", j.Nomor)
+		}
+		ada[j.Nomor] = true
+		if j.Ya {
+			jumlahYa++
+		}
+		jawaban = append(jawaban, models.JawabanKpsp{Nomor: j.Nomor, Ya: j.Ya})
+	}
+	for n := int16(1); n <= 10; n++ {
+		if !ada[n] {
+			return nil, validasi("jawaban KPSP nomor %d belum diisi", n)
+		}
+	}
+
+	pid := p.ID
+	return &models.HasilKpsp{
+		AnakID:        p.AnakID,
+		PendaftaranID: &pid,
+		UsiaBulan:     kelompok,
+		JumlahYa:      int16(jumlahYa),
+		Hasil:         models.HitungHasilKpsp(jumlahYa),
+		Tanggal:       tanggal,
+		Catatan:       strings.TrimSpace(in.Catatan),
+		DicatatOleh:   bidanID,
+		Version:       1,
+		Jawaban:       jawaban,
+	}, nil
 }

@@ -313,6 +313,10 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
     final usia = int.tryParse(_teks(d['usia_bulan'])) ?? 0;
     final imun = (d['imunisasi'] as List? ?? []).whereType<Map>().toList();
     final sup = (d['suplemen'] as List? ?? []).whereType<Map>().toList();
+    // KPSP: null bila bidan tidak melakukan skrining pada kunjungan ini.
+    final kpsp = d['kpsp'] is Map
+        ? HasilKpsp.fromJson(Map<String, dynamic>.from(d['kpsp'] as Map))
+        : null;
     final ulang = _tgl(c?['tanggal_kunjungan_ulang']);
     final peringatan = _teks(u?['peringatan_validasi']);
 
@@ -400,6 +404,9 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                 ],
               ),
       ),
+      // Urutan sama dengan pendataan bidan:
+      // pemeriksaan -> KPSP -> imunisasi -> suplemen.
+      if (kpsp != null) _kartuKpspRiwayat(kpsp),
       if (imun.isNotEmpty)
         _kartu(
           title: 'Imunisasi',
@@ -474,4 +481,67 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
         ),
     ];
   }
+}
+
+
+// ---------------------------------------------------------------------------
+// KARTU HASIL KPSP
+// Hanya tampil bila bidan memang melakukan skrining pada kunjungan tersebut.
+// ---------------------------------------------------------------------------
+Widget _kartuKpspRiwayat(HasilKpsp k) {
+  final warna = switch (k.hasil) {
+    kpspSesuai => AppColors.hijauTua,
+    kpspMeragukan => AppColors.kuning,
+    kpspPenyimpangan => AppColors.merah,
+    _ => AppColors.teksAbu,
+  };
+  return _kartu(
+    title: 'KPSP (Skrining Perkembangan)',
+    kanan: 'Umur ${k.usiaBulan} bulan',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
+          decoration: BoxDecoration(
+            color: warna.withValues(alpha: 0.08),
+            border: Border.all(color: warna.withValues(alpha: 0.45)),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.assignment_turned_in_outlined, size: 18, color: warna),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(labelHasilKpsp(k.hasil),
+                        style: TextStyle(
+                            fontSize: 14.5, fontWeight: FontWeight.w700, color: warna)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Text('Jawaban "Ya": ${k.jumlahYa} dari 10',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: warna)),
+              const SizedBox(height: 4),
+              Text(saranHasilKpsp(k.hasil),
+                  style: TextStyle(fontSize: 13, height: 1.35, color: AppColors.teksGelap)),
+            ],
+          ),
+        ),
+        if (k.catatan.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text('Catatan bidan',
+              style: TextStyle(
+                  fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.teksAbu)),
+          const SizedBox(height: 3),
+          Text(k.catatan,
+              style: TextStyle(fontSize: 13.5, height: 1.35, color: AppColors.teksGelap)),
+        ],
+      ],
+    ),
+  );
 }

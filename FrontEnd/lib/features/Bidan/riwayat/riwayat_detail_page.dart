@@ -458,6 +458,9 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                 ],
               ),
       ),
+      // Urutan sama dengan pendataan bidan:
+      // pemeriksaan -> KPSP -> imunisasi -> suplemen.
+      if (kpsp != null) _kartuKpspBidan(kpsp),
       if (imun.isNotEmpty)
         _kartu(
           title: 'Imunisasi',
@@ -508,7 +511,6 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
             ],
           ),
         ),
-      if (kpsp != null) _kartuKpspBidan(kpsp),
       if (sup.isNotEmpty)
         _kartu(
           title: 'Suplemen',

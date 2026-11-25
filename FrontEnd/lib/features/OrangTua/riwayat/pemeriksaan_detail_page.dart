@@ -146,6 +146,11 @@ class _DetailRiwayatPage extends StatelessWidget {
                   ),
                 ),
 
+                // Urutan sama dengan pendataan bidan:
+                // pemeriksaan -> KPSP -> imunisasi -> suplemen.
+                // KPSP (skrining perkembangan) — hanya tampil bila bidan mengisinya
+                if (d.kpsp != null) _kartuKpspRiwayat(d.kpsp!),
+
                 // Imunisasi
                 if (d.imunisasi.isNotEmpty)
                   _kartu(
@@ -161,9 +166,6 @@ class _DetailRiwayatPage extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                // KPSP (skrining perkembangan) — hanya tampil bila bidan mengisinya
-                if (d.kpsp != null) _kartuKpspRiwayat(d.kpsp!),
 
                 // Suplemen
                 if (d.suplemen.isNotEmpty)
