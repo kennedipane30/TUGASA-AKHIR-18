@@ -765,7 +765,7 @@ class ImunisasiService {
 
   /// Bidan mencatat riwayat imunisasi anak sebelum posyandu (kunjungan pertama).
   /// [status]: 'sudah' | 'belum_pernah'.
-  /// [items]: imunisasi program yang dicentang {jenis_imunisasi_id, dosis_ke, tanggal_pemberian, tempat, foto_bukti}.
+  /// [items]: imunisasi program yang dicentang {jenis_vaksin_id, dosis_ke, tanggal_pemberian, tempat, foto_bukti}.
   /// [mandiri]: imunisasi di luar program {nama_imunisasi, dosis_ke, tanggal_pemberian, tempat, foto_bukti}.
   Future<KartuImunisasi> catatRiwayatAwal({
     required String anakId,

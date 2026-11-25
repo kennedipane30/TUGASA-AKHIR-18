@@ -89,7 +89,7 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
       if (imun is List) {
         for (final e in imun) {
           if (e is Map && e['jenis_vaksin_id'] != null) {
-            final k = '${e['jenis_imunisasi_id']}|${e['dosis_ke']}';
+            final k = '${e['jenis_vaksin_id']}|${e['dosis_ke']}';
             _imunisasiDipilih[k] = _PilihImunisasi();
             _imunisasiSesiIni.add(k);
           }

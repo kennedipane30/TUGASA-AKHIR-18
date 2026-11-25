@@ -22,7 +22,7 @@ const (
 // setiap dosis imunisasi. Berlaku sama untuk semua anak.
 //
 // Tabel  : jadwal_imunisasi
-// Kunci  : (jenis_imunisasi_id, dosis_ke) unik, satu baris per dosis.
+// Kunci  : (jenis_vaksin_id, dosis_ke) unik, satu baris per dosis.
 // Sumber : diisi otomatis saat server mulai (service.ImunisasiService.SiapkanMaster).
 //
 // Jadwal imunisasi per anak TIDAK disimpan di database. Jadwal dan status setiap
@@ -64,7 +64,7 @@ type JadwalImunisasi struct {
 	Keterangan string `gorm:"column:keterangan;type:text" json:"keterangan"`
 
 	// JenisImunisasi: relasi ke master jenis imunisasi.
-	JenisImunisasi *JenisImunisasi `gorm:"foreignKey:JenisVaksinID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"jenis_vaksin,omitempty"`
+	JenisImunisasi *JenisImunisasi `gorm:"foreignKey:JenisImunisasiID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"jenis_vaksin,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `gorm:"index" json:"updated_at"`

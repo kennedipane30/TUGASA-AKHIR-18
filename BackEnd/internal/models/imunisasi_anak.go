@@ -96,10 +96,10 @@ type ImunisasiAnak struct {
 	Catatan string `gorm:"column:catatan;type:text" json:"catatan"`
 
 	// Relasi
-	Anak              *Anak        `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
-	JenisImunisasi       *JenisImunisasi `gorm:"foreignKey:JenisVaksinID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"jenis_vaksin,omitempty"`
-	Pendaftaran       *Pendaftaran `gorm:"foreignKey:PendaftaranID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
-	DiberikanOlehUser *User        `gorm:"foreignKey:DiberikanOleh;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	Anak              *Anak           `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	JenisImunisasi    *JenisImunisasi `gorm:"foreignKey:JenisImunisasiID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"jenis_vaksin,omitempty"`
+	Pendaftaran       *Pendaftaran    `gorm:"foreignKey:PendaftaranID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
+	DiberikanOlehUser *User           `gorm:"foreignKey:DiberikanOleh;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 
 	// Sinkronisasi offline-first
 	Version       int        `gorm:"default:1;column:version" json:"version"`

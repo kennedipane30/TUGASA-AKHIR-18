@@ -488,7 +488,7 @@ class _HasilAnakPageState extends State<_HasilAnakPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${_namaImunisasi[_teks(v['jenis_imunisasi_id'])] ?? 'Imunisasi'} · Dosis ${_teks(v['dosis_ke'])}',
+                        '${_namaImunisasi[_teks(v['jenis_vaksin_id'])] ?? 'Imunisasi'} · Dosis ${_teks(v['dosis_ke'])}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16.5,
