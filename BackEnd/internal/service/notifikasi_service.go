@@ -41,7 +41,7 @@ type NotifikasiService struct {
 	loc  *time.Location
 
 	// pengingat imunisasi, Vitamin A, dan obat cacing (aktif setelah SetImunisasi)
-	imunisasi      *repository.ImunisasiRepository
+	imunisasi         *repository.ImunisasiRepository
 	muHarian       sync.Mutex
 	harianTerakhir string
 }
@@ -258,8 +258,8 @@ func (s *NotifikasiService) kirimPush(list []models.Notifikasi) {
 			switch n.ObjekTabel {
 			case "jadwal_posyandu":
 				data["jadwal_id"] = n.ObjekID.String()
-			case "balita":
-				data["balita_id"] = n.ObjekID.String()
+			case "anak":
+				data["anak_id"] = n.ObjekID.String()
 			}
 		}
 		err := s.push.Kirim(p.TokenFCM, n.Judul, n.Isi, data)
@@ -295,7 +295,7 @@ func (s *NotifikasiService) JadwalDibuat(jadwalID uuid.UUID, pengirim uint) {
 		judul := "Jadwal Posyandu Baru"
 		if role == models.RoleOrangTua {
 			return judul, fmt.Sprintf(
-				"Posyandu %s dijadwalkan pada %s%s. Daftarkan balita Anda melalui aplikasi.",
+				"Posyandu %s dijadwalkan pada %s%s. Daftarkan anak Anda melalui aplikasi.",
 				nama, waktu, lokasi)
 		}
 		return judul, fmt.Sprintf("Posyandu %s dijadwalkan pada %s%s.", nama, waktu, lokasi)
@@ -304,7 +304,7 @@ func (s *NotifikasiService) JadwalDibuat(jadwalID uuid.UUID, pengirim uint) {
 	// jadwal yang dibuat mendadak langsung diperiksa (misalnya check-in sudah dibuka)
 	s.periksaSatuJadwal(j, time.Now().In(s.loc))
 
-	// rencana imunisasi, Vitamin A, dan obat cacing per balita
+	// rencana imunisasi, Vitamin A, dan obat cacing per anak
 	s.KirimRencana(j, &pengirim, false)
 }
 
@@ -371,19 +371,19 @@ func (s *NotifikasiService) JadwalDibatalkan(jadwalID uuid.UUID, pengirim uint) 
 // ---------------------------------------------------------------- peringatan penimbangan
 
 // PeringatanTimbang: dipanggil setelah pengukuran dinilai 2T atau BGM.
-// Dikirim sekali per pengukuran HANYA ke bidan posyandu balita tersebut.
+// Dikirim sekali per pengukuran HANYA ke bidan posyandu anak tersebut.
 // Orang tua dikabari setelah bidan menyimpan catatan (HasilPemeriksaan).
-func (s *NotifikasiService) PeringatanTimbang(balita *models.Balita, p *models.PenilaianTimbang, pengirim *uint) {
+func (s *NotifikasiService) PeringatanTimbang(anak *models.Anak, p *models.PenilaianTimbang, pengirim *uint) {
 	defer s.pulih("peringatan timbang")
-	if balita == nil || p == nil || !(p.DuaT || p.Bgm) {
+	if anak == nil || p == nil || !(p.DuaT || p.Bgm) {
 		return
 	}
-	pos, err := s.repo.PosyanduBalita(balita.ID)
+	pos, err := s.repo.PosyanduAnak(anak.ID)
 	if err != nil {
-		log.Printf("notifikasi: posyandu balita %s tidak ditemukan: %v", balita.ID, err)
+		log.Printf("notifikasi: posyandu anak %s tidak ditemukan: %v", anak.ID, err)
 		return
 	}
-	// hanya bidan di posyandu balita tersebut (kader tidak menerima)
+	// hanya bidan di posyandu anak tersebut (kader tidak menerima)
 	bidan, err := s.repo.Penerima(pos, []string{string(models.RoleBidan)})
 	if err != nil {
 		log.Printf("notifikasi: gagal mengambil bidan: %v", err)
@@ -394,8 +394,8 @@ func (s *NotifikasiService) PeringatanTimbang(balita *models.Balita, p *models.P
 		return
 	}
 
-	nama := strings.TrimSpace(balita.Nama)
-	usia := usiaTeks(balita.TanggalLahir, p.TanggalUkur)
+	nama := strings.TrimSpace(anak.Nama)
+	usia := usiaTeks(anak.TanggalLahir, p.TanggalUkur)
 	bb := fmt.Sprintf("%.1f kg", p.BbKg)
 	rincianNaik := ""
 	if p.KenaikanGram != nil && p.KbmGram != nil {
@@ -418,9 +418,9 @@ func (s *NotifikasiService) PeringatanTimbang(balita *models.Balita, p *models.P
 		label = "BGM"
 	}
 
-	aid := balita.ID
+	aid := anak.ID
 	kunci := fmt.Sprintf("%s:%s", models.NotifPeringatanTimbang, p.PengukuranID)
-	s.kirimKeUser(penerima, models.NotifPeringatanTimbang, kunci, "balita", &aid, pengirim,
+	s.kirimKeUser(penerima, models.NotifPeringatanTimbang, kunci, "anak", &aid, pengirim,
 		func(role models.Role) (string, string) {
 			if role == models.RoleOrangTua {
 				return fmt.Sprintf("Perhatian Pertumbuhan %s", nama), fmt.Sprintf(
@@ -439,28 +439,28 @@ func notifTeksKg(v float64) string {
 	return strings.Replace(fmt.Sprintf("%.1f", v), ".", ",", 1) + " kg"
 }
 
-// notifHasilPemeriksaan: balita selesai dilayani (bidan menyimpan catatan), hanya ke orang tua.
+// notifHasilPemeriksaan: anak selesai dilayani (bidan menyimpan catatan), hanya ke orang tua.
 // objek_tabel = "pendaftaran", objek_id = id pendaftaran (aplikasi membuka detail pemeriksaan).
 const notifHasilPemeriksaan = "hasil_pemeriksaan"
 
 // HasilPemeriksaan: dipanggil setelah bidan menyimpan catatan pemeriksaan.
-// Dikirim HANYA ke orang tua balita, sekali per versi catatan (bidan mengubah = notifikasi baru).
-func (s *NotifikasiService) HasilPemeriksaan(balita *models.Balita, pendaftaranID uuid.UUID, versi int, pengirim *uint) {
+// Dikirim HANYA ke orang tua anak, sekali per versi catatan (bidan mengubah = notifikasi baru).
+func (s *NotifikasiService) HasilPemeriksaan(anak *models.Anak, pendaftaranID uuid.UUID, versi int, pengirim *uint) {
 	defer s.pulih("hasil pemeriksaan")
-	if balita == nil || pendaftaranID == uuid.Nil {
+	if anak == nil || pendaftaranID == uuid.Nil {
 		return
 	}
-	ortu, err := s.repo.OrangTuaBalita(balita.ID)
+	ortu, err := s.repo.OrangTuaAnak(anak.ID)
 	if err != nil {
-		log.Printf("notifikasi: gagal mengambil orang tua balita %s: %v", balita.ID, err)
+		log.Printf("notifikasi: gagal mengambil orang tua anak %s: %v", anak.ID, err)
 		return
 	}
 	if len(ortu) == 0 {
-		log.Printf("notifikasi: balita %s belum terhubung ke akun orang tua", balita.ID)
+		log.Printf("notifikasi: anak %s belum terhubung ke akun orang tua", anak.ID)
 		return
 	}
 
-	nama := strings.TrimSpace(balita.Nama)
+	nama := strings.TrimSpace(anak.Nama)
 	judul := fmt.Sprintf("Selesai Dilayani: %s", nama)
 	isi := fmt.Sprintf("%s sudah selesai dilayani di posyandu (diukur kader dan diperiksa bidan). "+
 		"Hasil pemeriksaan sudah dapat dilihat.", nama)
@@ -478,7 +478,7 @@ func (s *NotifikasiService) HasilPemeriksaan(balita *models.Balita, pendaftaranI
 // ---------------------------------------------------------------- pengingat otomatis
 
 // JalankanPengingat: diperiksa setiap menit selama server berjalan
-// (jadwal: 24 jam sebelum & check-in dibuka; kesehatan balita: sekali sehari 07.00 WIB).
+// (jadwal: 24 jam sebelum & check-in dibuka; kesehatan anak: sekali sehari 07.00 WIB).
 func (s *NotifikasiService) JalankanPengingat(ctx context.Context) {
 	s.periksaJadwal()
 	t := time.NewTicker(time.Minute)
@@ -576,7 +576,7 @@ func (s *NotifikasiService) kirimPengingat(j *models.JadwalPosyandu, mulai, now 
 	s.kirimKeRole(j, notifRolePenerima, models.NotifPengingatJadwal, kunci, nil, func(role models.Role) (string, string) {
 		if role == models.RoleOrangTua {
 			return judul, fmt.Sprintf(
-				"%s %s%s. Jangan lupa membawa balita dan buku KIA. Check-in dapat dilakukan %d menit sebelum kegiatan dimulai.",
+				"%s %s%s. Jangan lupa membawa anak dan buku KIA. Check-in dapat dilakukan %d menit sebelum kegiatan dimulai.",
 				pembuka, waktu, lokasi, menit)
 		}
 		return judul, fmt.Sprintf("%s %s%s. Mohon persiapkan kegiatan pelayanan.", pembuka, waktu, lokasi)
@@ -612,7 +612,7 @@ func (s *NotifikasiService) kirimCheckinDibuka(j *models.JadwalPosyandu, mulai t
 }
 
 // ============================================================================
-// PENGINGAT KESEHATAN BALITA (imunisasi, Vitamin A, obat cacing)
+// PENGINGAT KESEHATAN ANAK (imunisasi, Vitamin A, obat cacing)
 //
 //   - Imunisasi ikut jadwal posyandu berikutnya: dosis dengan tanggal ideal
 //     <= tanggal jadwal (termasuk yang terlambat/dikejar) masuk rencana.
@@ -633,33 +633,33 @@ const (
 )
 
 type RencanaItem struct {
-	Jenis            string `json:"jenis"` // imunisasi | vitamin_a | obat_cacing
-	Kode             string `json:"kode"`
-	JenisImunisasiID string `json:"jenis_imunisasi_id,omitempty"` // untuk centang otomatis di catatan bidan
-	Nama             string `json:"nama"`
-	DosisKe          int16  `json:"dosis_ke"`
-	Keterangan       string `json:"keterangan"`
-	Terlambat        bool   `json:"terlambat"`
+	Jenis         string `json:"jenis"` // imunisasi | vitamin_a | obat_cacing
+	Kode          string `json:"kode"`
+	JenisImunisasiID string `json:"jenis_vaksin_id,omitempty"` // untuk centang otomatis di catatan bidan
+	Nama          string `json:"nama"`
+	DosisKe       int16  `json:"dosis_ke"`
+	Keterangan    string `json:"keterangan"`
+	Terlambat     bool   `json:"terlambat"`
 }
 
-type RencanaBalita struct {
+type RencanaAnak struct {
 	Imunisasi []RencanaItem `json:"imunisasi"`
 	Suplemen  []RencanaItem `json:"suplemen"`
 	KeFaskes  []RencanaItem `json:"ke_faskes"` // harus diberikan di puskesmas/faskes
 }
 
-func notifRencanaKosong() *RencanaBalita {
-	return &RencanaBalita{Imunisasi: []RencanaItem{}, Suplemen: []RencanaItem{}, KeFaskes: []RencanaItem{}}
+func notifRencanaKosong() *RencanaAnak {
+	return &RencanaAnak{Imunisasi: []RencanaItem{}, Suplemen: []RencanaItem{}, KeFaskes: []RencanaItem{}}
 }
 
-func (r *RencanaBalita) adaPosyandu() bool { return len(r.Imunisasi)+len(r.Suplemen) > 0 }
+func (r *RencanaAnak) adaPosyandu() bool { return len(r.Imunisasi)+len(r.Suplemen) > 0 }
 
 func notifKunciItem(it RencanaItem) string {
 	return fmt.Sprintf("%s:%s:%d", it.Jenis, it.Kode, it.DosisKe)
 }
 
 // kurangi: hapus item yang sudah menjadi rencana jadwal sebelumnya.
-func (r *RencanaBalita) kurangi(lain *RencanaBalita) {
+func (r *RencanaAnak) kurangi(lain *RencanaAnak) {
 	if lain == nil {
 		return
 	}
@@ -683,7 +683,7 @@ func (r *RencanaBalita) kurangi(lain *RencanaBalita) {
 	r.Suplemen = saring(r.Suplemen)
 }
 
-func (r *RencanaBalita) semuaPosyandu() []RencanaItem {
+func (r *RencanaAnak) semuaPosyandu() []RencanaItem {
 	out := make([]RencanaItem, 0, len(r.Imunisasi)+len(r.Suplemen))
 	out = append(out, r.Imunisasi...)
 	return append(out, r.Suplemen...)
@@ -729,7 +729,7 @@ func notifAwalSemester(t time.Time) time.Time {
 	return time.Date(t.Year(), time.January, 1, 0, 0, 0, 0, time.UTC)
 }
 
-func notifNamaDosis(it *JadwalBalitaItem) string {
+func notifNamaDosis(it *JadwalAnakItem) string {
 	nama := strings.TrimSpace(it.JenisImunisasi.Nama)
 	if nama == "" {
 		nama = it.JenisImunisasi.Kode
@@ -744,46 +744,46 @@ func notifPerluDiberi(s string) bool {
 	return s == StatusImunisasiJatuhTemp || s == StatusImunisasiTerlambat
 }
 
-type notifDataBalita struct {
+type notifDataAnak struct {
 	master  []models.JadwalImunisasi
-	riwayat map[uuid.UUID][]models.ImunisasiBalita
-	sup     map[uuid.UUID][]models.SuplemenBalita
+	riwayat map[uuid.UUID][]models.ImunisasiAnak
+	sup     map[uuid.UUID][]models.SuplemenAnak
 }
 
-func (s *NotifikasiService) muat(balita []models.Balita) (*notifDataBalita, error) {
+func (s *NotifikasiService) muat(anak []models.Anak) (*notifDataAnak, error) {
 	master, err := s.imunisasi.ListJadwalMaster()
 	if err != nil {
 		return nil, err
 	}
-	ids := make([]uuid.UUID, 0, len(balita))
-	for _, a := range balita {
+	ids := make([]uuid.UUID, 0, len(anak))
+	for _, a := range anak {
 		ids = append(ids, a.ID)
 	}
-	riw, err := s.imunisasi.ListRiwayatBanyakBalita(ids)
+	riw, err := s.imunisasi.ListRiwayatBanyakAnak(ids)
 	if err != nil {
 		return nil, err
 	}
-	sup, err := s.repo.SuplemenBanyakBalita(ids)
+	sup, err := s.repo.SuplemenBanyakAnak(ids)
 	if err != nil {
 		return nil, err
 	}
-	d := &notifDataBalita{
+	d := &notifDataAnak{
 		master:  master,
-		riwayat: map[uuid.UUID][]models.ImunisasiBalita{},
-		sup:     map[uuid.UUID][]models.SuplemenBalita{},
+		riwayat: map[uuid.UUID][]models.ImunisasiAnak{},
+		sup:     map[uuid.UUID][]models.SuplemenAnak{},
 	}
 	for _, r := range riw {
-		d.riwayat[r.BalitaID] = append(d.riwayat[r.BalitaID], r)
+		d.riwayat[r.AnakID] = append(d.riwayat[r.AnakID], r)
 	}
 	for _, s := range sup {
-		d.sup[s.BalitaID] = append(d.sup[s.BalitaID], s)
+		d.sup[s.AnakID] = append(d.sup[s.AnakID], s)
 	}
 	return d, nil
 }
 
-// notifBalitaAktif: balita yang sudah lahir dan berusia 0-59 bulan pada [hari].
-func notifBalitaAktif(list []models.Balita, hari time.Time) []models.Balita {
-	out := make([]models.Balita, 0, len(list))
+// notifBalitaAktif: anak yang sudah lahir dan berusia 0-59 bulan pada [hari].
+func notifBalitaAktif(list []models.Anak, hari time.Time) []models.Anak {
+	out := make([]models.Anak, 0, len(list))
 	for _, a := range list {
 		lahir := tglSaja(a.TanggalLahir)
 		if lahir.After(hari) || usiaBulan(lahir, hari) > batasUsiaBalita {
@@ -794,8 +794,8 @@ func notifBalitaAktif(list []models.Balita, hari time.Time) []models.Balita {
 	return out
 }
 
-// rencana: imunisasi dan suplemen balita untuk jadwal posyandu tanggal [tgl], dinilai dari [hari].
-func (s *NotifikasiService) rencana(a *models.Balita, d *notifDataBalita, tgl, hari time.Time) *RencanaBalita {
+// rencana: imunisasi dan suplemen anak untuk jadwal posyandu tanggal [tgl], dinilai dari [hari].
+func (s *NotifikasiService) rencana(a *models.Anak, d *notifDataAnak, tgl, hari time.Time) *RencanaAnak {
 	out := notifRencanaKosong()
 	tgl, hari = tglSaja(tgl), tglSaja(hari)
 	lahir := tglSaja(a.TanggalLahir)
@@ -844,7 +844,7 @@ func (s *NotifikasiService) rencana(a *models.Balita, d *notifDataBalita, tgl, h
 	return out
 }
 
-func (s *NotifikasiService) rencanaSuplemen(a *models.Balita, d *notifDataBalita, tgl time.Time) []RencanaItem {
+func (s *NotifikasiService) rencanaSuplemen(a *models.Anak, d *notifDataAnak, tgl time.Time) []RencanaItem {
 	out := []RencanaItem{}
 	lahir := tglSaja(a.TanggalLahir)
 	if lahir.After(tgl) {
@@ -902,14 +902,14 @@ func (s *NotifikasiService) rencanaSuplemen(a *models.Balita, d *notifDataBalita
 	return out
 }
 
-// RencanaBanyak: rencana per balita untuk satu jadwal (dipakai halaman pendaftaran orang tua).
-func (s *NotifikasiService) RencanaBanyak(balita []models.Balita, j *models.JadwalPosyandu) map[uuid.UUID]*RencanaBalita {
-	out := map[uuid.UUID]*RencanaBalita{}
-	if s.imunisasi == nil || j == nil || len(balita) == 0 {
+// RencanaBanyak: rencana per anak untuk satu jadwal (dipakai halaman pendaftaran orang tua).
+func (s *NotifikasiService) RencanaBanyak(anak []models.Anak, j *models.JadwalPosyandu) map[uuid.UUID]*RencanaAnak {
+	out := map[uuid.UUID]*RencanaAnak{}
+	if s.imunisasi == nil || j == nil || len(anak) == 0 {
 		return out
 	}
 	hari := hariIni()
-	aktif := notifBalitaAktif(balita, hari)
+	aktif := notifBalitaAktif(anak, hari)
 	d, err := s.muat(aktif)
 	if err != nil {
 		log.Printf("pengingat: gagal memuat data rencana: %v", err)
@@ -922,9 +922,9 @@ func (s *NotifikasiService) RencanaBanyak(balita []models.Balita, j *models.Jadw
 	return out
 }
 
-// RencanaPendaftaran: "Rencana Hari Ini" satu balita pada kunjungan posyandunya (halaman catatan bidan).
+// RencanaPendaftaran: "Rencana Hari Ini" satu anak pada kunjungan posyandunya (halaman catatan bidan).
 // Imunisasi/suplemen yang dicatat pada kunjungan ini diabaikan agar tetap tampil sebagai bagian rencana.
-func (s *NotifikasiService) RencanaPendaftaran(a *models.Balita, j *models.JadwalPosyandu, pendaftaranID uuid.UUID) *RencanaBalita {
+func (s *NotifikasiService) RencanaPendaftaran(a *models.Anak, j *models.JadwalPosyandu, pendaftaranID uuid.UUID) *RencanaAnak {
 	if s == nil || s.imunisasi == nil || a == nil || j == nil {
 		return nil
 	}
@@ -933,19 +933,19 @@ func (s *NotifikasiService) RencanaPendaftaran(a *models.Balita, j *models.Jadwa
 	if lahir.After(tgl) || usiaBulan(lahir, tgl) > batasUsiaBalita {
 		return notifRencanaKosong()
 	}
-	d, err := s.muat([]models.Balita{*a})
+	d, err := s.muat([]models.Anak{*a})
 	if err != nil {
-		log.Printf("pengingat: gagal memuat rencana balita %s: %v", a.ID, err)
+		log.Printf("pengingat: gagal memuat rencana anak %s: %v", a.ID, err)
 		return nil
 	}
-	riw := []models.ImunisasiBalita{}
+	riw := []models.ImunisasiAnak{}
 	for _, r := range d.riwayat[a.ID] {
 		if r.PendaftaranID == nil || *r.PendaftaranID != pendaftaranID {
 			riw = append(riw, r)
 		}
 	}
 	d.riwayat[a.ID] = riw
-	sup := []models.SuplemenBalita{}
+	sup := []models.SuplemenAnak{}
 	for _, x := range d.sup[a.ID] {
 		if x.PendaftaranID == nil || *x.PendaftaranID != pendaftaranID {
 			sup = append(sup, x)
@@ -957,7 +957,7 @@ func (s *NotifikasiService) RencanaPendaftaran(a *models.Balita, j *models.Jadwa
 
 // ---------------------------------------------------------------- rencana saat jadwal dibuat / diubah / dibatalkan
 
-// KirimRencana: rencana imunisasi & suplemen per balita ke orang tua, ringkasan ke bidan.
+// KirimRencana: rencana imunisasi & suplemen per anak ke orang tua, ringkasan ke bidan.
 // [pindahan] = rencana berasal dari jadwal sebelumnya yang dibatalkan.
 func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uint, pindahan bool) {
 	if s.imunisasi == nil || j == nil {
@@ -977,16 +977,16 @@ func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uin
 		return
 	}
 
-	semua, err := s.imunisasi.BalitaAktifPosyandu(j.Posyandu)
+	semua, err := s.imunisasi.AnakAktifPosyandu(j.Posyandu)
 	if err != nil {
-		log.Printf("pengingat: gagal mengambil balita posyandu %s: %v", j.Posyandu, err)
+		log.Printf("pengingat: gagal mengambil anak posyandu %s: %v", j.Posyandu, err)
 		return
 	}
-	balita := notifBalitaAktif(semua, hari)
-	if len(balita) == 0 {
+	anak := notifBalitaAktif(semua, hari)
+	if len(anak) == 0 {
 		return
 	}
-	d, err := s.muat(balita)
+	d, err := s.muat(anak)
 	if err != nil {
 		log.Printf("pengingat: gagal memuat data: %v", err)
 		return
@@ -1006,10 +1006,10 @@ func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uin
 	waktu := s.teksWaktu(mulai)
 	lokasi := notifLokasi(j)
 	jid := j.ID
-	var nBalita, nImun, nVit, nCacing int
+	var nAnak, nImun, nVit, nCacing int
 
-	for i := range balita {
-		a := &balita[i]
+	for i := range anak {
+		a := &anak[i]
 		r := s.rencana(a, d, tgl, hari)
 		if sebelum != nil {
 			r.kurangi(s.rencana(a, d, tglSaja(sebelum.Tanggal), hari))
@@ -1017,7 +1017,7 @@ func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uin
 		if !r.adaPosyandu() {
 			continue
 		}
-		nBalita++
+		nAnak++
 		if len(r.Imunisasi) > 0 {
 			nImun++
 		}
@@ -1030,7 +1030,7 @@ func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uin
 			}
 		}
 
-		ortu, err := s.repo.OrangTuaBalita(a.ID)
+		ortu, err := s.repo.OrangTuaAnak(a.ID)
 		if err != nil || len(ortu) == 0 {
 			continue
 		}
@@ -1054,7 +1054,7 @@ func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uin
 			func(models.Role) (string, string) { return judul, isi })
 	}
 
-	if nBalita == 0 {
+	if nAnak == 0 {
 		return
 	}
 	bidan, err := s.repo.Penerima(j.Posyandu, []string{string(models.RoleBidan)})
@@ -1072,7 +1072,7 @@ func (s *NotifikasiService) KirimRencana(j *models.JadwalPosyandu, pengirim *uin
 		bagian = append(bagian, fmt.Sprintf("%d balita obat cacing", nCacing))
 	}
 	kunci := fmt.Sprintf("%s:%s:ringkas:%s:%d-%d-%d-%d", models.NotifRencanaPosyandu, j.ID, tgl.Format("20060102"),
-		nBalita, nImun, nVit, nCacing)
+		nAnak, nImun, nVit, nCacing)
 	isi := fmt.Sprintf("Posyandu %s, %s%s: %s. Mohon siapkan imunisasi dan logistik suplemen.",
 		namaPos, waktu, lokasi, notifGabungKata(bagian))
 	s.kirimKeUser(bidan, models.NotifRencanaPosyandu, kunci, "jadwal_posyandu", &jid, pengirim,
@@ -1131,35 +1131,35 @@ func (s *NotifikasiService) harianPosyandu(pos string, hari time.Time) {
 		}
 	}
 
-	daftar, err := s.imunisasi.BalitaAktifPosyandu(pos)
+	daftar, err := s.imunisasi.AnakAktifPosyandu(pos)
 	if err != nil {
-		log.Printf("pengingat: gagal mengambil balita %s: %v", pos, err)
+		log.Printf("pengingat: gagal mengambil anak %s: %v", pos, err)
 		return
 	}
-	balita := notifBalitaAktif(daftar, hari)
-	if len(balita) == 0 {
+	anak := notifBalitaAktif(daftar, hari)
+	if len(anak) == 0 {
 		return
 	}
-	d, err := s.muat(balita)
+	d, err := s.muat(anak)
 	if err != nil {
 		log.Printf("pengingat: gagal memuat data %s: %v", pos, err)
 		return
 	}
 
-	for i := range balita {
-		a := &balita[i]
+	for i := range anak {
+		a := &anak[i]
 		s.cekFaskes(a, d, hari, jadwal)
 		s.cekH3(a, d, hari, jadwal)
 		s.cekTerlambat(a, d, hari, jadwal)
 	}
-	s.cekJadwalBelumAda(pos, balita, d, hari, jadwal)
+	s.cekJadwalBelumAda(pos, anak, d, hari, jadwal)
 }
 
-func (s *NotifikasiService) kirimOrtu(a *models.Balita, jenis, kunci, objekTabel string, objekID *uuid.UUID, judul, isi string) {
+func (s *NotifikasiService) kirimOrtu(a *models.Anak, jenis, kunci, objekTabel string, objekID *uuid.UUID, judul, isi string) {
 	if s.repo.KunciSudahAda(kunci) {
 		return
 	}
-	ortu, err := s.repo.OrangTuaBalita(a.ID)
+	ortu, err := s.repo.OrangTuaAnak(a.ID)
 	if err != nil || len(ortu) == 0 {
 		return
 	}
@@ -1168,7 +1168,7 @@ func (s *NotifikasiService) kirimOrtu(a *models.Balita, jenis, kunci, objekTabel
 }
 
 // cekFaskes: HB0 bayi baru lahir dan imunisasi yang batas usianya habis sebelum jadwal posyandu berikutnya.
-func (s *NotifikasiService) cekFaskes(a *models.Balita, d *notifDataBalita, hari time.Time, jadwal []models.JadwalPosyandu) {
+func (s *NotifikasiService) cekFaskes(a *models.Anak, d *notifDataAnak, hari time.Time, jadwal []models.JadwalPosyandu) {
 	lahir := tglSaja(a.TanggalLahir)
 	kini, _ := hitungJadwal(a, d.master, d.riwayat[a.ID], hari)
 	var berikut *time.Time
@@ -1211,7 +1211,7 @@ func (s *NotifikasiService) cekFaskes(a *models.Balita, d *notifDataBalita, hari
 	aid := a.ID
 	if hb0 {
 		kunci := fmt.Sprintf("%s:%s:%s", models.NotifImunisasiFaskes, a.ID, kodeHB0)
-		s.kirimOrtu(a, models.NotifImunisasiFaskes, kunci, "balita", &aid,
+		s.kirimOrtu(a, models.NotifImunisasiFaskes, kunci, "anak", &aid,
 			"Imunisasi Hepatitis B (HB0) "+nama,
 			fmt.Sprintf("%s perlu mendapat imunisasi Hepatitis B (HB0) di puskesmas, bidan, atau fasilitas kesehatan terdekat, paling lambat usia 7 hari (%s).",
 				nama, notifTglIndo(lahir.AddDate(0, 0, 7))))
@@ -1224,14 +1224,14 @@ func (s *NotifikasiService) cekFaskes(a *models.Balita, d *notifDataBalita, hari
 	if berikut != nil {
 		alasan = "jadwal posyandu berikutnya (" + notifTglIndo(*berikut) + ") sudah melewati batas usia"
 	}
-	s.kirimOrtu(a, models.NotifImunisasiFaskes, kunci, "balita", &aid,
+	s.kirimOrtu(a, models.NotifImunisasiFaskes, kunci, "anak", &aid,
 		"Segera ke Puskesmas: Imunisasi "+nama,
 		fmt.Sprintf("Imunisasi %s untuk %s harus diberikan paling lambat %s karena batas usia pemberiannya hampir lewat, sedangkan %s. Silakan datang ke puskesmas atau fasilitas kesehatan terdekat.",
 			notifTeksItem(items), nama, notifTglIndo(batasAwal.AddDate(0, 0, -1)), alasan))
 }
 
-// cekH3: pengingat 3 hari sebelum posyandu yang berisi imunisasi/suplemen untuk balita.
-func (s *NotifikasiService) cekH3(a *models.Balita, d *notifDataBalita, hari time.Time, jadwal []models.JadwalPosyandu) {
+// cekH3: pengingat 3 hari sebelum posyandu yang berisi imunisasi/suplemen untuk anak.
+func (s *NotifikasiService) cekH3(a *models.Anak, d *notifDataAnak, hari time.Time, jadwal []models.JadwalPosyandu) {
 	target := hari.AddDate(0, 0, 3)
 	for ji := range jadwal {
 		j := &jadwal[ji]
@@ -1261,14 +1261,14 @@ func (s *NotifikasiService) cekH3(a *models.Balita, d *notifDataBalita, hari tim
 		kunci := fmt.Sprintf("%s:%s:%s:%s", jenis, j.ID, a.ID, notifSidikItem(items))
 		jid := j.ID
 		s.kirimOrtu(a, jenis, kunci, "jadwal_posyandu", &jid, judul,
-			fmt.Sprintf("Posyandu %s dilaksanakan %s%s. %s dijadwalkan menerima %s. Pastikan balita dalam keadaan sehat dan bawa buku KIA.",
+			fmt.Sprintf("Posyandu %s dilaksanakan %s%s. %s dijadwalkan menerima %s. Pastikan anak dalam keadaan sehat dan bawa buku KIA.",
 				notifNamaPosyandu(j.Posyandu), s.teksWaktu(mulai), notifLokasi(j), nama, notifTeksItem(items)))
 		return
 	}
 }
 
 // cekTerlambat: sekali saat terdeteksi, lalu H-1 sebelum setiap posyandu (maksimal 3 kali).
-func (s *NotifikasiService) cekTerlambat(a *models.Balita, d *notifDataBalita, hari time.Time, jadwal []models.JadwalPosyandu) {
+func (s *NotifikasiService) cekTerlambat(a *models.Anak, d *notifDataAnak, hari time.Time, jadwal []models.JadwalPosyandu) {
 	kini, _ := hitungJadwal(a, d.master, d.riwayat[a.ID], hari)
 	telat := []RencanaItem{}
 	for i := range kini {
@@ -1291,7 +1291,7 @@ func (s *NotifikasiService) cekTerlambat(a *models.Balita, d *notifDataBalita, h
 		if len(jadwal) > 0 {
 			saran = fmt.Sprintf(" Bawa %s ke posyandu %s.", nama, notifTglIndo(tglSaja(jadwal[0].Tanggal)))
 		}
-		s.kirimOrtu(a, models.NotifImunisasiTerlambat, kunciAwal, "balita", &aid,
+		s.kirimOrtu(a, models.NotifImunisasiTerlambat, kunciAwal, "anak", &aid,
 			"Imunisasi "+nama+" Terlambat",
 			fmt.Sprintf("Imunisasi %s untuk %s sudah melewati jadwal yang dianjurkan, tetapi masih dapat dikejar.%s",
 				notifTeksItem(telat), nama, saran))
@@ -1322,15 +1322,15 @@ func (s *NotifikasiService) cekTerlambat(a *models.Balita, d *notifDataBalita, h
 
 // cekJadwalBelumAda: ke sekretaris dan bidan bila ada kebutuhan dalam 7 hari tetapi
 // belum ada jadwal posyandu dalam 30 hari ke depan (sekali per minggu).
-func (s *NotifikasiService) cekJadwalBelumAda(pos string, balita []models.Balita, d *notifDataBalita,
+func (s *NotifikasiService) cekJadwalBelumAda(pos string, anak []models.Anak, d *notifDataAnak,
 	hari time.Time, jadwal []models.JadwalPosyandu) {
 	if len(jadwal) > 0 && !tglSaja(jadwal[0].Tanggal).After(hari.AddDate(0, 0, 30)) {
 		return
 	}
 	cek := hari.AddDate(0, 0, 7)
 	var nImun, nTelat, nVit int
-	for i := range balita {
-		a := &balita[i]
+	for i := range anak {
+		a := &anak[i]
 		pada, _ := hitungJadwal(a, d.master, d.riwayat[a.ID], cek)
 		punya, telat := false, false
 		for k := range pada {
@@ -1393,13 +1393,13 @@ func (s *NotifikasiService) cekJadwalBelumAda(pos string, balita []models.Balita
 
 // ---------------------------------------------------------------- laporan reaksi imunisasi (KIPI)
 
-// LaporanKipi: orang tua melaporkan reaksi setelah imunisasi; dikirim hanya ke bidan posyandu balita.
-func (s *NotifikasiService) LaporanKipi(balita *models.Balita, m *models.ImunisasiBalita, pengirim uint) {
+// LaporanKipi: orang tua melaporkan reaksi setelah imunisasi; dikirim hanya ke bidan posyandu anak.
+func (s *NotifikasiService) LaporanKipi(anak *models.Anak, m *models.ImunisasiAnak, pengirim uint) {
 	defer s.pulih("laporan KIPI")
-	if balita == nil || m == nil {
+	if anak == nil || m == nil {
 		return
 	}
-	pos, err := s.repo.PosyanduBalita(balita.ID)
+	pos, err := s.repo.PosyanduAnak(anak.ID)
 	if err != nil || pos == "" {
 		return
 	}
@@ -1417,11 +1417,11 @@ func (s *NotifikasiService) LaporanKipi(balita *models.Balita, m *models.Imunisa
 	h := fnv.New32a()
 	h.Write([]byte(m.ReaksiKipi))
 	kunci := fmt.Sprintf("%s:%s:%08x", models.NotifLaporanKipi, m.ID, h.Sum32())
-	aid := balita.ID
-	nama := strings.TrimSpace(balita.Nama)
+	aid := anak.ID
+	nama := strings.TrimSpace(anak.Nama)
 	isi := fmt.Sprintf("Orang tua %s melaporkan reaksi setelah %s (%s): %s. Mohon segera dihubungi dan ditindaklanjuti.",
 		nama, imunisasi, notifTglIndo(tglSaja(m.TanggalPemberian)), m.ReaksiKipi)
-	s.kirimKeUser(bidan, models.NotifLaporanKipi, kunci, "balita", &aid, &pengirim,
+	s.kirimKeUser(bidan, models.NotifLaporanKipi, kunci, "anak", &aid, &pengirim,
 		func(models.Role) (string, string) { return "Laporan Reaksi Imunisasi: " + nama, isi })
 }
 

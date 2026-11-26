@@ -60,7 +60,7 @@ func (a *Akses) Pendaftaran(c *gin.Context, id uuid.UUID) bool {
 	return a.cek(c, asal, err, "data milik posyandu lain")
 }
 
-func (a *Akses) Balita(c *gin.Context, id uuid.UUID) bool {
-	asal, err := a.repo.PosyanduBalita(id)
-	return a.cek(c, asal, err, "balita terdaftar di posyandu lain")
+func (a *Akses) Anak(c *gin.Context, id uuid.UUID) bool {
+	asal, err := a.repo.PosyanduAnak(id)
+	return a.cek(c, asal, err, "anak terdaftar di posyandu lain")
 }

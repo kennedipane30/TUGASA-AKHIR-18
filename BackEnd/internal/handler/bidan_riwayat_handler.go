@@ -16,8 +16,8 @@ func (h *PelayananHandler) BidanRiwayatJadwal(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": list})
 }
 
-// GET /bidan/riwayat/jadwal/:id/balita
-func (h *PelayananHandler) BidanRiwayatBalita(c *gin.Context) {
+// GET /bidan/riwayat/jadwal/:id/anak
+func (h *PelayananHandler) BidanRiwayatAnak(c *gin.Context) {
 	id, ok := idParam(c, "id")
 	if !ok {
 		return

@@ -6,13 +6,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GET /kader/daftar-balita?cari=  (nama balita / nama orang tua)
-func (h *JadwalHandler) CariBalitaSesi(c *gin.Context) {
+// GET /kader/daftar-anak?cari=  (nama anak / nama orang tua)
+func (h *JadwalHandler) CariAnakSesi(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
-	res, err := h.svc.CariBalitaSesi(pos, c.Query("cari"))
+	res, err := h.svc.CariAnakSesi(pos, c.Query("cari"))
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -20,17 +20,17 @@ func (h *JadwalHandler) CariBalitaSesi(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
 
-// POST /kader/daftar-balita/:balita_id  (daftarkan ke sesi hari ini + check-in)
-func (h *JadwalHandler) DaftarkanBalita(c *gin.Context) {
+// POST /kader/daftar-anak/:anak_id  (daftarkan ke sesi hari ini + check-in)
+func (h *JadwalHandler) DaftarkanAnak(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
-	balitaID, ok := idParam(c, "balita_id")
+	anakID, ok := idParam(c, "anak_id")
 	if !ok {
 		return
 	}
-	res, err := h.svc.DaftarkanBalita(c.GetUint("user_id"), pos, balitaID)
+	res, err := h.svc.DaftarkanAnak(c.GetUint("user_id"), pos, anakID)
 	if err != nil {
 		tulisError(c, err)
 		return

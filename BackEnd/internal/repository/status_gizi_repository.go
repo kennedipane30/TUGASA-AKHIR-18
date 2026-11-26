@@ -65,9 +65,9 @@ func (r *StatusGiziRepository) ListByPengukuran(ids []uuid.UUID) ([]models.Statu
 	return list, err
 }
 
-func (r *StatusGiziRepository) ListByBalita(balitaID uuid.UUID) ([]models.StatusGizi, error) {
+func (r *StatusGiziRepository) ListByAnak(anakID uuid.UUID) ([]models.StatusGizi, error) {
 	list := []models.StatusGizi{}
-	err := r.db.Where("balita_id = ?", balitaID).Order("tanggal_ukur ASC").Find(&list).Error
+	err := r.db.Where("anak_id = ?", anakID).Order("tanggal_ukur ASC").Find(&list).Error
 	return list, err
 }
 
@@ -82,8 +82,8 @@ func (r *StatusGiziRepository) PengukuranTanpaStatus(batas int) ([]models.Penguk
 	return list, err
 }
 
-func (r *StatusGiziRepository) BalitaByIDs(ids []uuid.UUID) ([]models.Balita, error) {
-	list := []models.Balita{}
+func (r *StatusGiziRepository) AnakByIDs(ids []uuid.UUID) ([]models.Anak, error) {
+	list := []models.Anak{}
 	if len(ids) == 0 {
 		return list, nil
 	}

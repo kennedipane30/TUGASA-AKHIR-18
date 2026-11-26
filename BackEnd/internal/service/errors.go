@@ -8,7 +8,7 @@ import (
 var (
 	ErrJadwalTidakAda      = errors.New("jadwal tidak ditemukan")
 	ErrPendaftaranTidakAda = errors.New("pendaftaran tidak ditemukan")
-	ErrBalitaTidakAda      = errors.New("balita tidak ditemukan")
+	ErrAnakTidakAda        = errors.New("anak tidak ditemukan")
 )
 
 // ErrValidasi: input tidak valid (kode 400).

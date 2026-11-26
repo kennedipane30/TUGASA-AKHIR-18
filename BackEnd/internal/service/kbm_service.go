@@ -23,7 +23,7 @@ import (
 //   5              500               11             200
 //   6              400               12 - 60        200
 //
-// N/T hanya dinilai bila balita juga ditimbang pada bulan sebelumnya.
+// N/T hanya dinilai bila anak juga ditimbang pada bulan sebelumnya.
 // 2T  = tidak naik dua bulan berturut-turut.
 // BGM = Bawah Garis Merah KMS (BB/U < -3 SD).
 // ============================================================================
@@ -54,11 +54,11 @@ func (s *KbmService) SetNotifikasi(n *NotifikasiService) { s.notif = n }
 func indeksBulan(t time.Time) int { return t.Year()*12 + int(t.Month()) }
 
 // Nilai: hitung penilaian satu penimbangan (tanpa menyimpan).
-func (s *KbmService) Nilai(balita *models.Balita, u *models.Pengukuran) (*models.PenilaianTimbang, error) {
+func (s *KbmService) Nilai(anak *models.Anak, u *models.Pengukuran) (*models.PenilaianTimbang, error) {
 	tgl := time.Date(u.TanggalUkur.Year(), u.TanggalUkur.Month(), u.TanggalUkur.Day(), 0, 0, 0, 0, time.UTC)
-	usia := usiaBulan(balita.TanggalLahir, tgl)
+	usia := usiaBulan(anak.TanggalLahir, tgl)
 	p := &models.PenilaianTimbang{
-		PengukuranID: u.ID, BalitaID: u.BalitaID, TanggalUkur: tgl,
+		PengukuranID: u.ID, AnakID: u.AnakID, TanggalUkur: tgl,
 		UsiaBulan: int16(usia), BbKg: u.BbKg,
 	}
 
@@ -69,7 +69,7 @@ func (s *KbmService) Nilai(balita *models.Balita, u *models.Pengukuran) (*models
 	p.ZBbu = z
 	p.Bgm = z != nil && *z < -3
 
-	prev, err := s.repo.PengukuranSebelum(u.BalitaID, tgl, u.ID)
+	prev, err := s.repo.PengukuranSebelum(u.AnakID, tgl, u.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -128,8 +128,8 @@ func (s *KbmService) Nilai(balita *models.Balita, u *models.Pengukuran) (*models
 }
 
 // NilaiDanSimpan: dipanggil setiap kader menyimpan pengukuran (setelah status gizi dihitung).
-func (s *KbmService) NilaiDanSimpan(balita *models.Balita, u *models.Pengukuran) (*models.PenilaianTimbang, error) {
-	p, err := s.Nilai(balita, u)
+func (s *KbmService) NilaiDanSimpan(anak *models.Anak, u *models.Pengukuran) (*models.PenilaianTimbang, error) {
+	p, err := s.Nilai(anak, u)
 	if err != nil {
 		return nil, err
 	}
@@ -142,13 +142,13 @@ func (s *KbmService) NilaiDanSimpan(balita *models.Balita, u *models.Pengukuran)
 // NilaiDanKabari: dipakai saat kader menyimpan pengukuran. Menilai dan menyimpan.
 // Orang tua TIDAK dikabari di sini; orang tua dikabari setelah bidan menyimpan catatan
 // (lihat PelayananService.SimpanCatatan). Bidan tetap diberi peringatan bila 2T/BGM.
-func (s *KbmService) NilaiDanKabari(balita *models.Balita, u *models.Pengukuran, pengirim *uint) (*models.PenilaianTimbang, error) {
-	p, err := s.NilaiDanSimpan(balita, u)
+func (s *KbmService) NilaiDanKabari(anak *models.Anak, u *models.Pengukuran, pengirim *uint) (*models.PenilaianTimbang, error) {
+	p, err := s.NilaiDanSimpan(anak, u)
 	if err != nil {
 		return nil, err
 	}
 	if s.notif != nil {
-		a := *balita
+		a := *anak
 		pp := *p
 		if p.PerluRujuk {
 			go s.notif.PeringatanTimbang(&a, &pp, pengirim)
@@ -189,20 +189,20 @@ func (s *KbmService) HitungDataLama() {
 		}
 		ids := make([]uuid.UUID, 0, len(list))
 		for _, u := range list {
-			ids = append(ids, u.BalitaID)
+			ids = append(ids, u.AnakID)
 		}
-		balita, err := s.repo.BalitaByIDs(ids)
+		anak, err := s.repo.AnakByIDs(ids)
 		if err != nil {
-			log.Printf("kbm: gagal membaca balita: %v", err)
+			log.Printf("kbm: gagal membaca anak: %v", err)
 			return
 		}
-		peta := map[uuid.UUID]*models.Balita{}
-		for i := range balita {
-			peta[balita[i].ID] = &balita[i]
+		peta := map[uuid.UUID]*models.Anak{}
+		for i := range anak {
+			peta[anak[i].ID] = &anak[i]
 		}
 		berhasil := 0
 		for i := range list {
-			a := peta[list[i].BalitaID]
+			a := peta[list[i].AnakID]
 			if a == nil {
 				continue
 			}

@@ -9,7 +9,7 @@ import (
 
 // Status rujukan.
 const (
-	StatusRujukanDirujuk    = "dirujuk"    // surat dibuat, balita dirujuk ke faskes
+	StatusRujukanDirujuk    = "dirujuk"    // surat dibuat, anak dirujuk ke faskes
 	StatusRujukanSelesai    = "selesai"    // rujukan balik (hasil dari faskes) sudah dicatat bidan
 	StatusRujukanDibatalkan = "dibatalkan" // dibatalkan bidan beserta alasannya
 )
@@ -17,9 +17,9 @@ const (
 // Rujukan: surat rujukan balita dari bidan posyandu ke fasilitas kesehatan
 // (Puskesmas/RS), seperti format rujukan rumah sakit.
 //
-// Data balita, orang tua, dan pemeriksaan terakhir disimpan sebagai salinan
-// (DataBalita, JSON) saat rujukan dibuat, sehingga isi surat tidak berubah
-// walaupun data balita diperbarui kemudian.
+// Data anak, orang tua, dan pemeriksaan terakhir disimpan sebagai salinan
+// (DataAnak, JSON) saat rujukan dibuat, sehingga isi surat tidak berubah
+// walaupun data anak diperbarui kemudian.
 type Rujukan struct {
 	// ID: kunci utama (UUID).
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
@@ -30,9 +30,9 @@ type Rujukan struct {
 	// Posyandu: kode posyandu perujuk.
 	Posyandu string `gorm:"column:posyandu;size:20;not null;index" json:"posyandu"`
 
-	// BalitaID: balita yang dirujuk (FK ke balita).
-	BalitaID uuid.UUID `gorm:"column:balita_id;type:uuid;not null;index" json:"balita_id"`
-	Balita   *Balita   `gorm:"foreignKey:BalitaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	// AnakID: balita yang dirujuk (FK ke anak).
+	AnakID uuid.UUID `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
+	Anak   *Anak     `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 
 	// BidanID: bidan perujuk (FK ke users) dan namanya saat surat dibuat.
 	BidanID   uint   `gorm:"column:bidan_id;not null;index" json:"bidan_id"`
@@ -42,11 +42,11 @@ type Rujukan struct {
 	// Tanggal: tanggal surat rujukan.
 	Tanggal time.Time `gorm:"column:tanggal;type:date;not null;index" json:"tanggal"`
 
-	// NamaBalita: nama balita saat dirujuk (untuk daftar & pencarian).
-	NamaBalita string `gorm:"column:nama_balita;size:100" json:"nama_balita"`
+	// NamaAnak: nama anak saat dirujuk (untuk daftar & pencarian).
+	NamaAnak string `gorm:"column:nama_anak;size:100" json:"nama_anak"`
 
-	// DataBalita: salinan identitas balita, orang tua, dan pemeriksaan terakhir (JSON).
-	DataBalita string `gorm:"column:data_balita;type:text" json:"-"`
+	// DataAnak: salinan identitas anak, orang tua, dan pemeriksaan terakhir (JSON).
+	DataAnak string `gorm:"column:data_anak;type:text" json:"-"`
 
 	// Isian bidan.
 	Keluhan   string `gorm:"column:keluhan;type:text;not null" json:"keluhan"`

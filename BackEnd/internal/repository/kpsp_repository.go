@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// KpspRepository melayani master pertanyaan KPSP dan hasil skrining balita.
+// KpspRepository melayani master pertanyaan KPSP dan hasil skrining anak.
 type KpspRepository struct {
 	db *gorm.DB
 }

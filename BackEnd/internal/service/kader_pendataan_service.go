@@ -13,11 +13,11 @@ import (
 )
 
 // ============================================================================
-// DAFTARKAN BALITA KE SESI POSYANDU HARI INI (kader, walk-in)
+// DAFTARKAN ANAK KE SESI POSYANDU HARI INI (kader, walk-in)
 //
 //   - hanya bila ada sesi posyandu HARI INI yang belum selesai
-//   - cari berdasarkan nama balita ATAU nama orang tua
-//   - balita yang sudah terdaftar (daftar online) atau sudah check-in
+//   - cari berdasarkan nama anak ATAU nama orang tua
+//   - anak yang sudah terdaftar (daftar online) atau sudah check-in
 //     TIDAK dapat didaftarkan lagi
 //   - pendaftaran baru: langsung check-in + nomor antrean berikutnya
 // ============================================================================
@@ -28,8 +28,8 @@ const (
 	statusSudahCheckin   = "sudah_checkin"
 )
 
-type BalitaSesi struct {
-	BalitaID     uuid.UUID `json:"balita_id"`
+type AnakSesi struct {
+	AnakID       uuid.UUID `json:"anak_id"`
 	Nama         string    `json:"nama"`
 	JenisKelamin string    `json:"jenis_kelamin"`
 	TanggalLahir string    `json:"tanggal_lahir"`
@@ -40,16 +40,16 @@ type BalitaSesi struct {
 	BolehDaftar  bool      `json:"boleh_daftar"`
 }
 
-type SesiDaftarBalita struct {
+type SesiDaftarAnak struct {
 	SesiAktif bool                   `json:"sesi_aktif"`
 	Pesan     string                 `json:"pesan,omitempty"`
 	Jadwal    *models.JadwalPosyandu `json:"jadwal"`
-	Balita    []BalitaSesi           `json:"balita"`
+	Anak      []AnakSesi             `json:"anak"`
 }
 
-type HasilDaftarBalita struct {
+type HasilDaftarAnak struct {
 	PendaftaranID uuid.UUID `json:"pendaftaran_id"`
-	BalitaID      uuid.UUID `json:"balita_id"`
+	AnakID        uuid.UUID `json:"anak_id"`
 	Nama          string    `json:"nama"`
 	NomorAntrean  *int16    `json:"nomor_antrean"`
 }
@@ -71,19 +71,19 @@ func (s *JadwalService) sesiHariIni(pos string) (*models.JadwalPosyandu, error) 
 	return nil, nil
 }
 
-// CariBalitaSesi: balita + status pendaftarannya pada sesi hari ini.
-func (s *JadwalService) CariBalitaSesi(pos, kata string) (*SesiDaftarBalita, error) {
+// CariAnakSesi: anak + status pendaftarannya pada sesi hari ini.
+func (s *JadwalService) CariAnakSesi(pos, kata string) (*SesiDaftarAnak, error) {
 	pos, err := posKader(pos)
 	if err != nil {
 		return nil, err
 	}
-	out := &SesiDaftarBalita{Balita: []BalitaSesi{}}
+	out := &SesiDaftarAnak{Anak: []AnakSesi{}}
 	j, err := s.sesiHariIni(pos)
 	if err != nil {
 		return nil, err
 	}
 	if j == nil {
-		out.Pesan = "Tidak ada sesi posyandu hari ini. Balita hanya dapat didaftarkan pada hari pelaksanaan posyandu."
+		out.Pesan = "Tidak ada sesi posyandu hari ini. Anak hanya dapat didaftarkan pada hari pelaksanaan posyandu."
 		return out, nil
 	}
 	out.SesiAktif = true
@@ -93,28 +93,28 @@ func (s *JadwalService) CariBalitaSesi(pos, kata string) (*SesiDaftarBalita, err
 	if len([]rune(kata)) < 2 {
 		return out, nil
 	}
-	rows, err := s.repo.CariBalitaDanIbu(pos, kata)
+	rows, err := s.repo.CariAnakDanIbu(pos, kata)
 	if err != nil {
 		return nil, err
 	}
 	ids := make([]uuid.UUID, 0, len(rows))
 	for _, r := range rows {
-		ids = append(ids, r.BalitaID)
+		ids = append(ids, r.AnakID)
 	}
-	daftar, err := s.repo.ListPendaftaranBalita(ids, j.ID)
+	daftar, err := s.repo.ListPendaftaranAnak(ids, j.ID)
 	if err != nil {
 		return nil, err
 	}
 	peta := map[uuid.UUID]models.Pendaftaran{}
 	for _, p := range daftar {
-		peta[p.BalitaID] = p
+		peta[p.AnakID] = p
 	}
 
 	acuan := hariIni()
 	for _, r := range rows {
 		st := statusBelumTerdaftar
 		var nomor *int16
-		if p, ok := peta[r.BalitaID]; ok {
+		if p, ok := peta[r.AnakID]; ok {
 			switch p.StatusKehadiran {
 			case statusTerdaftar:
 				st, nomor = statusTerdaftar, p.NomorAntrean
@@ -123,8 +123,8 @@ func (s *JadwalService) CariBalitaSesi(pos, kata string) (*SesiDaftarBalita, err
 			}
 		}
 		lahir := tglRekap(r.TanggalLahir)
-		out.Balita = append(out.Balita, BalitaSesi{
-			BalitaID:     r.BalitaID,
+		out.Anak = append(out.Anak, AnakSesi{
+			AnakID:       r.AnakID,
 			Nama:         r.Nama,
 			JenisKelamin: r.JenisKelamin,
 			TanggalLahir: lahir.Format("2006-01-02"),
@@ -138,8 +138,8 @@ func (s *JadwalService) CariBalitaSesi(pos, kata string) (*SesiDaftarBalita, err
 	return out, nil
 }
 
-// DaftarkanBalita: daftarkan balita ke sesi hari ini dan langsung check-in.
-func (s *JadwalService) DaftarkanBalita(kaderID uint, pos string, balitaID uuid.UUID) (*HasilDaftarBalita, error) {
+// DaftarkanAnak: daftarkan anak ke sesi hari ini dan langsung check-in.
+func (s *JadwalService) DaftarkanAnak(kaderID uint, pos string, anakID uuid.UUID) (*HasilDaftarAnak, error) {
 	pos, err := posKader(pos)
 	if err != nil {
 		return nil, err
@@ -151,22 +151,22 @@ func (s *JadwalService) DaftarkanBalita(kaderID uint, pos string, balitaID uuid.
 	if j == nil {
 		return nil, konflik("tidak ada sesi posyandu hari ini")
 	}
-	a, err := s.repo.GetBalita(balitaID)
+	a, err := s.repo.GetAnak(anakID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrBalitaTidakAda
+		return nil, ErrAnakTidakAda
 	}
 	if err != nil {
 		return nil, err
 	}
 	if a.Status != "aktif" {
-		return nil, konflik("data balita tidak aktif")
+		return nil, konflik("data anak tidak aktif")
 	}
-	posBalita, err := s.repo.PosyanduBalita(a.ID)
+	posAnak, err := s.repo.PosyanduAnak(a.ID)
 	if err != nil {
 		return nil, err
 	}
-	if pa, _ := models.NormalisasiPosyandu(posBalita); pa != pos {
-		return nil, terlarang("balita ini terdaftar di posyandu lain")
+	if pa, _ := models.NormalisasiPosyandu(posAnak); pa != pos {
+		return nil, terlarang("anak ini terdaftar di posyandu lain")
 	}
 
 	now := time.Now()
@@ -188,7 +188,7 @@ func (s *JadwalService) DaftarkanBalita(kaderID uint, pos string, balitaID uuid.
 			n := r.NomorAntreanBerikut(j.ID)
 			p = &models.Pendaftaran{
 				JadwalID:     j.ID,
-				BalitaID:     a.ID,
+				AnakID:       a.ID,
 				Sumber:       "walk_in",
 				NomorAntrean: &n,
 				WaktuDaftar:  now,
@@ -211,9 +211,9 @@ func (s *JadwalService) DaftarkanBalita(kaderID uint, pos string, balitaID uuid.
 	if err != nil {
 		return nil, err
 	}
-	return &HasilDaftarBalita{
+	return &HasilDaftarAnak{
 		PendaftaranID: hasil.ID,
-		BalitaID:      a.ID,
+		AnakID:        a.ID,
 		Nama:          a.Nama,
 		NomorAntrean:  hasil.NomorAntrean,
 	}, nil

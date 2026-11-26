@@ -7,18 +7,18 @@ import (
 	"gorm.io/gorm"
 )
 
-// ImunisasiMandiriBalita: imunisasi di luar jadwal imunisasi program (mis. Rotavirus, PCV,
-// Influenza, Varisela, Hepatitis A) yang pernah diterima balita di RS, puskesmas,
-// klinik, atau bidan praktik. Dicatat bidan saat kunjungan pertama balita.
+// ImunisasiMandiriAnak: imunisasi di luar jadwal imunisasi program (mis. Rotavirus, PCV,
+// Influenza, Varisela, Hepatitis A) yang pernah diterima anak di RS, puskesmas,
+// klinik, atau bidan praktik. Dicatat bidan saat kunjungan pertama anak.
 // Hanya catatan riwayat: tidak memengaruhi jadwal imunisasi program.
-type ImunisasiMandiriBalita struct {
-	ID       uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
-	BalitaID uuid.UUID `gorm:"column:balita_id;type:uuid;not null;index" json:"balita_id"`
-	Balita   *Balita   `gorm:"foreignKey:BalitaID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
+type ImunisasiMandiriAnak struct {
+	ID     uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
+	AnakID uuid.UUID `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
+	Anak   *Anak     `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 
 	// NamaImunisasi: nama imunisasi sesuai keterangan / Buku KIA, mis. "Rotavirus".
-	NamaImunisasi string `gorm:"column:nama_imunisasi;size:100;not null" json:"nama_imunisasi"`
-	DosisKe       int16  `gorm:"column:dosis_ke;not null;default:1" json:"dosis_ke"`
+	NamaImunisasi string `gorm:"column:nama_vaksin;size:100;not null" json:"nama_vaksin"`
+	DosisKe    int16  `gorm:"column:dosis_ke;not null;default:1" json:"dosis_ke"`
 
 	TanggalPemberian time.Time `gorm:"column:tanggal_pemberian;type:date;not null" json:"tanggal_pemberian"`
 	Tempat           string    `gorm:"column:tempat;size:100;not null" json:"tempat"`
@@ -35,9 +35,9 @@ type ImunisasiMandiriBalita struct {
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func (ImunisasiMandiriBalita) TableName() string { return "imunisasi_mandiri_balita" }
+func (ImunisasiMandiriAnak) TableName() string { return "vaksin_mandiri_anak" }
 
-func (m *ImunisasiMandiriBalita) BeforeCreate(*gorm.DB) error {
+func (m *ImunisasiMandiriAnak) BeforeCreate(*gorm.DB) error {
 	if m.ID == uuid.Nil {
 		m.ID = uuid.New()
 	}

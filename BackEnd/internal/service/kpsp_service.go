@@ -1,10 +1,10 @@
 package service
 
-// KPSP (Kuesioner Pra Skrining Perkembangan): skrining perkembangan balita,
+// KPSP (Kuesioner Pra Skrining Perkembangan): skrining perkembangan anak,
 // 10 pertanyaan per kelompok umur.
 //
 // Dua bagian dalam satu berkas:
-//   - KpspService: membaca lembar pertanyaan sesuai umur balita.
+//   - KpspService: membaca lembar pertanyaan sesuai umur anak.
 //   - KpspInput & rakitKpsp: memeriksa isian bidan lalu menyusunnya menjadi
 //     satu lembar hasil. Penyimpanannya ikut PelayananService.SimpanCatatan,
 //     supaya satu tombol Simpan menyimpan pemeriksaan, imunisasi, suplemen,
@@ -36,10 +36,10 @@ type LembarKpsp struct {
 	// UsiaBulan: kelompok umur lembar ini (3, 6, 9, ... 72).
 	UsiaBulan int16 `json:"usia_bulan"`
 
-	// UsiaBalitaBulan: umur balita sebenarnya, untuk ditampilkan di aplikasi.
-	UsiaBalitaBulan int `json:"usia_balita_bulan"`
+	// UsiaAnakBulan: umur anak sebenarnya, untuk ditampilkan di aplikasi.
+	UsiaAnakBulan int `json:"usia_anak_bulan"`
 
-	// Berlaku: false bila balita di luar jangkauan KPSP (3-72 bulan).
+	// Berlaku: false bila anak di luar jangkauan KPSP (3-72 bulan).
 	// Aplikasi menyembunyikan kartu KPSP bila bernilai false.
 	Berlaku bool `json:"berlaku"`
 
@@ -47,15 +47,15 @@ type LembarKpsp struct {
 	Pertanyaan []models.PertanyaanKpsp `json:"pertanyaan"`
 }
 
-// Lembar mengambil lembar KPSP yang sesuai untuk balita berumur usiaBalitaBulan.
+// Lembar mengambil lembar KPSP yang sesuai untuk anak berumur usiaAnakBulan.
 // Kelompok umur ditentukan di server (lihat models.KelompokUsiaKpsp) supaya
 // aplikasi tidak perlu tahu aturan pemilihannya.
-func (s *KpspService) Lembar(usiaBalitaBulan int) (*LembarKpsp, error) {
+func (s *KpspService) Lembar(usiaAnakBulan int) (*LembarKpsp, error) {
 	hasil := &LembarKpsp{
-		UsiaBalitaBulan: usiaBalitaBulan,
-		Pertanyaan:      []models.PertanyaanKpsp{},
+		UsiaAnakBulan: usiaAnakBulan,
+		Pertanyaan:    []models.PertanyaanKpsp{},
 	}
-	kelompok, berlaku := models.KelompokUsiaKpsp(usiaBalitaBulan)
+	kelompok, berlaku := models.KelompokUsiaKpsp(usiaAnakBulan)
 	if !berlaku {
 		return hasil, nil
 	}
@@ -69,11 +69,11 @@ func (s *KpspService) Lembar(usiaBalitaBulan int) (*LembarKpsp, error) {
 	hasil.Pertanyaan = list
 	return hasil, nil
 }
-
 // Fitur KPSP (Kuesioner Pra Skrining Perkembangan): isian 10 pertanyaan yang
 // diisi bidan pada kartu KPSP, lalu disimpan bersama catatan pemeriksaan.
 //
 // Pembacaan daftar pertanyaannya ada di kpsp_service.go.
+
 
 // KpspInput adalah satu lembar KPSP yang diisi bidan. Jawaban berisi 10 baris
 // (nomor 1-10) berisi true bila dijawab "Ya". Hasil S/M/P dihitung di server
@@ -99,16 +99,16 @@ func (s *PelayananService) rakitKpsp(bidanID uint, p *models.Pendaftaran, tangga
 	if in == nil {
 		return nil, nil
 	}
-	usiaBalita := usiaBulan(p.Balita.TanggalLahir, tanggal)
-	kelompok, berlaku := models.KelompokUsiaKpsp(usiaBalita)
+	usiaAnak := usiaBulan(p.Anak.TanggalLahir, tanggal)
+	kelompok, berlaku := models.KelompokUsiaKpsp(usiaAnak)
 	if !berlaku {
-		return nil, validasi("KPSP hanya untuk balita usia 3-72 bulan (usia balita %s)",
-			usiaTeks(p.Balita.TanggalLahir, tanggal))
+		return nil, validasi("KPSP hanya untuk anak usia 3-72 bulan (usia anak %s)",
+			usiaTeks(p.Anak.TanggalLahir, tanggal))
 	}
-	// Kelompok umur ditentukan server dari tanggal lahir balita; nilai dari
+	// Kelompok umur ditentukan server dari tanggal lahir anak; nilai dari
 	// aplikasi hanya diterima bila sama, agar lembar tidak tertukar.
 	if in.UsiaBulan != 0 && in.UsiaBulan != kelompok {
-		return nil, validasi("kelompok umur KPSP tidak sesuai usia balita (seharusnya %d bulan)", kelompok)
+		return nil, validasi("kelompok umur KPSP tidak sesuai usia anak (seharusnya %d bulan)", kelompok)
 	}
 	if len(in.Jawaban) != 10 {
 		return nil, validasi("KPSP harus berisi 10 jawaban, diterima %d", len(in.Jawaban))
@@ -141,7 +141,7 @@ func (s *PelayananService) rakitKpsp(bidanID uint, p *models.Pendaftaran, tangga
 
 	pid := p.ID
 	return &models.HasilKpsp{
-		BalitaID:      p.BalitaID,
+		AnakID:        p.AnakID,
 		PendaftaranID: &pid,
 		UsiaBulan:     kelompok,
 		JumlahYa:      int16(jumlahYa),

@@ -29,7 +29,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	skdnRepo := repository.NewSkdnRepository(db)
 	logAktivitasRepo := repository.NewLogAktivitasRepository(db)
 	laporanBulananRepo := repository.NewLaporanBulananRepository(db)
-	balitaArsipRepo := repository.NewBalitaArsipRepository(db)
+	anakArsipRepo := repository.NewAnakArsipRepository(db)
 	kpspRepo := repository.NewKpspRepository(db)
 
 	// service
@@ -47,21 +47,21 @@ func Setup(db *gorm.DB) *gin.Engine {
 	notifSvc.SetImunisasi(imunisasiRepo)
 	jadwalSvc.SetNotifikasi(notifSvc)
 	pelayananSvc.SetNotifikasi(notifSvc) // "Rencana Hari Ini" di catatan bidan
-	imunisasiSvc.SetNotifikasi(notifSvc) // laporan reaksi imunisasi (KIPI) ke bidan
+	imunisasiSvc.SetNotifikasi(notifSvc)    // laporan reaksi imunisasi (KIPI) ke bidan
 
 	// master jenis imunisasi & jadwal imunisasi rutin Kemenkes (dibuat/diperbarui otomatis)
 	imunisasiSvc.SiapkanMaster()
 
-	// pengingat otomatis (24 jam sebelum mulai, check-in dibuka, kesehatan balita 07.00 WIB)
+	// pengingat otomatis (24 jam sebelum mulai, check-in dibuka, kesehatan anak 07.00 WIB)
 	go notifSvc.JalankanPengingat(context.Background())
 	// hitung status gizi, lalu penilaian N/T (KBM), 2T, BGM untuk pengukuran lama
 	go func() {
 		giziSvc.HitungDataLama()
 		kbmSvc.HitungDataLama()
 	}()
-	// arsip otomatis balita yang sudah berusia 60 bulan (lulus balita), dicek setiap hari
-	balitaArsipSvc := service.NewBalitaArsipService(balitaArsipRepo)
-	go balitaArsipSvc.JalankanLulusBalita(context.Background())
+	// arsip otomatis anak yang sudah berusia 60 bulan (lulus balita), dicek setiap hari
+	anakArsipSvc := service.NewAnakArsipService(anakArsipRepo)
+	go anakArsipSvc.JalankanLulusBalita(context.Background())
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
@@ -83,7 +83,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	laporanBulananH := handler.NewLaporanBulananHandler(service.NewLaporanBulananService(
 		rekapRepo, laporanBulananRepo, service.NewRekapService(rekapRepo), service.NewSkdnService(rekapRepo, skdnRepo)))
 	kaderKeluargaH := handler.NewKaderKeluargaHandler(service.NewKaderKeluargaService(userRepo, keluargaRepo))
-	balitaArsipH := handler.NewBalitaArsipHandler(balitaArsipSvc)
+	anakArsipH := handler.NewAnakArsipHandler(anakArsipSvc)
 	logAktivitasH := handler.NewLogAktivitasHandler(logAktivitasRepo)
 	// OTP WhatsApp: registrasi orang tua & lupa PIN
 	otpH := handler.NewOtpHandler(service.NewOtpService(
@@ -107,11 +107,11 @@ func Setup(db *gorm.DB) *gin.Engine {
 	protected.POST("/auth/ubah-pin", pinH.UbahPIN)
 	protected.GET("/jadwal", jadwalH.List)
 	protected.GET("/jadwal/terdekat", jadwalH.Terdekat)
-	protected.GET("/imunisasi", pelayananH.ListJenisImunisasi)
-	protected.GET("/imunisasi/jadwal", imunisasiH.JadwalMaster)
-	protected.GET("/imunisasi/balita/:balita_id", imunisasiH.KartuBalita)
-	protected.POST("/imunisasi/bukti", imunisasiH.UnggahBukti) // orang tua & bidan (dicek di handler)
-	protected.GET("/imunisasi/bukti/:nama", imunisasiH.AmbilBukti)
+	protected.GET("/vaksin", pelayananH.ListJenisImunisasi)
+	protected.GET("/vaksin/jadwal", imunisasiH.JadwalMaster)
+	protected.GET("/vaksin/anak/:anak_id", imunisasiH.KartuAnak)
+	protected.POST("/vaksin/bukti", imunisasiH.UnggahBukti) // orang tua & bidan (dicek di handler)
+	protected.GET("/vaksin/bukti/:nama", imunisasiH.AmbilBukti)
 
 	// notifikasi (semua role)
 	protected.GET("/notifikasi", notifH.List)
@@ -139,18 +139,18 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.POST("/jadwal/:id/batalkan", jadwalH.Batalkan)
 	sekretaris.GET("/qr", jadwalH.QRPosyandu) // QR tetap, satu per posyandu
 	sekretaris.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
-	// riwayat pemeriksaan: tanggal posyandu -> balita -> hasil pendataan
+	// riwayat pemeriksaan: tanggal posyandu -> anak -> hasil pendataan
 	sekretaris.GET("/riwayat/jadwal", pelayananH.SekretarisRiwayatJadwal)
-	sekretaris.GET("/riwayat/jadwal/:id/balita", pelayananH.SekretarisRiwayatBalita)
+	sekretaris.GET("/riwayat/jadwal/:id/anak", pelayananH.SekretarisRiwayatAnak)
 	sekretaris.GET("/riwayat/pendaftaran/:id", pelayananH.SekretarisRiwayatDetail)
-	sekretaris.GET("/imunisasi/statistik", imunisasiH.Statistik)
+	sekretaris.GET("/vaksin/statistik", imunisasiH.Statistik)
 	// rekap posyandu: status gizi, Vitamin A & obat cacing, balita tidak hadir
 	sekretaris.GET("/rekap/gizi", rekapH.Gizi)
 	sekretaris.GET("/rekap/suplemen", rekapH.Suplemen)
 	sekretaris.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
 	// semua balita posyandu
 	sekretaris.GET("/balita", balitaH.Daftar)
-	sekretaris.GET("/balita/:balita_id", balitaH.Detail)
+	sekretaris.GET("/balita/:anak_id", balitaH.Detail)
 	// ringkasan penimbangan (SKDN)
 	sekretaris.GET("/skdn", skdnH.Hitung)
 	sekretaris.GET("/laporan-bulanan", laporanBulananH.Laporan)
@@ -161,28 +161,28 @@ func Setup(db *gorm.DB) *gin.Engine {
 	ortu := protected.Group("/", middleware.RoleRequired("orang_tua"))
 	ortu.GET("/keluarga/saya", keluargaH.Get)
 	ortu.PUT("/keluarga/saya", keluargaH.SimpanProfil)
-	ortu.POST("/keluarga/saya/balita", keluargaH.TambahBalita)
-	ortu.PUT("/keluarga/saya/balita/:id", keluargaH.UbahBalita)
-	ortu.DELETE("/keluarga/saya/balita/:id", keluargaH.HapusBalita)
+	ortu.POST("/keluarga/saya/anak", keluargaH.TambahAnak)
+	ortu.PUT("/keluarga/saya/anak/:id", keluargaH.UbahAnak)
+	ortu.DELETE("/keluarga/saya/anak/:id", keluargaH.HapusAnak)
 	ortu.GET("/keluarga", keluargaH.Get)
 	ortu.PUT("/keluarga", keluargaH.SimpanProfil)
-	ortu.POST("/keluarga/balita", keluargaH.TambahBalita)
-	ortu.PUT("/keluarga/balita/:id", keluargaH.UbahBalita)
-	ortu.DELETE("/keluarga/balita/:id", keluargaH.HapusBalita)
+	ortu.POST("/keluarga/anak", keluargaH.TambahAnak)
+	ortu.PUT("/keluarga/anak/:id", keluargaH.UbahAnak)
+	ortu.DELETE("/keluarga/anak/:id", keluargaH.HapusAnak)
 	ortu.POST("/jadwal/:id/daftar", jadwalH.Daftar)
 	ortu.POST("/jadwal/:id/batal", jadwalH.BatalDaftar)
 	ortu.POST("/jadwal/:id/scan", jadwalH.Scan)
 	ortu.GET("/jadwal/:id/kartu", jadwalH.Kartu)
 	ortu.GET("/riwayat", pelayananH.Riwayat)
 	// laporan reaksi setelah imunisasi (riwayat imunisasi awal dicatat bidan)
-	ortu.POST("/imunisasi/riwayat/:id/kipi", imunisasiH.LaporKipi)
-	// rujukan balita (lihat & unduh surat)
+	ortu.POST("/vaksin/riwayat/:id/kipi", imunisasiH.LaporKipi)
+	// rujukan anak (lihat & unduh surat)
 	ortu.GET("/rujukan", rujukanH.DaftarOrangTua)
 	ortu.GET("/rujukan/:id", rujukanH.DetailOrangTua)
 
 	// kader (menampilkan QR tetap posyandu, bukan memindai)
 	kader := protected.Group("/kader", middleware.RoleRequired("kader"))
-	kader.GET("/cari-balita", jadwalH.CariBalita)
+	kader.GET("/anak", jadwalH.CariAnak)
 	kader.POST("/users/:id/reset-pin", pinH.ResetPIN) // hanya akun orang tua
 	kader.GET("/qr", jadwalH.QRPosyandu)              // QR tetap, satu per posyandu
 	kader.GET("/jadwal/:id/qr", jadwalH.QRJadwal)
@@ -191,51 +191,51 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kader.GET("/jadwal/:id/antrean", pelayananH.AntreanKader)
 	kader.GET("/pendaftaran/:id/pengukuran", pelayananH.PengukuranKader)
 	kader.PUT("/pendaftaran/:id/pengukuran", pelayananH.CatatPengukuran)
-	// riwayat pemeriksaan: tanggal posyandu -> balita -> hasil pendataan
+	// riwayat pemeriksaan: tanggal posyandu -> anak -> hasil pendataan
 	kader.GET("/riwayat/jadwal", pelayananH.KaderRiwayatJadwal)
-	kader.GET("/riwayat/jadwal/:id/balita", pelayananH.KaderRiwayatBalita)
+	kader.GET("/riwayat/jadwal/:id/anak", pelayananH.KaderRiwayatAnak)
 	kader.GET("/riwayat/pendaftaran/:id", pelayananH.KaderRiwayatDetail)
 	kader.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
 	kader.GET("/balita", balitaH.Daftar)
-	kader.GET("/balita/:balita_id", balitaH.Detail)
-	kader.PUT("/balita/:balita_id/arsip", balitaArsipH.Arsipkan)    // pindah | meninggal | lainnya
-	kader.PUT("/balita/:balita_id/aktifkan", balitaArsipH.Aktifkan) // batalkan arsip
+	kader.GET("/balita/:anak_id", balitaH.Detail)
+	kader.PUT("/balita/:anak_id/arsip", anakArsipH.Arsipkan)    // pindah | meninggal | lainnya
+	kader.PUT("/balita/:anak_id/aktifkan", anakArsipH.Aktifkan) // batalkan arsip
 	// Tambahkan Akun & Data Keluarga oleh kader (orang tua tanpa akun / tanpa HP)
 	kader.GET("/cek-akun", kaderKeluargaH.CekAkun) // ?nik=&no_hp= : cek langsung saat diisi
-	kader.GET("/keluarga", kaderKeluargaH.Cari)    // ?cari= nama ibu / NIK / No. HP / nama balita
-	kader.POST("/keluarga", kaderKeluargaH.Tambah) // akun + data keluarga + satu/lebih balita
+	kader.GET("/keluarga", kaderKeluargaH.Cari)    // ?cari= nama ibu / NIK / No. HP / nama anak
+	kader.POST("/keluarga", kaderKeluargaH.Tambah) // akun + data keluarga + satu/lebih anak
 	kader.GET("/keluarga/:id", kaderKeluargaH.Detail)
 	kader.PUT("/keluarga/:id", kaderKeluargaH.UbahProfil)
-	kader.POST("/keluarga/:id/balita", kaderKeluargaH.TambahBalita)
-	kader.PUT("/keluarga/:id/balita/:balita_id", kaderKeluargaH.UbahBalita)
-	// Daftarkan balita ke sesi posyandu hari ini (walk-in)
-	kader.GET("/daftar-balita", jadwalH.CariBalitaSesi) // ?cari= nama balita / nama orang tua
-	kader.POST("/daftar-balita/:balita_id", jadwalH.DaftarkanBalita)
+	kader.POST("/keluarga/:id/anak", kaderKeluargaH.TambahAnak)
+	kader.PUT("/keluarga/:id/anak/:anak_id", kaderKeluargaH.UbahAnak)
+	// Daftarkan anak ke sesi posyandu hari ini (walk-in)
+	kader.GET("/daftar-anak", jadwalH.CariAnakSesi) // ?cari= nama anak / nama orang tua
+	kader.POST("/daftar-anak/:anak_id", jadwalH.DaftarkanAnak)
 
 	// bidan
 	bidan := protected.Group("/bidan", middleware.RoleRequired("bidan"))
 	bidan.GET("/jadwal/:id/pengukuran", pelayananH.AntreanBidan)
 	bidan.GET("/pendaftaran/:id", pelayananH.DetailBidan)
 	bidan.PUT("/pendaftaran/:id/catatan", pelayananH.SimpanCatatan)
-	// riwayat pemeriksaan: tanggal posyandu -> balita -> hasil pendataan
+	// riwayat pemeriksaan: tanggal posyandu -> anak -> hasil pendataan
 	bidan.GET("/riwayat/jadwal", pelayananH.BidanRiwayatJadwal)
-	bidan.GET("/riwayat/jadwal/:id/balita", pelayananH.BidanRiwayatBalita)
+	bidan.GET("/riwayat/jadwal/:id/anak", pelayananH.BidanRiwayatAnak)
 	bidan.GET("/riwayat/pendaftaran/:id", pelayananH.BidanRiwayatDetail)
 	// imunisasi susulan (diberikan di luar sesi posyandu)
-	bidan.POST("/imunisasi/riwayat", imunisasiH.CatatRiwayat)
-	bidan.DELETE("/imunisasi/riwayat/:id", imunisasiH.HapusRiwayat)
-	bidan.PUT("/imunisasi/riwayat/:id/konfirmasi", imunisasiH.KonfirmasiRiwayat)
-	bidan.PUT("/imunisasi/riwayat/:id/kipi", imunisasiH.TindakLanjutKipi)
-	bidan.POST("/imunisasi/balita/:balita_id/konfirmasi-selesai", imunisasiH.SelesaiKonfirmasi)
+	bidan.POST("/vaksin/riwayat", imunisasiH.CatatRiwayat)
+	bidan.DELETE("/vaksin/riwayat/:id", imunisasiH.HapusRiwayat)
+	bidan.PUT("/vaksin/riwayat/:id/konfirmasi", imunisasiH.KonfirmasiRiwayat)
+	bidan.PUT("/vaksin/riwayat/:id/kipi", imunisasiH.TindakLanjutKipi)
+	bidan.POST("/vaksin/anak/:anak_id/konfirmasi-selesai", imunisasiH.SelesaiKonfirmasi)
 	// riwayat imunisasi sebelum posyandu (kunjungan pertama) & imunisasi di luar program
-	bidan.POST("/imunisasi/balita/:balita_id/riwayat-awal", imunisasiH.CatatRiwayatAwal)
-	bidan.DELETE("/imunisasi/mandiri/:id", imunisasiH.HapusImunisasiMandiri)
-	// KPSP (skrining perkembangan): ambil 10 pertanyaan sesuai umur balita.
+	bidan.POST("/vaksin/anak/:anak_id/riwayat-awal", imunisasiH.CatatRiwayatAwal)
+	bidan.DELETE("/vaksin/mandiri/:id", imunisasiH.HapusImunisasiMandiri)
+	// KPSP (skrining perkembangan): ambil 10 pertanyaan sesuai umur anak.
 	// Pengisiannya ikut tersimpan lewat PUT /bidan/pendaftaran/:id/catatan.
 	bidan.GET("/kpsp/lembar", kpspH.Lembar)
 	bidan.GET("/balita", balitaH.Daftar)
 	bidan.GET("/balita-berisiko", balitaH.Berisiko)
-	bidan.GET("/balita/:balita_id", balitaH.Detail)
+	bidan.GET("/balita/:anak_id", balitaH.Detail)
 	// ringkasan penimbangan (SKDN)
 	bidan.GET("/skdn", skdnH.Hitung)
 	bidan.GET("/laporan-bulanan", laporanBulananH.Laporan)
@@ -247,8 +247,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	bidan.DELETE("/rujukan/:id", rujukanH.Hapus)
 	bidan.PUT("/rujukan/:id/balik", rujukanH.CatatBalik)
 	bidan.POST("/rujukan/:id/batal", rujukanH.Batal)
-	bidan.GET("/rujukan-balita", rujukanH.CariBalita)            // ?cari=nama/NIK
-	bidan.GET("/rujukan-balita/:balita_id", rujukanH.DataBalita) // data balita otomatis
+	bidan.GET("/rujukan-anak", rujukanH.CariAnak)          // ?cari=nama/NIK
+	bidan.GET("/rujukan-anak/:anak_id", rujukanH.DataAnak) // data anak otomatis
 	// rekap posyandu: status gizi, Vitamin A & obat cacing, balita tidak hadir
 	// (sama dengan sekretaris; data dibatasi ke posyandu akun bidan)
 	bidan.GET("/rekap/gizi", rekapH.Gizi)

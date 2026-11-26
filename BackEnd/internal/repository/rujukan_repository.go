@@ -84,32 +84,32 @@ func (r *RujukanRepository) DaftarPosyandu(pos string, status []string) ([]model
 	return list, err
 }
 
-func subBalitaOrangTua(db *gorm.DB, userID uint) *gorm.DB {
-	return db.Model(&models.Balita{}).Select("id").
+func subAnakOrangTua(db *gorm.DB, userID uint) *gorm.DB {
+	return db.Model(&models.Anak{}).Select("id").
 		Where("keluarga_id IN (?)", db.Model(&models.OrangTua{}).Select("keluarga_id").Where("user_id = ?", userID))
 }
 
-// DaftarOrangTua: rujukan semua balita milik akun orang tua [userID].
+// DaftarOrangTua: rujukan semua anak milik akun orang tua [userID].
 func (r *RujukanRepository) DaftarOrangTua(userID uint) ([]models.Rujukan, error) {
 	list := []models.Rujukan{}
-	err := r.db.Where("balita_id IN (?)", subBalitaOrangTua(r.db, userID)).
+	err := r.db.Where("anak_id IN (?)", subAnakOrangTua(r.db, userID)).
 		Order("tanggal DESC, created_at DESC").Limit(300).Find(&list).Error
 	return list, err
 }
 
-// MilikOrangTua: true bila balita pada rujukan termasuk balita akun orang tua [userID].
-func (r *RujukanRepository) MilikOrangTua(balitaID uuid.UUID, userID uint) bool {
+// MilikOrangTua: true bila anak pada rujukan termasuk anak akun orang tua [userID].
+func (r *RujukanRepository) MilikOrangTua(anakID uuid.UUID, userID uint) bool {
 	var n int64
-	r.db.Model(&models.Balita{}).Where("id = ?", balitaID).
-		Where("id IN (?)", subBalitaOrangTua(r.db, userID)).Count(&n)
+	r.db.Model(&models.Anak{}).Where("id = ?", anakID).
+		Where("id IN (?)", subAnakOrangTua(r.db, userID)).Count(&n)
 	return n > 0
 }
 
-// ---------------------------------------------------------------- data balita otomatis
+// ---------------------------------------------------------------- data anak otomatis
 
-// CariBalita: balita aktif di posyandu berdasarkan nama atau NIK (maks. 20).
-func (r *RujukanRepository) CariBalita(pos, kata string) ([]models.Balita, error) {
-	list := []models.Balita{}
+// CariAnak: anak aktif di posyandu berdasarkan nama atau NIK (maks. 20).
+func (r *RujukanRepository) CariAnak(pos, kata string) ([]models.Anak, error) {
+	list := []models.Anak{}
 	kata = strings.TrimSpace(kata)
 	q := r.db.Preload("Keluarga").Where("status = ?", "aktif").
 		Where("keluarga_id IN (?)", subKeluargaPosyandu(r.db, pos))
@@ -120,9 +120,9 @@ func (r *RujukanRepository) CariBalita(pos, kata string) ([]models.Balita, error
 	return list, err
 }
 
-// GetBalita: balita beserta keluarganya.
-func (r *RujukanRepository) GetBalita(id uuid.UUID) (*models.Balita, error) {
-	var a models.Balita
+// GetAnak: anak beserta keluarganya.
+func (r *RujukanRepository) GetAnak(id uuid.UUID) (*models.Anak, error) {
+	var a models.Anak
 	err := r.db.Preload("Keluarga").First(&a, "id = ?", id).Error
 	return &a, err
 }
@@ -141,10 +141,10 @@ func cukupTidakAda(err error) error {
 	return err
 }
 
-// PengukuranTerakhir: pengukuran terbaru balita (nil bila belum pernah).
-func (r *RujukanRepository) PengukuranTerakhir(balitaID uuid.UUID) (*models.Pengukuran, error) {
+// PengukuranTerakhir: pengukuran terbaru anak (nil bila belum pernah).
+func (r *RujukanRepository) PengukuranTerakhir(anakID uuid.UUID) (*models.Pengukuran, error) {
 	var p models.Pengukuran
-	err := r.db.Where("balita_id = ?", balitaID).Order("tanggal_ukur DESC, created_at DESC").First(&p).Error
+	err := r.db.Where("anak_id = ?", anakID).Order("tanggal_ukur DESC, created_at DESC").First(&p).Error
 	if err != nil {
 		return nil, cukupTidakAda(err)
 	}
@@ -171,11 +171,11 @@ func (r *RujukanRepository) PenilaianPengukuran(pengukuranID uuid.UUID) (*models
 	return &p, nil
 }
 
-// PemeriksaanTerakhir: catatan pemeriksaan bidan terbaru untuk balita.
-func (r *RujukanRepository) PemeriksaanTerakhir(balitaID uuid.UUID) (*models.PemeriksaanBidan, error) {
+// PemeriksaanTerakhir: catatan pemeriksaan bidan terbaru untuk anak.
+func (r *RujukanRepository) PemeriksaanTerakhir(anakID uuid.UUID) (*models.PemeriksaanBidan, error) {
 	var p models.PemeriksaanBidan
 	err := r.db.Where("pendaftaran_id IN (?)",
-		r.db.Model(&models.Pendaftaran{}).Select("id").Where("balita_id = ?", balitaID)).
+		r.db.Model(&models.Pendaftaran{}).Select("id").Where("anak_id = ?", anakID)).
 		Order("created_at DESC").First(&p).Error
 	if err != nil {
 		return nil, cukupTidakAda(err)

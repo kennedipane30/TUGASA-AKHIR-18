@@ -90,18 +90,18 @@ func (h *KeluargaHandler) SimpanProfil(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
 
-func (h *KeluargaHandler) TambahBalita(c *gin.Context) {
+func (h *KeluargaHandler) TambahAnak(c *gin.Context) {
 	uid, ok := userID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "tidak terautentikasi"})
 		return
 	}
-	var in service.BalitaInput
+	var in service.AnakInput
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "body tidak valid"})
 		return
 	}
-	a, err := h.svc.TambahBalita(uid, in)
+	a, err := h.svc.TambahAnak(uid, in)
 	if err != nil {
 		respondErr(c, err)
 		return
@@ -109,7 +109,7 @@ func (h *KeluargaHandler) TambahBalita(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": a})
 }
 
-func (h *KeluargaHandler) UbahBalita(c *gin.Context) {
+func (h *KeluargaHandler) UbahAnak(c *gin.Context) {
 	uid, ok := userID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "tidak terautentikasi"})
@@ -119,12 +119,12 @@ func (h *KeluargaHandler) UbahBalita(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var in service.BalitaInput
+	var in service.AnakInput
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "body tidak valid"})
 		return
 	}
-	a, err := h.svc.UbahBalita(uid, id, in)
+	a, err := h.svc.UbahAnak(uid, id, in)
 	if err != nil {
 		respondErr(c, err)
 		return
@@ -132,7 +132,7 @@ func (h *KeluargaHandler) UbahBalita(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": a})
 }
 
-func (h *KeluargaHandler) HapusBalita(c *gin.Context) {
+func (h *KeluargaHandler) HapusAnak(c *gin.Context) {
 	uid, ok := userID(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "tidak terautentikasi"})
@@ -142,9 +142,9 @@ func (h *KeluargaHandler) HapusBalita(c *gin.Context) {
 	if !ok {
 		return
 	}
-	if err := h.svc.HapusBalita(uid, id); err != nil {
+	if err := h.svc.HapusAnak(uid, id); err != nil {
 		respondErr(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "data balita dihapus"})
+	c.JSON(http.StatusOK, gin.H{"message": "data anak dihapus"})
 }

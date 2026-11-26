@@ -10,7 +10,7 @@ func AllModels() []any {
 		&KodeOTP{}, // kode OTP WhatsApp (registrasi & lupa PIN)
 		&Keluarga{},
 		&OrangTua{},
-		&Balita{},
+		&Anak{},
 
 		// jadwal & pelayanan posyandu
 		&JadwalPosyandu{},
@@ -23,13 +23,13 @@ func AllModels() []any {
 		&StatusGizi{},
 		&PenilaianTimbang{},
 		&StandarAntropometri{},
-		&SuplemenBalita{},
+		&SuplemenAnak{},
 
 		// imunisasi
 		&JenisImunisasi{},
 		&JadwalImunisasi{},
-		&ImunisasiBalita{},
-		&ImunisasiMandiriBalita{}, // imunisasi di luar program (dicatat bidan)
+		&ImunisasiAnak{},
+		&ImunisasiMandiriAnak{}, // imunisasi di luar program (dicatat bidan)
 
 		// KPSP (skrining perkembangan)
 		&PertanyaanKpsp{}, // master 10 pertanyaan per kelompok umur

@@ -1,6 +1,6 @@
 package service
 
-// Riwayat pemeriksaan untuk orang tua: daftar kunjungan balita beserta
+// Riwayat pemeriksaan untuk orang tua: daftar kunjungan anak beserta
 // pengukuran, status gizi, catatan bidan, imunisasi, suplemen, dan hasil KPSP.
 //
 // Riwayat jadwal posyandu ada di riwayat_jadwal_service.go.
@@ -16,8 +16,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// Fitur riwayat untuk orang tua: daftar kunjungan balita beserta pengukuran,
+// Fitur riwayat untuk orang tua: daftar kunjungan anak beserta pengukuran,
 // status gizi, catatan bidan, imunisasi, suplemen, dan hasil KPSP.
+
 
 type PengukuranRiwayat struct {
 	TanggalUkur     time.Time `json:"tanggal_ukur"`
@@ -31,22 +32,22 @@ type PengukuranRiwayat struct {
 
 type RiwayatItem struct {
 	PendaftaranID uuid.UUID                `json:"pendaftaran_id"`
-	BalitaID      uuid.UUID                `json:"balita_id"`
-	NamaBalita    string                   `json:"nama_balita"`
+	AnakID        uuid.UUID                `json:"anak_id"`
+	NamaAnak      string                   `json:"nama_anak"`
 	Tanggal       time.Time                `json:"tanggal"`
 	JamMulai      string                   `json:"jam_mulai"`
 	Pengukuran    *PengukuranRiwayat       `json:"pengukuran"`
 	StatusGizi    *models.StatusGizi       `json:"status_gizi"`
 	Penilaian     *models.PenilaianTimbang `json:"penilaian"`
 	Catatan       *models.PemeriksaanBidan `json:"catatan"`
-	Imunisasi     []models.ImunisasiBalita `json:"imunisasi"`
-	Suplemen      []models.SuplemenBalita  `json:"suplemen"`
+	Imunisasi     []models.ImunisasiAnak   `json:"imunisasi"`
+	Suplemen      []models.SuplemenAnak    `json:"suplemen"`
 	Kpsp          *models.HasilKpsp        `json:"kpsp"` // skrining perkembangan kunjungan ini
 }
 
 // Riwayat menampilkan kunjungan yang SUDAH diukur kader atau SUDAH diberi catatan bidan,
-// hanya untuk balita keluarga sendiri. Status gizi tampil begitu kader menyimpan pengukuran.
-func (s *PelayananService) Riwayat(userID uint, balitaID *uuid.UUID) ([]RiwayatItem, error) {
+// hanya untuk anak keluarga sendiri. Status gizi tampil begitu kader menyimpan pengukuran.
+func (s *PelayananService) Riwayat(userID uint, anakID *uuid.UUID) ([]RiwayatItem, error) {
 	kosong := []RiwayatItem{}
 	ibu, err := s.kel.FindIbuByUser(userID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -55,21 +56,21 @@ func (s *PelayananService) Riwayat(userID uint, balitaID *uuid.UUID) ([]RiwayatI
 	if err != nil {
 		return nil, err
 	}
-	balitaList, err := s.kel.ListBalita(ibu.KeluargaID)
+	anakList, err := s.kel.ListAnak(ibu.KeluargaID)
 	if err != nil {
 		return nil, err
 	}
 	nama := map[uuid.UUID]string{}
-	ids := make([]uuid.UUID, 0, len(balitaList))
-	for _, a := range balitaList {
+	ids := make([]uuid.UUID, 0, len(anakList))
+	for _, a := range anakList {
 		nama[a.ID] = a.Nama
 		ids = append(ids, a.ID)
 	}
-	if balitaID != nil {
-		if _, ok := nama[*balitaID]; !ok {
-			return nil, terlarang("balita bukan bagian dari keluarga Anda")
+	if anakID != nil {
+		if _, ok := nama[*anakID]; !ok {
+			return nil, terlarang("anak bukan bagian dari keluarga Anda")
 		}
-		ids = []uuid.UUID{*balitaID}
+		ids = []uuid.UUID{*anakID}
 	}
 	if len(ids) == 0 {
 		return kosong, nil
@@ -125,13 +126,13 @@ func (s *PelayananService) Riwayat(userID uint, balitaID *uuid.UUID) ([]RiwayatI
 			petaCatatan[c.PendaftaranID] = c
 		}
 	}
-	petaImun := map[uuid.UUID][]models.ImunisasiBalita{}
+	petaImun := map[uuid.UUID][]models.ImunisasiAnak{}
 	for _, i := range imun {
 		if i.PendaftaranID != nil {
 			petaImun[*i.PendaftaranID] = append(petaImun[*i.PendaftaranID], i)
 		}
 	}
-	petaSup := map[uuid.UUID][]models.SuplemenBalita{}
+	petaSup := map[uuid.UUID][]models.SuplemenAnak{}
 	for _, x := range sup {
 		if x.PendaftaranID != nil {
 			petaSup[*x.PendaftaranID] = append(petaSup[*x.PendaftaranID], x)
@@ -149,16 +150,16 @@ func (s *PelayananService) Riwayat(userID uint, balitaID *uuid.UUID) ([]RiwayatI
 	for _, p := range list {
 		it := RiwayatItem{
 			PendaftaranID: p.ID,
-			BalitaID:      p.BalitaID,
-			NamaBalita:    nama[p.BalitaID],
+			AnakID:        p.AnakID,
+			NamaAnak:      nama[p.AnakID],
 			Imunisasi:     petaImun[p.ID],
 			Suplemen:      petaSup[p.ID],
 		}
 		if it.Imunisasi == nil {
-			it.Imunisasi = []models.ImunisasiBalita{}
+			it.Imunisasi = []models.ImunisasiAnak{}
 		}
 		if it.Suplemen == nil {
-			it.Suplemen = []models.SuplemenBalita{}
+			it.Suplemen = []models.SuplemenAnak{}
 		}
 		if k, ok := petaKpsp[p.ID]; ok {
 			it.Kpsp = &k

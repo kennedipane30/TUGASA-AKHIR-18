@@ -1,6 +1,6 @@
 package handler
 
-// Endpoint riwayat kunjungan balita untuk orang tua.
+// Endpoint riwayat kunjungan anak untuk orang tua.
 
 import (
 	"net/http"
@@ -9,18 +9,18 @@ import (
 	"github.com/google/uuid"
 )
 
-// GET /riwayat?balita_id=...   (hanya kunjungan yang sudah diberi catatan bidan)
+// GET /riwayat?anak_id=...   (hanya kunjungan yang sudah diberi catatan bidan)
 func (h *PelayananHandler) Riwayat(c *gin.Context) {
-	var balitaID *uuid.UUID
-	if s := c.Query("balita_id"); s != "" {
+	var anakID *uuid.UUID
+	if s := c.Query("anak_id"); s != "" {
 		id, err := uuid.Parse(s)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "balita_id tidak valid"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "anak_id tidak valid"})
 			return
 		}
-		balitaID = &id
+		anakID = &id
 	}
-	list, err := h.svc.Riwayat(c.GetUint("user_id"), balitaID)
+	list, err := h.svc.Riwayat(c.GetUint("user_id"), anakID)
 	if err != nil {
 		tulisError(c, err)
 		return

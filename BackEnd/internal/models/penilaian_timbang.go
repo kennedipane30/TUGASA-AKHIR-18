@@ -32,7 +32,7 @@ const (
 type PenilaianTimbang struct {
 	ID           uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	PengukuranID uuid.UUID `gorm:"column:pengukuran_id;type:uuid;not null;uniqueIndex:ux_penilaian_timbang_pengukuran,where:deleted_at IS NULL" json:"pengukuran_id"`
-	BalitaID     uuid.UUID `gorm:"column:balita_id;type:uuid;not null;index" json:"balita_id"`
+	AnakID       uuid.UUID `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
 	TanggalUkur  time.Time `gorm:"column:tanggal_ukur;type:date;not null;index" json:"tanggal_ukur"`
 	UsiaBulan    int16     `gorm:"column:usia_bulan" json:"usia_bulan"`
 	BbKg         float64   `gorm:"column:bb_kg;type:numeric(5,2)" json:"bb_kg"`
@@ -53,7 +53,7 @@ type PenilaianTimbang struct {
 	Keterangan   string   `gorm:"column:keterangan;type:text" json:"keterangan"`
 
 	Pengukuran *Pengukuran `gorm:"foreignKey:PengukuranID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
-	Balita     *Balita     `gorm:"foreignKey:BalitaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	Anak       *Anak       `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 
 	Version       int            `gorm:"column:version;default:1" json:"version"`
 	PerangkatAsal *uuid.UUID     `gorm:"column:perangkat_asal;type:uuid" json:"perangkat_asal,omitempty"`

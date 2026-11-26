@@ -23,7 +23,7 @@ func tulisError(c *gin.Context, err error) {
 		c.JSON(http.StatusForbidden, gin.H{"error": et.Pesan})
 	case errors.Is(err, service.ErrJadwalTidakAda),
 		errors.Is(err, service.ErrPendaftaranTidakAda),
-		errors.Is(err, service.ErrBalitaTidakAda):
+		errors.Is(err, service.ErrAnakTidakAda):
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	default:
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

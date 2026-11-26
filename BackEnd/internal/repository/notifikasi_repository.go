@@ -44,26 +44,26 @@ func (r *NotifikasiRepository) Penerima(posyandu string, roles []string) ([]mode
 	return list, err
 }
 
-// PosyanduBalita: kode posyandu balita (melalui keluarga).
-func (r *NotifikasiRepository) PosyanduBalita(balitaID uuid.UUID) (string, error) {
+// PosyanduAnak: kode posyandu anak (melalui keluarga).
+func (r *NotifikasiRepository) PosyanduAnak(anakID uuid.UUID) (string, error) {
 	var pos string
 	err := r.db.Model(&models.Keluarga{}).Select("posyandu").
-		Where("id IN (?)", r.db.Model(&models.Balita{}).Select("keluarga_id").Where("id = ?", balitaID)).
+		Where("id IN (?)", r.db.Model(&models.Anak{}).Select("keluarga_id").Where("id = ?", anakID)).
 		Scan(&pos).Error
 	return pos, err
 }
 
-// OrangTuaBalita: akun orang tua aktif dari keluarga seorang balita.
-func (r *NotifikasiRepository) OrangTuaBalita(balitaID uuid.UUID) ([]models.User, error) {
+// OrangTuaAnak: akun orang tua aktif dari keluarga seorang anak.
+func (r *NotifikasiRepository) OrangTuaAnak(anakID uuid.UUID) ([]models.User, error) {
 	list := []models.User{}
 	err := r.db.Where("is_active = ? AND role = ?", true, models.RoleOrangTua).
 		Where("id IN (?)", r.db.Model(&models.OrangTua{}).Select("user_id").
-			Where("keluarga_id IN (?)", r.db.Model(&models.Balita{}).Select("keluarga_id").Where("id = ?", balitaID))).
+			Where("keluarga_id IN (?)", r.db.Model(&models.Anak{}).Select("keluarga_id").Where("id = ?", anakID))).
 		Find(&list).Error
 	return list, err
 }
 
-// ---------------------------------------------------------------- pengingat kesehatan balita
+// ---------------------------------------------------------------- pengingat kesehatan anak
 
 // JadwalMendatangPosyandu: jadwal terjadwal satu posyandu mulai tanggal [dari], urut tanggal.
 func (r *NotifikasiRepository) JadwalMendatangPosyandu(posyandu string, dari time.Time) ([]models.JadwalPosyandu, error) {
@@ -73,13 +73,13 @@ func (r *NotifikasiRepository) JadwalMendatangPosyandu(posyandu string, dari tim
 	return list, err
 }
 
-// SuplemenBanyakBalita: riwayat suplemen (Vitamin A, obat cacing, dll.) untuk banyak balita sekaligus.
-func (r *NotifikasiRepository) SuplemenBanyakBalita(balitaIDs []uuid.UUID) ([]models.SuplemenBalita, error) {
-	list := []models.SuplemenBalita{}
-	if len(balitaIDs) == 0 {
+// SuplemenBanyakAnak: riwayat suplemen (Vitamin A, obat cacing, dll.) untuk banyak anak sekaligus.
+func (r *NotifikasiRepository) SuplemenBanyakAnak(anakIDs []uuid.UUID) ([]models.SuplemenAnak, error) {
+	list := []models.SuplemenAnak{}
+	if len(anakIDs) == 0 {
 		return list, nil
 	}
-	err := r.db.Where("balita_id IN ?", balitaIDs).Order("tanggal ASC").Find(&list).Error
+	err := r.db.Where("anak_id IN ?", anakIDs).Order("tanggal ASC").Find(&list).Error
 	return list, err
 }
 

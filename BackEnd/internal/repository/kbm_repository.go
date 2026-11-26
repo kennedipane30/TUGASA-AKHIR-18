@@ -15,10 +15,10 @@ type KbmRepository struct{ db *gorm.DB }
 
 func NewKbmRepository(db *gorm.DB) *KbmRepository { return &KbmRepository{db} }
 
-// PengukuranSebelum: penimbangan terakhir balita sebelum [tanggal], selain [kecuali].
-func (r *KbmRepository) PengukuranSebelum(balitaID uuid.UUID, tanggal time.Time, kecuali uuid.UUID) (*models.Pengukuran, error) {
+// PengukuranSebelum: penimbangan terakhir anak sebelum [tanggal], selain [kecuali].
+func (r *KbmRepository) PengukuranSebelum(anakID uuid.UUID, tanggal time.Time, kecuali uuid.UUID) (*models.Pengukuran, error) {
 	var p models.Pengukuran
-	err := r.db.Where("balita_id = ? AND id <> ? AND tanggal_ukur < ?", balitaID, kecuali, tanggal.Format("2006-01-02")).
+	err := r.db.Where("anak_id = ? AND id <> ? AND tanggal_ukur < ?", anakID, kecuali, tanggal.Format("2006-01-02")).
 		Order("tanggal_ukur DESC").First(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -91,8 +91,8 @@ func (r *KbmRepository) PengukuranTanpaPenilaian(batas int) ([]models.Pengukuran
 	return list, err
 }
 
-func (r *KbmRepository) BalitaByIDs(ids []uuid.UUID) ([]models.Balita, error) {
-	list := []models.Balita{}
+func (r *KbmRepository) AnakByIDs(ids []uuid.UUID) ([]models.Anak, error) {
+	list := []models.Anak{}
 	if len(ids) == 0 {
 		return list, nil
 	}
