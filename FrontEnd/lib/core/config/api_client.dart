@@ -4,8 +4,9 @@ import '../token_storage.dart';
 class ApiClient {
   // HP fisik lewat Wi-Fi: pakai IP laptop (cek dengan ipconfig).
 // 10.249.161.127
-  static const baseUrl = 'http://10.249.161.127:8081/api/v1';
-  //  static const baseUrl = 'http://10.0.2.2:8081/api/v1';
+  // static const baseUrl = 'http://10.249.161.127:8081/api/v1';
+   static const baseUrl = 'http://10.249.161.127:8081/api/v1';
+    //  static const baseUrl = 'http://10.0.2.2:8081/api/v1';
 
   static final Dio dio = Dio(BaseOptions(
     baseUrl: baseUrl,
