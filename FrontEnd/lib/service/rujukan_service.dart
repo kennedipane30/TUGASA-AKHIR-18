@@ -72,8 +72,8 @@ class PemeriksaanRujukan {
   String get tandaTimbang => [if (duaT) '2T (2 kali tidak naik)', if (bgm) 'BGM'].join(', ');
 }
 
-class DataAnakRujukan {
-  final String anakId;
+class DataBalitaRujukan {
+  final String balitaId;
   final String nama, nik, jenisKelamin, usiaTeks;
   final DateTime? tanggalLahir;
   final double? beratLahirKg, panjangLahirCm;
@@ -81,8 +81,8 @@ class DataAnakRujukan {
   final PemeriksaanRujukan? pemeriksaan;
   final String keluhanTerakhir, penyakitPenyerta;
 
-  DataAnakRujukan.fromJson(Map<String, dynamic> j)
-      : anakId = _s(j['anak_id']),
+  DataBalitaRujukan.fromJson(Map<String, dynamic> j)
+      : balitaId = _s(j['balita_id']),
         nama = _s(j['nama']),
         nik = _s(j['nik']),
         jenisKelamin = _s(j['jenis_kelamin']),
@@ -101,11 +101,11 @@ class DataAnakRujukan {
         penyakitPenyerta = _s(j['penyakit_penyerta']);
 }
 
-class AnakCariRujukan {
-  final String anakId, nama, jenisKelamin, usiaTeks, namaOrangTua;
+class BalitaCariRujukan {
+  final String balitaId, nama, jenisKelamin, usiaTeks, namaOrangTua;
 
-  AnakCariRujukan.fromJson(Map<String, dynamic> j)
-      : anakId = _s(j['anak_id']),
+  BalitaCariRujukan.fromJson(Map<String, dynamic> j)
+      : balitaId = _s(j['balita_id']),
         nama = _s(j['nama']),
         jenisKelamin = _s(j['jenis_kelamin']),
         usiaTeks = _s(j['usia_teks']),
@@ -113,14 +113,14 @@ class AnakCariRujukan {
 }
 
 class RujukanRingkas {
-  final String id, nomor, anakId, namaAnak, jenisKelamin, usiaTeks, diagnosis, tujuan, status;
+  final String id, nomor, balitaId, namaBalita, jenisKelamin, usiaTeks, diagnosis, tujuan, status;
   final DateTime? tanggal;
 
   RujukanRingkas.fromJson(Map<String, dynamic> j)
       : id = _s(j['id']),
         nomor = _s(j['nomor']),
-        anakId = _s(j['anak_id']),
-        namaAnak = _s(j['nama_anak']),
+        balitaId = _s(j['balita_id']),
+        namaBalita = _s(j['nama_balita']),
         jenisKelamin = _s(j['jenis_kelamin']),
         usiaTeks = _s(j['usia_teks']),
         diagnosis = _s(j['diagnosis']),
@@ -143,7 +143,7 @@ class RujukanBalik {
 class RujukanDetail {
   final String id, nomor, posyandu, status;
   final DateTime? tanggal;
-  final DataAnakRujukan dataAnak;
+  final DataBalitaRujukan dataBalita;
   final String keluhan, diagnosis, tindakan, tujuan, bidanNama;
   final RujukanBalik? balik;
   final String alasanBatal;
@@ -155,7 +155,7 @@ class RujukanDetail {
         posyandu = _s(j['posyandu']),
         status = _s(j['status']),
         tanggal = _tgl(j['tanggal']),
-        dataAnak = DataAnakRujukan.fromJson(_m(j['data_anak'])),
+        dataBalita = DataBalitaRujukan.fromJson(_m(j['data_balita'])),
         keluhan = _s(j['keluhan']),
         diagnosis = _s(j['diagnosis']),
         tindakan = _s(j['tindakan']),
@@ -232,21 +232,21 @@ class RujukanService {
   Future<List<RujukanRingkas>> daftarBidan(String status) async =>
       _l(await _get('/bidan/rujukan', {'status': status})).map(RujukanRingkas.fromJson).toList();
 
-  Future<List<AnakCariRujukan>> cariAnak(String kata) async =>
-      _l(await _get('/bidan/rujukan-anak', {'cari': kata})).map(AnakCariRujukan.fromJson).toList();
+  Future<List<BalitaCariRujukan>> cariBalita(String kata) async =>
+      _l(await _get('/bidan/rujukan-balita', {'cari': kata})).map(BalitaCariRujukan.fromJson).toList();
 
-  Future<DataAnakRujukan> dataAnak(String anakId) async =>
-      DataAnakRujukan.fromJson(_m(await _get('/bidan/rujukan-anak/$anakId')));
+  Future<DataBalitaRujukan> dataBalita(String balitaId) async =>
+      DataBalitaRujukan.fromJson(_m(await _get('/bidan/rujukan-balita/$balitaId')));
 
   Future<RujukanDetail> buat({
-    required String anakId,
+    required String balitaId,
     required String keluhan,
     required String diagnosis,
     required String tindakan,
     required String tujuan,
   }) async =>
       RujukanDetail.fromJson(_m(await _kirim('POST', '/bidan/rujukan', {
-        'anak_id': anakId,
+        'balita_id': balitaId,
         'keluhan': keluhan,
         'diagnosis': diagnosis,
         'tindakan': tindakan,

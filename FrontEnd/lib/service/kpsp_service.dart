@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../core/config/api_client.dart';
 
-/// KPSP (Kuesioner Pra Skrining Perkembangan): skrining perkembangan anak yang
+/// KPSP (Kuesioner Pra Skrining Perkembangan): skrining perkembangan balita yang
 /// diisi bidan saat sesi posyandu, 10 pertanyaan per kelompok umur.
 ///
 /// Penilaian mengikuti pedoman SDIDTK Kemenkes dan dihitung di server:
@@ -11,8 +11,8 @@ import '../core/config/api_client.dart';
 ///   jumlah jawaban "Ya" 7-8   -> Meragukan (M)
 ///   jumlah jawaban "Ya" <= 6  -> Kemungkinan ada Penyimpangan (P)
 class KpspService {
-  /// Mengambil lembar KPSP yang sesuai untuk anak berumur [usiaBulan].
-  /// Kelompok umurnya ditentukan server, aplikasi cukup mengirim umur anak.
+  /// Mengambil lembar KPSP yang sesuai untuk balita berumur [usiaBulan].
+  /// Kelompok umurnya ditentukan server, aplikasi cukup mengirim umur balita.
   ///
   /// Mengembalikan null bila gagal, supaya halaman catatan bidan tetap dapat
   /// dibuka walaupun lembar KPSP tidak dapat diambil.
@@ -39,10 +39,10 @@ class LembarKpsp {
   /// 54, 60, 66, atau 72 bulan.
   final int usiaBulan;
 
-  /// Umur anak sebenarnya dalam bulan.
-  final int usiaAnakBulan;
+  /// Umur balita sebenarnya dalam bulan.
+  final int usiaBalitaBulan;
 
-  /// false bila anak di luar jangkauan KPSP (umur < 3 atau > 72 bulan).
+  /// false bila balita di luar jangkauan KPSP (umur < 3 atau > 72 bulan).
   /// Kartu KPSP disembunyikan bila bernilai false.
   final bool berlaku;
 
@@ -51,7 +51,7 @@ class LembarKpsp {
 
   const LembarKpsp({
     required this.usiaBulan,
-    required this.usiaAnakBulan,
+    required this.usiaBalitaBulan,
     required this.berlaku,
     required this.pertanyaan,
   });
@@ -66,7 +66,7 @@ class LembarKpsp {
     }
     return LembarKpsp(
       usiaBulan: _int(j['usia_bulan']),
-      usiaAnakBulan: _int(j['usia_anak_bulan']),
+      usiaBalitaBulan: _int(j['usia_balita_bulan']),
       berlaku: j['berlaku'] == true,
       pertanyaan: list,
     );
@@ -173,7 +173,7 @@ String labelHasilKpsp(String hasil) {
 String saranHasilKpsp(String hasil) {
   switch (hasil) {
     case kpspSesuai:
-      return 'Perkembangan anak sesuai umur. Lanjutkan stimulasi dan skrining berikutnya sesuai jadwal.';
+      return 'Perkembangan balita sesuai umur. Lanjutkan stimulasi dan skrining berikutnya sesuai jadwal.';
     case kpspMeragukan:
       return 'Beri stimulasi lebih sering, lalu ulangi KPSP dua minggu lagi.';
     case kpspPenyimpangan:

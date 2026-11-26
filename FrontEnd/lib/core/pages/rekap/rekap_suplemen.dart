@@ -25,7 +25,7 @@ class _KelompokTahun {
   }
 }
 
-/// Satu anak yang belum menerima (gabungan dua semester).
+/// Satu balita yang belum menerima (gabungan dua semester).
 class _BelumTahun {
   final String nama, jk, umur, kelompok;
   final List<String> belum = [];
@@ -227,9 +227,9 @@ class _TabSuplemenState extends State<_TabSuplemen> {
       }
       (cacing ??= _KelompokTahun(d.obatCacing.label, d.obatCacing.keterangan)).tambah(d.obatCacing);
       for (final a in d.belumMenerima) {
-        final kunci = '${a.anak.nama}|${a.anak.jkTeks}';
+        final kunci = '${a.balita.nama}|${a.balita.jkTeks}';
         final b = belum.putIfAbsent(
-            kunci, () => _BelumTahun(a.anak.nama, a.anak.jkTeks, a.anak.usiaTeks, a.kelompok));
+            kunci, () => _BelumTahun(a.balita.nama, a.balita.jkTeks, a.balita.usiaTeks, a.kelompok));
         for (final x in a.belum) {
           b.belum.add('$x ($semester)');
         }
@@ -259,7 +259,7 @@ class _TabSuplemenState extends State<_TabSuplemen> {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 _adaSemester2
-                    ? 'Rekap 1 tahun (Januari-Desember $_tahun). Setiap anak mendapat vitamin A 2 kali setahun.'
+                    ? 'Rekap 1 tahun (Januari-Desember $_tahun). Setiap balita mendapat vitamin A 2 kali setahun.'
                     : 'Rekap tahun berjalan (Januari-Juni $_tahun). Data Juli-Desember belum tersedia.',
                 style: const TextStyle(fontSize: 15, color: AppColors.teksRedup),
               ),

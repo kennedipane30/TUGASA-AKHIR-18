@@ -21,7 +21,7 @@ const redupRujukan = Color(0xFF64748B);
 const garisRujukan = Color(0xFFB8BEC6);
 
 String _namaFile(RujukanDetail r) =>
-    'Surat_Rujukan_${r.dataAnak.nama.trim().replaceAll(RegExp(r'\s+'), '_')}_${r.nomor.replaceAll('/', '-')}.pdf';
+    'Surat_Rujukan_${r.dataBalita.nama.trim().replaceAll(RegExp(r'\s+'), '_')}_${r.nomor.replaceAll('/', '-')}.pdf';
 
 /// Unduh: membuka layar cetak HP, lalu pilih "Simpan sebagai PDF".
 Future<void> unduhSuratRujukan(RujukanDetail r) async {
@@ -40,8 +40,8 @@ Future<void> bagikanSuratRujukan(BuildContext context, RujukanDetail r) async {
   await SharePlus.instance.share(
     ShareParams(
       files: [XFile(file.path, mimeType: 'application/pdf')],
-      text: 'Surat Rujukan ${r.dataAnak.nama} - ${r.nomor}',
-      subject: 'Surat Rujukan ${r.dataAnak.nama} - ${r.nomor}',
+      text: 'Surat Rujukan ${r.dataBalita.nama} - ${r.nomor}',
+      subject: 'Surat Rujukan ${r.dataBalita.nama} - ${r.nomor}',
       sharePositionOrigin: kotak == null ? null : kotak.localToGlobal(Offset.zero) & kotak.size,
     ),
   );
@@ -89,7 +89,7 @@ class TombolRujukan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final anak = proses
+    final balita = proses
         ? SizedBox(
             width: 20,
             height: 20,
@@ -121,7 +121,7 @@ class TombolRujukan extends StatelessWidget {
                 elevation: 0,
                 shape: bentuk,
               ),
-              child: anak,
+              child: balita,
             )
           : OutlinedButton(
               onPressed: proses ? null : onTap,
@@ -130,7 +130,7 @@ class TombolRujukan extends StatelessWidget {
                 side: BorderSide(color: warna, width: 1.4),
                 shape: bentuk,
               ),
-              child: anak,
+              child: balita,
             ),
     );
   }
@@ -177,12 +177,12 @@ Widget paragrafRujukan(String judul, String isi, {bool akhir = false}) => Paddin
       ),
     );
 
-/// Kartu data anak, orang tua, dan pemeriksaan terakhir (dipakai di form & detail).
-List<Widget> kartuDataAnakRujukan(DataAnakRujukan a) {
+/// Kartu data balita, orang tua, dan pemeriksaan terakhir (dipakai di form & detail).
+List<Widget> kartuDataBalitaRujukan(DataBalitaRujukan a) {
   final p = a.pemeriksaan;
   return [
     KartuRekap(
-      title: 'Identitas Anak',
+      title: 'Identitas Balita',
       child: Column(
         children: daftarBarisRujukan([
           ('Nama', a.nama),
@@ -278,7 +278,7 @@ class RujukanDetailView extends StatelessWidget {
               ],
             ),
           ),
-        ...kartuDataAnakRujukan(r.dataAnak),
+        ...kartuDataBalitaRujukan(r.dataBalita),
       ],
     );
   }
@@ -308,7 +308,7 @@ class KartuRingkasRujukan extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(r.namaAnak,
+                      child: Text(r.namaBalita,
                           style: const TextStyle(
                               fontSize: 16.5, fontWeight: FontWeight.w700, color: teksRujukan)),
                     ),

@@ -669,10 +669,10 @@ class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
   Widget build(BuildContext context) {
     final d = widget.data;
     final daftar = switch (_aktif) {
-      '≥ 2 bulan' => d.anak.where((a) => a.bulanTidakDatang >= 2).toList(),
-      'Belum pernah' => d.anak.where((a) => a.belumPernah).toList(),
-      'Sudah mendaftar' => d.anak.where((a) => a.sudahMendaftar).toList(),
-      _ => d.anak,
+      '≥ 2 bulan' => d.balita.where((a) => a.bulanTidakDatang >= 2).toList(),
+      'Belum pernah' => d.balita.where((a) => a.belumPernah).toList(),
+      'Sudah mendaftar' => d.balita.where((a) => a.sudahMendaftar).toList(),
+      _ => d.balita,
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -710,7 +710,7 @@ class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
           KartuRekap(
             child: _kosong(
               Icons.verified_outlined,
-              d.anak.isEmpty ? 'Semua balita sasaran sudah ditimbang bulan ini' : 'Tidak ada balita pada filter ini',
+              d.balita.isEmpty ? 'Semua balita sasaran sudah ditimbang bulan ini' : 'Tidak ada balita pada filter ini',
             ),
           ),
         for (final a in daftar) _kartu(a),
@@ -718,7 +718,7 @@ class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
     );
   }
 
-  Widget _kartu(AnakTidakHadir a) {
+  Widget _kartu(BalitaTidakHadir a) {
     final String status;
     if (a.belumPernah) {
       status = 'Belum pernah ditimbang';
@@ -734,9 +734,9 @@ class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _barisTh('Nama', a.anak.nama),
-          _barisTh('Jenis Kelamin', a.anak.jkTeks),
-          _barisTh('Umur', a.anak.usiaTeks),
+          _barisTh('Nama', a.balita.nama),
+          _barisTh('Jenis Kelamin', a.balita.jkTeks),
+          _barisTh('Umur', a.balita.usiaTeks),
           _barisTh('Status', a.sudahMendaftar ? '$status (sudah mendaftar, tidak check-in)' : status),
         ],
       ),

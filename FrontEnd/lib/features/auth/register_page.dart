@@ -263,7 +263,7 @@ class _RegisterPageState extends State<RegisterPage> {
               Transform.translate(
                 offset: const Offset(0, -8),
                 child: const Text(
-                  'Pantau kesehatan anak dan gizi buah hati secara berkala tanpa batas koneksi',
+                  'Pantau kesehatan balita dan gizi buah hati secara berkala tanpa batas koneksi',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: _hijauTerang,
@@ -350,7 +350,7 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: 10),
           const Center(
             child: Text(
-              'Buat akun terlebih dahulu. Data keluarga seperti data diri, suami/ayah, dan anak dapat dilengkapi setelah masuk.',
+              'Buat akun terlebih dahulu. Data keluarga seperti data diri, suami/ayah, dan balita dapat dilengkapi setelah masuk.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.black54,
@@ -363,7 +363,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
           // 1. Identitas akun
           _judulBagian(1, 'Identitas Akun'),
-          _label('Posyandu Tempat Anak Dilayani'),
+          _label('Posyandu Tempat Balita Dilayani'),
           DropdownButtonFormField<String>(
             value: _posyandu,
             isExpanded: true,
@@ -380,7 +380,7 @@ class _RegisterPageState extends State<RegisterPage> {
             validator: (v) => v == null ? 'Posyandu wajib dipilih' : null,
           ),
           _catatan(
-            'Pendaftaran, jadwal, dan data anak hanya berlaku di posyandu yang dipilih.',
+            'Pendaftaran, jadwal, dan data balita hanya berlaku di posyandu yang dipilih.',
           ),
           _label('Nama Lengkap Ibu / Wali'),
           TextFormField(

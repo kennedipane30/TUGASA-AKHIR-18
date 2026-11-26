@@ -154,7 +154,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Balita: polos, judul di tengah)
   // -------------------------------------------------------------------------
   Widget _header() {
     return Container(

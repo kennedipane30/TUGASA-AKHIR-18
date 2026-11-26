@@ -250,7 +250,7 @@ class ImunisasiRingkas {
 }
 
 class BalitaItem {
-  final String anakId;
+  final String balitaId;
   final String nama;
   final String jenisKelamin;
   final DateTime? tanggalLahir;
@@ -263,12 +263,12 @@ class BalitaItem {
   final int bulanTidakDatang; // -1 = belum pernah ditimbang
   final ImunisasiRingkas imunisasi;
 
-  /// Hanya terisi untuk anak arsip (pindah, meninggal, lulus balita).
+  /// Hanya terisi untuk balita arsip (pindah, meninggal, lulus balita).
   final DateTime? tanggalArsip;
   final String alasanArsip;
 
   const BalitaItem({
-    required this.anakId,
+    required this.balitaId,
     required this.nama,
     required this.jenisKelamin,
     required this.tanggalLahir,
@@ -285,7 +285,7 @@ class BalitaItem {
   });
 
   factory BalitaItem.fromJson(Map<String, dynamic> j) => BalitaItem(
-        anakId: _s(j['anak_id']),
+        balitaId: _s(j['balita_id']),
         nama: _s(j['nama']).isEmpty ? '-' : _s(j['nama']),
         jenisKelamin: _s(j['jenis_kelamin']),
         tanggalLahir: _tgl(j['tanggal_lahir']),
@@ -296,7 +296,7 @@ class BalitaItem {
         jumlahTimbang: _i(j['jumlah_timbang']),
         terakhir: j['terakhir'] is Map ? TimbangRingkas.fromJson(_m(j['terakhir'])) : null,
         bulanTidakDatang: _i(j['bulan_tidak_datang']),
-        imunisasi: ImunisasiRingkas.fromJson(_m(j['vaksin'])),
+        imunisasi: ImunisasiRingkas.fromJson(_m(j['imunisasi'])),
         tanggalArsip: _tgl(j['tanggal_arsip']),
         alasanArsip: _s(j['alasan_arsip']),
       );
@@ -345,7 +345,7 @@ class RingkasBalita {
         masalahGizi: _i(j['masalah_gizi']),
         stunting: _i(j['stunting']),
         duaTBgm: _i(j['dua_t_bgm']),
-        imunisasiTerlambat: _i(j['vaksin_terlambat']),
+        imunisasiTerlambat: _i(j['imunisasi_terlambat']),
         belumPernah: _i(j['belum_pernah']),
       );
 }
@@ -363,35 +363,35 @@ class DaftarBalita {
 }
 
 class DetailBalita {
-  final Map<String, dynamic> anak;
+  final Map<String, dynamic> balita;
   final Map<String, dynamic> keluarga;
   final BalitaItem ringkas;
   final List<TimbangRingkas> riwayat;
 
   const DetailBalita({
-    required this.anak,
+    required this.balita,
     required this.keluarga,
     required this.ringkas,
     required this.riwayat,
   });
 
   factory DetailBalita.fromJson(Map<String, dynamic> j) => DetailBalita(
-        anak: _m(j['anak']),
+        balita: _m(j['balita']),
         keluarga: _m(j['keluarga']),
         ringkas: BalitaItem.fromJson(_m(j['ringkas'])),
         riwayat: _l(j['riwayat']).map(TimbangRingkas.fromJson).toList(),
       );
 }
 
-class AnakBerisiko {
+class BalitaBerisiko {
   final BalitaItem balita;
   final List<String> alasan;
   final int skor;
   final String tingkat; // tinggi | sedang
 
-  const AnakBerisiko({required this.balita, required this.alasan, required this.skor, required this.tingkat});
+  const BalitaBerisiko({required this.balita, required this.alasan, required this.skor, required this.tingkat});
 
-  factory AnakBerisiko.fromJson(Map<String, dynamic> j) => AnakBerisiko(
+  factory BalitaBerisiko.fromJson(Map<String, dynamic> j) => BalitaBerisiko(
         balita: BalitaItem.fromJson(j),
         alasan: _ls(j['alasan']),
         skor: _i(j['skor']),
@@ -436,13 +436,13 @@ class RingkasBerisiko {
 
 class DaftarBerisiko {
   final RingkasBerisiko ringkas;
-  final List<AnakBerisiko> anak;
+  final List<BalitaBerisiko> balita;
 
-  const DaftarBerisiko({required this.ringkas, required this.anak});
+  const DaftarBerisiko({required this.ringkas, required this.balita});
 
   factory DaftarBerisiko.fromJson(Map<String, dynamic> j) => DaftarBerisiko(
         ringkas: RingkasBerisiko.fromJson(_m(j['ringkas'])),
-        anak: _l(j['anak']).map(AnakBerisiko.fromJson).toList(),
+        balita: _l(j['balita']).map(BalitaBerisiko.fromJson).toList(),
       );
 }
 
@@ -484,7 +484,7 @@ class BalitaService {
     }
   }
 
-  /// Anak yang sudah diarsipkan (pindah, meninggal, lulus balita), terbaru di atas.
+  /// Balita yang sudah diarsipkan (pindah, meninggal, lulus balita), terbaru di atas.
   Future<DaftarBalita> daftarArsip({String cari = ''}) async {
     try {
       final res = await ApiClient.dio.get(
@@ -498,27 +498,27 @@ class BalitaService {
     }
   }
 
-  /// Kader: arsipkan anak. [alasan]: pindah | meninggal | lainnya. [tanggal]: YYYY-MM-DD.
-  Future<void> arsipkan(String anakId,
+  /// Kader: arsipkan balita. [alasan]: pindah | meninggal | lainnya. [tanggal]: YYYY-MM-DD.
+  Future<void> arsipkan(String balitaId,
       {required String alasan, required String tanggal, String keterangan = ''}) async {
     try {
-      await ApiClient.dio.put('$prefix/balita/$anakId/arsip',
+      await ApiClient.dio.put('$prefix/balita/$balitaId/arsip',
           data: {'alasan': alasan, 'tanggal': tanggal, 'keterangan': keterangan.trim()});
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }
   }
 
-  /// Kader: aktifkan kembali anak arsip (bukan lulus balita).
-  Future<void> aktifkan(String anakId) async {
+  /// Kader: aktifkan kembali balita arsip (bukan lulus balita).
+  Future<void> aktifkan(String balitaId) async {
     try {
-      await ApiClient.dio.put('$prefix/balita/$anakId/aktifkan');
+      await ApiClient.dio.put('$prefix/balita/$balitaId/aktifkan');
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }
   }
 
-  /// Bidan: daftar anak berisiko (deteksi dini), urut dari risiko tertinggi.
+  /// Bidan: daftar balita berisiko (deteksi dini), urut dari risiko tertinggi.
   Future<DaftarBerisiko> berisiko() async {
     try {
       final res = await ApiClient.dio.get(
@@ -531,9 +531,9 @@ class BalitaService {
     }
   }
 
-  Future<DetailBalita> detail(String anakId) async {
+  Future<DetailBalita> detail(String balitaId) async {
     try {
-      final res = await ApiClient.dio.get('$prefix/balita/$anakId');
+      final res = await ApiClient.dio.get('$prefix/balita/$balitaId');
       return DetailBalita.fromJson(_data(res.data));
     } on DioException catch (e) {
       throw Exception(_pesanError(e));

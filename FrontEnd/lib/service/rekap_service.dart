@@ -32,16 +32,16 @@ const namaBulanRekap = [
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
 ];
 
-class AnakRekap {
-  final String anakId;
+class BalitaRekap {
+  final String balitaId;
   final String nama;
   final String jenisKelamin;
   final DateTime? tanggalLahir;
   final int usiaBulan;
   final String usiaTeks;
 
-  const AnakRekap({
-    required this.anakId,
+  const BalitaRekap({
+    required this.balitaId,
     required this.nama,
     required this.jenisKelamin,
     required this.tanggalLahir,
@@ -49,8 +49,8 @@ class AnakRekap {
     required this.usiaTeks,
   });
 
-  factory AnakRekap.fromJson(Map<String, dynamic> j) => AnakRekap(
-        anakId: _s(j['anak_id']),
+  factory BalitaRekap.fromJson(Map<String, dynamic> j) => BalitaRekap(
+        balitaId: _s(j['balita_id']),
         nama: _s(j['nama']).isEmpty ? '-' : _s(j['nama']),
         jenisKelamin: _s(j['jenis_kelamin']),
         tanggalLahir: _tgl(j['tanggal_lahir']),
@@ -90,16 +90,16 @@ class KategoriGizi {
       );
 }
 
-class AnakGizi {
-  final AnakRekap anak;
+class BalitaGizi {
+  final BalitaRekap balita;
   final DateTime? tanggalUkur;
   final double? zBbu;
   final double? zTbu;
   final double? zBbtb;
   final List<String> masalah;
 
-  const AnakGizi({
-    required this.anak,
+  const BalitaGizi({
+    required this.balita,
     required this.tanggalUkur,
     required this.zBbu,
     required this.zTbu,
@@ -107,8 +107,8 @@ class AnakGizi {
     required this.masalah,
   });
 
-  factory AnakGizi.fromJson(Map<String, dynamic> j) => AnakGizi(
-        anak: AnakRekap.fromJson(j),
+  factory BalitaGizi.fromJson(Map<String, dynamic> j) => BalitaGizi(
+        balita: BalitaRekap.fromJson(j),
         tanggalUkur: _tgl(j['tanggal_ukur']),
         zBbu: _dN(j['z_bbu']),
         zTbu: _dN(j['z_tbu']),
@@ -156,7 +156,7 @@ class RekapGizi {
   final int giziLebih;
   final List<KategoriGizi> kategori;
   final List<TrenGizi> tren;
-  final List<AnakGizi> prioritas;
+  final List<BalitaGizi> prioritas;
 
   const RekapGizi({
     required this.label,
@@ -185,7 +185,7 @@ class RekapGizi {
         giziLebih: _i(j['gizi_lebih']),
         kategori: _l(j['kategori']).map(KategoriGizi.fromJson).toList(),
         tren: _l(j['tren']).map(TrenGizi.fromJson).toList(),
-        prioritas: _l(j['prioritas']).map(AnakGizi.fromJson).toList(),
+        prioritas: _l(j['prioritas']).map(BalitaGizi.fromJson).toList(),
       );
 
   double persen(int n) => diukur == 0 ? 0 : (n * 1000 / diukur).round() / 10;
@@ -223,15 +223,15 @@ class KelompokSuplemen {
       );
 }
 
-class AnakSuplemen {
-  final AnakRekap anak;
+class BalitaSuplemen {
+  final BalitaRekap balita;
   final String kelompok;
   final List<String> belum;
 
-  const AnakSuplemen({required this.anak, required this.kelompok, required this.belum});
+  const BalitaSuplemen({required this.balita, required this.kelompok, required this.belum});
 
-  factory AnakSuplemen.fromJson(Map<String, dynamic> j) => AnakSuplemen(
-        anak: AnakRekap.fromJson(j),
+  factory BalitaSuplemen.fromJson(Map<String, dynamic> j) => BalitaSuplemen(
+        balita: BalitaRekap.fromJson(j),
         kelompok: _s(j['kelompok']),
         belum: _ls(j['belum']),
       );
@@ -245,7 +245,7 @@ class RekapSuplemen {
   final DateTime? rentangSampai;
   final List<KelompokSuplemen> vitaminA;
   final KelompokSuplemen obatCacing;
-  final List<AnakSuplemen> belumMenerima;
+  final List<BalitaSuplemen> belumMenerima;
 
   const RekapSuplemen({
     required this.tahun,
@@ -266,29 +266,29 @@ class RekapSuplemen {
         rentangSampai: _tgl(j['rentang_sampai']),
         vitaminA: _l(j['vitamin_a']).map(KelompokSuplemen.fromJson).toList(),
         obatCacing: KelompokSuplemen.fromJson(_m(j['obat_cacing'])),
-        belumMenerima: _l(j['belum_menerima']).map(AnakSuplemen.fromJson).toList(),
+        belumMenerima: _l(j['belum_menerima']).map(BalitaSuplemen.fromJson).toList(),
       );
 }
 
 // ---------------------------------------------------------------- balita tidak hadir
 
-class AnakTidakHadir {
-  final AnakRekap anak;
+class BalitaTidakHadir {
+  final BalitaRekap balita;
   final DateTime? terakhirDitimbang;
   final int bulanTidakDatang; // -1 = belum pernah ditimbang
   final bool sudahMendaftar;
   final String keterangan;
 
-  const AnakTidakHadir({
-    required this.anak,
+  const BalitaTidakHadir({
+    required this.balita,
     required this.terakhirDitimbang,
     required this.bulanTidakDatang,
     required this.sudahMendaftar,
     required this.keterangan,
   });
 
-  factory AnakTidakHadir.fromJson(Map<String, dynamic> j) => AnakTidakHadir(
-        anak: AnakRekap.fromJson(j),
+  factory BalitaTidakHadir.fromJson(Map<String, dynamic> j) => BalitaTidakHadir(
+        balita: BalitaRekap.fromJson(j),
         terakhirDitimbang: _tgl(j['terakhir_ditimbang']),
         bulanTidakDatang: _i(j['bulan_tidak_datang']),
         sudahMendaftar: _b(j['sudah_mendaftar']),
@@ -306,7 +306,7 @@ class RekapTidakHadir {
   final int tidakHadir;
   final double persenDS;
   final int belumPernah;
-  final List<AnakTidakHadir> anak;
+  final List<BalitaTidakHadir> balita;
 
   const RekapTidakHadir({
     required this.label,
@@ -316,7 +316,7 @@ class RekapTidakHadir {
     required this.tidakHadir,
     required this.persenDS,
     required this.belumPernah,
-    required this.anak,
+    required this.balita,
   });
 
   factory RekapTidakHadir.fromJson(Map<String, dynamic> j) => RekapTidakHadir(
@@ -327,7 +327,7 @@ class RekapTidakHadir {
         tidakHadir: _i(j['tidak_hadir']),
         persenDS: _d(j['persen_ds']),
         belumPernah: _i(j['belum_pernah']),
-        anak: _l(j['anak']).map(AnakTidakHadir.fromJson).toList(),
+        balita: _l(j['balita']).map(BalitaTidakHadir.fromJson).toList(),
       );
 }
 

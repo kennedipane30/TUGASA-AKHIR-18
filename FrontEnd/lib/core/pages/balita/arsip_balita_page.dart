@@ -6,8 +6,8 @@ import '../../../features/Kader/keluarga/keluarga.dart';
 // ARSIP BALITA (kader, dari Semua Balita -> Lihat detail)
 //  - Form arsip (bottom sheet): alasan pindah / meninggal / lainnya + tanggal.
 //  - Konfirmasi sebelum diarsipkan / diaktifkan kembali.
-// Anak berusia 60 bulan diarsipkan otomatis oleh sistem (lulus balita).
-// Gaya form mengikuti form data anak kader (features/Kader/keluarga).
+// Balita berusia 60 bulan diarsipkan otomatis oleh sistem (lulus balita).
+// Gaya form mengikuti form data balita kader (features/Kader/keluarga).
 // ============================================================================
 
 /// Isian arsip. [alasan]: pindah | meninggal | lainnya. [tanggal]: dd/mm/yyyy.
@@ -25,7 +25,7 @@ class IsianArsip {
       };
 }
 
-/// Membuka form arsip untuk anak [nama] (lahir [lahir]). Mengembalikan isian,
+/// Membuka form arsip untuk balita [nama] (lahir [lahir]). Mengembalikan isian,
 /// atau null bila dibatalkan.
 Future<IsianArsip?> bukaFormArsip(BuildContext context, {required String nama, DateTime? lahir}) {
   return showModalBottomSheet<IsianArsip>(
@@ -39,14 +39,14 @@ Future<IsianArsip?> bukaFormArsip(BuildContext context, {required String nama, D
   );
 }
 
-/// Konfirmasi terakhir sebelum data anak diarsipkan.
+/// Konfirmasi terakhir sebelum data balita diarsipkan.
 Future<bool> konfirmasiArsip(BuildContext context, String nama, IsianArsip isian) async {
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text('Arsipkan data anak?',
+      title: const Text('Arsipkan data balita?',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: kkTeksGelap)),
       content: Text(
         '$nama (${isian.alasanTeks}, ${isian.tanggal}) tidak akan muncul lagi '
@@ -71,7 +71,7 @@ Future<bool> konfirmasiArsip(BuildContext context, String nama, IsianArsip isian
   return ok == true;
 }
 
-/// Konfirmasi sebelum anak arsip diaktifkan kembali.
+/// Konfirmasi sebelum balita arsip diaktifkan kembali.
 Future<bool> konfirmasiAktifkan(BuildContext context, String nama) async {
   final ok = await showDialog<bool>(
     context: context,
@@ -209,7 +209,7 @@ class _FormArsipState extends State<_FormArsip> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text('ARSIPKAN DATA ANAK',
+                const Text('ARSIPKAN DATA BALITA',
                     style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -268,7 +268,7 @@ class _FormArsipState extends State<_FormArsip> {
                     border: Border.all(color: const Color(0xFFFED7AA)),
                   ),
                   child: const Text(
-                    'Anak yang diarsipkan tidak muncul lagi di pendaftaran, pendataan, dan '
+                    'Balita yang diarsipkan tidak muncul lagi di pendaftaran, pendataan, dan '
                     'rekap. Riwayat penimbangan dan imunisasi tetap tersimpan.',
                     style: TextStyle(fontSize: 14, height: 1.35, color: Color(0xFF9A3412)),
                   ),
