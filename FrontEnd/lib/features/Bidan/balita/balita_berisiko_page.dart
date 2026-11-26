@@ -10,7 +10,7 @@ import '../../../core/pages/rekap/rekap_posyandu_page.dart';
 const _hijauTua = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
 
-/// Bidan: daftar balita berisiko (deteksi dini) berdasarkan penimbangan terakhir.
+/// Bidan: daftar anak berisiko (deteksi dini) berdasarkan penimbangan terakhir.
 /// Risiko tinggi: gizi buruk, BGM, 2T, sangat pendek.
 /// Risiko sedang: gizi kurang, pendek, BB kurang, tidak naik (T), gizi lebih.
 class BalitaBerisikoPage extends StatefulWidget {
@@ -56,8 +56,8 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
     }
   }
 
-  List<BalitaBerisiko> _saring(List<BalitaBerisiko> list) {
-    bool ada(BalitaBerisiko a, List<String> kata) =>
+  List<AnakBerisiko> _saring(List<AnakBerisiko> list) {
+    bool ada(AnakBerisiko a, List<String> kata) =>
         a.balita.terakhir?.masalah.any(kata.contains) ?? false;
     switch (_aktif) {
       case 'Risiko tinggi':
@@ -72,13 +72,13 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
     return list;
   }
 
-  Future<void> _buka(BalitaBerisiko a) async {
+  Future<void> _buka(AnakBerisiko a) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => BalitaDetailPage(
           prefix: '/bidan',
-          balitaId: a.balita.balitaId,
+          anakId: a.balita.anakId,
           nama: a.balita.nama,
           bisaKelolaImunisasi: true,
         ),
@@ -143,12 +143,12 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
 
   List<Widget> _isi(DaftarBerisiko d) {
     final r = d.ringkas;
-    final daftar = _saring(d.balita);
-    final duaTBgm = d.balita.where((a) => a.balita.perluPerhatian).length;
+    final daftar = _saring(d.anak);
+    final duaTBgm = d.anak.where((a) => a.balita.perluPerhatian).length;
     return [
       KartuRekap(
         title: 'Ringkasan Risiko',
-        trailing: teksKananRekap('${r.total} balita'),
+        trailing: teksKananRekap('${r.total} anak'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -200,7 +200,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
       if (daftar.isEmpty)
         KartuRekap(
           child: Text(
-            d.balita.isEmpty ? 'Tidak ada balita berisiko di posyandu ini' : 'Tidak ada balita pada filter ini',
+            d.anak.isEmpty ? 'Tidak ada anak berisiko di posyandu ini' : 'Tidak ada anak pada filter ini',
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16, color: AppColors.teksRedup),
           ),
@@ -209,7 +209,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
     ];
   }
 
-  Widget _kartu(BalitaBerisiko a) {
+  Widget _kartu(AnakBerisiko a) {
     final b = a.balita;
     final t = b.terakhir;
     final warna = a.tinggi ? AppColors.merah : AppColors.kuning;

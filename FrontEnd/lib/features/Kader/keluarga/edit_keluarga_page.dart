@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/no_hp.dart';
-import 'form_balita.dart';
+import 'form_anak.dart';
 import 'keluarga.dart';
 
 /// Edit data keluarga oleh kader.
 ///  - Data akun (nama, NIK, No. HP) hanya ditampilkan (tidak diubah di sini).
 ///  - Data keluarga (ibu, alamat, suami/ayah) dapat diubah lalu disimpan.
-///  - Data balita dapat ditambah dan diubah (tidak dihapus, demi riwayat pemeriksaan).
-///  - Hanya balita aktif yang ditampilkan. Balita arsip (pindah, meninggal, lulus balita)
+///  - Data anak dapat ditambah dan diubah (tidak dihapus, demi riwayat pemeriksaan).
+///  - Hanya anak aktif yang ditampilkan. Anak arsip (pindah, meninggal, lulus balita)
 ///    dilihat dan dikelola di Semua Balita > Diarsipkan.
 class EditKeluargaPage extends StatefulWidget {
   final String keluargaId;
@@ -27,7 +27,7 @@ class _EditKeluargaPageState extends State<EditKeluargaPage> {
   String? _galat;
 
   String _nama = '', _nik = '', _hp = '';
-  List<IsianBalita> _balita = [];
+  List<IsianAnak> _anak = [];
 
   @override
   void initState() {
@@ -52,15 +52,15 @@ class _EditKeluargaPageState extends State<EditKeluargaPage> {
       final d = await KeluargaAkunApi.detail(widget.keluargaId);
       if (!mounted) return;
       final ibu = d['ibu'] is Map ? Map<String, dynamic>.from(d['ibu']) : null;
-      final balita = ((d['balita'] as List?) ?? [])
-          .map((e) => IsianBalita.fromApi(Map<String, dynamic>.from(e as Map)))
+      final anak = ((d['anak'] as List?) ?? [])
+          .map((e) => IsianAnak.fromApi(Map<String, dynamic>.from(e as Map)))
           .where((a) => !a.diarsipkan)
           .toList();
       setState(() {
         _nama = (ibu?['nama'] ?? '').toString();
         _nik = (ibu?['nik'] ?? '').toString();
         _hp = (ibu?['no_hp'] ?? '').toString();
-        _balita = balita;
+        _anak = anak;
         if (!diam) _keluarga.isiDari(d);
       });
     } catch (e) {
@@ -90,26 +90,26 @@ class _EditKeluargaPageState extends State<EditKeluargaPage> {
     }
   }
 
-  Future<void> _tambahBalita() async {
-    final a = await bukaFormBalita(context);
+  Future<void> _tambahAnak() async {
+    final a = await bukaFormAnak(context);
     if (a == null || !mounted) return;
     try {
-      await KeluargaAkunApi.tambahBalita(widget.keluargaId, a);
+      await KeluargaAkunApi.tambahAnak(widget.keluargaId, a);
       if (!mounted) return;
-      kkSnack(context, 'Data balita berhasil ditambahkan');
+      kkSnack(context, 'Data anak berhasil ditambahkan');
       await _muat(diam: true);
     } catch (e) {
       if (mounted) kkSnack(context, kkPesanError(e));
     }
   }
 
-  Future<void> _ubahBalita(IsianBalita awal) async {
-    final a = await bukaFormBalita(context, awal: awal);
+  Future<void> _ubahAnak(IsianAnak awal) async {
+    final a = await bukaFormAnak(context, awal: awal);
     if (a == null || !mounted) return;
     try {
-      await KeluargaAkunApi.ubahBalita(widget.keluargaId, a);
+      await KeluargaAkunApi.ubahAnak(widget.keluargaId, a);
       if (!mounted) return;
-      kkSnack(context, 'Data balita berhasil diubah');
+      kkSnack(context, 'Data anak berhasil diubah');
       await _muat(diam: true);
     } catch (e) {
       if (mounted) kkSnack(context, kkPesanError(e));
@@ -155,13 +155,13 @@ class _EditKeluargaPageState extends State<EditKeluargaPage> {
             child: FormDataKeluarga(isian: _keluarga, nikIbu: _nik),
           ),
           KartuBagian(
-            judul: 'Data Balita',
-            kanan: '${_balita.length} balita',
+            judul: 'Data Anak',
+            kanan: '${_anak.length} anak',
             child: Column(
               children: [
-                for (final a in _balita) BarisBalita(balita: a, onUbah: () => _ubahBalita(a)),
+                for (final a in _anak) BarisAnak(anak: a, onUbah: () => _ubahAnak(a)),
                 const SizedBox(height: 4),
-                kkTombolGaris('Tambah Balita', ikon: Icons.add, onPressed: _tambahBalita),
+                kkTombolGaris('Tambah Anak', ikon: Icons.add, onPressed: _tambahAnak),
               ],
             ),
           ),

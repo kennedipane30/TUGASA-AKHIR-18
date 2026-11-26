@@ -121,8 +121,8 @@ class _Suplemen {
 
 class _Pemeriksaan {
   final String pendaftaranId;
-  final String balitaId;
-  final String namaBalita;
+  final String anakId;
+  final String namaAnak;
   final DateTime? tanggal;
   final String jamMulai;
 
@@ -155,8 +155,8 @@ class _Pemeriksaan {
 
   _Pemeriksaan({
     required this.pendaftaranId,
-    required this.balitaId,
-    required this.namaBalita,
+    required this.anakId,
+    required this.namaAnak,
     required this.tanggal,
     required this.jamMulai,
     required this.adaUkur,
@@ -192,7 +192,7 @@ class _Pemeriksaan {
   factory _Pemeriksaan.fromApi(
     Map<String, dynamic> j,
     Map<String, String> namaImunisasi,
-    Map<String, DateTime> lahirBalita,
+    Map<String, DateTime> lahirAnak,
   ) {
     final u = j['pengukuran'] is Map
         ? Map<String, dynamic>.from(j['pengukuran'] as Map)
@@ -204,8 +204,8 @@ class _Pemeriksaan {
     final imunisasi = <_Imunisasi>[];
     for (final e in (j['imunisasi'] as List? ?? [])) {
       if (e is! Map) continue;
-      final id = _teks(e['jenis_imunisasi_id']);
-      final kondisi = switch (_teks(e['kondisi_balita'])) {
+      final id = _teks(e['jenis_vaksin_id']);
+      final kondisi = switch (_teks(e['kondisi_anak'])) {
         'sehat' => 'Sehat',
         'demam_ringan' => 'Demam ringan',
         final x => x,
@@ -233,8 +233,8 @@ class _Pemeriksaan {
       );
     }
 
-    // Usia dihitung dari tanggal lahir balita dan tanggal ukur (bukan angka tersimpan).
-    final lahir = lahirBalita[_teks(j['balita_id'])];
+    // Usia dihitung dari tanggal lahir anak dan tanggal ukur (bukan angka tersimpan).
+    final lahir = lahirAnak[_teks(j['anak_id'])];
     final tglUkur = _tgl(u?['tanggal_ukur']) ?? _tgl(j['tanggal']);
     final usiaTersimpan = int.tryParse(_teks(u?['usia_bulan'])) ?? 0;
     final usiaBulan = (lahir != null && tglUkur != null)
@@ -246,8 +246,8 @@ class _Pemeriksaan {
 
     return _Pemeriksaan(
       pendaftaranId: _teks(j['pendaftaran_id']),
-      balitaId: _teks(j['balita_id']),
-      namaBalita: _teks(j['nama_balita']).isEmpty ? '-' : _teks(j['nama_balita']),
+      anakId: _teks(j['anak_id']),
+      namaAnak: _teks(j['nama_anak']).isEmpty ? '-' : _teks(j['nama_anak']),
       tanggal: _tgl(j['tanggal']),
       jamMulai: () {
         final s = _teks(j['jam_mulai']);
@@ -456,12 +456,12 @@ Widget _header(BuildContext context, String judul) {
 // HALAMAN 1: RIWAYAT PEMERIKSAAN (DAFTAR KUNJUNGAN)
 // ---------------------------------------------------------------------------
 class OrangTuaPemeriksaanPage extends StatefulWidget {
-  final String? balitaId;
+  final String? anakId;
 
   /// Bila diisi (mis. dari notifikasi), detail pemeriksaan kunjungan ini langsung dibuka.
   final String? pendaftaranId;
 
-  const OrangTuaPemeriksaanPage({super.key, this.balitaId, this.pendaftaranId});
+  const OrangTuaPemeriksaanPage({super.key, this.anakId, this.pendaftaranId});
 
   @override
   State<OrangTuaPemeriksaanPage> createState() =>
@@ -473,10 +473,10 @@ class _OrangTuaPemeriksaanPageState
   List<_Pemeriksaan> _data = [];
   bool _memuat = true;
   String? _gagal;
-  String _balitaAktif = '';
+  String _anakAktif = '';
   bool _sudahBukaAwal = false;
 
-  bool get _terkunci => widget.balitaId != null && widget.balitaId!.isNotEmpty;
+  bool get _terkunci => widget.anakId != null && widget.anakId!.isNotEmpty;
 
   @override
   void initState() {
@@ -487,7 +487,7 @@ class _OrangTuaPemeriksaanPageState
   Future<Map<String, String>> _muatNamaImunisasi() async {
     try {
       final r = await ApiClient.dio.get(
-        '/imunisasi',
+        '/vaksin',
         options: Options(receiveTimeout: const Duration(seconds: 15)),
       );
       dynamic d = r.data;
@@ -509,7 +509,7 @@ class _OrangTuaPemeriksaanPageState
     try {
       final model = KeluargaApi.keModel(await KeluargaApi.ambil());
       final peta = <String, DateTime>{};
-      for (final a in model.balita) {
+      for (final a in model.anak) {
         final lahir = parseTgl(a.tglLahir);
         if (a.id != null && lahir != null) peta[a.id.toString()] = lahir;
       }
@@ -522,7 +522,7 @@ class _OrangTuaPemeriksaanPageState
   Future<void> _muat() async {
     try {
       final namaImunisasi = await _muatNamaImunisasi();
-      final lahirBalita = await _muatTanggalLahir();
+      final lahirAnak = await _muatTanggalLahir();
       final r = await ApiClient.dio.get(
         '/riwayat',
         options: Options(receiveTimeout: const Duration(seconds: 15)),
@@ -539,7 +539,7 @@ class _OrangTuaPemeriksaanPageState
               _Pemeriksaan.fromApi(
                 Map<String, dynamic>.from(e),
                 namaImunisasi,
-                lahirBalita,
+                lahirAnak,
               ),
             );
           }
@@ -553,7 +553,7 @@ class _OrangTuaPemeriksaanPageState
       });
 
       if (_terkunci) {
-        list.removeWhere((e) => e.balitaId != widget.balitaId);
+        list.removeWhere((e) => e.anakId != widget.anakId);
       }
 
       if (!mounted) return;
@@ -561,9 +561,9 @@ class _OrangTuaPemeriksaanPageState
         _data = list;
         _gagal = null;
         _memuat = false;
-        if (_balitaAktif.isNotEmpty &&
-            !list.any((e) => e.balitaId == _balitaAktif)) {
-          _balitaAktif = '';
+        if (_anakAktif.isNotEmpty &&
+            !list.any((e) => e.anakId == _anakAktif)) {
+          _anakAktif = '';
         }
       });
       _bukaAwal();
@@ -598,14 +598,14 @@ class _OrangTuaPemeriksaanPageState
 
   @override
   Widget build(BuildContext context) {
-    final balita = <String, String>{};
+    final anak = <String, String>{};
     for (final p in _data) {
-      balita[p.balitaId] = p.namaBalita;
+      anak[p.anakId] = p.namaAnak;
     }
 
-    final daftar = _balitaAktif.isEmpty
+    final daftar = _anakAktif.isEmpty
         ? _data
-        : _data.where((p) => p.balitaId == _balitaAktif).toList();
+        : _data.where((p) => p.anakId == _anakAktif).toList();
 
     return Scaffold(
       backgroundColor: AppColors.latar,
@@ -649,12 +649,12 @@ class _OrangTuaPemeriksaanPageState
                   else if (_data.isEmpty)
                     _kartu(
                       child: const Text(
-                        'Belum ada riwayat pemeriksaan. Hasil muncul di sini setelah balita Anda ditimbang dan diukur di posyandu.',
+                        'Belum ada riwayat pemeriksaan. Hasil muncul di sini setelah anak Anda ditimbang dan diukur di posyandu.',
                         style: TextStyle(fontSize: 15.5, height: 1.4, color: _teksAbu),
                       ),
                     )
                   else ...[
-                    if (!_terkunci && balita.length > 1)
+                    if (!_terkunci && anak.length > 1)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: SingleChildScrollView(
@@ -662,7 +662,7 @@ class _OrangTuaPemeriksaanPageState
                           child: Row(
                             children: [
                               _chip('', 'Semua'),
-                              for (final e in balita.entries) _chip(e.key, e.value),
+                              for (final e in anak.entries) _chip(e.key, e.value),
                             ],
                           ),
                         ),
@@ -679,7 +679,7 @@ class _OrangTuaPemeriksaanPageState
   }
 
   Widget _chip(String id, String label) {
-    final dipilih = _balitaAktif == id;
+    final dipilih = _anakAktif == id;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ChoiceChip(
@@ -694,7 +694,7 @@ class _OrangTuaPemeriksaanPageState
           fontWeight: FontWeight.w600,
           color: dipilih ? Colors.white : _teksGelap,
         ),
-        onSelected: (_) => setState(() => _balitaAktif = id),
+        onSelected: (_) => setState(() => _anakAktif = id),
       ),
     );
   }
@@ -725,7 +725,7 @@ class _OrangTuaPemeriksaanPageState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _barisInfo('Nama', p.namaBalita, lebar: 70),
+                      _barisInfo('Nama', p.namaAnak, lebar: 70),
                       if (p.adaUkur) _barisInfo('Usia', p.usiaTeks, lebar: 70),
                       if (p.adaUkur)
                         _barisInfo('Hasil',

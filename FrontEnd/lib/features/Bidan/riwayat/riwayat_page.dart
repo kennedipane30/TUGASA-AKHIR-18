@@ -23,7 +23,7 @@ const _garis = Color(0xFFB8BEC6);
 
 String _teks(dynamic v) => v?.toString().trim() ?? '';
 
-/// Label kondisi balita sebelum imunisasi.
+/// Label kondisi anak sebelum imunisasi.
 String _kondisiTeks(dynamic v) {
   switch (_teks(v)) {
     case 'sehat':
@@ -214,7 +214,7 @@ Widget _judulTebal(String teks) {
 }
 
 // ---------------------------------------------------------------------------
-// HEADER (sama seperti halaman Imunisasi Balita: polos, judul di tengah)
+// HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
 // Dipakai oleh ketiga halaman riwayat. Tombol kembali hanya muncul
 // bila ada halaman sebelumnya (sama seperti AppBar lama).
 // ---------------------------------------------------------------------------
@@ -541,7 +541,7 @@ class _BidanRiwayatPageState extends State<BidanRiwayatPage> {
           child: InkWell(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => _DaftarBalitaPage(jadwal: j)),
+              MaterialPageRoute(builder: (_) => _DaftarAnakPage(jadwal: j)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,7 +557,7 @@ class _BidanRiwayatPageState extends State<BidanRiwayatPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _bagian(Icons.location_on_outlined, 'Lokasi', _teks(j['lokasi'])),
-                            _bagian(Icons.how_to_reg_outlined, 'Balita check-in', '$checkin balita'),
+                            _bagian(Icons.how_to_reg_outlined, 'Anak check-in', '$checkin anak'),
                           ],
                         ),
                       ),

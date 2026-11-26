@@ -9,7 +9,7 @@ import '../../../core/utils/no_hp.dart';
 import '../../auth/auth_provider.dart';
 
 // ---------------------------------------------------------------------------
-// WARNA & HEADER (dipakai bersama oleh halaman keluarga & balita)
+// WARNA & HEADER (dipakai bersama oleh halaman keluarga & anak)
 // ---------------------------------------------------------------------------
 const kHijauHeader = Color(0xFF065F46);
 const kHijauTua = Color(0xFF0B3D2E);
@@ -241,7 +241,7 @@ class HeaderKeluarga extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // MODEL
 // ---------------------------------------------------------------------------
-class DataBalita {
+class DataAnak {
   String? id; // UUID
   String kodeQr;
   String nama, nik, tglLahir, jk, beratLahir, panjangLahir; // tglLahir: dd/mm/yyyy
@@ -255,7 +255,7 @@ class DataBalita {
 
   bool get diarsipkan => status == 'arsip';
 
-  DataBalita({
+  DataAnak({
     this.id,
     this.kodeQr = '',
     this.nama = '',
@@ -270,7 +270,7 @@ class DataBalita {
     this.alasanArsip = '',
   });
 
-  factory DataBalita.fromApi(Map<String, dynamic> j) => DataBalita(
+  factory DataAnak.fromApi(Map<String, dynamic> j) => DataAnak(
         id: j['id']?.toString(),
         kodeQr: j['kode_qr']?.toString() ?? '',
         nama: j['nama']?.toString() ?? '',
@@ -279,9 +279,9 @@ class DataBalita {
         jk: j['jenis_kelamin']?.toString() ?? '',
         beratLahir: angka(j['berat_lahir_kg']),
         panjangLahir: angka(j['panjang_lahir_cm']),
-        statusRiwayatImunisasi: (j['status_riwayat_imunisasi']?.toString() ?? '').isEmpty
+        statusRiwayatImunisasi: (j['status_riwayat_vaksin']?.toString() ?? '').isEmpty
             ? 'belum_ditanya'
-            : j['status_riwayat_imunisasi'].toString(),
+            : j['status_riwayat_vaksin'].toString(),
         status: j['status']?.toString() ?? 'aktif',
         tglArsip: dariApi(j['tanggal_arsip']),
         alasanArsip: j['alasan_arsip']?.toString() ?? '',
@@ -295,8 +295,8 @@ class DataKeluarga {
   // Suami / ayah
   bool tanpaAyah;
   String namaAyah, nikAyah, tglLahirAyah, noHpAyah, pekerjaanAyah;
-  // Balita (dikelola di halaman terpisah)
-  List<DataBalita> balita;
+  // Anak (dikelola di halaman terpisah)
+  List<DataAnak> anak;
 
   DataKeluarga({
     this.namaIbu = '',
@@ -313,16 +313,16 @@ class DataKeluarga {
     this.tglLahirAyah = '',
     this.noHpAyah = '',
     this.pekerjaanAyah = '',
-    List<DataBalita>? balita,
-  }) : balita = balita ?? [];
+    List<DataAnak>? anak,
+  }) : anak = anak ?? [];
 
   bool get ibuLengkap =>
       tglLahirIbu.isNotEmpty && alamat.trim().isNotEmpty && rw.trim().isNotEmpty;
 
   bool get ayahLengkap => tanpaAyah || namaAyah.trim().isNotEmpty;
-  bool get balitaLengkap => balita.isNotEmpty;
+  bool get anakLengkap => anak.isNotEmpty;
 
-  // Kelengkapan data orang tua (ibu + ayah). Data balita terpisah.
+  // Kelengkapan data orang tua (ibu + ayah). Data anak terpisah.
   int get langkahSelesai => (ibuLengkap ? 1 : 0) + (ayahLengkap ? 1 : 0);
   bool get lengkap => langkahSelesai == 2;
 }
@@ -336,7 +336,7 @@ Map<String, dynamic>? _peta(dynamic v) =>
     v is Map ? Map<String, dynamic>.from(v) : null;
 
 class KeluargaApi {
-  /// GET /keluarga -> { data: { keluarga, ibu, ayah, balita, status } }
+  /// GET /keluarga -> { data: { keluarga, ibu, ayah, anak, status } }
   static Future<Map<String, dynamic>> ambil() async {
     final r = await ApiClient.dio.get('/keluarga', options: opsiApi);
     return Map<String, dynamic>.from(r.data['data'] as Map);
@@ -347,8 +347,8 @@ class KeluargaApi {
     final k = _peta(data['keluarga']);
     final ibu = _peta(data['ibu']);
     final ayah = _peta(data['ayah']);
-    final balita = ((data['balita'] as List?) ?? [])
-        .map((e) => DataBalita.fromApi(Map<String, dynamic>.from(e as Map)))
+    final anak = ((data['anak'] as List?) ?? [])
+        .map((e) => DataAnak.fromApi(Map<String, dynamic>.from(e as Map)))
         .toList();
     return DataKeluarga(
       namaIbu: (user?['nama'] ?? ibu?['nama'] ?? '').toString(),
@@ -365,7 +365,7 @@ class KeluargaApi {
       tglLahirAyah: dariApi(ayah?['tanggal_lahir']),
       noHpAyah: (ayah?['no_hp'] ?? '').toString(),
       pekerjaanAyah: (ayah?['pekerjaan'] ?? '').toString(),
-      balita: balita,
+      anak: anak,
     );
   }
 }
@@ -432,7 +432,7 @@ double? keDouble(String s) {
   return double.tryParse(t.replaceAll(',', '.'));
 }
 
-String usiaBalita(String tgl) {
+String usiaAnak(String tgl) {
   final l = parseTgl(tgl);
   if (l == null) return '-';
   final n = DateTime.now();

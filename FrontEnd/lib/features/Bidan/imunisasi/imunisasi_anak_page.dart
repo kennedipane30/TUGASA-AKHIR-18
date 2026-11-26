@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../Bidan/imunisasi/imunisasi_lihat_body.dart';
+import 'imunisasi_lihat_body.dart';
 
 const _hijauHeader = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
@@ -29,16 +29,18 @@ Widget _judulTebal(String teks) {
   );
 }
 
-/// Halaman imunisasi (hanya lihat) untuk satu balita yang sudah dipilih.
-class ImunisasiBalitaLihatPage extends StatelessWidget {
-  final String balitaId;
-  final String namaBalita;
+/// Halaman imunisasi (hanya lihat) untuk satu anak yang sudah dipilih.
+/// Bidan: riwayat imunisasi yang sudah diterima dan suplemen anak, serta pencatatan
+/// imunisasi yang diberikan di luar posyandu.
+class BidanImunisasiAnakPage extends StatelessWidget {
+  final String anakId;
+  final String namaAnak;
   final String usia;
 
-  const ImunisasiBalitaLihatPage({
+  const BidanImunisasiAnakPage({
     super.key,
-    required this.balitaId,
-    required this.namaBalita,
+    required this.anakId,
+    required this.namaAnak,
     required this.usia,
   });
 
@@ -81,9 +83,9 @@ class ImunisasiBalitaLihatPage extends StatelessWidget {
   }
 
   // -------------------------------------------------------------------------
-  // KARTU DATA BALITA: nama (kapital) di kiri, usia di kanan, garis aksen di bawah.
+  // KARTU DATA ANAK: nama (kapital) di kiri, usia di kanan, garis aksen di bawah.
   // -------------------------------------------------------------------------
-  Widget _kartuBalita() {
+  Widget _kartuAnak() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Container(
@@ -104,7 +106,7 @@ class ImunisasiBalitaLihatPage extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      (namaBalita.isEmpty ? 'Balita' : namaBalita).toUpperCase(),
+                      (namaAnak.isEmpty ? 'Anak' : namaAnak).toUpperCase(),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -132,7 +134,7 @@ class ImunisasiBalitaLihatPage extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.fromLTRB(14, 10, 14, 12),
               child: Text(
-                'Jadwal, riwayat imunisasi, dan suplemen balita.',
+                'Riwayat imunisasi yang sudah diterima dan suplemen anak.',
                 style: TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFF374151)),
               ),
             ),
@@ -155,8 +157,8 @@ class ImunisasiBalitaLihatPage extends StatelessWidget {
         child: Column(
           children: [
             _header(context),
-            _kartuBalita(),
-            Expanded(child: ImunisasiLihatBody(balitaId: balitaId)),
+            _kartuAnak(),
+            Expanded(child: ImunisasiLihatBody(anakId: anakId, bisaKelola: true, hanyaRiwayat: true)),
           ],
         ),
       ),

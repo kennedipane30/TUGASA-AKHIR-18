@@ -389,7 +389,7 @@ class _AdminJadwalPageState extends State<AdminJadwalPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Imunisasi Balita: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
   // Tombol kembali hanya muncul bila ada halaman sebelumnya.
   // -------------------------------------------------------------------------
   Widget _header() {

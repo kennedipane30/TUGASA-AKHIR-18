@@ -39,7 +39,7 @@ Widget _judulTebal(String teks) {
   );
 }
 
-/// Orang tua: lihat jadwal imunisasi, riwayat imunisasi, dan suplemen balita sendiri,
+/// Orang tua: lihat jadwal imunisasi, riwayat imunisasi, dan suplemen anak sendiri,
 /// serta melaporkan reaksi setelah imunisasi (diteruskan ke bidan).
 class OrangTuaImunisasiPage extends StatefulWidget {
   const OrangTuaImunisasiPage({super.key});
@@ -51,8 +51,8 @@ class OrangTuaImunisasiPage extends StatefulWidget {
 class _OrangTuaImunisasiPageState extends State<OrangTuaImunisasiPage> {
   final _svc = ImunisasiService();
 
-  List<BalitaRingkas> _balita = [];
-  BalitaRingkas? _dipilih;
+  List<AnakRingkas> _anak = [];
+  AnakRingkas? _dipilih;
   bool _loading = true;
   String? _error;
 
@@ -68,10 +68,10 @@ class _OrangTuaImunisasiPageState extends State<OrangTuaImunisasiPage> {
       _error = null;
     });
     try {
-      final data = await _svc.balitaSaya();
+      final data = await _svc.anakSaya();
       if (!mounted) return;
       setState(() {
-        _balita = data;
+        _anak = data;
         _dipilih = data.isNotEmpty ? data.first : null;
         _loading = false;
       });
@@ -141,8 +141,8 @@ class _OrangTuaImunisasiPageState extends State<OrangTuaImunisasiPage> {
     );
   }
 
-  /// Kartu balita terpilih: nama (kapital) di kiri, usia di kanan, garis aksen di bawah.
-  Widget _kartuBalita(BalitaRingkas a) {
+  /// Kartu anak terpilih: nama (kapital) di kiri, usia di kanan, garis aksen di bawah.
+  Widget _kartuAnak(AnakRingkas a) {
     return Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
@@ -180,7 +180,7 @@ class _OrangTuaImunisasiPageState extends State<OrangTuaImunisasiPage> {
           const Padding(
             padding: EdgeInsets.fromLTRB(14, 10, 14, 12),
             child: Text(
-              'Jadwal imunisasi, riwayat imunisasi, dan suplemen balita.',
+              'Jadwal imunisasi, riwayat imunisasi, dan suplemen anak.',
               style: TextStyle(fontSize: 15.5, height: 1.35, color: Color(0xFF374151)),
             ),
           ),
@@ -214,20 +214,20 @@ class _OrangTuaImunisasiPageState extends State<OrangTuaImunisasiPage> {
         ),
       );
     }
-    if (_balita.isEmpty) {
-      return _pesan('Belum ada data balita. Tambahkan data balita terlebih dahulu.');
+    if (_anak.isEmpty) {
+      return _pesan('Belum ada data anak. Tambahkan data anak terlebih dahulu.');
     }
     final dipilih = _dipilih!;
     return Column(
       children: [
-        if (_balita.length > 1)
+        if (_anak.length > 1)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  for (final a in _balita)
+                  for (final a in _anak)
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
@@ -251,12 +251,12 @@ class _OrangTuaImunisasiPageState extends State<OrangTuaImunisasiPage> {
           ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-          child: _kartuBalita(dipilih),
+          child: _kartuAnak(dipilih),
         ),
         Expanded(
           child: ImunisasiLihatBody(
             key: ValueKey(dipilih.id),
-            balitaId: dipilih.id,
+            anakId: dipilih.id,
             bisaLaporKipi: true,
           ),
         ),

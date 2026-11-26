@@ -103,7 +103,7 @@ Widget _judulTebal(String teks) {
   );
 }
 
-/// Sekretaris: rekap imunisasi posyandu (cakupan, balita terlambat, jumlah dosis per jenis)
+/// Sekretaris: rekap imunisasi posyandu (cakupan, anak terlambat, jumlah dosis per jenis)
 /// dan jadwal imunisasi rutin yang berlaku.
 class AdminImunisasiPage extends StatefulWidget {
   const AdminImunisasiPage({super.key});
@@ -148,7 +148,7 @@ class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Imunisasi Balita: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
   // Tombol kembali hanya muncul bila ada halaman sebelumnya.
   // -------------------------------------------------------------------------
   Widget _header() {
@@ -251,8 +251,8 @@ class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Imunisasi Dasar Lengkap: ${d.balitaDasarLengkap} dari ${d.balitaUsia12Bulan} '
-                      'balita usia 12 bulan ke atas',
+                      'Imunisasi Dasar Lengkap: ${d.anakDasarLengkap} dari ${d.anakUsia12Bulan} '
+                      'anak usia 12 bulan ke atas',
                       style: const TextStyle(fontSize: 16, color: AppColors.teksRedup),
                     ),
                   ),
@@ -262,7 +262,7 @@ class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
-                  value: d.balitaUsia12Bulan == 0 ? 0 : d.balitaDasarLengkap / d.balitaUsia12Bulan,
+                  value: d.anakUsia12Bulan == 0 ? 0 : d.anakDasarLengkap / d.anakUsia12Bulan,
                   minHeight: 9,
                   backgroundColor: AppColors.latar,
                   color: AppColors.hijau,
@@ -274,7 +274,7 @@ class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
                   _kotak('Dosis\nDiberikan', '${d.totalDiberikan}',
                       const Color(0xFFE6F8EF), const Color(0xFFBDEBD3), const Color(0xFF059669)),
                   const SizedBox(width: 8),
-                  _kotak('Balita\nDiimunisasi', '${d.totalBalitaDiimunisasi}',
+                  _kotak('Anak\nDiimunisasi', '${d.totalAnakDiimunisasi}',
                       const Color(0xFFE3F2FD), const Color(0xFFBFDFF7), const Color(0xFF2563EB)),
                   const SizedBox(width: 8),
                   _kotak('Balita\nAktif', '${d.jumlahBalita}',
@@ -284,10 +284,10 @@ class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  _kotak('Saatnya Diimunisasi', '${d.balitaJatuhTempo}',
+                  _kotak('Saatnya Diimunisasi', '${d.anakJatuhTempo}',
                       const Color(0xFFFFF4DC), const Color(0xFFF9E0A8), const Color(0xFFD97706)),
                   const SizedBox(width: 8),
-                  _kotak('Balita Terlambat', '${d.balitaTerlambat}',
+                  _kotak('Anak Terlambat', '${d.anakTerlambat}',
                       const Color(0xFFFDEAF1), const Color(0xFFF6C9D9), const Color(0xFFE11D48)),
                 ],
               ),
@@ -345,7 +345,7 @@ class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
   }
 
   Widget _barisJenis(StatistikJenisImunisasi e, int jumlahBalita) {
-    final belum = (jumlahBalita - e.jumlahBalita) < 0 ? 0 : jumlahBalita - e.jumlahBalita;
+    final belum = (jumlahBalita - e.jumlahAnak) < 0 ? 0 : jumlahBalita - e.jumlahAnak;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
@@ -361,13 +361,13 @@ class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
                 style: const TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
           const SizedBox(height: 8),
           Text(
-            'Satu balita hanya bisa menerima ${e.dosisPerBalita} dosis'
+            'Satu anak hanya bisa menerima ${e.dosisPerAnak} dosis'
             '${e.jenis.khususDaerah ? ' (khusus daerah endemis)' : ''}',
             style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap),
           ),
           const SizedBox(height: 6),
-          _baris('Balita yang sudah menerima', '${e.jumlahBalita} balita', lebar: 200),
-          _baris('Balita yang belum', '$belum balita', lebar: 200),
+          _baris('Anak yang sudah menerima', '${e.jumlahAnak} anak', lebar: 200),
+          _baris('Anak yang belum', '$belum anak', lebar: 200),
         ],
       ),
     );

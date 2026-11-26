@@ -7,8 +7,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../service/rujukan_service.dart';
 
 // ============================================================================
-// RUJUKAN BALITA - ORANG TUA
-// Daftar surat rujukan balita; detail, unduh, dan bagikan surat (hanya melihat).
+// RUJUKAN ANAK - ORANG TUA
+// Daftar surat rujukan anak; detail, unduh, dan bagikan surat (hanya melihat).
 // ============================================================================
 
 class OrangTuaRujukanPage extends StatefulWidget {
@@ -81,7 +81,7 @@ class _OrangTuaRujukanPageState extends State<OrangTuaRujukanPage> {
           children: [
             Icon(Icons.description_outlined, size: 46, color: redupRujukan),
             SizedBox(height: 10),
-            Text('Belum ada surat rujukan untuk balita Anda.',
+            Text('Belum ada surat rujukan untuk anak Anda.',
                 textAlign: TextAlign.center, style: TextStyle(fontSize: 15, color: redupRujukan)),
           ],
         ),
@@ -94,7 +94,7 @@ class _OrangTuaRujukanPageState extends State<OrangTuaRujukanPage> {
             r,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => DetailRujukanBalitaPage(id: r.id)),
+              MaterialPageRoute(builder: (_) => DetailRujukanAnakPage(id: r.id)),
             ),
           ),
       ],
@@ -113,7 +113,7 @@ class _OrangTuaRujukanPageState extends State<OrangTuaRujukanPage> {
         ),
         child: Column(
           children: [
-            headerRekap(context, 'Rujukan Balita'),
+            headerRekap(context, 'Rujukan Anak'),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _muat,
@@ -135,15 +135,15 @@ class _OrangTuaRujukanPageState extends State<OrangTuaRujukanPage> {
 // Detail rujukan (orang tua)
 // ----------------------------------------------------------------------------
 
-class DetailRujukanBalitaPage extends StatefulWidget {
+class DetailRujukanAnakPage extends StatefulWidget {
   final String id;
-  const DetailRujukanBalitaPage({super.key, required this.id});
+  const DetailRujukanAnakPage({super.key, required this.id});
 
   @override
-  State<DetailRujukanBalitaPage> createState() => _DetailRujukanBalitaPageState();
+  State<DetailRujukanAnakPage> createState() => _DetailRujukanAnakPageState();
 }
 
-class _DetailRujukanBalitaPageState extends State<DetailRujukanBalitaPage> {
+class _DetailRujukanAnakPageState extends State<DetailRujukanAnakPage> {
   final _svc = const RujukanService();
   RujukanDetail? _data;
   bool _loading = true;
@@ -228,7 +228,7 @@ class _DetailRujukanBalitaPageState extends State<DetailRujukanBalitaPage> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Bawa balita beserta surat rujukan ini ke ${d.tujuan}. '
+              'Bawa anak beserta surat rujukan ini ke ${d.tujuan}. '
               'Tunjukkan surat (dicetak atau dari HP) kepada petugas kesehatan.',
               style: const TextStyle(fontSize: 14.5, height: 1.4, color: teksRujukan),
             ),

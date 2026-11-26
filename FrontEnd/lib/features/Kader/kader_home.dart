@@ -9,7 +9,7 @@ import '../../core/pages/balita/semua_balita_page.dart';
 import '../auth/auth_provider.dart';
 import 'pendataan/pendataan_page.dart';
 import 'keluarga/keluarga_page.dart';
-import 'daftarkan_balita/daftarkan_balita_page.dart';
+import 'daftarkan_anak/daftarkan_anak_page.dart';
 import 'riwayat/riwayat_page.dart';
 import 'rekap/balita_tidak_hadir_page.dart';
 import 'imunisasi/imunisasi_page.dart';
@@ -87,10 +87,10 @@ class _KaderHomeState extends State<KaderHome> {
   }
 
   /// Daftarkan balita ke sesi posyandu hari ini (walk-in), lalu muat ulang antrean.
-  Future<void> _bukaDaftarkanBalita() async {
+  Future<void> _bukaDaftarkanAnak() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const DaftarkanBalitaPage()),
+      MaterialPageRoute(builder: (_) => const DaftarkanAnakPage()),
     );
     _muat();
   }
@@ -296,7 +296,7 @@ class _KaderHomeState extends State<KaderHome> {
           cadangan: Icons.how_to_reg_outlined,
           warna: const Color(0xFF0F766E),
           judul: 'Daftarkan\nBalita',
-          onTap: _bukaDaftarkanBalita,
+          onTap: _bukaDaftarkanAnak,
         ),
         ItemLayananHome(
           aset: 'semua_balita.png',
@@ -323,7 +323,7 @@ class _KaderHomeState extends State<KaderHome> {
           aset: 'imunisasi_anak.png',
           cadangan: Icons.vaccines_outlined,
           warna: const Color(0xFF0B7FBF),
-          judul: 'Imunisasi\nBalita',
+          judul: 'Imunisasi\nAnak',
           onTap: _bukaImunisasi,
         ),
       ],

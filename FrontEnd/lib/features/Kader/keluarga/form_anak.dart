@@ -4,35 +4,35 @@ import 'package:flutter/services.dart';
 import 'keluarga.dart';
 
 // ============================================================================
-// FORM DATA BALITA (bottom sheet) + baris balita.
-// Aturan sama dengan halaman Data Balita orang tua; usia dibatasi balita (0-59 bln).
+// FORM DATA ANAK (bottom sheet) + baris anak.
+// Aturan sama dengan halaman Data Anak orang tua; usia dibatasi balita (0-59 bln).
 // ============================================================================
 
 // ---------------------------------------------------------------------------
-// FORM DATA BALITA (bottom sheet)
+// FORM DATA ANAK (bottom sheet)
 // ---------------------------------------------------------------------------
-/// Membuka form data balita. Mengembalikan isian baru, atau null bila dibatalkan.
-Future<IsianBalita?> bukaFormBalita(BuildContext context, {IsianBalita? awal}) {
-  return showModalBottomSheet<IsianBalita>(
+/// Membuka form data anak. Mengembalikan isian baru, atau null bila dibatalkan.
+Future<IsianAnak?> bukaFormAnak(BuildContext context, {IsianAnak? awal}) {
+  return showModalBottomSheet<IsianAnak>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (_) => _FormIsianBalita(awal: awal),
+    builder: (_) => _FormIsianAnak(awal: awal),
   );
 }
 
-class _FormIsianBalita extends StatefulWidget {
-  final IsianBalita? awal;
-  const _FormIsianBalita({this.awal});
+class _FormIsianAnak extends StatefulWidget {
+  final IsianAnak? awal;
+  const _FormIsianAnak({this.awal});
 
   @override
-  State<_FormIsianBalita> createState() => _FormIsianBalitaState();
+  State<_FormIsianAnak> createState() => _FormIsianAnakState();
 }
 
-class _FormIsianBalitaState extends State<_FormIsianBalita> {
+class _FormIsianAnakState extends State<_FormIsianAnak> {
   final _key = GlobalKey<FormState>();
   late final _nama = TextEditingController(text: widget.awal?.nama ?? '');
   late final _nik = TextEditingController(text: widget.awal?.nik ?? '');
@@ -56,7 +56,7 @@ class _FormIsianBalitaState extends State<_FormIsianBalita> {
     if (!ok || _jk.isEmpty) return;
     Navigator.pop(
       context,
-      IsianBalita(
+      IsianAnak(
         id: widget.awal?.id,
         nama: _nama.text.trim(),
         nik: _nik.text.trim(),
@@ -140,7 +140,7 @@ class _FormIsianBalitaState extends State<_FormIsianBalita> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                Text((widget.awal == null ? 'Tambah Data Balita' : 'Ubah Data Balita').toUpperCase(),
+                Text((widget.awal == null ? 'Tambah Data Anak' : 'Ubah Data Anak').toUpperCase(),
                     style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -149,16 +149,16 @@ class _FormIsianBalitaState extends State<_FormIsianBalita> {
                 const SizedBox(height: 8),
                 Container(height: 3, color: kkAksen),
                 const SizedBox(height: 16),
-                kkLabel('Nama balita', wajib: true),
+                kkLabel('Nama anak', wajib: true),
                 TextFormField(
                   controller: _nama,
                   textCapitalization: TextCapitalization.words,
-                  decoration: kkDekor('Nama lengkap balita', ikon: Icons.person_outline),
+                  decoration: kkDekor('Nama lengkap anak', ikon: Icons.person_outline),
                   validator: (v) =>
-                      (v ?? '').trim().isEmpty ? 'Nama balita wajib diisi' : null,
+                      (v ?? '').trim().isEmpty ? 'Nama anak wajib diisi' : null,
                 ),
                 kkJarak(),
-                kkLabel('NIK balita', opsional: true),
+                kkLabel('NIK anak', opsional: true),
                 TextFormField(
                   controller: _nik,
                   keyboardType: TextInputType.number,
@@ -251,13 +251,13 @@ class _FormIsianBalitaState extends State<_FormIsianBalita> {
   }
 }
 
-/// Satu baris balita di daftar (nama, tgl lahir, JK, usia) + tautan ubah/hapus.
-class BarisBalita extends StatelessWidget {
-  final IsianBalita balita;
+/// Satu baris anak di daftar (nama, tgl lahir, JK, usia) + tautan ubah/hapus.
+class BarisAnak extends StatelessWidget {
+  final IsianAnak anak;
   final VoidCallback? onUbah;
   final VoidCallback? onHapus;
 
-  const BarisBalita({super.key, required this.balita, this.onUbah, this.onHapus});
+  const BarisAnak({super.key, required this.anak, this.onUbah, this.onHapus});
 
   @override
   Widget build(BuildContext context) {
@@ -273,13 +273,13 @@ class BarisBalita extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(balita.nama.toUpperCase(),
+          Text(anak.nama.toUpperCase(),
               style: const TextStyle(
                   fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 0.2, color: kkTeksGelap)),
           const SizedBox(height: 8),
-          kkInfo('Tanggal Lahir', balita.tglLahir, lebar: 120),
-          kkInfo('Jenis Kelamin', balita.jkTeks, lebar: 120),
-          kkInfo('Usia', kkUsiaTeks(balita.tglLahir), lebar: 120),
+          kkInfo('Tanggal Lahir', anak.tglLahir, lebar: 120),
+          kkInfo('Jenis Kelamin', anak.jkTeks, lebar: 120),
+          kkInfo('Usia', kkUsiaTeks(anak.tglLahir), lebar: 120),
           if (onUbah != null || onHapus != null)
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

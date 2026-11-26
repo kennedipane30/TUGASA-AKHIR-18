@@ -234,9 +234,9 @@ Widget _tombolBawah({
 // Kembali ke halaman Pendataan dengan teks peringatan validasi (boleh kosong).
 // ---------------------------------------------------------------------------
 class EditPengukuranPage extends StatefulWidget {
-  final AntreanKader balita;
+  final AntreanKader anak;
 
-  const EditPengukuranPage({super.key, required this.balita});
+  const EditPengukuranPage({super.key, required this.anak});
 
   @override
   State<EditPengukuranPage> createState() => _EditPengukuranPageState();
@@ -285,7 +285,7 @@ class _EditPengukuranPageState extends State<EditPengukuranPage> {
   Future<void> _muatData() async {
     try {
       final r = await ApiClient.dio.get(
-        '/kader/pendaftaran/${widget.balita.pendaftaranId}/pengukuran',
+        '/kader/pendaftaran/${widget.anak.pendaftaranId}/pengukuran',
         options: Options(
           receiveTimeout: const Duration(seconds: 15),
         ),
@@ -338,7 +338,7 @@ class _EditPengukuranPageState extends State<EditPengukuranPage> {
 
     try {
       final r = await ApiClient.dio.put(
-        '/kader/pendaftaran/${widget.balita.pendaftaranId}/pengukuran',
+        '/kader/pendaftaran/${widget.anak.pendaftaranId}/pengukuran',
         data: {
           'bb_kg': bb,
           'tb_cm': tb,
@@ -456,14 +456,14 @@ class _EditPengukuranPageState extends State<EditPengukuranPage> {
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                       children: [
                         _kartu(
-                          judul: widget.balita.nama,
-                          kanan: 'Antrean ${widget.balita.kodeNomor}',
+                          judul: widget.anak.nama,
+                          kanan: 'Antrean ${widget.anak.kodeNomor}',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _barisInfo('Jenis Kelamin',
-                                  widget.balita.jk == 'P' ? 'Perempuan' : 'Laki-laki'),
-                              _barisInfo('Umur', widget.balita.usia),
+                                  widget.anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'),
+                              _barisInfo('Umur', widget.anak.usia),
                             ],
                           ),
                         ),
@@ -499,7 +499,7 @@ class _EditPengukuranPageState extends State<EditPengukuranPage> {
                           ),
                         ),
                         _kartu(
-                          judul: 'Kondisi Balita',
+                          judul: 'Kondisi Anak',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

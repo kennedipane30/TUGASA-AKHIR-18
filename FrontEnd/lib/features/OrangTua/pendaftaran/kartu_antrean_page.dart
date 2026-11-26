@@ -178,8 +178,8 @@ String _pesanError(Object e) {
 // ---------------------------------------------------------------------------
 class KartuAntreanData {
   final String pendaftaranId;
-  final String balitaId;
-  final String namaBalita;
+  final String anakId;
+  final String namaAnak;
   final String jadwalId;
   final DateTime tanggal;
   final String jamMulai;
@@ -192,14 +192,14 @@ class KartuAntreanData {
   final bool bolehBatal;
   final bool bolehCheckin;
 
-  /// Posisi balita dalam pelayanan (dari server): belum_checkin | menunggu_kader |
+  /// Posisi anak dalam pelayanan (dari server): belum_checkin | menunggu_kader |
   /// menunggu_bidan | selesai | tidak_dilayani | batal | tidak_hadir.
   final String tahap;
 
   KartuAntreanData({
     required this.pendaftaranId,
-    required this.balitaId,
-    required this.namaBalita,
+    required this.anakId,
+    required this.namaAnak,
     required this.jadwalId,
     required this.tanggal,
     required this.jamMulai,
@@ -223,8 +223,8 @@ class KartuAntreanData {
     final t = j['tanggal']?.toString() ?? '';
     return KartuAntreanData(
       pendaftaranId: j['pendaftaran_id']?.toString() ?? '',
-      balitaId: j['balita_id']?.toString() ?? '',
-      namaBalita: j['nama_balita']?.toString() ?? '-',
+      anakId: j['anak_id']?.toString() ?? '',
+      namaAnak: j['nama_anak']?.toString() ?? '-',
       jadwalId: j['jadwal_id']?.toString() ?? '',
       tanggal: (t.length >= 10 ? DateTime.tryParse(t.substring(0, 10)) : null) ?? DateTime.now(),
       jamMulai: _jam(j['jam_mulai']),
@@ -283,9 +283,9 @@ Widget _judulTebal(String teks) {
 // ---------------------------------------------------------------------------
 class KartuAntreanPage extends StatefulWidget {
   final String jadwalId;
-  final String balitaId;
+  final String anakId;
 
-  const KartuAntreanPage({super.key, required this.jadwalId, required this.balitaId});
+  const KartuAntreanPage({super.key, required this.jadwalId, required this.anakId});
 
   @override
   State<KartuAntreanPage> createState() => _KartuAntreanPageState();
@@ -297,7 +297,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
   bool _sibuk = false;
   String? _gagal;
 
-  /// Selama balita masih dalam antrean pelayanan, status disegarkan otomatis.
+  /// Selama anak masih dalam antrean pelayanan, status disegarkan otomatis.
   Timer? _pantau;
 
   /// Penanda area tiket yang diubah menjadi gambar (Simpan Tiket / Bagikan).
@@ -325,7 +325,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
     try {
       final r = await ApiClient.dio.get(
         '/jadwal/${widget.jadwalId}/kartu',
-        queryParameters: {'balita_id': widget.balitaId},
+        queryParameters: {'anak_id': widget.anakId},
         options: Options(receiveTimeout: const Duration(seconds: 15)),
       );
       dynamic d = r.data;
@@ -372,7 +372,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
     try {
       await ApiClient.dio.post(
         '/jadwal/${k.jadwalId}/scan',
-        data: {'balita_id': k.balitaId, 'kode_qr': kode.trim()},
+        data: {'anak_id': k.anakId, 'kode_qr': kode.trim()},
         options: Options(receiveTimeout: const Duration(seconds: 15)),
       );
       _snack('Check-in berhasil. Anda masuk ke antrean pendataan kader.');
@@ -395,7 +395,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Batalkan antrean?'),
-        content: Text('Pendaftaran ${k.namaBalita} pada ${k.tanggalPanjang} akan dibatalkan.'),
+        content: Text('Pendaftaran ${k.namaAnak} pada ${k.tanggalPanjang} akan dibatalkan.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Tidak')),
           ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Ya, batalkan')),
@@ -408,7 +408,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
     try {
       await ApiClient.dio.post(
         '/jadwal/${k.jadwalId}/batal',
-        data: {'balita_id': k.balitaId},
+        data: {'anak_id': k.anakId},
         options: Options(receiveTimeout: const Duration(seconds: 15)),
       );
       _snack('Pendaftaran dibatalkan');
@@ -477,7 +477,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
     final b = StringBuffer()
       ..writeln('*Bukti Antrean Posyandu*')
       ..writeln()
-      ..writeln('Nama Balita : ${k.namaBalita}')
+      ..writeln('Nama Balita : ${k.namaAnak}')
       ..writeln('Nomor Antrean : ${k.kodeNomor}')
       ..writeln('Tanggal : ${k.tanggalPanjang}');
     if (k.jam.isNotEmpty) b.writeln('Waktu : ${k.jam} WIB');
@@ -516,7 +516,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Imunisasi Balita: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
   // -------------------------------------------------------------------------
   Widget _header() {
     return Container(
@@ -755,7 +755,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _kolomNama('Nama Balita', k.namaBalita)),
+                Expanded(child: _kolomNama('Nama Balita', k.namaAnak)),
                 const SizedBox(width: 12),
                 Expanded(child: _kolomNama('Nama Pendamping', namaUser.isEmpty ? '-' : namaUser)),
               ],
@@ -851,7 +851,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => OrangTuaPemeriksaanPage(balitaId: k.balitaId, pendaftaranId: k.pendaftaranId),
+                  builder: (_) => OrangTuaPemeriksaanPage(anakId: k.anakId, pendaftaranId: k.pendaftaranId),
                 ),
               ),
               icon: const Icon(Icons.fact_check_outlined, size: 21),
@@ -864,7 +864,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
     }
     if (k.tidakDilayani) {
       return _kotakStatus(
-          'Sesi berakhir sebelum balita diperiksa bidan. Silakan hubungi bidan atau kader posyandu.',
+          'Sesi berakhir sebelum anak diperiksa bidan. Silakan hubungi bidan atau kader posyandu.',
           AppColors.merah);
     }
     if (k.status == 'sudah_checkin') {
@@ -878,7 +878,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
       return _kotakStatus('Pendaftaran ini telah dibatalkan', AppColors.merah);
     }
     if (k.status == 'tidak_hadir') {
-      return _kotakStatus('Balita tidak hadir pada sesi ini', AppColors.merah);
+      return _kotakStatus('Anak tidak hadir pada sesi ini', AppColors.merah);
     }
 
     final aktifCheckin = k.bolehCheckin && !_sibuk;
@@ -1021,10 +1021,10 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
 // ---------------------------------------------------------------------------
 // SCAN CHECK-IN LANGSUNG (dipakai tombol "Scan Sekarang" di beranda)
 // ---------------------------------------------------------------------------
-/// Membuka kamera, memindai QR posyandu, lalu check-in balita [balitaId] pada
+/// Membuka kamera, memindai QR posyandu, lalu check-in anak [anakId] pada
 /// jadwal [jadwalId]. Mengembalikan true bila check-in berhasil.
 Future<bool> scanCheckin(BuildContext context,
-    {required String jadwalId, required String balitaId}) async {
+    {required String jadwalId, required String anakId}) async {
   final kode = await Navigator.push<String>(
     context,
     MaterialPageRoute(builder: (_) => const _LayarScanQr()),
@@ -1037,7 +1037,7 @@ Future<bool> scanCheckin(BuildContext context,
   try {
     await ApiClient.dio.post(
       '/jadwal/$jadwalId/scan',
-      data: {'balita_id': balitaId, 'kode_qr': kode.trim()},
+      data: {'anak_id': anakId, 'kode_qr': kode.trim()},
       options: Options(receiveTimeout: const Duration(seconds: 15)),
     );
     snack('Check-in berhasil. Anda masuk ke antrean pendataan kader.');

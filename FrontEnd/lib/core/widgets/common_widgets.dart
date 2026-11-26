@@ -157,7 +157,7 @@ class KepalaKartuHome extends StatelessWidget {
   final IconData? ikon;
   final String judul;
 
-  /// Ditekan bila judul dapat dipilih (mis. memilih balita).
+  /// Ditekan bila judul dapat dipilih (mis. memilih anak).
   final VoidCallback? onJudul;
   final Widget? lencana;
 
@@ -347,12 +347,12 @@ class RingkasAngkaHome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final balita = <Widget>[];
+    final anak = <Widget>[];
     for (var i = 0; i < item.length; i++) {
       if (i > 0) {
-        balita.add(Container(width: 1, height: 34, color: warnaGarisHome.withValues(alpha: 0.5)));
+        anak.add(Container(width: 1, height: 34, color: warnaGarisHome.withValues(alpha: 0.5)));
       }
-      balita.add(
+      anak.add(
         Expanded(
           child: Column(
             children: [
@@ -373,7 +373,7 @@ class RingkasAngkaHome extends StatelessWidget {
         ),
       );
     }
-    return Row(children: balita);
+    return Row(children: anak);
   }
 }
 
@@ -808,7 +808,7 @@ class HomeShell extends StatelessWidget {
               ),
               SizedBox(height: 2),
               Text(
-                'Layanan Kesehatan Balita',
+                'Layanan Kesehatan Anak',
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

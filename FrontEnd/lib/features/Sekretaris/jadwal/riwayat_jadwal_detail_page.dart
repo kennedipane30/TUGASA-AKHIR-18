@@ -108,20 +108,20 @@ class RiwayatJadwalDetailPage extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _baris('Terdaftar', '${j.totalDaftar} balita'),
+                              _baris('Terdaftar', '${j.totalDaftar} anak'),
                               const SizedBox(height: 6),
-                              _baris('Check-in', '${j.checkin} balita'),
+                              _baris('Check-in', '${j.checkin} anak'),
                               const SizedBox(height: 6),
-                              _baris('Tidak hadir', '${j.tidakDatang} balita'),
+                              _baris('Tidak hadir', '${j.tidakDatang} anak'),
                               const SizedBox(height: 6),
-                              _baris('Batal', '${j.batal} balita'),
+                              _baris('Batal', '${j.batal} anak'),
                             ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Bagian detail lain (mis. daftar balita) dapat ditambahkan di sini.
+                  // Bagian detail lain (mis. daftar anak) dapat ditambahkan di sini.
                 ],
               ),
             ),

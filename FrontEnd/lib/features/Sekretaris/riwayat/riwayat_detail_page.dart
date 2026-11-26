@@ -1,19 +1,19 @@
 part of 'riwayat_page.dart';
 
 // ---------------------------------------------------------------------------
-// HALAMAN 2: DAFTAR BALITA PADA SATU JADWAL
+// HALAMAN 2: DAFTAR ANAK PADA SATU JADWAL
 // ---------------------------------------------------------------------------
-class _DaftarBalitaPage extends StatefulWidget {
+class _DaftarAnakPage extends StatefulWidget {
   final Map<String, dynamic> jadwal;
-  const _DaftarBalitaPage({required this.jadwal});
+  const _DaftarAnakPage({required this.jadwal});
 
   String get jadwalId => _teks(jadwal['id']);
 
   @override
-  State<_DaftarBalitaPage> createState() => _DaftarBalitaPageState();
+  State<_DaftarAnakPage> createState() => _DaftarAnakPageState();
 }
 
-class _DaftarBalitaPageState extends State<_DaftarBalitaPage> {
+class _DaftarAnakPageState extends State<_DaftarAnakPage> {
   List<Map<String, dynamic>> _data = [];
   bool _memuat = true;
   String? _gagal;
@@ -26,7 +26,7 @@ class _DaftarBalitaPageState extends State<_DaftarBalitaPage> {
 
   Future<void> _muat() async {
     try {
-      final d = await _get('$_prefix/jadwal/${widget.jadwalId}/balita');
+      final d = await _get('$_prefix/jadwal/${widget.jadwalId}/anak');
       final list = _daftarPeta(d);
       list.sort((a, b) => (int.tryParse(_teks(a['nomor_antrean'])) ?? 1 << 30)
           .compareTo(int.tryParse(_teks(b['nomor_antrean'])) ?? 1 << 30));
@@ -72,9 +72,9 @@ class _DaftarBalitaPageState extends State<_DaftarBalitaPage> {
             else
               _kartu(
                 title: 'Daftar Balita',
-                kanan: '${_data.length} balita',
+                kanan: '${_data.length} anak',
                 child: _data.isEmpty
-                    ? const Text('Belum ada balita yang check-in pada jadwal ini.',
+                    ? const Text('Belum ada anak yang check-in pada jadwal ini.',
                         style: TextStyle(fontSize: 16, color: AppColors.teksRedup))
                     : Column(children: [for (final a in _data) _baris(a)]),
               ),
@@ -122,7 +122,7 @@ class _DaftarBalitaPageState extends State<_DaftarBalitaPage> {
             context,
             MaterialPageRoute(
               builder: (_) =>
-                  _HasilBalitaPage(pendaftaranId: _teks(a['pendaftaran_id'])),
+                  _HasilAnakPage(pendaftaranId: _teks(a['pendaftaran_id'])),
             ),
           ),
           child: Container(
@@ -176,17 +176,17 @@ class _DaftarBalitaPageState extends State<_DaftarBalitaPage> {
 }
 
 // ---------------------------------------------------------------------------
-// HALAMAN 3: HASIL PENDATAAN BALITA
+// HALAMAN 3: HASIL PENDATAAN ANAK
 // ---------------------------------------------------------------------------
-class _HasilBalitaPage extends StatefulWidget {
+class _HasilAnakPage extends StatefulWidget {
   final String pendaftaranId;
-  const _HasilBalitaPage({required this.pendaftaranId});
+  const _HasilAnakPage({required this.pendaftaranId});
 
   @override
-  State<_HasilBalitaPage> createState() => _HasilBalitaPageState();
+  State<_HasilAnakPage> createState() => _HasilAnakPageState();
 }
 
-class _HasilBalitaPageState extends State<_HasilBalitaPage> {
+class _HasilAnakPageState extends State<_HasilAnakPage> {
   Map<String, dynamic>? _d;
   Map<String, String> _namaImunisasi = {};
   bool _memuat = true;
@@ -208,7 +208,7 @@ class _HasilBalitaPageState extends State<_HasilBalitaPage> {
     try {
       final peta = <String, String>{};
       try {
-        final v = await _get('/imunisasi');
+        final v = await _get('/vaksin');
         if (v is List) {
           for (final e in v) {
             if (e is Map) peta[_teks(e['id'])] = _teks(e['nama']);
@@ -305,7 +305,7 @@ class _HasilBalitaPageState extends State<_HasilBalitaPage> {
   }
 
   List<Widget> _isi(Map<String, dynamic> d) {
-    final balita = _peta(d['balita']) ?? {};
+    final anak = _peta(d['anak']) ?? {};
     final jadwal = _peta(d['jadwal']) ?? {};
     final u = _peta(d['pengukuran']);
     final prev = _peta(d['pengukuran_sebelumnya']);
@@ -322,14 +322,14 @@ class _HasilBalitaPageState extends State<_HasilBalitaPage> {
 
     return [
       _kartu(
-        title: _teks(balita['nama']).isEmpty ? 'Balita' : _teks(balita['nama']),
+        title: _teks(anak['nama']).isEmpty ? 'Anak' : _teks(anak['nama']),
         kanan: _fmtTgl(_tgl(jadwal['tanggal'])),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _baris('Jenis kelamin',
-                _teks(balita['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'),
-            _baris('Usia', _usia(usia, lahir: balita['tanggal_lahir'], pada: _tgl(jadwal['tanggal']))),
+                _teks(anak['jenis_kelamin']) == 'P' ? 'Perempuan' : 'Laki-laki'),
+            _baris('Usia', _usia(usia, lahir: anak['tanggal_lahir'], pada: _tgl(jadwal['tanggal']))),
             if (_jam(jadwal['jam_mulai']).isNotEmpty)
               _baris('Sesi posyandu', '${_jam(jadwal['jam_mulai'])} WIB'),
           ],
@@ -420,13 +420,13 @@ class _HasilBalitaPageState extends State<_HasilBalitaPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                          '${_namaImunisasi[_teks(v['jenis_imunisasi_id'])] ?? 'Imunisasi'} · Dosis ${_teks(v['dosis_ke'])}',
+                          '${_namaImunisasi[_teks(v['jenis_vaksin_id'])] ?? 'Imunisasi'} · Dosis ${_teks(v['dosis_ke'])}',
                           style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 17,
                               color: _teksGelap)),
-                      if (_teks(v['kondisi_balita']).isNotEmpty)
-                        Text('Kondisi: ${_kondisiTeks(v['kondisi_balita'])}',
+                      if (_teks(v['kondisi_anak']).isNotEmpty)
+                        Text('Kondisi: ${_kondisiTeks(v['kondisi_anak'])}',
                             style: const TextStyle(
                                 fontSize: 16, color: AppColors.teksRedup)),
                       if (_teks(v['nomor_batch']).isNotEmpty)

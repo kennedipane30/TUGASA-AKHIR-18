@@ -6,7 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/posyandu.dart';
 import '../../../service/imunisasi_service.dart';
 import '../../auth/auth_provider.dart';
-import 'imunisasi_balita_lihat_page.dart';
+import 'imunisasi_anak_lihat_page.dart';
 
 const _hijauHeader = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
@@ -79,7 +79,7 @@ const _tautanDetail = Text(
   ),
 );
 
-/// Kader: cari balita (hanya posyandu kader sendiri)
+/// Kader: cari anak (hanya posyandu kader sendiri)
 /// lalu lihat jadwal imunisasi, riwayat imunisasi, dan suplemennya.
 class KaderImunisasiPage extends StatefulWidget {
   const KaderImunisasiPage({super.key});
@@ -92,7 +92,7 @@ class _KaderImunisasiPageState extends State<KaderImunisasiPage> {
   final _svc = ImunisasiService();
   final _cari = TextEditingController();
 
-  List<BalitaRingkas> _hasil = [];
+  List<AnakRingkas> _hasil = [];
   bool _loading = false;
   bool _sudahCari = false;
   String? _error;
@@ -108,7 +108,7 @@ class _KaderImunisasiPageState extends State<KaderImunisasiPage> {
 
     if (kata.length < 2) {
       setState(() {
-        _error = 'Ketik minimal 2 karakter nama atau NIK balita';
+        _error = 'Ketik minimal 2 karakter nama atau NIK anak';
         _hasil = [];
         _sudahCari = false;
       });
@@ -121,7 +121,7 @@ class _KaderImunisasiPageState extends State<KaderImunisasiPage> {
     });
 
     try {
-      final data = await _svc.cariBalita(kata);
+      final data = await _svc.cariAnak(kata);
       if (!mounted) return;
 
       setState(() {
@@ -139,13 +139,13 @@ class _KaderImunisasiPageState extends State<KaderImunisasiPage> {
     }
   }
 
-  void _buka(BalitaRingkas a) {
+  void _buka(AnakRingkas a) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ImunisasiBalitaLihatPage(
-          balitaId: a.id,
-          namaBalita: a.nama,
+        builder: (_) => ImunisasiAnakLihatPage(
+          anakId: a.id,
+          namaAnak: a.nama,
           usia: a.usia,
         ),
       ),
@@ -204,7 +204,7 @@ class _KaderImunisasiPageState extends State<KaderImunisasiPage> {
         textInputAction: TextInputAction.search,
         onSubmitted: (_) => _muat(),
         decoration: InputDecoration(
-          hintText: 'Cari nama balita atau NIK balita',
+          hintText: 'Cari nama anak atau NIK anak',
           hintStyle: const TextStyle(fontSize: 16),
           prefixIcon: const Icon(Icons.search, color: Colors.black54),
           suffixIcon: IconButton(
@@ -242,8 +242,8 @@ class _KaderImunisasiPageState extends State<KaderImunisasiPage> {
     );
   }
 
-  /// Kartu balita: nama di kepala, usia lanjut ke samping, "Lihat detail" di kanan bawah.
-  Widget _kartuBalita(BalitaRingkas a) {
+  /// Kartu anak: nama di kepala, usia lanjut ke samping, "Lihat detail" di kanan bawah.
+  Widget _kartuAnak(AnakRingkas a) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: DecoratedBox(
@@ -333,13 +333,13 @@ class _KaderImunisasiPageState extends State<KaderImunisasiPage> {
                   : _error != null
                       ? _pesan(_error!)
                       : !_sudahCari
-                          ? _pesan('Ketik nama atau NIK balita untuk mencari di posyandu Anda.')
+                          ? _pesan('Ketik nama atau NIK anak untuk mencari di posyandu Anda.')
                           : _hasil.isEmpty
-                              ? _pesan('Balita tidak ditemukan di posyandu Anda.')
+                              ? _pesan('Anak tidak ditemukan di posyandu Anda.')
                               : ListView(
                                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                                   children: [
-                                    for (final a in _hasil) _kartuBalita(a),
+                                    for (final a in _hasil) _kartuAnak(a),
                                   ],
                                 ),
             ),

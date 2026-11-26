@@ -194,12 +194,12 @@ Future<Uint8List> buatPdfLaporanBulananSekretaris({
     _bagian('IV', 'Imunisasi yang Diberikan'),
     if (data.imunisasi.isEmpty)
       _tabel([
-        ['Jenis imunisasi', 'Jumlah balita'],
+        ['Jenis imunisasi', 'Jumlah anak'],
         ['Tidak ada imunisasi di posyandu bulan ini', '0'],
       ], [130, 44], tengah: {1})
     else
       _tabel([
-        ['Jenis imunisasi', 'Jumlah balita'],
+        ['Jenis imunisasi', 'Jumlah anak'],
         for (final v in data.imunisasi) [v.nama, '${v.jumlah}'],
         ['Total pemberian', '${data.totalImunisasi}'],
       ], [130, 44], tengah: {1}, barisTebal: {data.imunisasi.length + 1}),
@@ -208,12 +208,12 @@ Future<Uint8List> buatPdfLaporanBulananSekretaris({
     _bagian('V', 'Pemberian Suplemen'),
     if (data.suplemen.isEmpty)
       _tabel([
-        ['Suplemen', 'Jumlah balita'],
+        ['Suplemen', 'Jumlah anak'],
         ['Tidak ada pemberian suplemen bulan ini', '0'],
       ], [130, 44], tengah: {1})
     else
       _tabel([
-        ['Suplemen', 'Jumlah balita'],
+        ['Suplemen', 'Jumlah anak'],
         for (final s in data.suplemen) [s.nama, '${s.jumlah}'],
       ], [130, 44], tengah: {1}),
     _catatan('Vitamin A dosis tinggi dan obat cacing umumnya diberikan pada bulan Februari dan Agustus.'),

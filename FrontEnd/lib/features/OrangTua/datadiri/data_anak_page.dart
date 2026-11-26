@@ -1,4 +1,4 @@
-// data_balita_page.dart
+// data_anak_page.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -84,33 +84,33 @@ Widget _label(String teks, {bool wajib = false, String? ket}) => Padding(
 /// Usia detail: "27 hari", "1 bulan 3 hari", "1 tahun 2 bulan".
 String _usiaDetail(String tglLahir) {
   final lahir = parseTgl(tglLahir);
-  if (lahir == null) return usiaBalita(tglLahir);
+  if (lahir == null) return usiaAnak(tglLahir);
   return usiaDariLahir(lahir, DateTime.now());
 }
 
-Future<DataBalita?> tampilFormBalita(
+Future<DataAnak?> tampilFormAnak(
   BuildContext context, {
-  DataBalita? awal,
+  DataAnak? awal,
 }) =>
-    showModalBottomSheet<DataBalita>(
+    showModalBottomSheet<DataAnak>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _FormBalita(awal: awal),
+      builder: (_) => _FormAnak(awal: awal),
     );
 
-class DataBalitaPage extends StatefulWidget {
-  const DataBalitaPage({super.key});
+class DataAnakPage extends StatefulWidget {
+  const DataAnakPage({super.key});
 
   @override
-  State<DataBalitaPage> createState() => _DataBalitaPageState();
+  State<DataAnakPage> createState() => _DataAnakPageState();
 }
 
-class _DataBalitaPageState extends State<DataBalitaPage> {
-  List<DataBalita> _balita = [];
+class _DataAnakPageState extends State<DataAnakPage> {
+  List<DataAnak> _anak = [];
   bool _memuat = true;
   String? _gagal;
 
@@ -126,7 +126,7 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
       final model = KeluargaApi.keModel(data);
       if (!mounted) return;
       setState(() {
-        _balita = model.balita;
+        _anak = model.anak;
         _gagal = null;
         _memuat = false;
       });
@@ -139,26 +139,26 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
     }
   }
 
-  Future<void> _tambahAtauUbah({DataBalita? awal}) async {
-    final hasil = await tampilFormBalita(context, awal: awal);
+  Future<void> _tambahAtauUbah({DataAnak? awal}) async {
+    final hasil = await tampilFormAnak(context, awal: awal);
     if (hasil == null || !mounted) return;
     snackDi(
       context,
-      awal == null ? 'Data balita ditambahkan' : 'Data balita diperbarui',
+      awal == null ? 'Data anak ditambahkan' : 'Data anak diperbarui',
     );
-    // Balita baru: riwayat imunisasi dicatat bidan saat kunjungan pertama.
+    // Anak baru: riwayat imunisasi dicatat bidan saat kunjungan pertama.
     if (awal == null) await _infoBukuKia(hasil.nama);
     _muat();
   }
 
-  /// Info untuk orang tua: riwayat imunisasi balita dicatat bidan, bukan diisi sendiri.
+  /// Info untuk orang tua: riwayat imunisasi anak dicatat bidan, bukan diisi sendiri.
   Future<void> _infoBukuKia(String nama) => showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Riwayat Imunisasi Balita'),
+          title: const Text('Riwayat Imunisasi Anak'),
           content: Text(
             'Bawa Buku KIA atau kartu imunisasi $nama saat pertama kali ke posyandu. '
-            'Bidan akan mencatat imunisasi yang sudah pernah diterima balita.',
+            'Bidan akan mencatat imunisasi yang sudah pernah diterima anak.',
             style: const TextStyle(fontSize: 16, height: 1.4),
           ),
           actions: [
@@ -167,12 +167,12 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
         ),
       );
 
-  Future<void> _hapus(DataBalita balita) async {
+  Future<void> _hapus(DataAnak anak) async {
     final ya = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus data balita?'),
-        content: Text('Data ${balita.nama} akan dihapus dari daftar.'),
+        title: const Text('Hapus data anak?'),
+        content: Text('Data ${anak.nama} akan dihapus dari daftar.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -194,14 +194,14 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
 
     if (ya != true) return;
     try {
-      if (balita.id != null) {
+      if (anak.id != null) {
         await ApiClient.dio.delete(
-          '/keluarga/balita/${balita.id}',
+          '/keluarga/anak/${anak.id}',
           options: opsiApi,
         );
       }
       if (!mounted) return;
-      snackDi(context, 'Data balita dihapus');
+      snackDi(context, 'Data anak dihapus');
       _muat();
     } catch (error) {
       if (mounted) snackDi(context, pesanError(error));
@@ -226,8 +226,8 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
     );
   }
 
-  Widget _kartuBalita(DataBalita balita) {
-    final belumDicatat = balita.statusRiwayatImunisasi != StatusRiwayatImunisasi.dikonfirmasi;
+  Widget _kartuAnak(DataAnak anak) {
+    final belumDicatat = anak.statusRiwayatImunisasi != StatusRiwayatImunisasi.dikonfirmasi;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
@@ -236,21 +236,21 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          kepalaKeluarga(balita.nama,
-              kanan: balita.diarsipkan ? 'Tidak aktif' : 'Aktif',
-              warnaKanan: balita.diarsipkan ? AppColors.teksRedup : kHijauHeader),
+          kepalaKeluarga(anak.nama,
+              kanan: anak.diarsipkan ? 'Tidak aktif' : 'Aktif',
+              warnaKanan: anak.diarsipkan ? AppColors.teksRedup : kHijauHeader),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                infoKeluarga('Jenis Kelamin', balita.jk == 'P' ? 'Perempuan' : 'Laki-laki', lebar: 130),
-                infoKeluarga('Umur', _usiaDetail(balita.tglLahir), lebar: 130),
-                infoKeluarga('Tanggal Lahir', balita.tglLahir, lebar: 130),
-                if (balita.diarsipkan) ...[
-                  infoKeluarga('Keterangan', balita.alasanArsip.isEmpty ? '-' : balita.alasanArsip,
+                infoKeluarga('Jenis Kelamin', anak.jk == 'P' ? 'Perempuan' : 'Laki-laki', lebar: 130),
+                infoKeluarga('Umur', _usiaDetail(anak.tglLahir), lebar: 130),
+                infoKeluarga('Tanggal Lahir', anak.tglLahir, lebar: 130),
+                if (anak.diarsipkan) ...[
+                  infoKeluarga('Keterangan', anak.alasanArsip.isEmpty ? '-' : anak.alasanArsip,
                       lebar: 130),
-                  infoKeluarga('Sejak', balita.tglArsip.isEmpty ? '-' : balita.tglArsip, lebar: 130),
+                  infoKeluarga('Sejak', anak.tglArsip.isEmpty ? '-' : anak.tglArsip, lebar: 130),
                 ],
                 const Divider(height: 18, color: Color(0xFFE5E7EB)),
                 Row(
@@ -267,7 +267,7 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
                             fontSize: 15.5, fontWeight: FontWeight.w600, color: kTeksGelap)),
                     Expanded(
                       child: Text(
-                        StatusRiwayatImunisasi.label(balita.statusRiwayatImunisasi),
+                        StatusRiwayatImunisasi.label(anak.statusRiwayatImunisasi),
                         style: TextStyle(
                           fontSize: 15.5,
                           fontWeight: FontWeight.w700,
@@ -278,10 +278,10 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                if (balita.diarsipkan)
-                  // Balita arsip hanya dapat dilihat; riwayat tetap ada di menu Riwayat.
+                if (anak.diarsipkan)
+                  // Anak arsip hanya dapat dilihat; riwayat tetap ada di menu Riwayat.
                   const Text(
-                    'Data balita ini sudah tidak aktif di posyandu. '
+                    'Data anak ini sudah tidak aktif di posyandu. '
                     'Riwayat penimbangan dan imunisasi tetap dapat dilihat.',
                     style: TextStyle(fontSize: 14.5, height: 1.4, color: AppColors.teksRedup),
                   )
@@ -289,11 +289,11 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
                   // Tombol bergaris: Hapus di kiri, Ubah di kanan.
                   Row(
                     children: [
-                      Expanded(child: _tombolGaris('Hapus', AppColors.merah, () => _hapus(balita))),
+                      Expanded(child: _tombolGaris('Hapus', AppColors.merah, () => _hapus(anak))),
                       const SizedBox(width: 10),
                       Expanded(
                           child:
-                              _tombolGaris('Ubah', kHijauHeader, () => _tambahAtauUbah(awal: balita))),
+                              _tombolGaris('Ubah', kHijauHeader, () => _tambahAtauUbah(awal: anak))),
                     ],
                   ),
               ],
@@ -333,7 +333,7 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
       children: [
         const SizedBox(height: 16),
         Expanded(
-          child: _balita.isEmpty
+          child: _anak.isEmpty
               ? ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   children: [
@@ -342,8 +342,8 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
                       decoration: dekorKartuKeluarga(),
                       child: const Text(
-                        'Belum ada data balita. Tekan tombol hijau di bawah '
-                        'untuk menambah data balita balita.',
+                        'Belum ada data anak. Tekan tombol hijau di bawah '
+                        'untuk menambah data anak balita.',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 15.5, height: 1.4, color: AppColors.teksRedup),
                       ),
@@ -353,13 +353,13 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   children: [
-                    // balita aktif lebih dulu, balita tidak aktif di bawah
-                    for (final balita in _balita.where((a) => !a.diarsipkan)) _kartuBalita(balita),
-                    for (final balita in _balita.where((a) => a.diarsipkan)) _kartuBalita(balita),
+                    // anak aktif lebih dulu, anak tidak aktif di bawah
+                    for (final anak in _anak.where((a) => !a.diarsipkan)) _kartuAnak(anak),
+                    for (final anak in _anak.where((a) => a.diarsipkan)) _kartuAnak(anak),
                   ],
                 ),
         ),
-        if (_balita.isNotEmpty)
+        if (_anak.isNotEmpty)
           const Padding(
             padding: EdgeInsets.fromLTRB(32, 0, 32, 14),
             child: Text(
@@ -384,29 +384,29 @@ class _DataBalitaPageState extends State<DataBalitaPage> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: tombolHijauKeluarga('Tambah Balita',
+            child: tombolHijauKeluarga('Tambah Anak',
                 ikon: Icons.add, onPressed: () => _tambahAtauUbah()),
           ),
         ),
         body: Column(
           children: [
-            const HeaderKeluarga(judul: 'Data Balita'),
+            const HeaderKeluarga(judul: 'Data Anak'),
             Expanded(child: _isi()),
           ],
         ),
       );
 }
 
-class _FormBalita extends StatefulWidget {
-  final DataBalita? awal;
+class _FormAnak extends StatefulWidget {
+  final DataAnak? awal;
 
-  const _FormBalita({this.awal});
+  const _FormAnak({this.awal});
 
   @override
-  State<_FormBalita> createState() => _FormBalitaState();
+  State<_FormAnak> createState() => _FormAnakState();
 }
 
-class _FormBalitaState extends State<_FormBalita> {
+class _FormAnakState extends State<_FormAnak> {
   final _key = GlobalKey<FormState>();
   late final TextEditingController _nama;
   late final TextEditingController _nik;
@@ -422,13 +422,13 @@ class _FormBalitaState extends State<_FormBalita> {
   @override
   void initState() {
     super.initState();
-    final balita = widget.awal;
-    _nama = TextEditingController(text: balita?.nama ?? '');
-    _nik = TextEditingController(text: balita?.nik ?? '');
-    _tgl = TextEditingController(text: balita?.tglLahir ?? '');
-    _berat = TextEditingController(text: balita?.beratLahir ?? '');
-    _panjang = TextEditingController(text: balita?.panjangLahir ?? '');
-    _jk = balita?.jk ?? '';
+    final anak = widget.awal;
+    _nama = TextEditingController(text: anak?.nama ?? '');
+    _nik = TextEditingController(text: anak?.nik ?? '');
+    _tgl = TextEditingController(text: anak?.tglLahir ?? '');
+    _berat = TextEditingController(text: anak?.beratLahir ?? '');
+    _panjang = TextEditingController(text: anak?.panjangLahir ?? '');
+    _jk = anak?.jk ?? '';
   }
 
   @override
@@ -490,16 +490,16 @@ class _FormBalitaState extends State<_FormBalita> {
       final id = widget.awal?.id;
       final response = id == null
           ? await ApiClient.dio.post(
-              '/keluarga/balita',
+              '/keluarga/anak',
               data: body,
               options: opsiApi,
             )
           : await ApiClient.dio.put(
-              '/keluarga/balita/$id',
+              '/keluarga/anak/$id',
               data: body,
               options: opsiApi,
             );
-      final hasil = DataBalita.fromApi(
+      final hasil = DataAnak.fromApi(
         Map<String, dynamic>.from(response.data['data'] as Map),
       );
       if (mounted) Navigator.pop(context, hasil);
@@ -564,11 +564,11 @@ class _FormBalitaState extends State<_FormBalita> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 judulLembarKeluarga(
-                  widget.awal == null ? 'Tambah Data Balita' : 'Ubah Data Balita',
+                  widget.awal == null ? 'Tambah Data Anak' : 'Ubah Data Anak',
                   sub: 'Lengkapi biodata balita',
                 ),
                 const SizedBox(height: 18),
-                _label('Nama Lengkap Balita', wajib: true),
+                _label('Nama Lengkap Anak', wajib: true),
                 TextFormField(
                   controller: _nama,
                   textCapitalization: TextCapitalization.words,
@@ -617,7 +617,7 @@ class _FormBalitaState extends State<_FormBalita> {
                     ),
                   ),
                 const SizedBox(height: 14),
-                _label('NIK Balita', ket: '(opsional)'),
+                _label('NIK Anak', ket: '(opsional)'),
                 TextFormField(
                   controller: _nik,
                   keyboardType: TextInputType.number,

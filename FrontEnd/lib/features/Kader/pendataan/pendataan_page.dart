@@ -105,7 +105,7 @@ Widget _kartu({
 
 class AntreanKader {
   final String pendaftaranId;
-  final String balitaId;
+  final String anakId;
   final String nama;
   final String jk;
   final DateTime? tanggalLahir;
@@ -118,7 +118,7 @@ class AntreanKader {
 
   AntreanKader({
     required this.pendaftaranId,
-    required this.balitaId,
+    required this.anakId,
     required this.nama,
     required this.jk,
     required this.tanggalLahir,
@@ -132,7 +132,7 @@ class AntreanKader {
 
   factory AntreanKader.fromApi(Map<String, dynamic> j) => AntreanKader(
         pendaftaranId: j['pendaftaran_id']?.toString() ?? '',
-        balitaId: j['balita_id']?.toString() ?? '',
+        anakId: j['anak_id']?.toString() ?? '',
         nama: j['nama']?.toString() ?? '',
         jk: j['jenis_kelamin']?.toString() ?? '',
         tanggalLahir: _tglLahir(j['tanggal_lahir']),
@@ -157,7 +157,7 @@ class AntreanKader {
     return bl == 0 ? '$th tahun' : '$th tahun $bl bulan';
   }
 
-  /// GET /kader/jadwal/:id/antrean (balita yang sudah check-in lewat scan orang tua),
+  /// GET /kader/jadwal/:id/antrean (anak yang sudah check-in lewat scan orang tua),
   /// diurutkan berdasarkan nomor antrean.
   static Future<List<AntreanKader>> ambil(String jadwalId) async {
     final r = await ApiClient.dio.get(
@@ -385,8 +385,8 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
       context,
       MaterialPageRoute(
         builder: (_) => a.sudahDiukur
-            ? EditPengukuranPage(balita: a)
-            : CatatPengukuranPage(balita: a),
+            ? EditPengukuranPage(anak: a)
+            : CatatPengukuranPage(anak: a),
       ),
     );
 
@@ -435,7 +435,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Imunisasi Balita: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
   // -------------------------------------------------------------------------
   Widget _header() {
     return Container(
@@ -501,7 +501,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   children: [
-                    // Pesan "sesi belum dimulai" hanya muncul bila sudah ada balita yang check-in.
+                    // Pesan "sesi belum dimulai" hanya muncul bila sudah ada anak yang check-in.
                     if (!_memuat && _gagal == null && mulaiNanti != null && _antrean.isNotEmpty)
                       _bannerBelumMulai(mulaiNanti),
                     if (_memuat)
@@ -554,7 +554,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                       if (_antrean.isEmpty)
                         _kartu(
                           child: const Text(
-                            'Belum ada balita. Data balita masuk ke sini setelah orang tua melakukan check-in dengan scan QR.',
+                            'Belum ada anak. Data anak masuk ke sini setelah orang tua melakukan check-in dengan scan QR.',
                             style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
                           ),
                         )
@@ -568,7 +568,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
                         if (!_antrean.any((a) => a.sudahDiukur == _lihatSudah))
                           _kartu(
                             child: Text(
-                              _lihatSudah ? 'Belum ada balita yang dicatat.' : 'Semua balita sudah dicatat.',
+                              _lihatSudah ? 'Belum ada anak yang dicatat.' : 'Semua anak sudah dicatat.',
                               style: const TextStyle(fontSize: 16, color: AppColors.teksRedup),
                             ),
                           ),
@@ -585,7 +585,7 @@ class _KaderPendataanPageState extends State<KaderPendataanPage> {
     );
   }
 
-  /// Kartu antrean: hanya nomor antrean dan status (nama balita tidak
+  /// Kartu antrean: hanya nomor antrean dan status (nama anak tidak
   /// ditampilkan di daftar; tetap tampil di halaman Catat / Edit).
   Widget _baris(AntreanKader a) {
     final belumMulai = _mulaiNanti != null;
