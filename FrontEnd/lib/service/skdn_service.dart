@@ -94,8 +94,8 @@ class SkdnBulan {
 }
 
 /// Balita yang perlu perhatian (tidak naik, 2T, atau BGM).
-class BalitaSkdn {
-  final String balitaId;
+class AnakSkdn {
+  final String anakId;
   final String nama;
   final String jenisKelamin;
   final String usiaTeks;
@@ -108,8 +108,8 @@ class BalitaSkdn {
   final bool bgm;
   final String keterangan;
 
-  const BalitaSkdn({
-    required this.balitaId,
+  const AnakSkdn({
+    required this.anakId,
     required this.nama,
     required this.jenisKelamin,
     required this.usiaTeks,
@@ -123,8 +123,8 @@ class BalitaSkdn {
     required this.keterangan,
   });
 
-  factory BalitaSkdn.fromJson(Map<String, dynamic> j) => BalitaSkdn(
-        balitaId: _s(j['balita_id']),
+  factory AnakSkdn.fromJson(Map<String, dynamic> j) => AnakSkdn(
+        anakId: _s(j['anak_id']),
         nama: _s(j['nama']).isEmpty ? '-' : _s(j['nama']),
         jenisKelamin: _s(j['jenis_kelamin']),
         usiaTeks: _s(j['usia_teks']),
@@ -146,8 +146,8 @@ class SkdnData {
   final String posyandu;
   final double targetDS;
   final List<SkdnBulan> tren;
-  final List<BalitaSkdn> perluRujuk;
-  final List<BalitaSkdn> tidakNaik;
+  final List<AnakSkdn> perluRujuk;
+  final List<AnakSkdn> tidakNaik;
 
   const SkdnData({
     required this.bulan,
@@ -163,8 +163,8 @@ class SkdnData {
         posyandu: _s(j['posyandu']),
         targetDS: j['target_ds'] == null ? 85 : _d(j['target_ds']),
         tren: _l(j['tren']).map(SkdnBulan.fromJson).toList(),
-        perluRujuk: _l(j['perlu_rujuk']).map(BalitaSkdn.fromJson).toList(),
-        tidakNaik: _l(j['tidak_naik']).map(BalitaSkdn.fromJson).toList(),
+        perluRujuk: _l(j['perlu_rujuk']).map(AnakSkdn.fromJson).toList(),
+        tidakNaik: _l(j['tidak_naik']).map(AnakSkdn.fromJson).toList(),
       );
 
   bool get capaiTarget => bulan.persenDS >= targetDS;

@@ -216,13 +216,13 @@ class _SkdnViewState extends State<SkdnView> {
     _muat();
   }
 
-  void _bukaBalita(BalitaSkdn a) {
+  void _bukaAnak(AnakSkdn a) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => BalitaDetailPage(
           prefix: widget.prefix,
-          balitaId: a.balitaId,
+          anakId: a.anakId,
           nama: a.nama,
           bisaKelolaImunisasi: widget.prefix == '/bidan',
         ),
@@ -300,7 +300,7 @@ class _SkdnViewState extends State<SkdnView> {
       _kartuPersentase(d),
       _kartuRincian(b),
       if (d.tren.length > 1) _kartuTren(d),
-      _kartuBalita(
+      _kartuAnak(
         'Perlu Diperiksa / Dirujuk',
         Icons.warning_amber_rounded,
         AppColors.merah,
@@ -308,7 +308,7 @@ class _SkdnViewState extends State<SkdnView> {
         d.perluRujuk,
         'Tidak ada balita yang perlu dirujuk bulan ini.',
       ),
-      _kartuBalita(
+      _kartuAnak(
         'Berat Badan Tidak Naik',
         Icons.trending_flat,
         AppColors.kuning,
@@ -574,9 +574,9 @@ class _SkdnViewState extends State<SkdnView> {
         ],
       );
 
-  // ------------------------------------------------------------ daftar balita
+  // ------------------------------------------------------------ daftar anak
 
-  Widget _kartuBalita(String judul, IconData ikon, Color fg, Color bg, List<BalitaSkdn> list, String kosong) {
+  Widget _kartuAnak(String judul, IconData ikon, Color fg, Color bg, List<AnakSkdn> list, String kosong) {
     return KartuRekap(
       title: judul,
       child: Column(
@@ -585,7 +585,7 @@ class _SkdnViewState extends State<SkdnView> {
           if (list.isEmpty)
             Text(kosong, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup))
           else
-            for (final a in list) _barisBalita(a, fg, bg),
+            for (final a in list) _barisAnak(a, fg, bg),
           const SizedBox(height: 6),
           _barisKet('Jumlah balita', '${list.length}'),
         ],
@@ -593,7 +593,7 @@ class _SkdnViewState extends State<SkdnView> {
     );
   }
 
-  Widget _barisBalita(BalitaSkdn a, Color fg, Color bg) {
+  Widget _barisAnak(AnakSkdn a, Color fg, Color bg) {
     final naik = a.kenaikanGram;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -602,7 +602,7 @@ class _SkdnViewState extends State<SkdnView> {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => _bukaBalita(a),
+          onTap: () => _bukaAnak(a),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
             child: Row(

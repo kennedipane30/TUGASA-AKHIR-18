@@ -99,7 +99,7 @@ Future<Uint8List> buatPdfSuratRujukan(RujukanDetail r) async {
     author: 'PosyanduCare',
     creator: 'PosyanduCare',
   );
-  final a = r.dataBalita;
+  final a = r.dataAnak;
   final p = a.pemeriksaan;
   final namaPos = labelPosyandu(r.posyandu.isNotEmpty ? r.posyandu : a.posyandu);
   final ortu = <(String, String)>[
@@ -144,9 +144,9 @@ Future<Uint8List> buatPdfSuratRujukan(RujukanDetail r) async {
     pw.SizedBox(height: 8),
     _teks('Dengan hormat, mohon pemeriksaan dan penanganan lebih lanjut terhadap balita berikut:'),
 
-    _bagian('I', 'Identitas Balita'),
+    _bagian('I', 'Identitas Anak'),
     _tabelData([
-      ('Nama balita', a.nama),
+      ('Nama anak', a.nama),
       ('NIK', _isi(a.nik)),
       ('Jenis kelamin', jkRujukan(a.jenisKelamin)),
       ('Tanggal lahir / usia', '${tglRujukan(a.tanggalLahir)}  (${_isi(a.usiaTeks)})'),

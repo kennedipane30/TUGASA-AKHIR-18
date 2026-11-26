@@ -116,7 +116,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
   Timer? _tunda;
 
   DaftarBalita? _data;
-  DaftarBalita? _arsip; // balita yang sudah diarsipkan
+  DaftarBalita? _arsip; // anak yang sudah diarsipkan
   bool _loading = true;
   String? _error;
   String _aktif = 'Semua';
@@ -191,7 +191,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
       MaterialPageRoute(
         builder: (_) => BalitaDetailPage(
           prefix: widget.prefix,
-          balitaId: b.balitaId,
+          anakId: b.anakId,
           nama: b.nama,
           bisaKelolaImunisasi: widget.bisaKelolaImunisasi,
         ),

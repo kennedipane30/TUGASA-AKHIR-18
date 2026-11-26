@@ -127,7 +127,7 @@ class _TabGiziState extends State<_TabGizi> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'Persentase dihitung dari balita yang diukur bulan ini. Satu balita bisa termasuk lebih dari satu kategori.',
+              'Persentase dihitung dari balita yang diukur bulan ini. Satu anak bisa termasuk lebih dari satu kategori.',
               style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
             ),
           ],
@@ -179,7 +179,7 @@ class _TabGiziState extends State<_TabGizi> {
     ];
   }
 
-  Widget _kartuPrioritas(BalitaGizi a) {
+  Widget _kartuPrioritas(AnakGizi a) {
     String z(String l, double? v) => v == null ? '' : '$l ${v.toStringAsFixed(2)}';
     final nilai = [z('BB/U', a.zBbu), z('TB/U', a.zTbu), z('BB/TB', a.zBbtb)].where((e) => e.isNotEmpty).join(' · ');
     return Container(
@@ -192,14 +192,14 @@ class _TabGiziState extends State<_TabGizi> {
           Row(
             children: [
               Expanded(
-                child: Text(a.balita.nama, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
+                child: Text(a.anak.nama, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
               ),
               if (a.tanggalUkur != null)
                 Text(formatTanggal(a.tanggalUkur!), style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
             ],
           ),
           const SizedBox(height: 2),
-          Text('${a.balita.jkTeks} · ${a.balita.usiaTeks}', style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
+          Text('${a.anak.jkTeks} · ${a.anak.usiaTeks}', style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 6,
@@ -296,7 +296,7 @@ class _TrenGizi extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(t.label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                      Text('${t.diukur} balita', style: const TextStyle(fontSize: 14.5, color: AppColors.teksRedup)),
+                      Text('${t.diukur} anak', style: const TextStyle(fontSize: 14.5, color: AppColors.teksRedup)),
                     ],
                   ),
                 ),

@@ -145,7 +145,7 @@ class NotifikasiService {
         (m) => bukaHalaman(
           notifikasiId: m.data['notifikasi_id']?.toString(),
           jenis: m.data['jenis']?.toString(),
-          objekId: (m.data['balita_id'] ?? m.data['objek_id'])?.toString(),
+          objekId: (m.data['anak_id'] ?? m.data['objek_id'])?.toString(),
         ),
       );
       _subToken = fm.onTokenRefresh.listen((t) {
@@ -158,7 +158,7 @@ class NotifikasiService {
         _bukaTertunda = true;
         _idTertunda = awal.data['notifikasi_id']?.toString();
         _jenisTertunda = awal.data['jenis']?.toString();
-        _objekTertunda = (awal.data['balita_id'] ?? awal.data['objek_id'])?.toString();
+        _objekTertunda = (awal.data['anak_id'] ?? awal.data['objek_id'])?.toString();
       }
     } catch (e) {
       debugPrint('notifikasi: FCM gagal diinisialisasi: $e');
@@ -288,7 +288,7 @@ class NotifikasiService {
           payload: [
             m.data['notifikasi_id']?.toString() ?? '',
             m.data['jenis']?.toString() ?? '',
-            (m.data['balita_id'] ?? m.data['objek_id'])?.toString() ?? '',
+            (m.data['anak_id'] ?? m.data['objek_id'])?.toString() ?? '',
           ].join('|'),
         );
       } catch (e) {
@@ -314,7 +314,7 @@ class NotifikasiService {
   }
 
   /// Membuka tujuan notifikasi. Peringatan 2T/BGM langsung ke detail balita
-  /// (petugas) atau grafik balita (orang tua); selain itu ke daftar notifikasi.
+  /// (petugas) atau grafik anak (orang tua); selain itu ke daftar notifikasi.
   void bukaHalaman({String? notifikasiId, String? jenis, String? objekId}) {
     final nav = navigatorKey.currentState;
     if (!_masuk || nav == null) {

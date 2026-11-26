@@ -84,14 +84,14 @@ Widget _tautan(String teks) => Text(
 
 class BalitaDetailPage extends StatefulWidget {
   final String prefix;
-  final String balitaId;
+  final String anakId;
   final String nama;
   final bool bisaKelolaImunisasi;
 
   const BalitaDetailPage({
     super.key,
     required this.prefix,
-    required this.balitaId,
+    required this.anakId,
     required this.nama,
     this.bisaKelolaImunisasi = false,
   });
@@ -118,7 +118,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
       _error = null;
     });
     try {
-      final d = await _svc.detail(widget.balitaId);
+      final d = await _svc.detail(widget.anakId);
       if (!mounted) return;
       setState(() {
         _data = d;
@@ -141,13 +141,13 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
       ..showSnackBar(SnackBar(content: Text(pesan)));
   }
 
-  /// Kader: arsipkan balita (pindah / meninggal / lainnya).
+  /// Kader: arsipkan anak (pindah / meninggal / lainnya).
   Future<void> _arsipkan(BalitaItem r) async {
     final isian = await bukaFormArsip(context, nama: r.nama, lahir: r.tanggalLahir);
     if (isian == null || !mounted) return;
     if (!await konfirmasiArsip(context, r.nama, isian) || !mounted) return;
     try {
-      await _svc.arsipkan(widget.balitaId,
+      await _svc.arsipkan(widget.anakId,
           alasan: isian.alasan, tanggal: isian.tanggalApi, keterangan: isian.keterangan);
       if (!mounted) return;
       _snack('Data ${r.nama} diarsipkan');
@@ -157,11 +157,11 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
     }
   }
 
-  /// Kader: aktifkan kembali balita arsip.
+  /// Kader: aktifkan kembali anak arsip.
   Future<void> _aktifkan(BalitaItem r) async {
     if (!await konfirmasiAktifkan(context, r.nama) || !mounted) return;
     try {
-      await _svc.aktifkan(widget.balitaId);
+      await _svc.aktifkan(widget.anakId);
       if (!mounted) return;
       _snack('Data ${r.nama} aktif kembali');
       await _muat();
@@ -170,7 +170,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
     }
   }
 
-  /// Kartu status data balita (hanya kader): tombol Arsipkan / Aktifkan kembali.
+  /// Kartu status data anak (hanya kader): tombol Arsipkan / Aktifkan kembali.
   Widget _kartuStatus(BalitaItem r) {
     final lulus = r.alasanArsip.startsWith('Lulus balita');
     final Widget isi;
@@ -179,17 +179,17 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Arsipkan bila balita pindah domisili atau meninggal. Riwayat penimbangan '
+            'Arsipkan bila anak pindah domisili atau meninggal. Riwayat penimbangan '
             'dan imunisasi tetap tersimpan.',
             style: TextStyle(fontSize: 15, height: 1.4, color: AppColors.teksRedup),
           ),
           const SizedBox(height: 12),
-          _tombolGaris('Arsipkan Balita', Icons.archive_outlined, AppColors.merah, () => _arsipkan(r)),
+          _tombolGaris('Arsipkan Anak', Icons.archive_outlined, AppColors.merah, () => _arsipkan(r)),
         ],
       );
     } else if (lulus) {
       isi = const Text(
-        'Balita sudah berusia 5 tahun dan diarsipkan otomatis oleh sistem (lulus balita).',
+        'Anak sudah berusia 5 tahun dan diarsipkan otomatis oleh sistem (lulus balita).',
         style: TextStyle(fontSize: 15, height: 1.4, color: AppColors.teksRedup),
       );
     } else {
@@ -197,7 +197,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Aktifkan kembali bila salah arsip atau balita kembali ke desa.',
+            'Aktifkan kembali bila salah arsip atau anak kembali ke desa.',
             style: TextStyle(fontSize: 15, height: 1.4, color: AppColors.teksRedup),
           ),
           const SizedBox(height: 12),
@@ -205,7 +205,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         ],
       );
     }
-    return _kartu(judul: 'Status Data Balita', child: isi);
+    return _kartu(judul: 'Status Data Anak', child: isi);
   }
 
   Widget _tombolGaris(String label, IconData ikon, Color warna, VoidCallback onTap) {
@@ -330,7 +330,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
   }
 
   Widget _profil(DetailBalita d) {
-    final a = d.balita;
+    final a = d.anak;
     final r = d.ringkas;
     final num? beratLahir = num.tryParse(_t(a['berat_lahir_kg']));
     final num? panjangLahir = num.tryParse(_t(a['panjang_lahir_cm']));
@@ -360,7 +360,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
               _baris('NIK', _t(a['nik'])),
               _baris('Berat lahir', beratLahir == null ? '' : '$beratLahir kg'),
               _baris('Panjang lahir', panjangLahir == null ? '' : '$panjangLahir cm'),
-              _baris('Balita ke', _t(a['balita_ke'])),
+              _baris('Anak ke', _t(a['anak_ke'])),
               _baris('Jumlah penimbangan', '${r.jumlahTimbang} kali'),
             ],
           ),
@@ -406,7 +406,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
                     context,
                     MaterialPageRoute(builder: (_) => _HalamanImunisasi(
                           nama: widget.nama,
-                          balitaId: widget.balitaId,
+                          anakId: widget.anakId,
                           bisaKelola: widget.bisaKelolaImunisasi,
                         )),
                   ),
@@ -516,16 +516,16 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
   }
 }
 
-/// Halaman jadwal & riwayat imunisasi balita, dibuka dari tautan pada kartu
+/// Halaman jadwal & riwayat imunisasi anak, dibuka dari tautan pada kartu
 /// Imunisasi. Isinya sama dengan bekas tab Imunisasi, hanya pindah tempat.
 class _HalamanImunisasi extends StatelessWidget {
   final String nama;
-  final String balitaId;
+  final String anakId;
   final bool bisaKelola;
 
   const _HalamanImunisasi({
     required this.nama,
-    required this.balitaId,
+    required this.anakId,
     required this.bisaKelola,
   });
 
@@ -543,7 +543,7 @@ class _HalamanImunisasi extends StatelessWidget {
           children: [
             headerRekap(context, nama),
             Expanded(
-              child: ImunisasiLihatBody(balitaId: balitaId, bisaKelola: bisaKelola),
+              child: ImunisasiLihatBody(anakId: anakId, bisaKelola: bisaKelola),
             ),
           ],
         ),
