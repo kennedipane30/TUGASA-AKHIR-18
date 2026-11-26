@@ -37,7 +37,7 @@ type ProfilInput struct {
 	Ayah         *AyahInput `json:"ayah"`
 }
 
-type AnakInput struct {
+type BalitaInput struct {
 	Nama         string   `json:"nama"`
 	NIK          string   `json:"nik"`
 	TglLahir     string   `json:"tgl_lahir"`
@@ -48,14 +48,14 @@ type AnakInput struct {
 
 type StatusKeluarga struct {
 	ProfilLengkap bool `json:"profil_lengkap"`
-	JumlahAnak    int  `json:"jumlah_anak"`
+	JumlahBalita  int  `json:"jumlah_balita"`
 }
 
 type KeluargaResponse struct {
 	Keluarga *models.Keluarga `json:"keluarga"`
 	Ibu      *models.OrangTua `json:"ibu"`
 	Ayah     *models.OrangTua `json:"ayah"`
-	Anak     []models.Anak    `json:"anak"`
+	Balita   []models.Balita  `json:"balita"`
 	Status   StatusKeluarga   `json:"status"`
 }
 
@@ -101,7 +101,7 @@ func (s *KeluargaService) Get(uid uint) (*KeluargaResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	st := StatusKeluarga{JumlahAnak: len(d.Anak)}
+	st := StatusKeluarga{JumlahBalita: len(d.Balita)}
 	if d.Keluarga != nil {
 		st.ProfilLengkap = d.Keluarga.Alamat != "" && d.Keluarga.RT != "" && d.Keluarga.RW != ""
 	}
@@ -109,7 +109,7 @@ func (s *KeluargaService) Get(uid uint) (*KeluargaResponse, error) {
 		Keluarga: d.Keluarga,
 		Ibu:      d.Ibu,
 		Ayah:     d.Ayah,
-		Anak:     d.Anak,
+		Balita:   d.Balita,
 		Status:   st,
 	}, nil
 }
@@ -175,10 +175,10 @@ func (s *KeluargaService) SimpanProfil(uid uint, in ProfilInput) (*KeluargaRespo
 	return s.Get(uid)
 }
 
-func buatAnak(in AnakInput) (*models.Anak, error) {
+func buatBalita(in BalitaInput) (*models.Balita, error) {
 	nama := strings.TrimSpace(in.Nama)
 	if nama == "" {
-		return nil, invalid("nama anak wajib diisi")
+		return nil, invalid("nama balita wajib diisi")
 	}
 	tgl, err := parseTgl(in.TglLahir)
 	if err != nil {
@@ -202,7 +202,7 @@ func buatAnak(in AnakInput) (*models.Anak, error) {
 	if in.PanjangLahir != nil && (*in.PanjangLahir < 30 || *in.PanjangLahir > 65) {
 		return nil, invalid("panjang lahir tidak wajar (30-65 cm)")
 	}
-	return &models.Anak{
+	return &models.Balita{
 		Nama:           nama,
 		NIK:            strPtr(in.NIK),
 		TanggalLahir:   *tgl,
@@ -212,18 +212,18 @@ func buatAnak(in AnakInput) (*models.Anak, error) {
 	}, nil
 }
 
-func (s *KeluargaService) cekDuplikatAnak(keluargaID uuid.UUID, a *models.Anak, kecuali uuid.UUID) error {
-	if a.NIK != nil && s.repo.NIKAnakSudahAda(*a.NIK, kecuali) {
-		return konflik("NIK anak sudah terdaftar")
+func (s *KeluargaService) cekDuplikatBalita(keluargaID uuid.UUID, a *models.Balita, kecuali uuid.UUID) error {
+	if a.NIK != nil && s.repo.NIKBalitaSudahAda(*a.NIK, kecuali) {
+		return konflik("NIK balita sudah terdaftar")
 	}
-	if s.repo.AnakSudahAda(keluargaID, a.Nama, a.TanggalLahir, kecuali) {
-		return konflik("data anak dengan nama dan tanggal lahir yang sama sudah ada")
+	if s.repo.BalitaSudahAda(keluargaID, a.Nama, a.TanggalLahir, kecuali) {
+		return konflik("data balita dengan nama dan tanggal lahir yang sama sudah ada")
 	}
 	return nil
 }
 
-func (s *KeluargaService) TambahAnak(uid uint, in AnakInput) (*models.Anak, error) {
-	a, err := buatAnak(in)
+func (s *KeluargaService) TambahBalita(uid uint, in BalitaInput) (*models.Balita, error) {
+	a, err := buatBalita(in)
 	if err != nil {
 		return nil, err
 	}
@@ -231,18 +231,18 @@ func (s *KeluargaService) TambahAnak(uid uint, in AnakInput) (*models.Anak, erro
 	if err != nil {
 		return nil, err
 	}
-	if err := s.cekDuplikatAnak(kid, a, uuid.Nil); err != nil {
+	if err := s.cekDuplikatBalita(kid, a, uuid.Nil); err != nil {
 		return nil, err
 	}
 	a.KeluargaID = kid
-	if err := s.repo.TambahAnak(a); err != nil {
+	if err := s.repo.TambahBalita(a); err != nil {
 		return nil, err
 	}
 	return a, nil
 }
 
-func (s *KeluargaService) UbahAnak(uid uint, id uuid.UUID, in AnakInput) (*models.Anak, error) {
-	a, err := buatAnak(in)
+func (s *KeluargaService) UbahBalita(uid uint, id uuid.UUID, in BalitaInput) (*models.Balita, error) {
+	a, err := buatBalita(in)
 	if err != nil {
 		return nil, err
 	}
@@ -253,18 +253,18 @@ func (s *KeluargaService) UbahAnak(uid uint, id uuid.UUID, in AnakInput) (*model
 	if d.Keluarga == nil {
 		return nil, errors.New("data keluarga belum ada")
 	}
-	if err := s.cekDuplikatAnak(d.Keluarga.ID, a, id); err != nil {
+	if err := s.cekDuplikatBalita(d.Keluarga.ID, a, id); err != nil {
 		return nil, err
 	}
 	a.ID = id
 	a.KeluargaID = d.Keluarga.ID
-	if err := s.repo.UbahAnak(a); err != nil {
+	if err := s.repo.UbahBalita(a); err != nil {
 		return nil, err
 	}
 	return a, nil
 }
 
-func (s *KeluargaService) HapusAnak(uid uint, id uuid.UUID) error {
+func (s *KeluargaService) HapusBalita(uid uint, id uuid.UUID) error {
 	d, err := s.repo.GetByUser(uid)
 	if err != nil {
 		return err
@@ -272,5 +272,5 @@ func (s *KeluargaService) HapusAnak(uid uint, id uuid.UUID) error {
 	if d.Keluarga == nil {
 		return errors.New("data keluarga belum ada")
 	}
-	return s.repo.HapusAnak(id, d.Keluarga.ID)
+	return s.repo.HapusBalita(id, d.Keluarga.ID)
 }

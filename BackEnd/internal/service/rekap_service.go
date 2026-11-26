@@ -62,10 +62,10 @@ func tglRekap(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }
 
-// sasaranBalita: anak lahir sebelum [acuan] dan berusia 0-59 bulan pada [acuan].
-func sasaranBalita(anak []models.Anak, acuan time.Time) []models.Anak {
-	out := make([]models.Anak, 0, len(anak))
-	for _, a := range anak {
+// sasaranBalita: balita lahir sebelum [acuan] dan berusia 0-59 bulan pada [acuan].
+func sasaranBalita(balita []models.Balita, acuan time.Time) []models.Balita {
+	out := make([]models.Balita, 0, len(balita))
+	for _, a := range balita {
 		lahir := tglRekap(a.TanggalLahir)
 		if lahir.After(acuan) {
 			continue
@@ -78,8 +78,8 @@ func sasaranBalita(anak []models.Anak, acuan time.Time) []models.Anak {
 	return out
 }
 
-type AnakRekap struct {
-	AnakID       uuid.UUID `json:"anak_id"`
+type BalitaRekap struct {
+	BalitaID     uuid.UUID `json:"balita_id"`
 	Nama         string    `json:"nama"`
 	JenisKelamin string    `json:"jenis_kelamin"`
 	TanggalLahir string    `json:"tanggal_lahir"`
@@ -87,10 +87,10 @@ type AnakRekap struct {
 	UsiaTeks     string    `json:"usia_teks"`
 }
 
-func anakRekap(a *models.Anak, acuan time.Time) AnakRekap {
+func balitaRekap(a *models.Balita, acuan time.Time) BalitaRekap {
 	lahir := tglRekap(a.TanggalLahir)
-	return AnakRekap{
-		AnakID: a.ID, Nama: a.Nama, JenisKelamin: a.JenisKelamin,
+	return BalitaRekap{
+		BalitaID: a.ID, Nama: a.Nama, JenisKelamin: a.JenisKelamin,
 		TanggalLahir: lahir.Format("2006-01-02"),
 		UsiaBulan:    usiaBulan(lahir, acuan), UsiaTeks: usiaTeks(lahir, acuan),
 	}
@@ -107,8 +107,8 @@ type KategoriGiziRekap struct {
 	Tingkat string  `json:"tingkat"` // baik | waspada | risiko
 }
 
-type AnakGiziRekap struct {
-	AnakRekap
+type BalitaGiziRekap struct {
+	BalitaRekap
 	TanggalUkur  string   `json:"tanggal_ukur"`
 	ZBbu         *float64 `json:"z_bbu"`
 	ZTbu         *float64 `json:"z_tbu"`
@@ -142,7 +142,7 @@ type RekapGiziResp struct {
 	GiziLebih   int                 `json:"gizi_lebih"`
 	Kategori    []KategoriGiziRekap `json:"kategori"`
 	Tren        []TrenGiziRekap     `json:"tren"`
-	Prioritas   []AnakGiziRekap     `json:"prioritas"`
+	Prioritas   []BalitaGiziRekap   `json:"prioritas"`
 }
 
 type hitungGizi struct {
@@ -215,15 +215,15 @@ func (h *hitungGizi) tambah(g *models.StatusGizi) {
 	}
 }
 
-// terbaruPerAnak: satu status gizi terbaru per anak (list sudah urut terbaru di atas).
-func terbaruPerAnak(list []models.StatusGizi, sasaran map[uuid.UUID]bool) []models.StatusGizi {
+// terbaruPerBalita: satu status gizi terbaru per balita (list sudah urut terbaru di atas).
+func terbaruPerBalita(list []models.StatusGizi, sasaran map[uuid.UUID]bool) []models.StatusGizi {
 	sudah := map[uuid.UUID]bool{}
 	out := []models.StatusGizi{}
 	for _, g := range list {
-		if sudah[g.AnakID] || (sasaran != nil && !sasaran[g.AnakID]) {
+		if sudah[g.BalitaID] || (sasaran != nil && !sasaran[g.BalitaID]) {
 			continue
 		}
-		sudah[g.AnakID] = true
+		sudah[g.BalitaID] = true
 		out = append(out, g)
 	}
 	return out
@@ -238,43 +238,43 @@ func (s *RekapService) RekapGizi(pos, bulan string) (*RekapGiziResp, error) {
 		return nil, err
 	}
 	acuan := sampai.AddDate(0, 0, -1)
-	anak, err := s.repo.AnakAktif(pos)
+	balita, err := s.repo.BalitaAktif(pos)
 	if err != nil {
 		return nil, err
 	}
-	sasaran := sasaranBalita(anak, acuan)
+	sasaran := sasaranBalita(balita, acuan)
 	petaSasaran := map[uuid.UUID]bool{}
-	petaAnak := map[uuid.UUID]*models.Anak{}
+	petaBalita := map[uuid.UUID]*models.Balita{}
 	for i := range sasaran {
 		petaSasaran[sasaran[i].ID] = true
-		petaAnak[sasaran[i].ID] = &sasaran[i]
+		petaBalita[sasaran[i].ID] = &sasaran[i]
 	}
 
 	list, err := s.repo.StatusGiziRentang(pos, dari, sampai)
 	if err != nil {
 		return nil, err
 	}
-	terbaru := terbaruPerAnak(list, petaSasaran)
+	terbaru := terbaruPerBalita(list, petaSasaran)
 
 	var h hitungGizi
-	prioritas := []AnakGiziRekap{}
+	prioritas := []BalitaGiziRekap{}
 	for i := range terbaru {
 		g := &terbaru[i]
 		h.tambah(g)
 		m := masalahGizi(g)
-		a := petaAnak[g.AnakID]
+		a := petaBalita[g.BalitaID]
 		if len(m) == 0 || a == nil {
 			continue
 		}
-		prioritas = append(prioritas, AnakGiziRekap{
-			AnakRekap:   anakRekap(a, g.TanggalUkur),
+		prioritas = append(prioritas, BalitaGiziRekap{
+			BalitaRekap: balitaRekap(a, g.TanggalUkur),
 			TanggalUkur: g.TanggalUkur.Format("2006-01-02"),
 			ZBbu:        g.ZBbu, ZTbu: g.ZTbu, ZBbtb: g.ZBbtb,
 			KategoriBbu: g.KategoriBbu, KategoriTbu: g.KategoriTbu, KategoriBbtb: g.KategoriBbtb,
 			Masalah: m,
 		})
 	}
-	bobot := func(x AnakGiziRekap) int {
+	bobot := func(x BalitaGiziRekap) int {
 		b := 0
 		for _, m := range x.Masalah {
 			switch m {
@@ -323,7 +323,7 @@ func (s *RekapService) RekapGizi(pos, bulan string) (*RekapGiziResp, error) {
 			return nil, err
 		}
 		var t hitungGizi
-		tb := terbaruPerAnak(lst, nil)
+		tb := terbaruPerBalita(lst, nil)
 		for i := range tb {
 			t.tambah(&tb[i])
 		}
@@ -347,8 +347,8 @@ type KelompokSuplemenRekap struct {
 	Persen     float64 `json:"persen"`
 }
 
-type AnakSuplemenRekap struct {
-	AnakRekap
+type BalitaSuplemenRekap struct {
+	BalitaRekap
 	Kelompok string   `json:"kelompok"`
 	Belum    []string `json:"belum"`
 }
@@ -362,7 +362,7 @@ type RekapSuplemenResp struct {
 	TanggalAcuan  string                  `json:"tanggal_acuan"`
 	VitaminA      []KelompokSuplemenRekap `json:"vitamin_a"`
 	ObatCacing    KelompokSuplemenRekap   `json:"obat_cacing"`
-	BelumMenerima []AnakSuplemenRekap     `json:"belum_menerima"`
+	BelumMenerima []BalitaSuplemenRekap   `json:"belum_menerima"`
 }
 
 func isVitaminA(jenis string) bool {
@@ -409,7 +409,7 @@ func (s *RekapService) RekapSuplemen(pos string, tahun, periode int) (*RekapSupl
 	sampai := dari.AddDate(0, 6, 0)
 	acuan := time.Date(tahun, bulanVit+1, 1, 0, 0, 0, 0, time.UTC).AddDate(0, 0, -1) // akhir bulan vitamin A
 
-	anak, err := s.repo.AnakAktif(pos)
+	balita, err := s.repo.BalitaAktif(pos)
 	if err != nil {
 		return nil, err
 	}
@@ -421,17 +421,17 @@ func (s *RekapService) RekapSuplemen(pos string, tahun, periode int) (*RekapSupl
 	dapatCacing := map[uuid.UUID]bool{}
 	for _, x := range sup {
 		if isVitaminA(x.Jenis) {
-			dapatVit[x.AnakID] = true
+			dapatVit[x.BalitaID] = true
 		}
 		if isObatCacing(x.Jenis) {
-			dapatCacing[x.AnakID] = true
+			dapatCacing[x.BalitaID] = true
 		}
 	}
 
 	var sasBiru, sudahBiru, sasMerah, sudahMerah, sasCacing, sudahCacing int
-	belum := []AnakSuplemenRekap{}
-	for i := range anak {
-		a := &anak[i]
+	belum := []BalitaSuplemenRekap{}
+	for i := range balita {
+		a := &balita[i]
 		lahir := tglRekap(a.TanggalLahir)
 		if lahir.After(acuan) {
 			continue
@@ -440,7 +440,7 @@ func (s *RekapService) RekapSuplemen(pos string, tahun, periode int) (*RekapSupl
 		if u < 6 || u > batasUsiaBalita {
 			continue
 		}
-		item := AnakSuplemenRekap{AnakRekap: anakRekap(a, acuan), Belum: []string{}}
+		item := BalitaSuplemenRekap{BalitaRekap: balitaRekap(a, acuan), Belum: []string{}}
 		if u <= 11 {
 			item.Kelompok = "6-11 bulan"
 			sasBiru++
@@ -488,8 +488,8 @@ func (s *RekapService) RekapSuplemen(pos string, tahun, periode int) (*RekapSupl
 
 // ---------------------------------------------------------------- 3. balita tidak hadir
 
-type AnakTidakHadir struct {
-	AnakRekap
+type BalitaTidakHadir struct {
+	BalitaRekap
 	TerakhirDitimbang string `json:"terakhir_ditimbang"` // kosong = belum pernah ditimbang
 	BulanTidakDatang  int    `json:"bulan_tidak_datang"` // -1 = belum pernah ditimbang
 	SudahMendaftar    bool   `json:"sudah_mendaftar"`    // mendaftar jadwal bulan ini tetapi tidak check-in
@@ -497,15 +497,15 @@ type AnakTidakHadir struct {
 }
 
 type TidakHadirResp struct {
-	Bulan        string           `json:"bulan"`
-	Label        string           `json:"label"`
-	JumlahJadwal int              `json:"jumlah_jadwal"`
-	Sasaran      int              `json:"sasaran"`
-	Ditimbang    int              `json:"ditimbang"`
-	TidakHadir   int              `json:"tidak_hadir"`
-	PersenDS     float64          `json:"persen_ds"`
-	BelumPernah  int              `json:"belum_pernah"`
-	Anak         []AnakTidakHadir `json:"anak"`
+	Bulan        string             `json:"bulan"`
+	Label        string             `json:"label"`
+	JumlahJadwal int                `json:"jumlah_jadwal"`
+	Sasaran      int                `json:"sasaran"`
+	Ditimbang    int                `json:"ditimbang"`
+	TidakHadir   int                `json:"tidak_hadir"`
+	PersenDS     float64            `json:"persen_ds"`
+	BelumPernah  int                `json:"belum_pernah"`
+	Balita       []BalitaTidakHadir `json:"balita"`
 }
 
 func (s *RekapService) TidakHadir(pos, bulan string) (*TidakHadirResp, error) {
@@ -520,11 +520,11 @@ func (s *RekapService) TidakHadir(pos, bulan string) (*TidakHadirResp, error) {
 	if hi := hariIni(); acuan.After(hi) {
 		acuan = tglRekap(hi)
 	}
-	anak, err := s.repo.AnakAktif(pos)
+	balita, err := s.repo.BalitaAktif(pos)
 	if err != nil {
 		return nil, err
 	}
-	sasaran := sasaranBalita(anak, acuan)
+	sasaran := sasaranBalita(balita, acuan)
 	ditimbang, err := s.repo.DitimbangRentang(pos, dari, sampai)
 	if err != nil {
 		return nil, err
@@ -544,13 +544,13 @@ func (s *RekapService) TidakHadir(pos, bulan string) (*TidakHadirResp, error) {
 	mendaftar := map[uuid.UUID]bool{}
 	for _, p := range daftar {
 		if p.StatusKehadiran != "sudah_checkin" {
-			mendaftar[p.AnakID] = true
+			mendaftar[p.BalitaID] = true
 		}
 	}
 
 	out := &TidakHadirResp{
 		Bulan: dari.Format("2006-01"), Label: labelBulan(dari), JumlahJadwal: int(nJadwal),
-		Sasaran: len(sasaran), Anak: []AnakTidakHadir{},
+		Sasaran: len(sasaran), Balita: []BalitaTidakHadir{},
 	}
 	for i := range sasaran {
 		a := &sasaran[i]
@@ -558,7 +558,7 @@ func (s *RekapService) TidakHadir(pos, bulan string) (*TidakHadirResp, error) {
 			out.Ditimbang++
 			continue
 		}
-		it := AnakTidakHadir{AnakRekap: anakRekap(a, acuan), BulanTidakDatang: -1, SudahMendaftar: mendaftar[a.ID]}
+		it := BalitaTidakHadir{BalitaRekap: balitaRekap(a, acuan), BulanTidakDatang: -1, SudahMendaftar: mendaftar[a.ID]}
 		if t, ok := sebelumnya[a.ID]; ok {
 			t = tglRekap(t)
 			it.TerakhirDitimbang = t.Format("2006-01-02")
@@ -578,12 +578,12 @@ func (s *RekapService) TidakHadir(pos, bulan string) (*TidakHadirResp, error) {
 		if it.SudahMendaftar {
 			it.Keterangan += " · sudah mendaftar tetapi tidak check-in"
 		}
-		out.Anak = append(out.Anak, it)
+		out.Balita = append(out.Balita, it)
 	}
-	out.TidakHadir = len(out.Anak)
+	out.TidakHadir = len(out.Balita)
 	out.PersenDS = persenRekap(out.Ditimbang, out.Sasaran)
-	sort.SliceStable(out.Anak, func(i, j int) bool {
-		a, b := out.Anak[i].BulanTidakDatang, out.Anak[j].BulanTidakDatang
+	sort.SliceStable(out.Balita, func(i, j int) bool {
+		a, b := out.Balita[i].BulanTidakDatang, out.Balita[j].BulanTidakDatang
 		if a == -1 {
 			a = 1000
 		}
@@ -593,7 +593,7 @@ func (s *RekapService) TidakHadir(pos, bulan string) (*TidakHadirResp, error) {
 		if a != b {
 			return a > b
 		}
-		return out.Anak[i].Nama < out.Anak[j].Nama
+		return out.Balita[i].Nama < out.Balita[j].Nama
 	})
 	return out, nil
 }

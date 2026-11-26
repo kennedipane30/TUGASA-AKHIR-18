@@ -16,8 +16,12 @@ func (r *PelayananRepository) GetPemeriksaan(pendaftaranID uuid.UUID) (*models.P
 	return &p, err
 }
 
-func (r *PelayananRepository) CreatePemeriksaan(p *models.PemeriksaanBidan) error { return r.db.Create(p).Error }
-func (r *PelayananRepository) SavePemeriksaan(p *models.PemeriksaanBidan) error   { return r.db.Save(p).Error }
+func (r *PelayananRepository) CreatePemeriksaan(p *models.PemeriksaanBidan) error {
+	return r.db.Create(p).Error
+}
+func (r *PelayananRepository) SavePemeriksaan(p *models.PemeriksaanBidan) error {
+	return r.db.Save(p).Error
+}
 
 func (r *PelayananRepository) ListPemeriksaan(pendaftaranIDs []uuid.UUID) ([]models.PemeriksaanBidan, error) {
 	list := []models.PemeriksaanBidan{}
@@ -36,19 +40,19 @@ func (r *PelayananRepository) ListJenisImunisasi() ([]models.JenisImunisasi, err
 	return list, err
 }
 
-func (r *PelayananRepository) ImunisasiSudahAda(anakID, jenisID uuid.UUID, dosis int16, kecualiPendaftaran uuid.UUID) bool {
+func (r *PelayananRepository) ImunisasiSudahAda(balitaID, jenisID uuid.UUID, dosis int16, kecualiPendaftaran uuid.UUID) bool {
 	var n int64
-	r.db.Model(&models.ImunisasiAnak{}).
-		Where("anak_id = ? AND jenis_vaksin_id = ? AND dosis_ke = ?", anakID, jenisID, dosis).
+	r.db.Model(&models.ImunisasiBalita{}).
+		Where("balita_id = ? AND jenis_imunisasi_id = ? AND dosis_ke = ?", balitaID, jenisID, dosis).
 		Where("pendaftaran_id IS NULL OR pendaftaran_id <> ?", kecualiPendaftaran).
 		Count(&n)
 	return n > 0
 }
 
 // GantiImunisasi menggantikan seluruh catatan imunisasi satu kunjungan.
-func (r *PelayananRepository) GantiImunisasi(pendaftaranID uuid.UUID, items []models.ImunisasiAnak) error {
+func (r *PelayananRepository) GantiImunisasi(pendaftaranID uuid.UUID, items []models.ImunisasiBalita) error {
 	if err := r.db.Unscoped().Where("pendaftaran_id = ?", pendaftaranID).
-		Delete(&models.ImunisasiAnak{}).Error; err != nil {
+		Delete(&models.ImunisasiBalita{}).Error; err != nil {
 		return err
 	}
 	for i := range items {
@@ -59,9 +63,9 @@ func (r *PelayananRepository) GantiImunisasi(pendaftaranID uuid.UUID, items []mo
 	return nil
 }
 
-func (r *PelayananRepository) GantiSuplemen(pendaftaranID uuid.UUID, items []models.SuplemenAnak) error {
+func (r *PelayananRepository) GantiSuplemen(pendaftaranID uuid.UUID, items []models.SuplemenBalita) error {
 	if err := r.db.Unscoped().Where("pendaftaran_id = ?", pendaftaranID).
-		Delete(&models.SuplemenAnak{}).Error; err != nil {
+		Delete(&models.SuplemenBalita{}).Error; err != nil {
 		return err
 	}
 	for i := range items {
@@ -72,8 +76,8 @@ func (r *PelayananRepository) GantiSuplemen(pendaftaranID uuid.UUID, items []mod
 	return nil
 }
 
-func (r *PelayananRepository) ListImunisasi(pendaftaranIDs []uuid.UUID) ([]models.ImunisasiAnak, error) {
-	list := []models.ImunisasiAnak{}
+func (r *PelayananRepository) ListImunisasi(pendaftaranIDs []uuid.UUID) ([]models.ImunisasiBalita, error) {
+	list := []models.ImunisasiBalita{}
 	if len(pendaftaranIDs) == 0 {
 		return list, nil
 	}
@@ -81,15 +85,15 @@ func (r *PelayananRepository) ListImunisasi(pendaftaranIDs []uuid.UUID) ([]model
 	return list, err
 }
 
-func (r *PelayananRepository) ListImunisasiAnak(anakID uuid.UUID) ([]models.ImunisasiAnak, error) {
-	list := []models.ImunisasiAnak{}
-	err := r.db.Preload("JenisImunisasi").Where("anak_id = ?", anakID).
+func (r *PelayananRepository) ListImunisasiBalita(balitaID uuid.UUID) ([]models.ImunisasiBalita, error) {
+	list := []models.ImunisasiBalita{}
+	err := r.db.Preload("JenisImunisasi").Where("balita_id = ?", balitaID).
 		Order("tanggal_pemberian DESC").Find(&list).Error
 	return list, err
 }
 
-func (r *PelayananRepository) ListSuplemen(pendaftaranIDs []uuid.UUID) ([]models.SuplemenAnak, error) {
-	list := []models.SuplemenAnak{}
+func (r *PelayananRepository) ListSuplemen(pendaftaranIDs []uuid.UUID) ([]models.SuplemenBalita, error) {
+	list := []models.SuplemenBalita{}
 	if len(pendaftaranIDs) == 0 {
 		return list, nil
 	}

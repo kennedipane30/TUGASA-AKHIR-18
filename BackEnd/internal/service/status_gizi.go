@@ -225,26 +225,26 @@ func (s *StatusGiziService) hitungIndeks(indeks, jk string, acuan, x float64, se
 }
 
 // Hitung menghasilkan status gizi satu pengukuran (belum disimpan).
-func (s *StatusGiziService) Hitung(anak *models.Anak, u *models.Pengukuran) (*models.StatusGizi, error) {
-	if anak == nil || u == nil {
-		return nil, errors.New("data anak atau pengukuran kosong")
+func (s *StatusGiziService) Hitung(balita *models.Balita, u *models.Pengukuran) (*models.StatusGizi, error) {
+	if balita == nil || u == nil {
+		return nil, errors.New("data balita atau pengukuran kosong")
 	}
 	if err := s.muat(); err != nil {
 		return nil, err
 	}
-	jk := strings.ToUpper(strings.TrimSpace(anak.JenisKelamin))
+	jk := strings.ToUpper(strings.TrimSpace(balita.JenisKelamin))
 	if jk != "L" && jk != "P" {
-		return nil, fmt.Errorf("jenis kelamin anak tidak valid: %q", anak.JenisKelamin)
+		return nil, fmt.Errorf("jenis kelamin balita tidak valid: %q", balita.JenisKelamin)
 	}
 	tgl := u.TanggalUkur
 	if tgl.IsZero() {
 		tgl = time.Now()
 	}
-	usia := usiaBulanPenuh(anak.TanggalLahir, tgl)
+	usia := usiaBulanPenuh(balita.TanggalLahir, tgl)
 
 	st := &models.StatusGizi{
 		PengukuranID: u.ID,
-		AnakID:       u.AnakID,
+		BalitaID:     u.BalitaID,
 		TanggalUkur:  tgl,
 		UsiaBulan:    int16(usia),
 		JenisKelamin: jk,
@@ -252,8 +252,8 @@ func (s *StatusGiziService) Hitung(anak *models.Anak, u *models.Pengukuran) (*mo
 		Standar:      namaStandar,
 		Tingkat:      models.TingkatBaik,
 	}
-	if st.AnakID == uuid.Nil {
-		st.AnakID = anak.ID
+	if st.BalitaID == uuid.Nil {
+		st.BalitaID = balita.ID
 	}
 	if usia > 60 {
 		st.Tingkat = ""
@@ -318,8 +318,8 @@ func (s *StatusGiziService) Hitung(anak *models.Anak, u *models.Pengukuran) (*mo
 }
 
 // HitungDanSimpan dipanggil setiap kali kader menyimpan pengukuran.
-func (s *StatusGiziService) HitungDanSimpan(anak *models.Anak, u *models.Pengukuran) (*models.StatusGizi, error) {
-	st, err := s.Hitung(anak, u)
+func (s *StatusGiziService) HitungDanSimpan(balita *models.Balita, u *models.Pengukuran) (*models.StatusGizi, error) {
+	st, err := s.Hitung(balita, u)
 	if err != nil {
 		return nil, err
 	}
@@ -373,21 +373,21 @@ func (s *StatusGiziService) HitungDataLama() {
 		}
 		ids := make([]uuid.UUID, 0, len(list))
 		for _, u := range list {
-			ids = append(ids, u.AnakID)
+			ids = append(ids, u.BalitaID)
 		}
-		anakList, err := s.repo.AnakByIDs(ids)
+		balitaList, err := s.repo.BalitaByIDs(ids)
 		if err != nil {
-			log.Printf("status gizi: gagal mengambil data anak: %v", err)
+			log.Printf("status gizi: gagal mengambil data balita: %v", err)
 			return
 		}
-		peta := make(map[uuid.UUID]*models.Anak, len(anakList))
-		for i := range anakList {
-			peta[anakList[i].ID] = &anakList[i]
+		peta := make(map[uuid.UUID]*models.Balita, len(balitaList))
+		for i := range balitaList {
+			peta[balitaList[i].ID] = &balitaList[i]
 		}
 		berhasil := 0
 		for i := range list {
 			u := &list[i]
-			if _, err := s.HitungDanSimpan(peta[u.AnakID], u); err != nil {
+			if _, err := s.HitungDanSimpan(peta[u.BalitaID], u); err != nil {
 				log.Printf("status gizi: pengukuran %s dilewati: %v", u.ID, err)
 				continue
 			}

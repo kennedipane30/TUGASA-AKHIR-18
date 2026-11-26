@@ -7,11 +7,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// SuplemenAnak adalah riwayat pemberian suplemen kepada anak
+// SuplemenBalita adalah riwayat pemberian suplemen kepada balita
 // (Vitamin A, obat cacing, PMT, zinc, dll.) yang diinput manual oleh bidan
 // pada form Catatan Bidan saat sesi posyandu.
 //
-// Tabel : suplemen_anak
+// Tabel : suplemen_balita
 //
 // Contoh satu baris:
 //
@@ -22,12 +22,12 @@ import (
 // Data lama (sebelum input manual) berisi Jenis berupa kode
 // "vitamin_a" / "obat_cacing" / "pmt" dengan Jumlah = 0; aplikasi
 // menampilkannya sebagai nama yang mudah dibaca.
-type SuplemenAnak struct {
+type SuplemenBalita struct {
 	// ID: kunci utama (UUID).
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 
-	// AnakID: anak penerima suplemen (FK ke anak).
-	AnakID uuid.UUID `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
+	// BalitaID: balita penerima suplemen (FK ke balita).
+	BalitaID uuid.UUID `gorm:"column:balita_id;type:uuid;not null;index" json:"balita_id"`
 
 	// Jenis: nama suplemen, mis. "Obat Cacing (Albendazol)".
 	Jenis string `gorm:"column:jenis;size:100" json:"jenis"`
@@ -61,7 +61,7 @@ type SuplemenAnak struct {
 	Catatan string `gorm:"column:catatan;type:text" json:"catatan"`
 
 	// Relasi
-	Anak              *Anak        `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	Balita            *Balita      `gorm:"foreignKey:BalitaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 	Pendaftaran       *Pendaftaran `gorm:"foreignKey:PendaftaranID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
 	DiberikanOlehUser *User        `gorm:"foreignKey:DiberikanOleh;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 
@@ -74,9 +74,9 @@ type SuplemenAnak struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func (SuplemenAnak) TableName() string { return "suplemen_anak" }
+func (SuplemenBalita) TableName() string { return "suplemen_balita" }
 
-func (m *SuplemenAnak) BeforeCreate(*gorm.DB) error {
+func (m *SuplemenBalita) BeforeCreate(*gorm.DB) error {
 	if m.ID == uuid.Nil {
 		m.ID = uuid.New()
 	}

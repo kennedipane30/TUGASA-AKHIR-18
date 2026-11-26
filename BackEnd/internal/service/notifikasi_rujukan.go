@@ -19,7 +19,7 @@ func (s *NotifikasiService) kirimRujukanOrtu(m *models.Rujukan, tahap string, pe
 	if s.repo.KunciSudahAda(kunci) {
 		return
 	}
-	ortu, err := s.repo.OrangTuaAnak(m.AnakID)
+	ortu, err := s.repo.OrangTuaBalita(m.BalitaID)
 	if err != nil || len(ortu) == 0 {
 		return
 	}
@@ -28,17 +28,17 @@ func (s *NotifikasiService) kirimRujukanOrtu(m *models.Rujukan, tahap string, pe
 		func(models.Role) (string, string) { return judul, isi })
 }
 
-// RujukanDibuat: orang tua diberi tahu anaknya dirujuk.
-func (s *NotifikasiService) RujukanDibuat(anak *models.Anak, m *models.Rujukan, pengirim uint) {
+// RujukanDibuat: orang tua diberi tahu balitanya dirujuk.
+func (s *NotifikasiService) RujukanDibuat(balita *models.Balita, m *models.Rujukan, pengirim uint) {
 	defer s.pulih("rujukan dibuat")
 	if m == nil {
 		return
 	}
-	nama := strings.TrimSpace(m.NamaAnak)
-	if anak != nil && strings.TrimSpace(anak.Nama) != "" {
-		nama = strings.TrimSpace(anak.Nama)
+	nama := strings.TrimSpace(m.NamaBalita)
+	if balita != nil && strings.TrimSpace(balita.Nama) != "" {
+		nama = strings.TrimSpace(balita.Nama)
 	}
-	isi := fmt.Sprintf("%s dirujuk ke %s. Diagnosis: %s. Buka menu Rujukan Anak untuk melihat dan mengunduh surat rujukan (No. %s), lalu bawa surat ke fasilitas kesehatan tujuan.",
+	isi := fmt.Sprintf("%s dirujuk ke %s. Diagnosis: %s. Buka menu Rujukan Balita untuk melihat dan mengunduh surat rujukan (No. %s), lalu bawa surat ke fasilitas kesehatan tujuan.",
 		nama, m.Tujuan, m.Diagnosis, m.Nomor)
 	s.kirimRujukanOrtu(m, "dibuat", pengirim, "Surat Rujukan: "+nama, isi)
 }
@@ -49,8 +49,8 @@ func (s *NotifikasiService) RujukanDiubah(m *models.Rujukan, pengirim uint) {
 	if m == nil {
 		return
 	}
-	nama := strings.TrimSpace(m.NamaAnak)
-	isi := fmt.Sprintf("Surat rujukan %s (No. %s) diperbarui bidan. Tujuan: %s. Silakan unduh ulang surat rujukan terbaru di menu Rujukan Anak.",
+	nama := strings.TrimSpace(m.NamaBalita)
+	isi := fmt.Sprintf("Surat rujukan %s (No. %s) diperbarui bidan. Tujuan: %s. Silakan unduh ulang surat rujukan terbaru di menu Rujukan Balita.",
 		nama, m.Nomor, m.Tujuan)
 	s.kirimRujukanOrtu(m, fmt.Sprintf("ubah-v%d", m.Version), pengirim, "Rujukan Diperbarui: "+nama, isi)
 }
@@ -65,11 +65,11 @@ func (s *NotifikasiService) RujukanDihapus(m *models.Rujukan, pengirim uint) {
 	if s.repo.KunciSudahAda(kunci) {
 		return
 	}
-	ortu, err := s.repo.OrangTuaAnak(m.AnakID)
+	ortu, err := s.repo.OrangTuaBalita(m.BalitaID)
 	if err != nil || len(ortu) == 0 {
 		return
 	}
-	nama := strings.TrimSpace(m.NamaAnak)
+	nama := strings.TrimSpace(m.NamaBalita)
 	isi := fmt.Sprintf("Surat rujukan %s (No. %s) telah dihapus oleh bidan dan tidak berlaku lagi.", nama, m.Nomor)
 	s.kirimKeUser(ortu, NotifRujukan, kunci, "", nil, &pengirim,
 		func(models.Role) (string, string) { return "Rujukan Dihapus: " + nama, isi })
@@ -81,8 +81,8 @@ func (s *NotifikasiService) RujukanSelesai(m *models.Rujukan, pengirim uint) {
 	if m == nil {
 		return
 	}
-	nama := strings.TrimSpace(m.NamaAnak)
-	isi := fmt.Sprintf("Hasil pemeriksaan rujukan %s dari %s sudah dicatat bidan. Buka menu Rujukan Anak untuk melihat hasil dan tindak lanjutnya.",
+	nama := strings.TrimSpace(m.NamaBalita)
+	isi := fmt.Sprintf("Hasil pemeriksaan rujukan %s dari %s sudah dicatat bidan. Buka menu Rujukan Balita untuk melihat hasil dan tindak lanjutnya.",
 		nama, m.Tujuan)
 	s.kirimRujukanOrtu(m, "selesai", pengirim, "Hasil Rujukan: "+nama, isi)
 }
@@ -93,7 +93,7 @@ func (s *NotifikasiService) RujukanDibatalkan(m *models.Rujukan, pengirim uint) 
 	if m == nil {
 		return
 	}
-	nama := strings.TrimSpace(m.NamaAnak)
+	nama := strings.TrimSpace(m.NamaBalita)
 	isi := fmt.Sprintf("Rujukan %s (No. %s) dibatalkan bidan. Alasan: %s.", nama, m.Nomor, m.AlasanBatal)
 	s.kirimRujukanOrtu(m, "batal", pengirim, "Rujukan Dibatalkan: "+nama, isi)
 }

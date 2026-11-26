@@ -11,7 +11,7 @@ import (
 const (
 	SumberImunisasiPosyandu = "posyandu"     // diberikan saat sesi posyandu (catatan bidan)
 	SumberImunisasiLuar     = "luar"         // dicatat bidan: diberikan di RS/puskesmas/klinik/bidan praktik
-	SumberImunisasiOrangTua = "laporan_ortu" // dilaporkan orang tua saat mendaftarkan anak
+	SumberImunisasiOrangTua = "laporan_ortu" // dilaporkan orang tua saat mendaftarkan balita
 )
 
 // Status konfirmasi catatan imunisasi.
@@ -20,33 +20,33 @@ const (
 	KonfirmasiImunisasiMenunggu = "menunggu" // laporan orang tua, menunggu konfirmasi bidan
 )
 
-// Kondisi anak sebelum imunisasi di posyandu.
+// Kondisi balita sebelum imunisasi di posyandu.
 const (
-	KondisiAnakSehat       = "sehat"
-	KondisiAnakDemamRingan = "demam_ringan"
-	KondisiAnakSakit       = "sakit" // imunisasi ditunda, tidak dapat disimpan
+	KondisiBalitaSehat       = "sehat"
+	KondisiBalitaDemamRingan = "demam_ringan"
+	KondisiBalitaSakit       = "sakit" // imunisasi ditunda, tidak dapat disimpan
 )
 
-// ImunisasiAnak adalah riwayat imunisasi yang sudah diberikan kepada seorang anak.
+// ImunisasiBalita adalah riwayat imunisasi yang sudah diberikan kepada seorang balita.
 //
-// Tabel : imunisasi_anak
+// Tabel : imunisasi_balita
 // Diisi melalui tiga cara:
 //  1. Sesi posyandu (form Catatan Bidan): Sumber = posyandu, PendaftaranID terisi.
 //  2. Bidan mencatat imunisasi dari luar posyandu: Sumber = luar.
-//  3. Orang tua melaporkan imunisasi saat mendaftarkan anak: Sumber = laporan_ortu,
+//  3. Orang tua melaporkan imunisasi saat mendaftarkan balita: Sumber = laporan_ortu,
 //     StatusKonfirmasi = menunggu sampai bidan mengonfirmasi.
 //
-// Satu anak + satu jenis imunisasi + satu dosis hanya boleh tercatat sekali.
-// Usia anak saat diimunisasi dihitung dari TanggalPemberian dikurangi tanggal lahir.
-type ImunisasiAnak struct {
+// Satu balita + satu jenis imunisasi + satu dosis hanya boleh tercatat sekali.
+// Usia balita saat diimunisasi dihitung dari TanggalPemberian dikurangi tanggal lahir.
+type ImunisasiBalita struct {
 	// ID: kunci utama (UUID).
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 
-	// AnakID: anak penerima imunisasi (FK ke anak).
-	AnakID uuid.UUID `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
+	// BalitaID: balita penerima imunisasi (FK ke balita).
+	BalitaID uuid.UUID `gorm:"column:balita_id;type:uuid;not null;index" json:"balita_id"`
 
 	// JenisImunisasiID: imunisasi yang diberikan (FK ke jenis_imunisasi).
-	JenisImunisasiID uuid.UUID `gorm:"column:jenis_vaksin_id;type:uuid;not null;index" json:"jenis_vaksin_id"`
+	JenisImunisasiID uuid.UUID `gorm:"column:jenis_imunisasi_id;type:uuid;not null;index" json:"jenis_imunisasi_id"`
 
 	// DosisKe: dosis ke berapa yang diberikan.
 	DosisKe int16 `gorm:"column:dosis_ke;not null" json:"dosis_ke"`
@@ -66,8 +66,8 @@ type ImunisasiAnak struct {
 	// NomorBatch: nomor batch imunisasi (opsional).
 	NomorBatch string `gorm:"column:nomor_batch;size:50" json:"nomor_batch"`
 
-	// KondisiAnak: kondisi anak sebelum imunisasi (sehat | demam_ringan).
-	KondisiAnak string `gorm:"column:kondisi_anak;type:text" json:"kondisi_anak"`
+	// KondisiBalita: kondisi balita sebelum imunisasi (sehat | demam_ringan).
+	KondisiBalita string `gorm:"column:kondisi_balita;type:text" json:"kondisi_balita"`
 
 	// PemberiLuar: nama petugas pemberi imunisasi di luar posyandu (opsional).
 	PemberiLuar string `gorm:"column:pemberi_luar;size:100" json:"pemberi_luar"`
@@ -96,8 +96,8 @@ type ImunisasiAnak struct {
 	Catatan string `gorm:"column:catatan;type:text" json:"catatan"`
 
 	// Relasi
-	Anak              *Anak           `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
-	JenisImunisasi    *JenisImunisasi `gorm:"foreignKey:JenisImunisasiID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"jenis_vaksin,omitempty"`
+	Balita            *Balita         `gorm:"foreignKey:BalitaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	JenisImunisasi    *JenisImunisasi `gorm:"foreignKey:JenisImunisasiID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"jenis_imunisasi,omitempty"`
 	Pendaftaran       *Pendaftaran    `gorm:"foreignKey:PendaftaranID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
 	DiberikanOlehUser *User           `gorm:"foreignKey:DiberikanOleh;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 
@@ -110,9 +110,9 @@ type ImunisasiAnak struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func (ImunisasiAnak) TableName() string { return "imunisasi_anak" }
+func (ImunisasiBalita) TableName() string { return "imunisasi_balita" }
 
-func (m *ImunisasiAnak) BeforeCreate(*gorm.DB) error {
+func (m *ImunisasiBalita) BeforeCreate(*gorm.DB) error {
 	if m.ID == uuid.Nil {
 		m.ID = uuid.New()
 	}
@@ -130,7 +130,7 @@ func (m *ImunisasiAnak) BeforeCreate(*gorm.DB) error {
 }
 
 // SumberEfektif: data lama tanpa kolom sumber dibaca dari ada/tidaknya PendaftaranID.
-func (m *ImunisasiAnak) SumberEfektif() string {
+func (m *ImunisasiBalita) SumberEfektif() string {
 	if m.PendaftaranID != nil {
 		return SumberImunisasiPosyandu
 	}

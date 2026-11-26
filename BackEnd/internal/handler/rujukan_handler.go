@@ -37,13 +37,13 @@ func (h *RujukanHandler) DaftarBidan(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
-// GET /bidan/rujukan-anak?cari=nama/NIK
-func (h *RujukanHandler) CariAnak(c *gin.Context) {
+// GET /bidan/rujukan-balita?cari=nama/NIK
+func (h *RujukanHandler) CariBalita(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
-	data, err := h.svc.CariAnak(pos, c.Query("cari"))
+	data, err := h.svc.CariBalita(pos, c.Query("cari"))
 	if err != nil {
 		h.gagal(c, err)
 		return
@@ -51,17 +51,17 @@ func (h *RujukanHandler) CariAnak(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
-// GET /bidan/rujukan-anak/:anak_id : data anak otomatis untuk form rujukan.
-func (h *RujukanHandler) DataAnak(c *gin.Context) {
+// GET /bidan/rujukan-balita/:balita_id : data balita otomatis untuk form rujukan.
+func (h *RujukanHandler) DataBalita(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
-	anakID, ok := idParam(c, "anak_id")
+	balitaID, ok := idParam(c, "balita_id")
 	if !ok {
 		return
 	}
-	data, err := h.svc.DataAnak(pos, anakID)
+	data, err := h.svc.DataBalita(pos, balitaID)
 	if err != nil {
 		h.gagal(c, err)
 		return
@@ -194,7 +194,7 @@ func (h *RujukanHandler) Batal(c *gin.Context) {
 
 // ---------------------------------------------------------------- orang tua
 
-// GET /rujukan : rujukan semua anak milik orang tua.
+// GET /rujukan : rujukan semua balita milik orang tua.
 func (h *RujukanHandler) DaftarOrangTua(c *gin.Context) {
 	data, err := h.svc.DaftarOrangTua(c.GetUint("user_id"))
 	if err != nil {

@@ -18,7 +18,7 @@ import (
 //
 // Relasi:
 //   - 1 JenisImunisasi memiliki banyak JadwalImunisasi (satu baris per dosis).
-//   - 1 JenisImunisasi dirujuk oleh banyak ImunisasiAnak (riwayat pemberian).
+//   - 1 JenisImunisasi dirujuk oleh banyak ImunisasiBalita (riwayat pemberian).
 //
 // Jenis imunisasi yang tidak lagi dipakai tidak dihapus, melainkan dinonaktifkan
 // (IsActive = false) agar riwayat imunisasi lama tetap utuh.
@@ -27,7 +27,7 @@ type JenisImunisasi struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 
 	// Kode: kode unik imunisasi, mis. "BCG", "DPT-HB-HIB".
-	Kode string `gorm:"column:kode;size:20;not null;uniqueIndex:ux_jenis_vaksin_kode" json:"kode"`
+	Kode string `gorm:"column:kode;size:20;not null;uniqueIndex:ux_jenis_imunisasi_kode" json:"kode"`
 
 	// Nama: nama imunisasi yang ditampilkan, mis. "Polio Tetes (OPV)".
 	Nama string `gorm:"column:nama;size:100;not null" json:"nama"`
@@ -58,7 +58,7 @@ type JenisImunisasi struct {
 	UpdatedAt time.Time `gorm:"index" json:"updated_at"`
 }
 
-func (JenisImunisasi) TableName() string { return "jenis_vaksin" }
+func (JenisImunisasi) TableName() string { return "jenis_imunisasi" }
 
 func (m *JenisImunisasi) BeforeCreate(*gorm.DB) error {
 	if m.ID == uuid.Nil {

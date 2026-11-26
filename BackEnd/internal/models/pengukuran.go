@@ -7,11 +7,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// Pengukuran: Hasil pengukuran antropometri anak pada satu kehadiran.
+// Pengukuran: Hasil pengukuran antropometri balita pada satu kehadiran.
 type Pengukuran struct {
 	ID                 uuid.UUID      `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	PendaftaranID      uuid.UUID      `gorm:"column:pendaftaran_id;type:uuid;not null;uniqueIndex:ux_pengukuran_pendaftaran_id,where:deleted_at IS NULL" json:"pendaftaran_id"`
-	AnakID             uuid.UUID      `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
+	BalitaID           uuid.UUID      `gorm:"column:balita_id;type:uuid;not null;index" json:"balita_id"`
 	TanggalUkur        time.Time      `gorm:"column:tanggal_ukur;type:date;not null" json:"tanggal_ukur"`
 	UsiaBulan          int16          `gorm:"column:usia_bulan" json:"usia_bulan"`
 	BbKg               float64        `gorm:"column:bb_kg;type:numeric(5,2);not null" json:"bb_kg"`
@@ -26,7 +26,7 @@ type Pengukuran struct {
 	PeringatanValidasi string         `gorm:"column:peringatan_validasi;type:text" json:"peringatan_validasi"`
 	DicatatOleh        uint           `gorm:"column:dicatat_oleh;not null;index" json:"dicatat_oleh"`
 	Pendaftaran        *Pendaftaran   `gorm:"foreignKey:PendaftaranID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
-	Anak               *Anak          `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	Balita             *Balita        `gorm:"foreignKey:BalitaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 	DicatatOlehUser    *User          `gorm:"foreignKey:DicatatOleh;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 	Version            int            `gorm:"default:1;column:version" json:"version"`
 	PerangkatAsal      *uuid.UUID     `gorm:"type:uuid;column:perangkat_asal" json:"perangkat_asal,omitempty"`

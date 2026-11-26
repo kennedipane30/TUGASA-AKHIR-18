@@ -9,15 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// POST /bidan/imunisasi/anak/:anak_id/riwayat-awal
-// Bidan mencatat riwayat imunisasi anak sebelum posyandu (kunjungan pertama).
+// POST /bidan/imunisasi/balita/:balita_id/riwayat-awal
+// Bidan mencatat riwayat imunisasi balita sebelum posyandu (kunjungan pertama).
 // Body: {status: sudah|belum_pernah, items: [...], mandiri: [...]}
 func (h *ImunisasiHandler) CatatRiwayatAwal(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
-	anakID, ok := idParam(c, "anak_id")
+	balitaID, ok := idParam(c, "balita_id")
 	if !ok {
 		return
 	}
@@ -26,7 +26,7 @@ func (h *ImunisasiHandler) CatatRiwayatAwal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "data riwayat imunisasi belum lengkap"})
 		return
 	}
-	data, err := h.svc.CatatRiwayatAwal(c.GetUint("user_id"), pos, anakID, in)
+	data, err := h.svc.CatatRiwayatAwal(c.GetUint("user_id"), pos, balitaID, in)
 	if err != nil {
 		h.gagal(c, err)
 		return

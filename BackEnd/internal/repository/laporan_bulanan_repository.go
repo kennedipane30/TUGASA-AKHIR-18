@@ -34,13 +34,13 @@ type ImunisasiPerJenis struct {
 
 func (r *LaporanBulananRepository) ImunisasiPerJenis(pos string, dari, sampai time.Time) ([]ImunisasiPerJenis, error) {
 	rows := []ImunisasiPerJenis{}
-	err := r.db.Table("imunisasi_anak AS i").
+	err := r.db.Table("imunisasi_balita AS i").
 		Select("j.nama AS nama, COUNT(i.id) AS jumlah").
-		Joins("JOIN jenis_vaksin j ON j.id = i.jenis_vaksin_id").
+		Joins("JOIN jenis_imunisasi j ON j.id = i.jenis_imunisasi_id").
 		Where("i.deleted_at IS NULL").
 		Where("i.sumber = ? AND i.status_konfirmasi = ?",
 			models.SumberImunisasiPosyandu, models.KonfirmasiImunisasiOK).
-		Where("i.anak_id IN (?)", subAnakPosyandu(r.db, pos)).
+		Where("i.balita_id IN (?)", subBalitaPosyandu(r.db, pos)).
 		Where("i.tanggal_pemberian >= ? AND i.tanggal_pemberian < ?", dari.Format(rekapTgl), sampai.Format(rekapTgl)).
 		Group("j.nama, j.urutan").
 		Order("j.urutan ASC, j.nama ASC").

@@ -97,8 +97,8 @@ func (h *KaderKeluargaHandler) UbahProfil(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": res})
 }
 
-// POST /kader/keluarga/:id/anak
-func (h *KaderKeluargaHandler) TambahAnak(c *gin.Context) {
+// POST /kader/keluarga/:id/balita
+func (h *KaderKeluargaHandler) TambahBalita(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
@@ -107,12 +107,12 @@ func (h *KaderKeluargaHandler) TambahAnak(c *gin.Context) {
 	if !ok {
 		return
 	}
-	var in service.AnakInput
+	var in service.BalitaInput
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "body tidak valid"})
 		return
 	}
-	a, err := h.svc.TambahAnak(pos, id, in)
+	a, err := h.svc.TambahBalita(pos, id, in)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -120,8 +120,8 @@ func (h *KaderKeluargaHandler) TambahAnak(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": a})
 }
 
-// PUT /kader/keluarga/:id/anak/:anak_id
-func (h *KaderKeluargaHandler) UbahAnak(c *gin.Context) {
+// PUT /kader/keluarga/:id/balita/:balita_id
+func (h *KaderKeluargaHandler) UbahBalita(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
@@ -130,16 +130,16 @@ func (h *KaderKeluargaHandler) UbahAnak(c *gin.Context) {
 	if !ok {
 		return
 	}
-	anakID, ok := idParam(c, "anak_id")
+	balitaID, ok := idParam(c, "balita_id")
 	if !ok {
 		return
 	}
-	var in service.AnakInput
+	var in service.BalitaInput
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "body tidak valid"})
 		return
 	}
-	a, err := h.svc.UbahAnak(pos, id, anakID, in)
+	a, err := h.svc.UbahBalita(pos, id, balitaID, in)
 	if err != nil {
 		tulisError(c, err)
 		return

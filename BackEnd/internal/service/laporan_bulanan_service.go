@@ -197,7 +197,7 @@ func (s *LaporanBulananService) Laporan(pos, bulan string) (*LaporanBulananResp,
 			petaSup[l] = map[uuid.UUID]bool{}
 			urutSup = append(urutSup, l)
 		}
-		petaSup[l][x.AnakID] = true
+		petaSup[l][x.BalitaID] = true
 	}
 	prioritasSup := map[string]int{"Vitamin A": 0, "Obat Cacing": 1, "PMT": 2}
 	sort.SliceStable(urutSup, func(i, j int) bool {
@@ -220,7 +220,7 @@ func (s *LaporanBulananService) Laporan(pos, bulan string) (*LaporanBulananResp,
 
 	// ------------------------------------------------ VI. balita berisiko
 	indeks := map[uuid.UUID]int{}
-	tambahMasalah := func(id uuid.UUID, a AnakRekap, masalah ...string) {
+	tambahMasalah := func(id uuid.UUID, a BalitaRekap, masalah ...string) {
 		i, ada := indeks[id]
 		if !ada {
 			out.BalitaBerisiko = append(out.BalitaBerisiko, BalitaBerisikoLaporan{
@@ -246,7 +246,7 @@ func (s *LaporanBulananService) Laporan(pos, bulan string) (*LaporanBulananResp,
 		}
 	}
 	for _, a := range gz.Prioritas {
-		tambahMasalah(a.AnakID, a.AnakRekap, a.Masalah...)
+		tambahMasalah(a.BalitaID, a.BalitaRekap, a.Masalah...)
 	}
 	for _, a := range sk.PerluRujuk {
 		m := []string{}
@@ -256,7 +256,7 @@ func (s *LaporanBulananService) Laporan(pos, bulan string) (*LaporanBulananResp,
 		if a.Bgm {
 			m = append(m, "BGM")
 		}
-		tambahMasalah(a.AnakID, a.AnakRekap, m...)
+		tambahMasalah(a.BalitaID, a.BalitaRekap, m...)
 	}
 	sort.SliceStable(out.BalitaBerisiko, func(i, j int) bool {
 		return strings.ToLower(out.BalitaBerisiko[i].Nama) < strings.ToLower(out.BalitaBerisiko[j].Nama)

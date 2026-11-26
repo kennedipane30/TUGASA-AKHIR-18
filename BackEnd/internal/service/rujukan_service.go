@@ -17,7 +17,7 @@ import (
 // ============================================================================
 // RUJUKAN BALITA (bidan membuat, orang tua melihat)
 //
-// Bidan memilih anak -> data anak, orang tua, dan pemeriksaan terakhir terisi
+// Bidan memilih balita -> data balita, orang tua, dan pemeriksaan terakhir terisi
 // otomatis -> bidan mengisi keluhan, diagnosis, tindakan, tujuan -> surat
 // rujukan bernomor dibuat & orang tua diberi notifikasi -> bidan mencatat
 // rujukan balik (hasil dari faskes) -> selesai.
@@ -37,7 +37,7 @@ func NewRujukanService(repo *repository.RujukanRepository) *RujukanService {
 // SetNotifikasi: notifikasi ke orang tua saat rujukan dibuat / selesai / dibatalkan.
 func (s *RujukanService) SetNotifikasi(n *NotifikasiService) { s.notif = n }
 
-// ---------------------------------------------------------------- data anak otomatis
+// ---------------------------------------------------------------- data balita otomatis
 
 type PemeriksaanRujukan struct {
 	TanggalUkur string   `json:"tanggal_ukur"`
@@ -53,8 +53,8 @@ type PemeriksaanRujukan struct {
 	Bgm         bool     `json:"bgm"`
 }
 
-type DataAnakRujukan struct {
-	AnakID           uuid.UUID           `json:"anak_id"`
+type DataBalitaRujukan struct {
+	BalitaID         uuid.UUID           `json:"balita_id"`
 	Nama             string              `json:"nama"`
 	NIK              string              `json:"nik"`
 	JenisKelamin     string              `json:"jenis_kelamin"`
@@ -73,8 +73,8 @@ type DataAnakRujukan struct {
 	PenyakitPenyerta string              `json:"penyakit_penyerta"`
 }
 
-type AnakCariRujukan struct {
-	AnakID       uuid.UUID `json:"anak_id"`
+type BalitaCariRujukan struct {
+	BalitaID     uuid.UUID `json:"balita_id"`
 	Nama         string    `json:"nama"`
 	JenisKelamin string    `json:"jenis_kelamin"`
 	UsiaTeks     string    `json:"usia_teks"`
@@ -141,34 +141,34 @@ func angkaNil(v float64) *float64 {
 	return &v
 }
 
-// cekAnakPosyandu: anak harus ada dan terdaftar di posyandu bidan.
-func (s *RujukanService) cekAnakPosyandu(anakID uuid.UUID, pos string) (*models.Anak, error) {
-	a, err := s.repo.GetAnak(anakID)
+// cekBalitaPosyandu: balita harus ada dan terdaftar di posyandu bidan.
+func (s *RujukanService) cekBalitaPosyandu(balitaID uuid.UUID, pos string) (*models.Balita, error) {
+	a, err := s.repo.GetBalita(balitaID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrAnakTidakAda
+		return nil, ErrBalitaTidakAda
 	}
 	if err != nil {
 		return nil, err
 	}
 	if a.Keluarga == nil || a.Keluarga.Posyandu != pos {
-		return nil, terlarang("anak terdaftar di posyandu lain")
+		return nil, terlarang("balita terdaftar di posyandu lain")
 	}
 	return a, nil
 }
 
-// CariAnak: bidan mencari anak berdasarkan nama / NIK di posyandunya.
-func (s *RujukanService) CariAnak(pos, kata string) ([]AnakCariRujukan, error) {
+// CariBalita: bidan mencari balita berdasarkan nama / NIK di posyandunya.
+func (s *RujukanService) CariBalita(pos, kata string) ([]BalitaCariRujukan, error) {
 	if pos == "" {
 		return nil, terlarang("akun belum terhubung ke posyandu")
 	}
-	list, err := s.repo.CariAnak(pos, kata)
+	list, err := s.repo.CariBalita(pos, kata)
 	if err != nil {
 		return nil, err
 	}
 	hi := hariIni()
-	out := make([]AnakCariRujukan, 0, len(list))
+	out := make([]BalitaCariRujukan, 0, len(list))
 	for _, a := range list {
-		it := AnakCariRujukan{AnakID: a.ID, Nama: a.Nama, JenisKelamin: a.JenisKelamin,
+		it := BalitaCariRujukan{BalitaID: a.ID, Nama: a.Nama, JenisKelamin: a.JenisKelamin,
 			UsiaTeks: usiaTeks(tglSaja(a.TanggalLahir), hi)}
 		if ortu, err := s.repo.OrangTuaKeluarga(a.KeluargaID); err == nil {
 			ibu, ayah, wali, _ := namaOrtu(ortu)
@@ -184,12 +184,12 @@ func (s *RujukanService) CariAnak(pos, kata string) ([]AnakCariRujukan, error) {
 	return out, nil
 }
 
-// dataAnak: identitas anak, orang tua, dan pemeriksaan terakhir (untuk form & salinan surat).
-func (s *RujukanService) dataAnak(a *models.Anak) (*DataAnakRujukan, error) {
+// dataBalita: identitas balita, orang tua, dan pemeriksaan terakhir (untuk form & salinan surat).
+func (s *RujukanService) dataBalita(a *models.Balita) (*DataBalitaRujukan, error) {
 	hi := hariIni()
 	lahir := tglSaja(a.TanggalLahir)
-	d := &DataAnakRujukan{
-		AnakID: a.ID, Nama: a.Nama, JenisKelamin: a.JenisKelamin,
+	d := &DataBalitaRujukan{
+		BalitaID: a.ID, Nama: a.Nama, JenisKelamin: a.JenisKelamin,
 		TanggalLahir: tglTeksRujukan(lahir), UsiaTeks: usiaTeks(lahir, hi),
 		BeratLahirKg: kosongNil(a.BeratLahirKg), PanjangLahirCm: kosongNil(a.PanjangLahirCm),
 	}
@@ -243,13 +243,13 @@ func (s *RujukanService) dataAnak(a *models.Anak) (*DataAnakRujukan, error) {
 	return d, nil
 }
 
-// DataAnak: bidan memilih anak, data otomatis untuk form rujukan.
-func (s *RujukanService) DataAnak(pos string, anakID uuid.UUID) (*DataAnakRujukan, error) {
-	a, err := s.cekAnakPosyandu(anakID, pos)
+// DataBalita: bidan memilih balita, data otomatis untuk form rujukan.
+func (s *RujukanService) DataBalita(pos string, balitaID uuid.UUID) (*DataBalitaRujukan, error) {
+	a, err := s.cekBalitaPosyandu(balitaID, pos)
 	if err != nil {
 		return nil, err
 	}
-	return s.dataAnak(a)
+	return s.dataBalita(a)
 }
 
 // ---------------------------------------------------------------- respons
@@ -258,8 +258,8 @@ type RujukanRingkas struct {
 	ID           uuid.UUID `json:"id"`
 	Nomor        string    `json:"nomor"`
 	Tanggal      string    `json:"tanggal"`
-	AnakID       uuid.UUID `json:"anak_id"`
-	NamaAnak     string    `json:"nama_anak"`
+	BalitaID     uuid.UUID `json:"balita_id"`
+	NamaBalita   string    `json:"nama_balita"`
 	JenisKelamin string    `json:"jenis_kelamin"`
 	UsiaTeks     string    `json:"usia_teks"`
 	Diagnosis    string    `json:"diagnosis"`
@@ -276,45 +276,45 @@ type RujukanBalik struct {
 }
 
 type RujukanDetail struct {
-	ID             uuid.UUID        `json:"id"`
-	Nomor          string           `json:"nomor"`
-	Tanggal        string           `json:"tanggal"`
-	Posyandu       string           `json:"posyandu"`
-	Status         string           `json:"status"`
-	DataAnak       *DataAnakRujukan `json:"data_anak"`
-	Keluhan        string           `json:"keluhan"`
-	Diagnosis      string           `json:"diagnosis"`
-	Tindakan       string           `json:"tindakan"`
-	Tujuan         string           `json:"tujuan"`
-	BidanNama      string           `json:"bidan_nama"`
-	Balik          *RujukanBalik    `json:"rujukan_balik"`
-	AlasanBatal    string           `json:"alasan_batal"`
-	DibatalkanPada string           `json:"dibatalkan_pada"`
-	DibuatPada     string           `json:"dibuat_pada"`
+	ID             uuid.UUID          `json:"id"`
+	Nomor          string             `json:"nomor"`
+	Tanggal        string             `json:"tanggal"`
+	Posyandu       string             `json:"posyandu"`
+	Status         string             `json:"status"`
+	DataBalita     *DataBalitaRujukan `json:"data_balita"`
+	Keluhan        string             `json:"keluhan"`
+	Diagnosis      string             `json:"diagnosis"`
+	Tindakan       string             `json:"tindakan"`
+	Tujuan         string             `json:"tujuan"`
+	BidanNama      string             `json:"bidan_nama"`
+	Balik          *RujukanBalik      `json:"rujukan_balik"`
+	AlasanBatal    string             `json:"alasan_batal"`
+	DibatalkanPada string             `json:"dibatalkan_pada"`
+	DibuatPada     string             `json:"dibuat_pada"`
 }
 
-func (s *RujukanService) salinan(m *models.Rujukan) *DataAnakRujukan {
-	d := &DataAnakRujukan{}
-	if strings.TrimSpace(m.DataAnak) != "" {
-		_ = json.Unmarshal([]byte(m.DataAnak), d)
+func (s *RujukanService) salinan(m *models.Rujukan) *DataBalitaRujukan {
+	d := &DataBalitaRujukan{}
+	if strings.TrimSpace(m.DataBalita) != "" {
+		_ = json.Unmarshal([]byte(m.DataBalita), d)
 	}
 	if d.Nama == "" {
-		d.Nama = m.NamaAnak
+		d.Nama = m.NamaBalita
 	}
-	d.AnakID = m.AnakID
+	d.BalitaID = m.BalitaID
 	return d
 }
 
 func (s *RujukanService) ringkas(m *models.Rujukan) RujukanRingkas {
 	d := s.salinan(m)
 	return RujukanRingkas{ID: m.ID, Nomor: m.Nomor, Tanggal: tglTeksRujukan(tglSaja(m.Tanggal)),
-		AnakID: m.AnakID, NamaAnak: m.NamaAnak, JenisKelamin: d.JenisKelamin, UsiaTeks: d.UsiaTeks,
+		BalitaID: m.BalitaID, NamaBalita: m.NamaBalita, JenisKelamin: d.JenisKelamin, UsiaTeks: d.UsiaTeks,
 		Diagnosis: m.Diagnosis, Tujuan: m.Tujuan, Status: m.Status}
 }
 
 func (s *RujukanService) detail(m *models.Rujukan) *RujukanDetail {
 	out := &RujukanDetail{ID: m.ID, Nomor: m.Nomor, Tanggal: tglTeksRujukan(tglSaja(m.Tanggal)),
-		Posyandu: m.Posyandu, Status: m.Status, DataAnak: s.salinan(m),
+		Posyandu: m.Posyandu, Status: m.Status, DataBalita: s.salinan(m),
 		Keluhan: m.Keluhan, Diagnosis: m.Diagnosis, Tindakan: m.Tindakan, Tujuan: m.Tujuan,
 		BidanNama: m.BidanNama, AlasanBatal: m.AlasanBatal,
 		DibuatPada: m.CreatedAt.In(wib).Format("2006-01-02 15:04")}
@@ -343,7 +343,7 @@ func (s *RujukanService) daftar(list []models.Rujukan) []RujukanRingkas {
 // ---------------------------------------------------------------- bidan
 
 type BuatRujukanInput struct {
-	AnakID    uuid.UUID `json:"anak_id"`
+	BalitaID  uuid.UUID `json:"balita_id"`
 	Keluhan   string    `json:"keluhan"`
 	Diagnosis string    `json:"diagnosis"`
 	Tindakan  string    `json:"tindakan"`
@@ -425,10 +425,10 @@ func (s *RujukanService) Buat(bidanID uint, pos string, in BuatRujukanInput) (*R
 	if pos == "" {
 		return nil, terlarang("akun belum terhubung ke posyandu")
 	}
-	if in.AnakID == uuid.Nil {
-		return nil, validasi("pilih anak yang akan dirujuk")
+	if in.BalitaID == uuid.Nil {
+		return nil, validasi("pilih balita yang akan dirujuk")
 	}
-	a, err := s.cekAnakPosyandu(in.AnakID, pos)
+	a, err := s.cekBalitaPosyandu(in.BalitaID, pos)
 	if err != nil {
 		return nil, err
 	}
@@ -448,14 +448,14 @@ func (s *RujukanService) Buat(bidanID uint, pos string, in BuatRujukanInput) (*R
 	if err != nil {
 		return nil, err
 	}
-	data, err := s.dataAnak(a)
+	data, err := s.dataBalita(a)
 	if err != nil {
 		return nil, err
 	}
 	js, _ := json.Marshal(data)
 	m := &models.Rujukan{
-		Posyandu: pos, AnakID: a.ID, BidanID: bidanID, BidanNama: s.repo.NamaUser(bidanID),
-		Tanggal: hariIni(), NamaAnak: a.Nama, DataAnak: string(js),
+		Posyandu: pos, BalitaID: a.ID, BidanID: bidanID, BidanNama: s.repo.NamaUser(bidanID),
+		Tanggal: hariIni(), NamaBalita: a.Nama, DataBalita: string(js),
 		Keluhan: keluhan, Diagnosis: diagnosis, Tindakan: tindakan, Tujuan: tujuan,
 		Status: models.StatusRujukanDirujuk, Version: 1,
 	}
@@ -469,7 +469,7 @@ func (s *RujukanService) Buat(bidanID uint, pos string, in BuatRujukanInput) (*R
 }
 
 // Ubah: bidan memperbaiki isian rujukan (keluhan, diagnosis, tindakan, tujuan)
-// selama rujukan masih aktif. Nomor, tanggal, dan data anak pada surat tetap.
+// selama rujukan masih aktif. Nomor, tanggal, dan data balita pada surat tetap.
 func (s *RujukanService) Ubah(bidanID uint, pos string, id uuid.UUID, in UbahRujukanInput) (*RujukanDetail, error) {
 	m, err := s.ambilBidan(pos, id)
 	if err != nil {
@@ -614,8 +614,8 @@ func (s *RujukanService) DetailOrangTua(userID uint, id uuid.UUID) (*RujukanDeta
 	if err != nil {
 		return nil, err
 	}
-	if !s.repo.MilikOrangTua(m.AnakID, userID) {
-		return nil, terlarang("rujukan ini bukan untuk anak Anda")
+	if !s.repo.MilikOrangTua(m.BalitaID, userID) {
+		return nil, terlarang("rujukan ini bukan untuk balita Anda")
 	}
 	return s.detail(m), nil
 }

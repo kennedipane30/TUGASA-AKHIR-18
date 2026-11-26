@@ -12,16 +12,16 @@ type BalitaRepository struct{ db *gorm.DB }
 
 func NewBalitaRepository(db *gorm.DB) *BalitaRepository { return &BalitaRepository{db} }
 
-// AnakPosyandu: semua anak di satu posyandu (aktif dan tidak aktif), urut nama.
-func (r *BalitaRepository) AnakPosyandu(pos string) ([]models.Anak, error) {
-	list := []models.Anak{}
+// BalitaPosyandu: semua balita di satu posyandu (aktif dan tidak aktif), urut nama.
+func (r *BalitaRepository) BalitaPosyandu(pos string) ([]models.Balita, error) {
+	list := []models.Balita{}
 	err := r.db.Where("keluarga_id IN (?)", subKeluargaPosyandu(r.db, pos)).
 		Order("nama ASC").Find(&list).Error
 	return list, err
 }
 
-func (r *BalitaRepository) GetAnak(id uuid.UUID) (*models.Anak, error) {
-	var a models.Anak
+func (r *BalitaRepository) GetBalita(id uuid.UUID) (*models.Balita, error) {
+	var a models.Balita
 	err := r.db.First(&a, "id = ?", id).Error
 	return &a, err
 }
@@ -39,13 +39,13 @@ func (r *BalitaRepository) PosyanduKeluarga(keluargaID uuid.UUID) (string, error
 	return pos, err
 }
 
-// PengukuranBanyakAnak: semua pengukuran untuk banyak anak, terbaru di atas.
-func (r *BalitaRepository) PengukuranBanyakAnak(ids []uuid.UUID) ([]models.Pengukuran, error) {
+// PengukuranBanyakBalita: semua pengukuran untuk banyak balita, terbaru di atas.
+func (r *BalitaRepository) PengukuranBanyakBalita(ids []uuid.UUID) ([]models.Pengukuran, error) {
 	list := []models.Pengukuran{}
 	if len(ids) == 0 {
 		return list, nil
 	}
-	err := r.db.Where("anak_id IN ?", ids).Order("tanggal_ukur DESC").Find(&list).Error
+	err := r.db.Where("balita_id IN ?", ids).Order("tanggal_ukur DESC").Find(&list).Error
 	return list, err
 }
 
@@ -78,8 +78,8 @@ func (r *BalitaRepository) PemeriksaanByPendaftaran(ids []uuid.UUID) ([]models.P
 }
 
 // SuplemenByPendaftaran: suplemen (Vitamin A, obat cacing, dll.) yang diberikan pada banyak kunjungan.
-func (r *BalitaRepository) SuplemenByPendaftaran(ids []uuid.UUID) ([]models.SuplemenAnak, error) {
-	list := []models.SuplemenAnak{}
+func (r *BalitaRepository) SuplemenByPendaftaran(ids []uuid.UUID) ([]models.SuplemenBalita, error) {
+	list := []models.SuplemenBalita{}
 	if len(ids) == 0 {
 		return list, nil
 	}
@@ -88,8 +88,8 @@ func (r *BalitaRepository) SuplemenByPendaftaran(ids []uuid.UUID) ([]models.Supl
 }
 
 // ImunisasiByPendaftaran: imunisasi yang diberikan pada banyak kunjungan, beserta nama imunisasi.
-func (r *BalitaRepository) ImunisasiByPendaftaran(ids []uuid.UUID) ([]models.ImunisasiAnak, error) {
-	list := []models.ImunisasiAnak{}
+func (r *BalitaRepository) ImunisasiByPendaftaran(ids []uuid.UUID) ([]models.ImunisasiBalita, error) {
+	list := []models.ImunisasiBalita{}
 	if len(ids) == 0 {
 		return list, nil
 	}

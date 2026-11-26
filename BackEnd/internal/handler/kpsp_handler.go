@@ -14,10 +14,10 @@ type KpspHandler struct{ svc *service.KpspService }
 func NewKpspHandler(svc *service.KpspService) *KpspHandler { return &KpspHandler{svc} }
 
 // GET /bidan/kpsp/lembar?usia_bulan=18
-// Mengambil 10 pertanyaan KPSP yang sesuai untuk anak berumur usia_bulan.
-// Kelompok umurnya ditentukan server, aplikasi cukup mengirim umur anak.
+// Mengambil 10 pertanyaan KPSP yang sesuai untuk balita berumur usia_bulan.
+// Kelompok umurnya ditentukan server, aplikasi cukup mengirim umur balita.
 //
-// Balasan berisi berlaku=false bila anak di luar jangkauan KPSP (3-72 bulan);
+// Balasan berisi berlaku=false bila balita di luar jangkauan KPSP (3-72 bulan);
 // pada keadaan itu aplikasi menyembunyikan kartu KPSP.
 func (h *KpspHandler) Lembar(c *gin.Context) {
 	usia, err := strconv.Atoi(c.Query("usia_bulan"))

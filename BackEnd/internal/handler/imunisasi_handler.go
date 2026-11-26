@@ -15,12 +15,14 @@ import (
 
 type ImunisasiHandler struct{ svc *service.ImunisasiService }
 
-func NewImunisasiHandler(svc *service.ImunisasiService) *ImunisasiHandler { return &ImunisasiHandler{svc} }
+func NewImunisasiHandler(svc *service.ImunisasiService) *ImunisasiHandler {
+	return &ImunisasiHandler{svc}
+}
 
 func (h *ImunisasiHandler) gagal(c *gin.Context, err error) {
 	switch {
-	case errors.Is(err, service.ErrAnakTidakAda):
-		c.JSON(http.StatusNotFound, gin.H{"error": "anak tidak ditemukan"})
+	case errors.Is(err, service.ErrBalitaTidakAda):
+		c.JSON(http.StatusNotFound, gin.H{"error": "balita tidak ditemukan"})
 	case errors.Is(err, service.ErrRiwayatImunisasiTidakAda):
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 	default:
@@ -30,7 +32,7 @@ func (h *ImunisasiHandler) gagal(c *gin.Context, err error) {
 
 // ---------------------------------------------------------------- semua role
 
-// GET /imunisasi/jadwal : jadwal imunisasi rutin (master, berlaku untuk semua anak).
+// GET /imunisasi/jadwal : jadwal imunisasi rutin (master, berlaku untuk semua balita).
 func (h *ImunisasiHandler) JadwalMaster(c *gin.Context) {
 	data, err := h.svc.ListJadwalMaster()
 	if err != nil {
@@ -40,14 +42,14 @@ func (h *ImunisasiHandler) JadwalMaster(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
-// GET /imunisasi/anak/:anak_id : kartu imunisasi anak (jadwal + status, riwayat imunisasi, suplemen).
-// Bidan, kader, sekretaris: anak di posyandunya. Orang tua: anak di keluarganya.
-func (h *ImunisasiHandler) KartuAnak(c *gin.Context) {
-	anakID, ok := idParam(c, "anak_id")
+// GET /imunisasi/balita/:balita_id : kartu imunisasi balita (jadwal + status, riwayat imunisasi, suplemen).
+// Bidan, kader, sekretaris: balita di posyandunya. Orang tua: balita di keluarganya.
+func (h *ImunisasiHandler) KartuBalita(c *gin.Context) {
+	balitaID, ok := idParam(c, "balita_id")
 	if !ok {
 		return
 	}
-	data, err := h.svc.KartuAnak(anakID, c.GetUint("user_id"), c.GetString("role"), c.GetString("posyandu"))
+	data, err := h.svc.KartuBalita(balitaID, c.GetUint("user_id"), c.GetString("role"), c.GetString("posyandu"))
 	if err != nil {
 		h.gagal(c, err)
 		return
@@ -135,7 +137,7 @@ func (h *ImunisasiHandler) LaporKipi(c *gin.Context) {
 	}
 	var in service.LaporKipiInput
 	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ceritakan reaksi yang dialami anak"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ceritakan reaksi yang dialami balita"})
 		return
 	}
 	data, err := h.svc.LaporKipi(c.GetUint("user_id"), id, in)
@@ -207,17 +209,17 @@ func (h *ImunisasiHandler) KonfirmasiRiwayat(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
-// POST /bidan/imunisasi/anak/:anak_id/konfirmasi-selesai : riwayat imunisasi anak sudah benar.
+// POST /bidan/imunisasi/balita/:balita_id/konfirmasi-selesai : riwayat imunisasi balita sudah benar.
 func (h *ImunisasiHandler) SelesaiKonfirmasi(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
-	anakID, ok := idParam(c, "anak_id")
+	balitaID, ok := idParam(c, "balita_id")
 	if !ok {
 		return
 	}
-	data, err := h.svc.SelesaiKonfirmasi(c.GetUint("user_id"), pos, anakID)
+	data, err := h.svc.SelesaiKonfirmasi(c.GetUint("user_id"), pos, balitaID)
 	if err != nil {
 		h.gagal(c, err)
 		return

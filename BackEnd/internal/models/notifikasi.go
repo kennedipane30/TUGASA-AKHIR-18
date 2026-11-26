@@ -14,15 +14,15 @@ const (
 	NotifPengingatJadwal  = "pengingat_jadwal"
 	NotifCheckinDibuka    = "checkin_dibuka"
 
-	// NotifPeringatanTimbang: anak 2T (tidak naik 2 bulan berturut-turut) atau BGM
-	// (bawah garis merah); dikirim ke bidan posyandu anak dan orang tuanya.
+	// NotifPeringatanTimbang: balita 2T (tidak naik 2 bulan berturut-turut) atau BGM
+	// (bawah garis merah); dikirim ke bidan posyandu balita dan orang tuanya.
 	NotifPeringatanTimbang = "peringatan_timbang"
 
 	// NotifHasilTimbang: hasil penimbangan (bukan 2T/BGM) ke orang tua.
 	NotifHasilTimbang = "hasil_timbang"
 
-	// Pengingat kesehatan anak (imunisasi, Vitamin A, obat cacing); tanpa tabel baru.
-	// NotifRencanaPosyandu: rencana per anak saat jadwal dibuat/diubah/dipindah karena batal.
+	// Pengingat kesehatan balita (imunisasi, Vitamin A, obat cacing); tanpa tabel baru.
+	// NotifRencanaPosyandu: rencana per balita saat jadwal dibuat/diubah/dipindah karena batal.
 	NotifRencanaPosyandu = "rencana_posyandu"
 	// NotifPengingatImunisasi: H-3 sebelum posyandu yang berisi imunisasi.
 	NotifPengingatImunisasi = "pengingat_imunisasi"

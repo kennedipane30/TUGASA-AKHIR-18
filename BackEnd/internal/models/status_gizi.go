@@ -21,7 +21,7 @@ const (
 type StatusGizi struct {
 	ID           uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	PengukuranID uuid.UUID `gorm:"column:pengukuran_id;type:uuid;not null;uniqueIndex:ux_status_gizi_pengukuran,where:deleted_at IS NULL" json:"pengukuran_id"`
-	AnakID       uuid.UUID `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
+	BalitaID     uuid.UUID `gorm:"column:balita_id;type:uuid;not null;index" json:"balita_id"`
 	TanggalUkur  time.Time `gorm:"column:tanggal_ukur;type:date;not null" json:"tanggal_ukur"`
 	UsiaBulan    int16     `gorm:"column:usia_bulan" json:"usia_bulan"`
 	JenisKelamin string    `gorm:"column:jenis_kelamin;size:1" json:"jenis_kelamin"`
@@ -51,7 +51,7 @@ type StatusGizi struct {
 	Standar       string `gorm:"column:standar;size:60" json:"standar"`
 
 	Pengukuran    *Pengukuran    `gorm:"foreignKey:PengukuranID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
-	Anak          *Anak          `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	Balita        *Balita        `gorm:"foreignKey:BalitaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 	Version       int            `gorm:"default:1;column:version" json:"version"`
 	PerangkatAsal *uuid.UUID     `gorm:"type:uuid;column:perangkat_asal" json:"perangkat_asal,omitempty"`
 	CreatedAt     time.Time      `json:"created_at"`

@@ -21,7 +21,7 @@ import (
 // Rincian D = N + T + O + B (dari tabel penilaian_timbang).
 // Penimbangan yang belum dinilai dimasukkan ke O (belum bisa dinilai).
 // Indikator: K/S, D/S (target >= 85%), N/D, D/K, N/S.
-// Tidak ada tabel baru: dihitung dari anak, pengukuran, dan penilaian_timbang.
+// Tidak ada tabel baru: dihitung dari balita, pengukuran, dan penilaian_timbang.
 // Dipakai sekretaris dan bidan (hanya posyandunya sendiri).
 // ============================================================================
 
@@ -61,9 +61,9 @@ type SkdnBulan struct {
 	PersenNS float64 `json:"persen_ns"`
 }
 
-// AnakSkdn: balita yang perlu perhatian pada bulan itu.
-type AnakSkdn struct {
-	AnakRekap
+// BalitaSkdn: balita yang perlu perhatian pada bulan itu.
+type BalitaSkdn struct {
+	BalitaRekap
 	TanggalUkur  string  `json:"tanggal_ukur"`
 	BbKg         float64 `json:"bb_kg"`
 	Status       string  `json:"status"` // N | T | O | B
@@ -76,20 +76,20 @@ type AnakSkdn struct {
 
 type SkdnResp struct {
 	SkdnBulan
-	Posyandu   string      `json:"posyandu"`
-	TargetDS   float64     `json:"target_ds"`
-	Tren       []SkdnBulan `json:"tren"`        // 6 bulan terakhir, terlama di awal
-	PerluRujuk []AnakSkdn  `json:"perlu_rujuk"` // 2T atau BGM
-	TidakNaik  []AnakSkdn  `json:"tidak_naik"`  // T (bukan 2T/BGM)
+	Posyandu   string       `json:"posyandu"`
+	TargetDS   float64      `json:"target_ds"`
+	Tren       []SkdnBulan  `json:"tren"`        // 6 bulan terakhir, terlama di awal
+	PerluRujuk []BalitaSkdn `json:"perlu_rujuk"` // 2T atau BGM
+	TidakNaik  []BalitaSkdn `json:"tidak_naik"`  // T (bukan 2T/BGM)
 }
 
 type hasilSkdn struct {
 	angka   SkdnBulan
-	rujuk   []AnakSkdn
-	tdkNaik []AnakSkdn
+	rujuk   []BalitaSkdn
+	tdkNaik []BalitaSkdn
 }
 
-func (s *SkdnService) hitungBulan(pos string, semuaAnak []models.Anak, dari time.Time, rinci bool) (*hasilSkdn, error) {
+func (s *SkdnService) hitungBulan(pos string, semuaBalita []models.Balita, dari time.Time, rinci bool) (*hasilSkdn, error) {
 	sampai := dari.AddDate(0, 1, 0)
 	acuan := sampai.AddDate(0, 0, -1)
 	if hi := tglRekap(hariIni()); acuan.After(hi) {
@@ -98,14 +98,14 @@ func (s *SkdnService) hitungBulan(pos string, semuaAnak []models.Anak, dari time
 
 	out := &hasilSkdn{
 		angka:   SkdnBulan{Bulan: dari.Format("2006-01"), Label: labelBulan(dari)},
-		rujuk:   []AnakSkdn{},
-		tdkNaik: []AnakSkdn{},
+		rujuk:   []BalitaSkdn{},
+		tdkNaik: []BalitaSkdn{},
 	}
 	if acuan.Before(dari) {
 		return out, nil
 	}
 
-	sasaran := sasaranBalita(semuaAnak, acuan)
+	sasaran := sasaranBalita(semuaBalita, acuan)
 	ditimbang, err := s.rekap.DitimbangRentang(pos, dari, sampai)
 	if err != nil {
 		return nil, err
@@ -114,10 +114,10 @@ func (s *SkdnService) hitungBulan(pos string, semuaAnak []models.Anak, dari time
 	if err != nil {
 		return nil, err
 	}
-	nilaiAnak := map[uuid.UUID]models.PenilaianTimbang{}
+	nilaiBalita := map[uuid.UUID]models.PenilaianTimbang{}
 	for _, p := range penilaian {
-		if _, ada := nilaiAnak[p.AnakID]; !ada {
-			nilaiAnak[p.AnakID] = p // terbaru di bulan itu
+		if _, ada := nilaiBalita[p.BalitaID]; !ada {
+			nilaiBalita[p.BalitaID] = p // terbaru di bulan itu
 		}
 	}
 
@@ -125,13 +125,13 @@ func (s *SkdnService) hitungBulan(pos string, semuaAnak []models.Anak, dari time
 	a.S = len(sasaran)
 	a.K = a.S
 	for i := range sasaran {
-		anak := &sasaran[i]
-		tgl, ok := ditimbang[anak.ID]
+		balita := &sasaran[i]
+		tgl, ok := ditimbang[balita.ID]
 		if !ok {
 			continue
 		}
 		a.D++
-		p, adaNilai := nilaiAnak[anak.ID]
+		p, adaNilai := nilaiBalita[balita.ID]
 		status := models.StatusTimbangO
 		if adaNilai && p.Status != "" {
 			status = p.Status
@@ -160,8 +160,8 @@ func (s *SkdnService) hitungBulan(pos string, semuaAnak []models.Anak, dari time
 		if !perluRujuk && status != models.StatusTimbangTidakNaik {
 			continue
 		}
-		it := AnakSkdn{
-			AnakRekap:   anakRekap(anak, tglRekap(tgl)),
+		it := BalitaSkdn{
+			BalitaRekap: balitaRekap(balita, tglRekap(tgl)),
 			TanggalUkur: tglRekap(tgl).Format("2006-01-02"),
 			BbKg:        p.BbKg, Status: status,
 			KenaikanGram: p.KenaikanGram, KbmGram: p.KbmGram,
@@ -191,7 +191,7 @@ func (s *SkdnService) hitungBulan(pos string, semuaAnak []models.Anak, dari time
 	a.PersenDK = persenRekap(a.D, a.K)
 	a.PersenNS = persenRekap(a.N, a.S)
 
-	urut := func(l []AnakSkdn) {
+	urut := func(l []BalitaSkdn) {
 		sort.SliceStable(l, func(i, j int) bool { return l[i].Nama < l[j].Nama })
 	}
 	urut(out.rujuk)
@@ -209,12 +209,12 @@ func (s *SkdnService) Hitung(pos, bulan string) (*SkdnResp, error) {
 	if err != nil {
 		return nil, err
 	}
-	anak, err := s.rekap.AnakAktif(pos)
+	balita, err := s.rekap.BalitaAktif(pos)
 	if err != nil {
 		return nil, err
 	}
 
-	utama, err := s.hitungBulan(pos, anak, dari, true)
+	utama, err := s.hitungBulan(pos, balita, dari, true)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func (s *SkdnService) Hitung(pos, bulan string) (*SkdnResp, error) {
 	}
 	for i := jumlahBulanTren - 1; i >= 1; i-- {
 		b := dari.AddDate(0, -i, 0)
-		h, err := s.hitungBulan(pos, anak, b, false)
+		h, err := s.hitungBulan(pos, balita, b, false)
 		if err != nil {
 			return nil, err
 		}

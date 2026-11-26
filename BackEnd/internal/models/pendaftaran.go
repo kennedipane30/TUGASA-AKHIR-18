@@ -7,11 +7,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// Pendaftaran: Pendaftaran, check-in, dan kehadiran anak pada satu jadwal.
+// Pendaftaran: Pendaftaran, check-in, dan kehadiran balita pada satu jadwal.
 type Pendaftaran struct {
 	ID                   uuid.UUID       `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	JadwalID             uuid.UUID       `gorm:"column:jadwal_id;type:uuid;not null;uniqueIndex:ux_pendaftaran_komposit,where:deleted_at IS NULL" json:"jadwal_id"`
-	AnakID               uuid.UUID       `gorm:"column:anak_id;type:uuid;not null;uniqueIndex:ux_pendaftaran_komposit,where:deleted_at IS NULL" json:"anak_id"`
+	BalitaID             uuid.UUID       `gorm:"column:balita_id;type:uuid;not null;uniqueIndex:ux_pendaftaran_komposit,where:deleted_at IS NULL" json:"balita_id"`
 	StatusKehadiran      string          `gorm:"column:status_kehadiran;size:20;default:terdaftar" json:"status_kehadiran"`
 	Sumber               string          `gorm:"column:sumber;size:10;default:mandiri" json:"sumber"`
 	NomorAntrean         *int16          `gorm:"column:nomor_antrean" json:"nomor_antrean"`
@@ -21,7 +21,7 @@ type Pendaftaran struct {
 	DiverifikasiOleh     *uint           `gorm:"column:diverifikasi_oleh;index" json:"diverifikasi_oleh"`
 	WaktuBatal           *time.Time      `gorm:"column:waktu_batal" json:"waktu_batal"`
 	Jadwal               *JadwalPosyandu `gorm:"foreignKey:JadwalID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
-	Anak                 *Anak           `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	Balita               *Balita         `gorm:"foreignKey:BalitaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 	DiverifikasiOlehUser *User           `gorm:"foreignKey:DiverifikasiOleh;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
 	Version              int             `gorm:"default:1;column:version" json:"version"`
 	PerangkatAsal        *uuid.UUID      `gorm:"type:uuid;column:perangkat_asal" json:"perangkat_asal,omitempty"`

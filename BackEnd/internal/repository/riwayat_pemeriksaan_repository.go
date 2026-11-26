@@ -1,6 +1,6 @@
 package repository
 
-// Kueri riwayat kunjungan anak untuk ditampilkan kepada orang tua.
+// Kueri riwayat kunjungan balita untuk ditampilkan kepada orang tua.
 
 import (
 	"posyandu-api/internal/models"
@@ -8,13 +8,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *PelayananRepository) RiwayatPendaftaran(anakIDs []uuid.UUID) ([]models.Pendaftaran, error) {
+func (r *PelayananRepository) RiwayatPendaftaran(balitaIDs []uuid.UUID) ([]models.Pendaftaran, error) {
 	list := []models.Pendaftaran{}
-	if len(anakIDs) == 0 {
+	if len(balitaIDs) == 0 {
 		return list, nil
 	}
 	err := r.db.Preload("Jadwal").
-		Where("anak_id IN ?", anakIDs).
+		Where("balita_id IN ?", balitaIDs).
 		Where(r.db.
 			Where("id IN (?)", r.db.Model(&models.Pengukuran{}).Select("pendaftaran_id")).
 			Or("id IN (?)", r.db.Model(&models.PemeriksaanBidan{}).

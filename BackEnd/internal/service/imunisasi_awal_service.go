@@ -14,13 +14,13 @@ import (
 )
 
 // ============================================================================
-// RIWAYAT IMUNISASI SEBELUM POSYANDU (dicatat BIDAN pada kunjungan pertama anak)
+// RIWAYAT IMUNISASI SEBELUM POSYANDU (dicatat BIDAN pada kunjungan pertama balita)
 //
-// Orang tua tidak lagi mengisi riwayat imunisasi. Saat anak pertama kali datang,
+// Orang tua tidak lagi mengisi riwayat imunisasi. Saat balita pertama kali datang,
 // bidan menanyakan / melihat Buku KIA lalu mencatat:
-//   - "belum_pernah": anak belum pernah diimunisasi, atau
+//   - "belum_pernah": balita belum pernah diimunisasi, atau
 //   - "sudah": daftar dosis imunisasi program (centang) + imunisasi mandiri di luar program.
-// Data langsung sah (dikonfirmasi). Status riwayat anak menjadi "dikonfirmasi",
+// Data langsung sah (dikonfirmasi). Status riwayat balita menjadi "dikonfirmasi",
 // sehingga bagian ini tidak muncul lagi pada kunjungan berikutnya.
 // ============================================================================
 
@@ -28,7 +28,7 @@ var ErrImunisasiMandiriTidakAda = errors.New("catatan imunisasi mandiri tidak di
 
 // ImunisasiMandiriInput: imunisasi di luar daftar program.
 type ImunisasiMandiriInput struct {
-	NamaImunisasi       string `json:"nama_vaksin"`
+	NamaImunisasi    string `json:"nama_imunisasi"`
 	DosisKe          int16  `json:"dosis_ke"`
 	TanggalPemberian string `json:"tanggal_pemberian"` // YYYY-MM-DD
 	Tempat           string `json:"tempat"`
@@ -37,15 +37,15 @@ type ImunisasiMandiriInput struct {
 
 // RiwayatAwalBidanInput: isian bidan untuk riwayat imunisasi sebelum posyandu.
 type RiwayatAwalBidanInput struct {
-	Status  string               `json:"status" binding:"required"` // sudah | belum_pernah
-	Items   []RiwayatAwalItem    `json:"items"`                     // imunisasi program yang dicentang
+	Status  string                  `json:"status" binding:"required"` // sudah | belum_pernah
+	Items   []RiwayatAwalItem       `json:"items"`                     // imunisasi program yang dicentang
 	Mandiri []ImunisasiMandiriInput `json:"mandiri"`                   // imunisasi di luar program
 }
 
 // ImunisasiMandiriResp: tampilan imunisasi mandiri pada kartu imunisasi.
 type ImunisasiMandiriResp struct {
 	ID               uuid.UUID `json:"id"`
-	NamaImunisasi       string    `json:"nama_vaksin"`
+	NamaImunisasi    string    `json:"nama_imunisasi"`
 	DosisKe          int16     `json:"dosis_ke"`
 	TanggalPemberian string    `json:"tanggal_pemberian"`
 	UsiaTeks         string    `json:"usia_teks"`
@@ -53,7 +53,7 @@ type ImunisasiMandiriResp struct {
 	FotoBukti        string    `json:"foto_bukti"`
 }
 
-func imunisasiMandiriResp(m *models.ImunisasiMandiriAnak, lahir time.Time) ImunisasiMandiriResp {
+func imunisasiMandiriResp(m *models.ImunisasiMandiriBalita, lahir time.Time) ImunisasiMandiriResp {
 	t := tglSaja(m.TanggalPemberian)
 	return ImunisasiMandiriResp{
 		ID: m.ID, NamaImunisasi: m.NamaImunisasi, DosisKe: m.DosisKe,
@@ -62,29 +62,29 @@ func imunisasiMandiriResp(m *models.ImunisasiMandiriAnak, lahir time.Time) Imuni
 	}
 }
 
-// daftarImunisasiMandiri: untuk KartuAnak.
-func (s *ImunisasiService) daftarImunisasiMandiri(anak *models.Anak) []ImunisasiMandiriResp {
+// daftarImunisasiMandiri: untuk KartuBalita.
+func (s *ImunisasiService) daftarImunisasiMandiri(balita *models.Balita) []ImunisasiMandiriResp {
 	out := []ImunisasiMandiriResp{}
-	list, err := s.repo.ListImunisasiMandiri(anak.ID)
+	list, err := s.repo.ListImunisasiMandiri(balita.ID)
 	if err != nil {
 		return out
 	}
 	for i := range list {
-		out = append(out, imunisasiMandiriResp(&list[i], anak.TanggalLahir))
+		out = append(out, imunisasiMandiriResp(&list[i], balita.TanggalLahir))
 	}
 	return out
 }
 
-// CatatRiwayatAwal: bidan mencatat riwayat imunisasi anak sebelum posyandu (sekali, kunjungan pertama).
-func (s *ImunisasiService) CatatRiwayatAwal(bidanID uint, pos string, anakID uuid.UUID, in RiwayatAwalBidanInput) (*KartuImunisasiResp, error) {
-	anak, err := s.CekAkses(anakID, bidanID, "bidan", pos)
+// CatatRiwayatAwal: bidan mencatat riwayat imunisasi balita sebelum posyandu (sekali, kunjungan pertama).
+func (s *ImunisasiService) CatatRiwayatAwal(bidanID uint, pos string, balitaID uuid.UUID, in RiwayatAwalBidanInput) (*KartuImunisasiResp, error) {
+	balita, err := s.CekAkses(balitaID, bidanID, "bidan", pos)
 	if err != nil {
 		return nil, err
 	}
-	if anak.StatusRiwayatImunisasi == models.RiwayatImunisasiDikonfirmasi {
-		return nil, konflik("riwayat imunisasi anak ini sudah dicatat; imunisasi dari luar posyandu berikutnya dicatat lewat menu Imunisasi Susulan")
+	if balita.StatusRiwayatImunisasi == models.RiwayatImunisasiDikonfirmasi {
+		return nil, konflik("riwayat imunisasi balita ini sudah dicatat; imunisasi dari luar posyandu berikutnya dicatat lewat menu Imunisasi Susulan")
 	}
-	if n := s.repo.JumlahMenungguKonfirmasi(anak.ID); n > 0 {
+	if n := s.repo.JumlahMenungguKonfirmasi(balita.ID); n > 0 {
 		return nil, konflik("masih ada %d laporan imunisasi lama dari orang tua yang belum dicek; benarkan atau batalkan terlebih dahulu", n)
 	}
 
@@ -97,7 +97,7 @@ func (s *ImunisasiService) CatatRiwayatAwal(bidanID uint, pos string, anakID uui
 	case "sudah":
 		if len(in.Items) == 0 && len(in.Mandiri) == 0 {
 			// boleh kosong bila sudah ada catatan imunisasi luar sebelumnya (mis. laporan lama yang sudah dibenarkan)
-			if luar, err := s.RiwayatLuar(anak); err != nil || len(luar) == 0 {
+			if luar, err := s.RiwayatLuar(balita); err != nil || len(luar) == 0 {
 				return nil, validasi("centang minimal satu imunisasi atau tambahkan imunisasi mandiri")
 			}
 		}
@@ -105,13 +105,13 @@ func (s *ImunisasiService) CatatRiwayatAwal(bidanID uint, pos string, anakID uui
 		return nil, validasi("status riwayat imunisasi harus sudah atau belum_pernah")
 	}
 
-	lahir := tglSaja(anak.TanggalLahir)
+	lahir := tglSaja(balita.TanggalLahir)
 	hari := hariIni()
 
 	err = s.repo.Tx(func(r *repository.ImunisasiRepository) error {
 		// ------------------------------------------------ imunisasi program (centang)
 		items := make([]itemRiwayat, 0, len(in.Items))
-		baru := make([]models.ImunisasiAnak, 0, len(in.Items))
+		baru := make([]models.ImunisasiBalita, 0, len(in.Items))
 		for _, x := range in.Items {
 			if x.JenisImunisasiID == uuid.Nil || x.DosisKe < 1 {
 				return validasi("imunisasi yang dicentang tidak valid, muat ulang halaman")
@@ -132,15 +132,15 @@ func (s *ImunisasiService) CatatRiwayatAwal(bidanID uint, pos string, anakID uui
 				return err
 			}
 			items = append(items, itemRiwayat{JenisImunisasiID: x.JenisImunisasiID, DosisKe: x.DosisKe, Tanggal: tgl})
-			baru = append(baru, models.ImunisasiAnak{
-				AnakID: anak.ID, JenisImunisasiID: x.JenisImunisasiID, DosisKe: x.DosisKe,
+			baru = append(baru, models.ImunisasiBalita{
+				BalitaID: balita.ID, JenisImunisasiID: x.JenisImunisasiID, DosisKe: x.DosisKe,
 				TanggalPemberian: tglSaja(tgl), Tempat: tempat, FotoBukti: foto,
 				Sumber: models.SumberImunisasiLuar, StatusKonfirmasi: models.KonfirmasiImunisasiOK,
 				DiberikanOleh: bidanID, Version: 1,
 			})
 		}
 		// dosis dobel, urutan dosis, usia, jarak minimal, tanggal (aturan yang sama dengan posyandu)
-		if err := validasiRiwayat(r, anak, items, nil, nil); err != nil {
+		if err := validasiRiwayat(r, balita, items, nil, nil); err != nil {
 			return err
 		}
 		for i := range baru {
@@ -163,7 +163,7 @@ func (s *ImunisasiService) CatatRiwayatAwal(bidanID uint, pos string, anakID uui
 				return validasi("dosis %s harus antara 1 dan 10", nama)
 			}
 			kunci := fmt.Sprintf("%s|%d", strings.ToLower(nama), x.DosisKe)
-			if dipakai[kunci] || r.ImunisasiMandiriAda(anak.ID, nama, x.DosisKe) {
+			if dipakai[kunci] || r.ImunisasiMandiriAda(balita.ID, nama, x.DosisKe) {
 				return konflik("%s dosis %d sudah tercatat", nama, x.DosisKe)
 			}
 			dipakai[kunci] = true
@@ -173,7 +173,7 @@ func (s *ImunisasiService) CatatRiwayatAwal(bidanID uint, pos string, anakID uui
 			}
 			tgl = tglSaja(tgl)
 			if tgl.Before(lahir) || tgl.After(hari) {
-				return validasi("tanggal %s harus antara tanggal lahir anak dan hari ini", nama)
+				return validasi("tanggal %s harus antara tanggal lahir balita dan hari ini", nama)
 			}
 			tempat, err := batasTeks(x.Tempat, 100, "tempat")
 			if err != nil {
@@ -186,8 +186,8 @@ func (s *ImunisasiService) CatatRiwayatAwal(bidanID uint, pos string, anakID uui
 			if err != nil {
 				return err
 			}
-			m := models.ImunisasiMandiriAnak{
-				AnakID: anak.ID, NamaImunisasi: nama, DosisKe: x.DosisKe, TanggalPemberian: tgl,
+			m := models.ImunisasiMandiriBalita{
+				BalitaID: balita.ID, NamaImunisasi: nama, DosisKe: x.DosisKe, TanggalPemberian: tgl,
 				Tempat: tempat, FotoBukti: foto, DicatatOleh: bidanID,
 			}
 			if err := r.CreateImunisasiMandiri(&m); err != nil {
@@ -198,12 +198,12 @@ func (s *ImunisasiService) CatatRiwayatAwal(bidanID uint, pos string, anakID uui
 		// ------------------------------------------------ status: sudah dicatat bidan
 		now := time.Now()
 		oleh := bidanID
-		return r.SimpanStatusRiwayat(anak.ID, models.RiwayatImunisasiDikonfirmasi, &oleh, &now)
+		return r.SimpanStatusRiwayat(balita.ID, models.RiwayatImunisasiDikonfirmasi, &oleh, &now)
 	})
 	if err != nil {
 		return nil, err
 	}
-	return s.KartuAnak(anak.ID, bidanID, "bidan", pos)
+	return s.KartuBalita(balita.ID, bidanID, "bidan", pos)
 }
 
 // HapusImunisasiMandiri: bidan menghapus catatan imunisasi mandiri yang salah.
@@ -215,7 +215,7 @@ func (s *ImunisasiService) HapusImunisasiMandiri(bidanID uint, pos string, id uu
 	if err != nil {
 		return err
 	}
-	if _, err := s.CekAkses(m.AnakID, bidanID, "bidan", pos); err != nil {
+	if _, err := s.CekAkses(m.BalitaID, bidanID, "bidan", pos); err != nil {
 		return err
 	}
 	return s.repo.HapusImunisasiMandiri(id)

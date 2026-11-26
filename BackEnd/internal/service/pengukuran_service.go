@@ -1,6 +1,6 @@
 package service
 
-// Pendataan kader: antrean anak yang sudah check-in, dan pencatatan pengukuran
+// Pendataan kader: antrean balita yang sudah check-in, dan pencatatan pengukuran
 // balita (berat, tinggi, lingkar kepala, LILA, keluhan).
 
 import (
@@ -20,7 +20,6 @@ import (
 // Fitur kader: antrean pendataan dan pencatatan pengukuran balita
 // (berat, tinggi, lingkar kepala, LILA, keluhan).
 
-
 type PengukuranInput struct {
 	BbKg            float64  `json:"bb_kg" binding:"required"`
 	TbCm            float64  `json:"tb_cm" binding:"required"`
@@ -35,7 +34,7 @@ type PengukuranInput struct {
 
 type AntreanItem struct {
 	PendaftaranID     uuid.UUID                `json:"pendaftaran_id"`
-	AnakID            uuid.UUID                `json:"anak_id"`
+	BalitaID          uuid.UUID                `json:"balita_id"`
 	Nama              string                   `json:"nama"`
 	JenisKelamin      string                   `json:"jenis_kelamin"`
 	TanggalLahir      string                   `json:"tanggal_lahir"` // YYYY-MM-DD, untuk usia detail di aplikasi
@@ -49,7 +48,7 @@ type AntreanItem struct {
 	Penilaian         *models.PenilaianTimbang `json:"penilaian"`
 }
 
-// AntreanKader: antrean pendataan, yaitu anak yang sudah check-in pada satu jadwal di posyandu kader.
+// AntreanKader: antrean pendataan, yaitu balita yang sudah check-in pada satu jadwal di posyandu kader.
 func (s *PelayananService) AntreanKader(jadwalID uuid.UUID, pos string) ([]AntreanItem, error) {
 	if _, err := s.jadwalPos(jadwalID, pos); err != nil {
 		return nil, err
@@ -104,7 +103,7 @@ func (s *PelayananService) AntreanKader(jadwalID uuid.UUID, pos string) ([]Antre
 	for _, p := range list {
 		it := AntreanItem{
 			PendaftaranID:     p.ID,
-			AnakID:            p.AnakID,
+			BalitaID:          p.BalitaID,
 			NomorAntrean:      p.NomorAntrean,
 			StatusKehadiran:   p.StatusKehadiran,
 			Sumber:            p.Sumber,
@@ -119,11 +118,11 @@ func (s *PelayananService) AntreanKader(jadwalID uuid.UUID, pos string) ([]Antre
 			gg := g
 			it.StatusGizi = &gg
 		}
-		if p.Anak != nil {
-			it.Nama = p.Anak.Nama
-			it.JenisKelamin = p.Anak.JenisKelamin
-			it.TanggalLahir = p.Anak.TanggalLahir.Format("2006-01-02")
-			it.UsiaBulan = usiaBulan(p.Anak.TanggalLahir, now)
+		if p.Balita != nil {
+			it.Nama = p.Balita.Nama
+			it.JenisKelamin = p.Balita.JenisKelamin
+			it.TanggalLahir = p.Balita.TanggalLahir.Format("2006-01-02")
+			it.UsiaBulan = usiaBulan(p.Balita.TanggalLahir, now)
 		}
 		out = append(out, it)
 	}
@@ -136,13 +135,13 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaran
 		return nil, err
 	}
 	if p.StatusKehadiran != "sudah_checkin" {
-		return nil, konflik("anak belum check-in, pengukuran belum dapat dicatat")
+		return nil, konflik("balita belum check-in, pengukuran belum dapat dicatat")
 	}
 	if err := cekSesiSudahMulai(p.Jadwal); err != nil {
 		return nil, err
 	}
-	if p.Anak == nil {
-		return nil, ErrAnakTidakAda
+	if p.Balita == nil {
+		return nil, ErrBalitaTidakAda
 	}
 	if _, err := s.repo.GetPemeriksaan(p.ID); err == nil {
 		return nil, konflik("data sudah dicatat bidan dan tidak dapat diubah")
@@ -169,7 +168,7 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaran
 	}
 
 	hari := hariIni()
-	usia := usiaBulan(p.Anak.TanggalLahir, hari)
+	usia := usiaBulan(p.Balita.TanggalLahir, hari)
 	cara := strings.TrimSpace(in.CaraUkur)
 	switch cara {
 	case "berbaring", "berdiri":
@@ -184,7 +183,7 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaran
 
 	// peringatan bila angka berubah tidak wajar dari kunjungan sebelumnya
 	var peringatan []string
-	prev, err := s.repo.PengukuranSebelumnya(p.AnakID, p.ID)
+	prev, err := s.repo.PengukuranSebelumnya(p.BalitaID, p.ID)
 	switch {
 	case err == nil:
 		if in.BbKg < prev.BbKg-0.3 {
@@ -207,7 +206,7 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaran
 		baru = true
 		m = &models.Pengukuran{
 			PendaftaranID: p.ID,
-			AnakID:        p.AnakID,
+			BalitaID:      p.BalitaID,
 			TanggalUkur:   hari,
 			DicatatOleh:   kaderID,
 			Version:       1,
@@ -239,14 +238,14 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaran
 	}
 	// Hitung z-score dan status gizi (WHO). Kegagalan tidak membatalkan pengukuran.
 	if s.gizi != nil {
-		if _, err := s.gizi.HitungDanSimpan(p.Anak, m); err != nil {
+		if _, err := s.gizi.HitungDanSimpan(p.Balita, m); err != nil {
 			log.Printf("status gizi pengukuran %s gagal dihitung: %v", m.ID, err)
 		}
 	}
 	// Penilaian N/T (KBM), 2T, dan BGM. Kegagalan tidak membatalkan pengukuran.
 	if s.kbm != nil {
 		pengirim := kaderID
-		if _, err := s.kbm.NilaiDanKabari(p.Anak, m, &pengirim); err != nil {
+		if _, err := s.kbm.NilaiDanKabari(p.Balita, m, &pengirim); err != nil {
 			log.Printf("penilaian KBM pengukuran %s gagal: %v", m.ID, err)
 		}
 	}

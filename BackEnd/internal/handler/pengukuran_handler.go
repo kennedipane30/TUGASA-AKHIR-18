@@ -1,6 +1,6 @@
 package handler
 
-// Endpoint pendataan kader: antrean anak yang sudah check-in, serta pencatatan
+// Endpoint pendataan kader: antrean balita yang sudah check-in, serta pencatatan
 // dan pembacaan pengukuran balita.
 
 import (

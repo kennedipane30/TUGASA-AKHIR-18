@@ -30,8 +30,8 @@ func subKeluargaPosyandu(db *gorm.DB, posyandu string) *gorm.DB {
 	return db.Model(&models.Keluarga{}).Select("id").Where("posyandu = ?", posyandu)
 }
 
-func subAnakPosyandu(db *gorm.DB, posyandu string) *gorm.DB {
-	return db.Model(&models.Anak{}).Select("id").
+func subBalitaPosyandu(db *gorm.DB, posyandu string) *gorm.DB {
+	return db.Model(&models.Balita{}).Select("id").
 		Where("keluarga_id IN (?)", subKeluargaPosyandu(db, posyandu))
 }
 
@@ -134,18 +134,20 @@ func (r *JadwalRepository) RingkasanPendaftaran(ids []uuid.UUID) (map[uuid.UUID]
 
 // ---------------------------------------------------------------- pendaftaran
 
-func (r *JadwalRepository) CreatePendaftaran(p *models.Pendaftaran) error { return r.db.Create(p).Error }
-func (r *JadwalRepository) SavePendaftaran(p *models.Pendaftaran) error   { return r.db.Save(p).Error }
+func (r *JadwalRepository) CreatePendaftaran(p *models.Pendaftaran) error {
+	return r.db.Create(p).Error
+}
+func (r *JadwalRepository) SavePendaftaran(p *models.Pendaftaran) error { return r.db.Save(p).Error }
 
-func (r *JadwalRepository) FindPendaftaran(jadwalID, anakID uuid.UUID) (*models.Pendaftaran, error) {
+func (r *JadwalRepository) FindPendaftaran(jadwalID, balitaID uuid.UUID) (*models.Pendaftaran, error) {
 	var p models.Pendaftaran
-	err := r.db.Where("jadwal_id = ? AND anak_id = ?", jadwalID, anakID).First(&p).Error
+	err := r.db.Where("jadwal_id = ? AND balita_id = ?", jadwalID, balitaID).First(&p).Error
 	return &p, err
 }
 
 func (r *JadwalRepository) GetPendaftaran(id uuid.UUID) (*models.Pendaftaran, error) {
 	var p models.Pendaftaran
-	err := r.db.Preload("Anak").Preload("Jadwal").First(&p, "id = ?", id).Error
+	err := r.db.Preload("Balita").Preload("Jadwal").First(&p, "id = ?", id).Error
 	return &p, err
 }
 
@@ -159,7 +161,7 @@ func (r *JadwalRepository) NomorAntreanBerikut(jadwalID uuid.UUID) int16 {
 
 func (r *JadwalRepository) ListPendaftaranJadwal(jadwalID uuid.UUID, status ...string) ([]models.Pendaftaran, error) {
 	list := []models.Pendaftaran{}
-	q := r.db.Preload("Anak").Where("jadwal_id = ?", jadwalID)
+	q := r.db.Preload("Balita").Where("jadwal_id = ?", jadwalID)
 	if len(status) > 0 {
 		q = q.Where("status_kehadiran IN ?", status)
 	}
@@ -196,42 +198,42 @@ func (r *JadwalRepository) petaPendaftaran(model any, ids []uuid.UUID) (map[uuid
 	return hasil, nil
 }
 
-func (r *JadwalRepository) ListPendaftaranAnak(anakIDs []uuid.UUID, jadwalID uuid.UUID) ([]models.Pendaftaran, error) {
+func (r *JadwalRepository) ListPendaftaranBalita(balitaIDs []uuid.UUID, jadwalID uuid.UUID) ([]models.Pendaftaran, error) {
 	list := []models.Pendaftaran{}
-	if len(anakIDs) == 0 {
+	if len(balitaIDs) == 0 {
 		return list, nil
 	}
-	err := r.db.Where("jadwal_id = ? AND anak_id IN ?", jadwalID, anakIDs).Find(&list).Error
+	err := r.db.Where("jadwal_id = ? AND balita_id IN ?", jadwalID, balitaIDs).Find(&list).Error
 	return list, err
 }
 
-// ---------------------------------------------------------------- anak
+// ---------------------------------------------------------------- balita
 
-func (r *JadwalRepository) GetAnak(id uuid.UUID) (*models.Anak, error) {
-	var a models.Anak
+func (r *JadwalRepository) GetBalita(id uuid.UUID) (*models.Balita, error) {
+	var a models.Balita
 	err := r.db.First(&a, "id = ?", id).Error
 	return &a, err
 }
 
-// PosyanduAnak: kode posyandu tempat anak terdaftar (melalui keluarga).
-func (r *JadwalRepository) PosyanduAnak(anakID uuid.UUID) (string, error) {
+// PosyanduBalita: kode posyandu tempat balita terdaftar (melalui keluarga).
+func (r *JadwalRepository) PosyanduBalita(balitaID uuid.UUID) (string, error) {
 	var pos string
 	err := r.db.Model(&models.Keluarga{}).
 		Select("posyandu").
-		Where("id IN (?)", r.db.Model(&models.Anak{}).Select("keluarga_id").Where("id = ?", anakID)).
+		Where("id IN (?)", r.db.Model(&models.Balita{}).Select("keluarga_id").Where("id = ?", balitaID)).
 		Scan(&pos).Error
 	return pos, err
 }
 
-func (r *JadwalRepository) AnakKeluarga(keluargaID uuid.UUID) ([]models.Anak, error) {
-	list := []models.Anak{}
+func (r *JadwalRepository) BalitaKeluarga(keluargaID uuid.UUID) ([]models.Balita, error) {
+	list := []models.Balita{}
 	err := r.db.Where("keluarga_id = ? AND status = ?", keluargaID, "aktif").
 		Order("tanggal_lahir DESC").Find(&list).Error
 	return list, err
 }
 
-func (r *JadwalRepository) CariAnak(kata string, posyandu ...string) ([]models.Anak, error) {
-	list := []models.Anak{}
+func (r *JadwalRepository) CariBalita(kata string, posyandu ...string) ([]models.Balita, error) {
+	list := []models.Balita{}
 	like := "%" + strings.ToLower(kata) + "%"
 	q := r.db.Where("status = ? AND (LOWER(nama) LIKE ? OR nik = ?)", "aktif", like, kata)
 	if p := pilihPosyandu(posyandu); p != "" {
@@ -241,8 +243,8 @@ func (r *JadwalRepository) CariAnak(kata string, posyandu ...string) ([]models.A
 	return list, err
 }
 
-func (r *JadwalRepository) GetAnakByKode(kode string, posyandu ...string) (*models.Anak, error) {
-	var a models.Anak
+func (r *JadwalRepository) GetBalitaByKode(kode string, posyandu ...string) (*models.Balita, error) {
+	var a models.Balita
 	q := r.db.Where("kode_qr = ? AND status = ?", kode, "aktif")
 	if p := pilihPosyandu(posyandu); p != "" {
 		q = q.Where("keluarga_id IN (?)", subKeluargaPosyandu(r.db, p))

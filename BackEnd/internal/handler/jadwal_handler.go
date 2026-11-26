@@ -27,19 +27,19 @@ func idParam(c *gin.Context, nama string) (uuid.UUID, bool) {
 	return id, true
 }
 
-type bodyAnak struct {
-	AnakID string `json:"anak_id" binding:"required"`
+type bodyBalita struct {
+	BalitaID string `json:"balita_id" binding:"required"`
 }
 
-func bacaAnakID(c *gin.Context) (uuid.UUID, bool) {
-	var in bodyAnak
+func bacaBalitaID(c *gin.Context) (uuid.UUID, bool) {
+	var in bodyBalita
 	if err := c.ShouldBindJSON(&in); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return uuid.Nil, false
 	}
-	id, err := uuid.Parse(in.AnakID)
+	id, err := uuid.Parse(in.BalitaID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "anak_id tidak valid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "balita_id tidak valid"})
 		return uuid.Nil, false
 	}
 	return id, true
@@ -224,11 +224,11 @@ func (h *JadwalHandler) Daftar(c *gin.Context) {
 	if !ok {
 		return
 	}
-	anakID, ok := bacaAnakID(c)
+	balitaID, ok := bacaBalitaID(c)
 	if !ok {
 		return
 	}
-	k, err := h.svc.Daftar(c.GetUint("user_id"), jadwalID, anakID)
+	k, err := h.svc.Daftar(c.GetUint("user_id"), jadwalID, balitaID)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -241,11 +241,11 @@ func (h *JadwalHandler) BatalDaftar(c *gin.Context) {
 	if !ok {
 		return
 	}
-	anakID, ok := bacaAnakID(c)
+	balitaID, ok := bacaBalitaID(c)
 	if !ok {
 		return
 	}
-	k, err := h.svc.BatalDaftar(c.GetUint("user_id"), jadwalID, anakID)
+	k, err := h.svc.BatalDaftar(c.GetUint("user_id"), jadwalID, balitaID)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -259,19 +259,19 @@ func (h *JadwalHandler) Scan(c *gin.Context) {
 		return
 	}
 	var in struct {
-		AnakID string `json:"anak_id" binding:"required"`
-		KodeQR string `json:"kode_qr" binding:"required"`
+		BalitaID string `json:"balita_id" binding:"required"`
+		KodeQR   string `json:"kode_qr" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&in); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "anak_id dan kode_qr wajib diisi"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "balita_id dan kode_qr wajib diisi"})
 		return
 	}
-	anakID, err := uuid.Parse(in.AnakID)
+	balitaID, err := uuid.Parse(in.BalitaID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "anak_id tidak valid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "balita_id tidak valid"})
 		return
 	}
-	k, err := h.svc.ScanCheckin(c.GetUint("user_id"), jadwalID, anakID, in.KodeQR)
+	k, err := h.svc.ScanCheckin(c.GetUint("user_id"), jadwalID, balitaID, in.KodeQR)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -284,12 +284,12 @@ func (h *JadwalHandler) Kartu(c *gin.Context) {
 	if !ok {
 		return
 	}
-	anakID, err := uuid.Parse(c.Query("anak_id"))
+	balitaID, err := uuid.Parse(c.Query("balita_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "anak_id tidak valid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "balita_id tidak valid"})
 		return
 	}
-	k, err := h.svc.KartuAntrean(c.GetUint("user_id"), jadwalID, anakID)
+	k, err := h.svc.KartuAntrean(c.GetUint("user_id"), jadwalID, balitaID)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -299,12 +299,12 @@ func (h *JadwalHandler) Kartu(c *gin.Context) {
 
 // ---------------------------------------------------------------- kader
 
-func (h *JadwalHandler) CariAnak(c *gin.Context) {
+func (h *JadwalHandler) CariBalita(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
 	}
-	list, err := h.svc.CariAnak(c.Query("cari"), pos)
+	list, err := h.svc.CariBalita(c.Query("cari"), pos)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -321,11 +321,11 @@ func (h *JadwalHandler) WalkIn(c *gin.Context) {
 	if !ok {
 		return
 	}
-	anakID, ok := bacaAnakID(c)
+	balitaID, ok := bacaBalitaID(c)
 	if !ok {
 		return
 	}
-	p, err := h.svc.WalkIn(c.GetUint("user_id"), pos, jadwalID, anakID)
+	p, err := h.svc.WalkIn(c.GetUint("user_id"), pos, jadwalID, balitaID)
 	if err != nil {
 		tulisError(c, err)
 		return

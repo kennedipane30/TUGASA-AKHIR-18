@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// KPSP (Kuesioner Pra Skrining Perkembangan) adalah skrining perkembangan anak
+// KPSP (Kuesioner Pra Skrining Perkembangan) adalah skrining perkembangan balita
 // yang diisi bidan saat sesi posyandu. Satu lembar KPSP berisi 10 pertanyaan
 // untuk kelompok umur tertentu; bidan menjawab Ya/Tidak pada setiap pertanyaan.
 //
@@ -42,11 +42,11 @@ const (
 // tiap 3 bulan sampai umur 24 bulan, lalu tiap 6 bulan sampai 72 bulan.
 var UsiaKpsp = []int16{3, 6, 9, 12, 15, 18, 21, 24, 30, 36, 42, 48, 54, 60, 66, 72}
 
-// KelompokUsiaKpsp memilih lembar KPSP yang dipakai untuk anak berumur
-// usiaBulan. Sesuai pedoman, bila umur anak belum mencapai kelompok berikutnya,
+// KelompokUsiaKpsp memilih lembar KPSP yang dipakai untuk balita berumur
+// usiaBulan. Sesuai pedoman, bila umur balita belum mencapai kelompok berikutnya,
 // yang dipakai adalah kelompok umur terdekat yang lebih muda.
 //
-// Mengembalikan (0, false) bila anak belum berumur 3 bulan atau sudah lewat
+// Mengembalikan (0, false) bila balita belum berumur 3 bulan atau sudah lewat
 // 72 bulan, yaitu di luar jangkauan KPSP.
 func KelompokUsiaKpsp(usiaBulan int) (int16, bool) {
 	if usiaBulan < 3 || usiaBulan > 72 {
@@ -119,8 +119,8 @@ type HasilKpsp struct {
 	// ID: kunci utama (UUID).
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 
-	// AnakID: anak yang diskrining (FK ke anak).
-	AnakID uuid.UUID `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
+	// BalitaID: balita yang diskrining (FK ke balita).
+	BalitaID uuid.UUID `gorm:"column:balita_id;type:uuid;not null;index" json:"balita_id"`
 
 	// PendaftaranID: kunjungan posyandu saat KPSP diisi (FK ke pendaftaran).
 	PendaftaranID *uuid.UUID `gorm:"column:pendaftaran_id;type:uuid;index" json:"pendaftaran_id"`
@@ -144,10 +144,10 @@ type HasilKpsp struct {
 	DicatatOleh uint `gorm:"column:dicatat_oleh;not null;index" json:"dicatat_oleh"`
 
 	// Relasi
-	Anak           *Anak         `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
-	Pendaftaran    *Pendaftaran  `gorm:"foreignKey:PendaftaranID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
-	DicatatOlehUser *User        `gorm:"foreignKey:DicatatOleh;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
-	Jawaban        []JawabanKpsp `gorm:"foreignKey:HasilKpspID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"jawaban,omitempty"`
+	Balita          *Balita       `gorm:"foreignKey:BalitaID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	Pendaftaran     *Pendaftaran  `gorm:"foreignKey:PendaftaranID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"-"`
+	DicatatOlehUser *User         `gorm:"foreignKey:DicatatOleh;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
+	Jawaban         []JawabanKpsp `gorm:"foreignKey:HasilKpspID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"jawaban,omitempty"`
 
 	// Sinkronisasi offline-first
 	Version       int        `gorm:"default:1;column:version" json:"version"`

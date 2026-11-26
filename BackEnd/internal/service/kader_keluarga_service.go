@@ -20,7 +20,7 @@ import (
 // Aturan validasi memakai fungsi yang sama dengan alur orang tua:
 //   - akun   : sama dengan Register (NIK 16 digit, No. HP, PIN 6 digit)
 //   - profil : profilData()  (sama dengan halaman Data Orang Tua)
-//   - anak   : buatAnak()    (sama dengan halaman Data Anak)
+//   - balita   : buatBalita()    (sama dengan halaman Data Balita)
 // PIN disebutkan orang tua; tidak wajib diganti saat login pertama.
 // ============================================================================
 
@@ -46,19 +46,19 @@ func posKader(pos string) (string, error) {
 	return p, nil
 }
 
-// keAnak: beri keterangan "Anak ke-n" pada pesan validasi data anak.
-func keAnak(i int, err error) error {
+// keBalita: beri keterangan "Balita ke-n" pada pesan validasi data balita.
+func keBalita(i int, err error) error {
 	var ve *ValidationError
 	if errors.As(err, &ve) {
-		return invalid(fmt.Sprintf("Anak ke-%d: %s", i+1, ve.Msg))
+		return invalid(fmt.Sprintf("Balita ke-%d: %s", i+1, ve.Msg))
 	}
 	return err
 }
 
 // cekUsiaBalita: kader hanya mendaftarkan balita (0-59 bulan).
-func cekUsiaBalita(a *models.Anak) error {
+func cekUsiaBalita(a *models.Balita) error {
 	if usiaBulan(a.TanggalLahir, hariIni()) > batasUsiaBalita {
-		return invalid("usia anak lebih dari 59 bulan (bukan balita)")
+		return invalid("usia balita lebih dari 59 bulan (bukan balita)")
 	}
 	return nil
 }
@@ -90,12 +90,12 @@ func (s *KaderKeluargaService) CekAkun(nik, hp string) CekAkunResp {
 // ---------------------------------------------------------------- tambahkan akun
 
 type TambahKeluargaInput struct {
-	Nama   string      `json:"nama"`
-	NIK    string      `json:"nik"`
-	NoHP   string      `json:"no_hp"`
-	Pin    string      `json:"pin"`
-	Profil ProfilInput `json:"profil"`
-	Anak   []AnakInput `json:"anak"`
+	Nama   string        `json:"nama"`
+	NIK    string        `json:"nik"`
+	NoHP   string        `json:"no_hp"`
+	Pin    string        `json:"pin"`
+	Profil ProfilInput   `json:"profil"`
+	Balita []BalitaInput `json:"balita"`
 }
 
 func (s *KaderKeluargaService) Tambah(pos string, in TambahKeluargaInput) (*KeluargaResponse, error) {
@@ -146,33 +146,33 @@ func (s *KaderKeluargaService) Tambah(pos string, in TambahKeluargaInput) (*Kelu
 		}
 	}
 
-	// 3. data anak (aturan sama dengan Data Anak), minimal satu
-	if len(in.Anak) == 0 {
-		return nil, invalid("tambahkan minimal satu data anak")
+	// 3. data balita (aturan sama dengan Data Balita), minimal satu
+	if len(in.Balita) == 0 {
+		return nil, invalid("tambahkan minimal satu data balita")
 	}
-	anak := make([]*models.Anak, 0, len(in.Anak))
-	nikAnak := map[string]bool{}
+	balita := make([]*models.Balita, 0, len(in.Balita))
+	nikBalita := map[string]bool{}
 	kunci := map[string]bool{}
-	for i, ai := range in.Anak {
-		a, err := buatAnak(ai)
+	for i, ai := range in.Balita {
+		a, err := buatBalita(ai)
 		if err != nil {
-			return nil, keAnak(i, err)
+			return nil, keBalita(i, err)
 		}
 		if err := cekUsiaBalita(a); err != nil {
-			return nil, keAnak(i, err)
+			return nil, keBalita(i, err)
 		}
 		if a.NIK != nil {
-			if nikAnak[*a.NIK] || s.kel.NIKAnakSudahAda(*a.NIK, uuid.Nil) {
-				return nil, konflik("Anak ke-%d: NIK anak telah digunakan", i+1)
+			if nikBalita[*a.NIK] || s.kel.NIKBalitaSudahAda(*a.NIK, uuid.Nil) {
+				return nil, konflik("Balita ke-%d: NIK balita telah digunakan", i+1)
 			}
-			nikAnak[*a.NIK] = true
+			nikBalita[*a.NIK] = true
 		}
 		k := strings.ToLower(a.Nama) + "|" + a.TanggalLahir.Format("2006-01-02")
 		if kunci[k] {
-			return nil, invalid(fmt.Sprintf("Anak ke-%d: nama dan tanggal lahir sama dengan anak lain", i+1))
+			return nil, invalid(fmt.Sprintf("Balita ke-%d: nama dan tanggal lahir sama dengan balita lain", i+1))
 		}
 		kunci[k] = true
-		anak = append(anak, a)
+		balita = append(balita, a)
 	}
 
 	// 4. simpan semua dalam satu transaksi
@@ -190,7 +190,7 @@ func (s *KaderKeluargaService) Tambah(pos string, in TambahKeluargaInput) (*Kelu
 		IsActive:      true,
 		WajibGantiPIN: false,
 	}
-	if _, err := s.kel.BuatKeluargaLengkap(u, profil, anak); err != nil {
+	if _, err := s.kel.BuatKeluargaLengkap(u, profil, balita); err != nil {
 		return nil, err
 	}
 	return s.klg.Get(u.ID)
@@ -248,25 +248,25 @@ func (s *KaderKeluargaService) UbahProfil(pos string, kid uuid.UUID, in ProfilIn
 	return s.klg.SimpanProfil(uid, in)
 }
 
-func (s *KaderKeluargaService) TambahAnak(pos string, kid uuid.UUID, in AnakInput) (*models.Anak, error) {
+func (s *KaderKeluargaService) TambahBalita(pos string, kid uuid.UUID, in BalitaInput) (*models.Balita, error) {
 	uid, err := s.uidKeluarga(pos, kid)
 	if err != nil {
 		return nil, err
 	}
-	a, err := buatAnak(in)
+	a, err := buatBalita(in)
 	if err != nil {
 		return nil, err
 	}
 	if err := cekUsiaBalita(a); err != nil {
 		return nil, err
 	}
-	return s.klg.TambahAnak(uid, in)
+	return s.klg.TambahBalita(uid, in)
 }
 
-func (s *KaderKeluargaService) UbahAnak(pos string, kid, anakID uuid.UUID, in AnakInput) (*models.Anak, error) {
+func (s *KaderKeluargaService) UbahBalita(pos string, kid, balitaID uuid.UUID, in BalitaInput) (*models.Balita, error) {
 	uid, err := s.uidKeluarga(pos, kid)
 	if err != nil {
 		return nil, err
 	}
-	return s.klg.UbahAnak(uid, anakID, in)
+	return s.klg.UbahBalita(uid, balitaID, in)
 }
