@@ -14,7 +14,6 @@ import '../../theme/app_colors.dart';
 import '../balita/balita_detail_page.dart';
 import '../../widgets/common_widgets.dart';
 import '../../../service/notifikasi_service.dart';
-import '../../theme/app_colors.dart';
 
 const _hijauHeader = Color(0xFF065F46); // sama dengan header halaman lain
 const _teksGelap = Color(0xFF1F2937);
@@ -182,7 +181,6 @@ void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
           anakId: id,
           nama: 'Detail Balita',
           bisaKelolaImunisasi: true,
-          tabAwal: 2,
         );
       }
     case 'hasil_pemeriksaan':

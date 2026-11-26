@@ -4,18 +4,16 @@ import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common_widgets.dart';
 import '../../../service/balita_service.dart';
-import '../../../service/imunisasi_service.dart' show namaSuplemen;
 import '../../../features/Bidan/imunisasi/imunisasi_lihat_body.dart';
 import '../rekap/rekap_posyandu_page.dart';
 import 'arsip_balita_page.dart';
 import 'semua_balita_page.dart' show labelTimbang;
 
-/// Detail satu balita: profil & keluarga, riwayat penimbangan (beserta catatan
-/// kader, catatan bidan, imunisasi, dan suplemen tiap kunjungan), dan imunisasi.
-/// [tabAwal] 0 = Profil, 1 = Penimbangan (kunjungan terbaru langsung terbuka), 2 = Imunisasi.
-const _biru = Color(0xFF2563EB);
-const _biruMuda = Color(0xFFE3F2FD);
-const _biruGaris = Color(0xFFBFDFF7);
+/// Detail satu balita: profil, data keluarga, kondisi terakhir, dan ringkasan
+/// imunisasi.
+///
+/// Riwayat pemeriksaan per kunjungan tidak ditampilkan di sini karena sudah
+/// ada di halaman Riwayat masing-masing peran.
 const _hijauTua = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
 
@@ -89,7 +87,6 @@ class BalitaDetailPage extends StatefulWidget {
   final String anakId;
   final String nama;
   final bool bisaKelolaImunisasi;
-  final int tabAwal;
 
   const BalitaDetailPage({
     super.key,
@@ -97,7 +94,6 @@ class BalitaDetailPage extends StatefulWidget {
     required this.anakId,
     required this.nama,
     this.bisaKelolaImunisasi = false,
-    this.tabAwal = 0,
   });
 
   @override
@@ -109,8 +105,6 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
   DetailBalita? _data;
   bool _loading = true;
   String? _error;
-  late int _tab = (widget.tabAwal < 0 || widget.tabAwal > 2) ? 0 : widget.tabAwal;
-  late final Set<int> _terbuka = {if (widget.tabAwal == 1) 0};
 
   @override
   void initState() {
@@ -235,7 +229,6 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    const label = ['Profil', 'Penimbangan', 'Imunisasi'];
     return Scaffold(
       backgroundColor: AppColors.latar,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -247,73 +240,26 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         child: Column(
           children: [
             headerRekap(context, widget.nama),
-            // Tab dibuat kartu terpisah dengan sedikit celah.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-              child: Row(
-                children: [
-                  for (var i = 0; i < label.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 8),
-                    Expanded(child: _tombolTab(label[i], i)),
-                  ],
-                ],
-              ),
-            ),
             Expanded(
-              child: _tab == 2
-                  ? ImunisasiLihatBody(anakId: widget.anakId, bisaKelola: widget.bisaKelolaImunisasi)
-                  : _loading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _error != null
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(_error!, textAlign: TextAlign.center),
-                                    const SizedBox(height: 12),
-                                    AppButton('Coba Lagi', onPressed: _muat),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : RefreshIndicator(
-                              onRefresh: _muat,
-                              child: _tab == 0 ? _profil(_data!) : _penimbangan(_data!),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(_error!, textAlign: TextAlign.center),
+                                const SizedBox(height: 12),
+                                AppButton('Coba Lagi', onPressed: _muat),
+                              ],
                             ),
+                          ),
+                        )
+                      : RefreshIndicator(onRefresh: _muat, child: _profil(_data!)),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _tombolTab(String teks, int i) {
-    final dipilih = _tab == i;
-    return Material(
-      color: dipilih ? _hijauTua : Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => setState(() => _tab = i),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: dipilih ? _hijauTua : _garis, width: 1.2),
-          ),
-          child: Text(
-            teks,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 15.5,
-              fontWeight: FontWeight.w600,
-              color: dipilih ? Colors.white : _teksGelap,
-            ),
-          ),
         ),
       ),
     );
@@ -419,6 +365,11 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
             ],
           ),
         ),
+        if (keluarga.isNotEmpty)
+          _kartu(
+            judul: 'Data Keluarga',
+            child: Column(children: [for (final e in keluarga) _baris(e.key, e.value)]),
+          ),
         _kartu(
           judul: 'Kondisi Terakhir',
           child: r.terakhir == null
@@ -451,7 +402,14 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: InkWell(
-                  onTap: () => setState(() => _tab = 2),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => _HalamanImunisasi(
+                          nama: widget.nama,
+                          anakId: widget.anakId,
+                          bisaKelola: widget.bisaKelolaImunisasi,
+                        )),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: _tautan('Lihat jadwal & riwayat imunisasi'),
@@ -461,11 +419,6 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
             ],
           ),
         ),
-        if (keluarga.isNotEmpty)
-          _kartu(
-            judul: 'Data Keluarga',
-            child: Column(children: [for (final e in keluarga) _baris(e.key, e.value)]),
-          ),
         if (_kader) _kartuStatus(r),
       ],
     );
@@ -561,185 +514,40 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
       for (final m in t.masalah) Pill(m, bg: AppColors.kuningMuda, fg: AppColors.kuning),
     ];
   }
+}
 
-  // ================================================================ penimbangan
+/// Halaman jadwal & riwayat imunisasi anak, dibuka dari tautan pada kartu
+/// Imunisasi. Isinya sama dengan bekas tab Imunisasi, hanya pindah tempat.
+class _HalamanImunisasi extends StatelessWidget {
+  final String nama;
+  final String anakId;
+  final bool bisaKelola;
 
-  Widget _penimbangan(DetailBalita d) {
-    if (d.riwayat.isEmpty) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 80),
-          Center(child: Text('Belum ada riwayat penimbangan', style: TextStyle(color: AppColors.teksRedup))),
-        ],
-      );
-    }
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      children: [
-        for (var i = 0; i < d.riwayat.length; i++) _kartuTimbang(i, d.riwayat[i], d.ringkas.tanggalLahir),
-      ],
-    );
-  }
+  const _HalamanImunisasi({
+    required this.nama,
+    required this.anakId,
+    required this.bisaKelola,
+  });
 
-  Widget _kartuTimbang(int i, TimbangRingkas t, DateTime? lahir) {
-    final buka = _terbuka.contains(i);
-    final k = t.kunjungan;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      clipBehavior: Clip.antiAlias,
-      decoration: _dekorKartu(),
-      child: Material(
-        color: Colors.white,
-        child: InkWell(
-          onTap: k == null
-              ? null
-              : () => setState(() {
-                    if (buka) {
-                      _terbuka.remove(i);
-                    } else {
-                      _terbuka.add(i);
-                    }
-                  }),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _kepala(t.tanggal == null ? '-' : formatTanggal(t.tanggal!),
-                  kanan: 'usia ${_usiaUkur(lahir, t)}'),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'BB ${t.bbKg} kg · TB ${t.tbCm} cm'
-                      '${t.lkCm == null ? '' : ' · LK ${t.lkCm} cm'}'
-                      '${t.lilaCm == null ? '' : ' · LiLA ${t.lilaCm} cm'}',
-                      style: const TextStyle(
-                          fontSize: 15.5, fontWeight: FontWeight.w600, color: _teksGelap),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(spacing: 6, runSpacing: 6, children: [
-                      ..._pill(t),
-                      if (k?.catatanBidan != null)
-                        const Pill('Catatan bidan', bg: AppColors.biruMuda, fg: AppColors.biru),
-                      if (k != null && k.imunisasi.isNotEmpty)
-                        Pill('${k.imunisasi.length} imunisasi',
-                            bg: AppColors.biruMuda, fg: AppColors.biru),
-                      if (k != null && k.suplemen.isNotEmpty)
-                        Pill('${k.suplemen.length} suplemen',
-                            bg: AppColors.kuningMuda, fg: AppColors.kuning),
-                    ]),
-                    if (k != null) ...[
-                      const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: _tautan(buka ? 'Tutup detail' : 'Lihat detail'),
-                      ),
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 200),
-                        alignment: Alignment.topCenter,
-                        child: buka ? _detailKunjungan(t, k) : const SizedBox(width: double.infinity),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.latar,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        child: Column(
+          children: [
+            headerRekap(context, nama),
+            Expanded(
+              child: ImunisasiLihatBody(anakId: anakId, bisaKelola: bisaKelola),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _subjudul(String teks) => Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 8),
-        child: Text(teks,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _teksGelap)),
-      );
-
-  Widget _blok(String judul, String isi, {Color bg = AppColors.latar, Color? garis, Color? warnaJudul}) {
-    if (isi.isEmpty) return const SizedBox.shrink();
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: garis == null ? null : Border.all(color: garis),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(judul, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15.5, color: warnaJudul)),
-          const SizedBox(height: 2),
-          Text(isi, style: const TextStyle(fontSize: 15.5, height: 1.35)),
-        ],
-      ),
-    );
-  }
-
-  Widget _detailKunjungan(TimbangRingkas t, KunjunganRingkas k) {
-    final c = k.catatanBidan;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Divider(height: 20, color: Color(0xFFE5EDE8)),
-
-        // ------------------------------------------------ pengukuran kader
-        _subjudul('Pengukuran Kader'),
-        _baris('Cara ukur', t.caraUkur),
-        _baris('ASI eksklusif', k.asiEksklusif ? 'Ya' : 'Tidak'),
-        _baris('Sedang sakit', k.sedangSakit ? 'Ya' : 'Tidak'),
-        _blok('Keluhan', k.keluhanKader),
-        _blok('Catatan kader', k.catatanKader),
-        _blok('Peringatan validasi', k.peringatanValidasi, bg: AppColors.merahMuda),
-
-        // ------------------------------------------------ catatan bidan
-        _subjudul('Catatan Bidan'),
-        if (c == null)
-          const Text('Catatan bidan belum diisi.',
-              style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup))
-        else ...[
-          _blok('Keluhan', c.keluhan, bg: _biruMuda, garis: _biruGaris, warnaJudul: _biru),
-          _blok('Hasil pemeriksaan', c.catatanEvaluasi, bg: _biruMuda, garis: _biruGaris, warnaJudul: _biru),
-          _blok('Catatan untuk orang tua', c.saranGizi, bg: _biruMuda, garis: _biruGaris, warnaJudul: _biru),
-          _baris('Kunjungan ulang', c.kunjunganUlang == null ? '' : formatTanggal(c.kunjunganUlang!)),
-          if (c.keluhan.isEmpty &&
-              c.catatanEvaluasi.isEmpty &&
-              c.saranGizi.isEmpty &&
-              c.kunjunganUlang == null)
-            const Text('Tidak ada keluhan atau catatan khusus.',
-                style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup)),
-        ],
-
-        // ------------------------------------------------ diberikan
-        _subjudul('Diberikan Saat Kunjungan'),
-        if (k.imunisasi.isEmpty && k.suplemen.isEmpty)
-          const Text('Tidak ada imunisasi atau suplemen.',
-              style: TextStyle(fontSize: 15.5, color: AppColors.teksRedup))
-        else
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final v in k.imunisasi)
-                Pill(
-                  [v.nama, if (v.keterangan.isNotEmpty) v.keterangan].join(' · '),
-                  bg: AppColors.biruMuda,
-                  fg: AppColors.biru,
-                ),
-              for (final x in k.suplemen)
-                Pill(
-                  [namaSuplemen(x.nama), if (x.keterangan.isNotEmpty) x.keterangan].join(' · '),
-                  bg: AppColors.kuningMuda,
-                  fg: AppColors.kuning,
-                ),
-            ],
-          ),
-      ],
     );
   }
 }
