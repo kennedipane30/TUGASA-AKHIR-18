@@ -316,9 +316,9 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                 children: [
                   // Pengantar
                   _kartu(
-                    judul: 'Memahami Kurva Pertumbuhan Anak',
+                    judul: 'Memahami Kurva Pertumbuhan Balita',
                     child: const Text(
-                      'Grafik kurva pertumbuhan digunakan untuk menilai apakah perkembangan fisik anak sesuai dengan acuan populasi sehat internasional (Z-Score), disesuaikan berdasarkan usia dan jenis kelamin.',
+                      'Grafik kurva pertumbuhan digunakan untuk menilai apakah perkembangan fisik balita sesuai dengan acuan populasi sehat internasional (Z-Score), disesuaikan berdasarkan usia dan jenis kelamin.',
                       style: TextStyle(fontSize: 15.5, height: 1.5, color: _teksAbu),
                     ),
                   ),
@@ -337,7 +337,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                           badgeBg: const Color(0xFFBBF7D0),
                           badgeFg: const Color(0xFF166534),
                           isi:
-                              'Garis tengah ideal. Menandakan ukuran anak berada tepat di rata-rata acuan populasi anak sehat.',
+                              'Garis tengah ideal. Menandakan ukuran balita berada tepat di rata-rata acuan populasi balita sehat.',
                           bg: const Color(0xFFEBFBF1),
                           border: const Color(0xFFC9EFD8),
                         ),
@@ -348,7 +348,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                           badgeBg: const Color(0xFFFDE68A),
                           badgeFg: const Color(0xFF92400E),
                           isi:
-                              'Variasi normal pertumbuhan anak. Pola pertumbuhan terus dipantau pada jadwal Posyandu bulanan.',
+                              'Variasi normal pertumbuhan balita. Pola pertumbuhan terus dipantau pada jadwal Posyandu bulanan.',
                           bg: const Color(0xFFFFFAEB),
                           border: const Color(0xFFFBE7B0),
                         ),
@@ -370,7 +370,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                           badgeBg: const Color(0xFFFFE4E6),
                           badgeFg: const Color(0xFFDC2626),
                           isi:
-                              'Penyimpangan signifikan. Memerlukan konsultasi medis langsung dengan bidan/dokter spesialis anak di Puskesmas.',
+                              'Penyimpangan signifikan. Memerlukan konsultasi medis langsung dengan bidan/dokter spesialis balita di Puskesmas.',
                           bg: const Color(0xFFFFF1F2),
                           border: const Color(0xFFFAD0D5),
                         ),
@@ -386,7 +386,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Pengukuran Lingkar Kepala (LK) sangat penting di 2 tahun pertama karena kehidupan kepala mencerminkan perkembangan volume otak dan penutupan ubun-ubun anak secara optimal.',
+                          'Pengukuran Lingkar Kepala (LK) sangat penting di 2 tahun pertama karena kehidupan kepala mencerminkan perkembangan volume otak dan penutupan ubun-ubun balita secara optimal.',
                           style: TextStyle(
                             fontSize: 15.5,
                             height: 1.5,
@@ -409,7 +409,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                           judul: 'Mikrosefali (< -2 SD)',
                           badge: 'Peringatan',
                           isi:
-                              'Ukuran kepala berada di bawah standar usianya. Wajib diperiksa ulang oleh dokter anak untuk mengevaluasi perkembangan saraf dan nutrisi.',
+                              'Ukuran kepala berada di bawah standar usianya. Wajib diperiksa ulang oleh dokter balita untuk mengevaluasi perkembangan saraf dan nutrisi.',
                           bg: const Color(0xFFFFF1F2),
                           border: const Color(0xFFFAD0D5),
                         ),
@@ -466,7 +466,7 @@ class OrangTuaGrafikPanduanPage extends StatelessWidget {
                       ),
                       onPressed: () => Navigator.maybePop(context),
                       child: const Text(
-                        'Kembali ke Grafik Anak',
+                        'Kembali ke Grafik Balita',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16.5,

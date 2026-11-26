@@ -11,15 +11,15 @@ import 'detail_rujukan_page.dart';
 
 // ============================================================================
 // TAMBAH RUJUKAN - BIDAN
-// Cari & pilih anak -> data anak otomatis -> isi keluhan, diagnosis,
+// Cari & pilih balita -> data balita otomatis -> isi keluhan, diagnosis,
 // tindakan, tujuan -> simpan (surat bernomor + notifikasi ke orang tua).
 // ============================================================================
 
 class TambahRujukanPage extends StatefulWidget {
-  /// Anak yang langsung dipilih (dari daftar "Perlu Dirujuk"); null = cari dulu.
-  final String? anakIdAwal;
+  /// Balita yang langsung dipilih (dari daftar "Perlu Dirujuk"); null = cari dulu.
+  final String? balitaIdAwal;
 
-  const TambahRujukanPage({super.key, this.anakIdAwal});
+  const TambahRujukanPage({super.key, this.balitaIdAwal});
 
   @override
   State<TambahRujukanPage> createState() => _TambahRujukanPageState();
@@ -31,14 +31,14 @@ class _TambahRujukanPageState extends State<TambahRujukanPage> {
   // pencarian
   final _cari = TextEditingController();
   Timer? _tunda;
-  List<AnakCariRujukan> _hasilCari = [];
+  List<BalitaCariRujukan> _hasilCari = [];
   bool _mencari = false;
   String? _gagalCari;
 
-  // anak terpilih
-  DataAnakRujukan? _anak;
-  bool _memuatAnak = false;
-  String? _gagalAnak;
+  // balita terpilih
+  DataBalitaRujukan? _balita;
+  bool _memuatBalita = false;
+  String? _gagalBalita;
 
   // form
   final _formKey = GlobalKey<FormState>();
@@ -51,7 +51,7 @@ class _TambahRujukanPageState extends State<TambahRujukanPage> {
   @override
   void initState() {
     super.initState();
-    final id = widget.anakIdAwal;
+    final id = widget.balitaIdAwal;
     if (id != null && id.isNotEmpty) {
       _pilih(id);
     } else {
@@ -88,7 +88,7 @@ class _TambahRujukanPageState extends State<TambahRujukanPage> {
       _gagalCari = null;
     });
     try {
-      final h = await _svc.cariAnak(kata.trim());
+      final h = await _svc.cariBalita(kata.trim());
       if (!mounted) return;
       setState(() {
         _hasilCari = h;
@@ -103,17 +103,17 @@ class _TambahRujukanPageState extends State<TambahRujukanPage> {
     }
   }
 
-  Future<void> _pilih(String anakId) async {
+  Future<void> _pilih(String balitaId) async {
     setState(() {
-      _memuatAnak = true;
-      _gagalAnak = null;
+      _memuatBalita = true;
+      _gagalBalita = null;
     });
     try {
-      final d = await _svc.dataAnak(anakId);
+      final d = await _svc.dataBalita(balitaId);
       if (!mounted) return;
       setState(() {
-        _anak = d;
-        _memuatAnak = false;
+        _balita = d;
+        _memuatBalita = false;
         if (_keluhan.text.trim().isEmpty && d.keluhanTerakhir.isNotEmpty) {
           _keluhan.text = d.keluhanTerakhir;
         }
@@ -121,22 +121,22 @@ class _TambahRujukanPageState extends State<TambahRujukanPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _gagalAnak = e.toString().replaceFirst('Exception: ', '');
-        _memuatAnak = false;
+        _gagalBalita = e.toString().replaceFirst('Exception: ', '');
+        _memuatBalita = false;
       });
     }
   }
 
-  void _gantiAnak() {
+  void _gantiBalita() {
     setState(() {
-      _anak = null;
+      _balita = null;
       _keluhan.clear();
     });
     if (_hasilCari.isEmpty) _jalankanCari(_cari.text);
   }
 
   Future<void> _simpan() async {
-    final a = _anak;
+    final a = _balita;
     if (a == null || _menyimpan) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final ok = await showDialog<bool>(
@@ -158,7 +158,7 @@ class _TambahRujukanPageState extends State<TambahRujukanPage> {
     setState(() => _menyimpan = true);
     try {
       final r = await _svc.buat(
-        anakId: a.anakId,
+        balitaId: a.balitaId,
         keluhan: _keluhan.text.trim(),
         diagnosis: _diagnosis.text.trim(),
         tindakan: _tindakan.text.trim(),
@@ -180,7 +180,7 @@ class _TambahRujukanPageState extends State<TambahRujukanPage> {
 
   Widget _pencarian() {
     return KartuRekap(
-      title: 'Pilih Anak',
+      title: 'Pilih Balita',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -190,25 +190,25 @@ class _TambahRujukanPageState extends State<TambahRujukanPage> {
             textInputAction: TextInputAction.search,
             onSubmitted: _jalankanCari,
             style: const TextStyle(fontSize: 15),
-            decoration: dekorRujukan('Ketik nama anak atau NIK').copyWith(prefixIcon: const Icon(Icons.search)),
+            decoration: dekorRujukan('Ketik nama balita atau NIK').copyWith(prefixIcon: const Icon(Icons.search)),
           ),
           const SizedBox(height: 12),
-          if (_mencari || _memuatAnak)
+          if (_mencari || _memuatBalita)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (_gagalCari != null || _gagalAnak != null)
-            Text(_gagalCari ?? _gagalAnak!, style: const TextStyle(color: AppColors.merah))
+          else if (_gagalCari != null || _gagalBalita != null)
+            Text(_gagalCari ?? _gagalBalita!, style: const TextStyle(color: AppColors.merah))
           else if (_hasilCari.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 10),
-              child: Text('Anak tidak ditemukan.', style: TextStyle(color: redupRujukan, fontSize: 14.5)),
+              child: Text('Balita tidak ditemukan.', style: TextStyle(color: redupRujukan, fontSize: 14.5)),
             )
           else
             for (var i = 0; i < _hasilCari.length; i++)
               InkWell(
-                onTap: () => _pilih(_hasilCari[i].anakId),
+                onTap: () => _pilih(_hasilCari[i].balitaId),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 11),
                   decoration: BoxDecoration(
@@ -254,22 +254,22 @@ class _TambahRujukanPageState extends State<TambahRujukanPage> {
     );
   }
 
-  Widget _form(DataAnakRujukan a) {
+  Widget _form(DataBalitaRujukan a) {
     return Form(
       key: _formKey,
       child: Column(
         children: [
-          if (widget.anakIdAwal == null)
+          if (widget.balitaIdAwal == null)
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
-                onPressed: _gantiAnak,
+                onPressed: _gantiBalita,
                 icon: const Icon(Icons.swap_horiz),
-                label: const Text('Ganti anak'),
+                label: const Text('Ganti balita'),
                 style: TextButton.styleFrom(foregroundColor: AppColors.hijau),
               ),
             ),
-          ...kartuDataAnakRujukan(a),
+          ...kartuDataBalitaRujukan(a),
           FormIsianRujukan(keluhan: _keluhan, diagnosis: _diagnosis, tindakan: _tindakan, tujuan: _tujuan),
         ],
       ),
@@ -278,7 +278,7 @@ class _TambahRujukanPageState extends State<TambahRujukanPage> {
 
   @override
   Widget build(BuildContext context) {
-    final a = _anak;
+    final a = _balita;
     return Scaffold(
       backgroundColor: AppColors.latar,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -384,7 +384,7 @@ class FormIsianRujukan extends StatelessWidget {
               wajib: true),
           _isian(diagnosis, 'Diagnosis', 'Contoh: Gizi kurang, 2T', wajib: true, baris: 2, maks: 500),
           _isian(tindakan, 'Tindakan yang sudah dilakukan', 'Contoh: Konseling gizi, pemberian PMT'),
-          _isian(tujuan, 'Tujuan', 'Contoh: Puskesmas Laguboti - Poli Anak', wajib: true, baris: 1, maks: 200),
+          _isian(tujuan, 'Tujuan', 'Contoh: Puskesmas Laguboti - Poli Balita', wajib: true, baris: 1, maks: 200),
         ],
       ),
     );

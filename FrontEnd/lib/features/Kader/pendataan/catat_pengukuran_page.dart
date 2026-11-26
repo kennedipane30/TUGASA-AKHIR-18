@@ -230,13 +230,13 @@ Widget _tombolBawah({
 
 // ---------------------------------------------------------------------------
 // HALAMAN CATAT PENGUKURAN (halaman penuh)
-// Mencatat pengukuran pertama anak pada sesi posyandu ini.
+// Mencatat pengukuran pertama balita pada sesi posyandu ini.
 // Kembali ke halaman Pendataan dengan teks peringatan validasi (boleh kosong).
 // ---------------------------------------------------------------------------
 class CatatPengukuranPage extends StatefulWidget {
-  final AntreanKader anak;
+  final AntreanKader balita;
 
-  const CatatPengukuranPage({super.key, required this.anak});
+  const CatatPengukuranPage({super.key, required this.balita});
 
   @override
   State<CatatPengukuranPage> createState() => _CatatPengukuranPageState();
@@ -289,7 +289,7 @@ class _CatatPengukuranPageState extends State<CatatPengukuranPage> {
 
     try {
       final r = await ApiClient.dio.put(
-        '/kader/pendaftaran/${widget.anak.pendaftaranId}/pengukuran',
+        '/kader/pendaftaran/${widget.balita.pendaftaranId}/pengukuran',
         data: {
           'bb_kg': bb,
           'tb_cm': tb,
@@ -407,14 +407,14 @@ class _CatatPengukuranPageState extends State<CatatPengukuranPage> {
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                       children: [
                         _kartu(
-                          judul: widget.anak.nama,
-                          kanan: 'Antrean ${widget.anak.kodeNomor}',
+                          judul: widget.balita.nama,
+                          kanan: 'Antrean ${widget.balita.kodeNomor}',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _barisInfo('Jenis Kelamin',
-                                  widget.anak.jk == 'P' ? 'Perempuan' : 'Laki-laki'),
-                              _barisInfo('Umur', widget.anak.usia),
+                                  widget.balita.jk == 'P' ? 'Perempuan' : 'Laki-laki'),
+                              _barisInfo('Umur', widget.balita.usia),
                             ],
                           ),
                         ),
@@ -450,7 +450,7 @@ class _CatatPengukuranPageState extends State<CatatPengukuranPage> {
                           ),
                         ),
                         _kartu(
-                          judul: 'Kondisi Anak',
+                          judul: 'Kondisi Balita',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

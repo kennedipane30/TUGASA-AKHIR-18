@@ -26,7 +26,7 @@ class _BidanRujukanPageState extends State<BidanRujukanPage> {
   final _svc = const RujukanService();
   int _tab = 0; // 0 aktif, 1 selesai
   List<RujukanRingkas>? _data;
-  List<AnakBerisiko> _perlu = [];
+  List<BalitaBerisiko> _perlu = [];
   bool _loading = true;
   String? _error;
 
@@ -43,13 +43,13 @@ class _BidanRujukanPageState extends State<BidanRujukanPage> {
     });
     try {
       final d = await _svc.daftarBidan(_tab == 0 ? 'aktif' : 'selesai');
-      var perlu = <AnakBerisiko>[];
+      var perlu = <BalitaBerisiko>[];
       if (_tab == 0) {
         try {
           final b = await const BalitaService('/bidan').berisiko();
-          // anak yang sudah punya rujukan aktif tidak disarankan lagi
-          final sudah = d.map((e) => e.anakId).toSet();
-          perlu = b.anak.where((a) => a.tinggi && !sudah.contains(a.balita.anakId)).toList();
+          // balita yang sudah punya rujukan aktif tidak disarankan lagi
+          final sudah = d.map((e) => e.balitaId).toSet();
+          perlu = b.balita.where((a) => a.tinggi && !sudah.contains(a.balita.balitaId)).toList();
         } catch (_) {}
       }
       if (!mounted) return;
@@ -76,10 +76,10 @@ class _BidanRujukanPageState extends State<BidanRujukanPage> {
     _muat();
   }
 
-  Future<void> _buat([String? anakId]) async {
+  Future<void> _buat([String? balitaId]) async {
     final hasil = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => TambahRujukanPage(anakIdAwal: anakId)),
+      MaterialPageRoute(builder: (_) => TambahRujukanPage(balitaIdAwal: balitaId)),
     );
     if (hasil == true) _muat();
   }
@@ -121,7 +121,7 @@ class _BidanRujukanPageState extends State<BidanRujukanPage> {
     if (_tab != 0 || _perlu.isEmpty) return const SizedBox.shrink();
     return KartuRekap(
       title: 'Perlu Dirujuk',
-      trailing: teksKananRekap('${_perlu.length} anak'),
+      trailing: teksKananRekap('${_perlu.length} balita'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -157,7 +157,7 @@ class _BidanRujukanPageState extends State<BidanRujukanPage> {
                   ),
                   const SizedBox(width: 8),
                   TextButton(
-                    onPressed: () => _buat(_perlu[i].balita.anakId),
+                    onPressed: () => _buat(_perlu[i].balita.balitaId),
                     style: TextButton.styleFrom(foregroundColor: AppColors.hijau),
                     child: const Text('Rujuk', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),

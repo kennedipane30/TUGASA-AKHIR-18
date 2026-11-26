@@ -10,7 +10,7 @@ import 'tambah_rujukan_page.dart';
 // ============================================================================
 // EDIT RUJUKAN - BIDAN
 // Memperbaiki keluhan, diagnosis, tindakan, dan tujuan selama rujukan masih
-// aktif. Anak, nomor, dan tanggal surat tetap. Hasil dikembalikan lewat
+// aktif. Balita, nomor, dan tanggal surat tetap. Hasil dikembalikan lewat
 // Navigator.pop(context, RujukanDetail).
 // ============================================================================
 
@@ -96,7 +96,7 @@ class _EditRujukanPageState extends State<EditRujukanPage> {
                         children: daftarBarisRujukan([
                           ('Nomor', r.nomor),
                           ('Tanggal', tglRujukan(r.tanggal)),
-                          ('Anak', r.dataAnak.nama),
+                          ('Balita', r.dataBalita.nama),
                         ]),
                       ),
                     ),

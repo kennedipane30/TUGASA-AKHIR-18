@@ -365,20 +365,20 @@ mixin _KartuPemeriksaan<T extends StatefulWidget>
     on _FormPemeriksaan<T>, _FormSuplemen<T>, _FormImunisasi<T>, _FormKpsp<T> {
   Widget _isi() {
     final d = _detail!;
-    final anak = d['anak'] is Map ? Map<String, dynamic>.from(d['anak'] as Map) : <String, dynamic>{};
+    final balita = d['balita'] is Map ? Map<String, dynamic>.from(d['balita'] as Map) : <String, dynamic>{};
     final ukur = d['pengukuran'] is Map ? Map<String, dynamic>.from(d['pengukuran'] as Map) : <String, dynamic>{};
     final prev = d['pengukuran_sebelumnya'] is Map ? Map<String, dynamic>.from(d['pengukuran_sebelumnya'] as Map) : null;
 
     final usia = _usiaBulan;
-    final lahirAnak = _lahir;
-    final usiaTeks = lahirAnak != null
-        ? usiaDariLahir(lahirAnak, DateTime.now())
+    final lahirBalita = _lahir;
+    final usiaTeks = lahirBalita != null
+        ? usiaDariLahir(lahirBalita, DateTime.now())
         : (usia >= 12 ? '${usia ~/ 12} tahun ${usia % 12} bulan' : '$usia bulan');
-    final jk = anak['jenis_kelamin']?.toString() == 'P' ? 'Perempuan' : 'Laki-laki';
+    final jk = balita['jenis_kelamin']?.toString() == 'P' ? 'Perempuan' : 'Laki-laki';
     final peringatan = ukur['peringatan_validasi']?.toString() ?? '';
     final penilaian = PenilaianTimbang.dari(d['penilaian']);
-    final anakId = anak['id']?.toString() ?? '';
-    final nama = anak['nama']?.toString() ?? '-';
+    final balitaId = balita['id']?.toString() ?? '';
+    final nama = balita['nama']?.toString() ?? '-';
     final mulaiNanti = _mulaiNanti;
 
     return ListView(
@@ -421,14 +421,14 @@ mixin _KartuPemeriksaan<T extends StatefulWidget>
               if (ukur['sedang_sakit'] == true)
                 const Padding(
                   padding: EdgeInsets.only(bottom: 6),
-                  child: Text('Anak sedang sakit',
+                  child: Text('Balita sedang sakit',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.merah)),
                 ),
               if (peringatan.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 _info(peringatan, ikon: Icons.warning_amber_rounded, bg: AppColors.merahMuda, fg: AppColors.merah),
               ],
-              if (anakId.isNotEmpty) ...[
+              if (balitaId.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 tombolGarisBidan(
                   'Riwayat Imunisasi',
@@ -437,7 +437,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget>
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => BidanImunisasiAnakPage(anakId: anakId, namaAnak: nama, usia: usiaTeks),
+                        builder: (_) => BidanImunisasiBalitaPage(balitaId: balitaId, namaBalita: nama, usia: usiaTeks),
                       ),
                     );
                     _muat();
@@ -458,11 +458,11 @@ mixin _KartuPemeriksaan<T extends StatefulWidget>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Keluhan anak tampil di kartu pengukuran (diisi kader saat pendataan).
+              // Keluhan balita tampil di kartu pengukuran (diisi kader saat pendataan).
               // Disimpan di kolom yang sama (catatan_evaluasi & saran_gizi), hanya label yang berubah.
               _teks(_catatanOrtu, 'Hasil pemeriksaan',
                   baris: 3,
-                  hint: 'Mis. anak demam sehingga imunisasi ditunda',
+                  hint: 'Mis. balita demam sehingga imunisasi ditunda',
                   ikon: Icons.fact_check_outlined),
               _teks(_saranGizi, 'Catatan untuk orang tua', baris: 3, ikon: Icons.note_alt_outlined),
             ],
@@ -470,7 +470,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget>
         ),
         // Urutan pendataan bidan: pemeriksaan -> KPSP -> imunisasi -> suplemen.
         _kartuKpsp(),
-        // Kunjungan pertama anak: riwayat imunisasi sebelum posyandu ditanyakan
+        // Kunjungan pertama balita: riwayat imunisasi sebelum posyandu ditanyakan
         // lebih dulu, karena menentukan imunisasi mana yang boleh diberikan hari ini.
         if (!_riwayatOk) _kartuRiwayat(),
         _kartuImunisasi(),
@@ -483,7 +483,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget>
 
   // -------------------------------------------------------------------------
   // LAPORAN ORANG TUA SETELAH IMUNISASI (tampil di atas form pemeriksaan)
-  // Hanya muncul bila orang tua melapor; bila tidak, anak dianggap normal.
+  // Hanya muncul bila orang tua melapor; bila tidak, balita dianggap normal.
   // -------------------------------------------------------------------------
   Widget _kartuLaporanOrtu() {
     final daftar = _laporanOrtu;
@@ -497,7 +497,7 @@ mixin _KartuPemeriksaan<T extends StatefulWidget>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _info('Orang tua melaporkan reaksi setelah imunisasi pada kunjungan sebelumnya. '
-              'Tanyakan keadaan anak sekarang dan catat tindak lanjutnya.',
+              'Tanyakan keadaan balita sekarang dan catat tindak lanjutnya.',
               ikon: Icons.report_gmailerrorred_outlined, bg: AppColors.merahMuda, fg: AppColors.merah),
           for (final r in daftar) _barisLaporanOrtu(r),
         ],

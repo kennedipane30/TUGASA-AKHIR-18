@@ -9,7 +9,7 @@ import '../../../core/theme/app_colors.dart';
 // ============================================================================
 // BAGIAN BERSAMA FITUR "DATA KELUARGA"
 // Dipakai oleh: keluarga_page, tambah_keluarga_page, edit_keluarga_page.
-// Aturan isian sama dengan halaman Data Orang Tua & Data Anak milik orang tua,
+// Aturan isian sama dengan halaman Data Orang Tua & Data Balita milik orang tua,
 // dan divalidasi ulang oleh backend (/kader/keluarga).
 // ============================================================================
 
@@ -252,7 +252,7 @@ String? _str(dynamic v) {
 // ---------------------------------------------------------------------------
 class RingkasKeluarga {
   final String keluargaId, namaIbu, nik, noHp, alamat;
-  final int jumlahAnak;
+  final int jumlahBalita;
   final bool punyaAkun;
 
   RingkasKeluarga({
@@ -261,7 +261,7 @@ class RingkasKeluarga {
     required this.nik,
     required this.noHp,
     required this.alamat,
-    required this.jumlahAnak,
+    required this.jumlahBalita,
     required this.punyaAkun,
   });
 
@@ -271,21 +271,21 @@ class RingkasKeluarga {
         nik: (j['nik'] ?? '').toString(),
         noHp: (j['no_hp'] ?? '').toString(),
         alamat: (j['alamat'] ?? '').toString(),
-        jumlahAnak: (j['jumlah_anak'] as num?)?.toInt() ?? 0,
+        jumlahBalita: (j['jumlah_balita'] as num?)?.toInt() ?? 0,
         punyaAkun: j['punya_akun'] == true,
       );
 }
 
-/// Isian satu anak (tanggal lahir dd/mm/yyyy).
-class IsianAnak {
+/// Isian satu balita (tanggal lahir dd/mm/yyyy).
+class IsianBalita {
   String? id;
   String nama, nik, tglLahir, jk, beratLahir, panjangLahir;
 
   /// aktif | arsip (hanya dibaca dari server, tidak dikirim saat simpan).
-  /// Anak arsip dikelola di Semua Balita > Lihat detail.
+  /// Balita arsip dikelola di Semua Balita > Lihat detail.
   String status;
 
-  IsianAnak({
+  IsianBalita({
     this.id,
     this.nama = '',
     this.nik = '',
@@ -298,7 +298,7 @@ class IsianAnak {
 
   bool get diarsipkan => status == 'arsip';
 
-  factory IsianAnak.fromApi(Map<String, dynamic> j) => IsianAnak(
+  factory IsianBalita.fromApi(Map<String, dynamic> j) => IsianBalita(
         id: j['id']?.toString(),
         nama: (j['nama'] ?? '').toString(),
         nik: (j['nik'] ?? '').toString(),
@@ -355,13 +355,13 @@ class KeluargaAkunApi {
     await ApiClient.dio.put('/kader/keluarga/$id', data: body, options: _opsi);
   }
 
-  static Future<void> tambahAnak(String id, IsianAnak a) async {
-    await ApiClient.dio.post('/kader/keluarga/$id/anak', data: a.toJson(), options: _opsi);
+  static Future<void> tambahBalita(String id, IsianBalita a) async {
+    await ApiClient.dio.post('/kader/keluarga/$id/balita', data: a.toJson(), options: _opsi);
   }
 
-  static Future<void> ubahAnak(String id, IsianAnak a) async {
+  static Future<void> ubahBalita(String id, IsianBalita a) async {
     await ApiClient.dio
-        .put('/kader/keluarga/$id/anak/${a.id}', data: a.toJson(), options: _opsi);
+        .put('/kader/keluarga/$id/balita/${a.id}', data: a.toJson(), options: _opsi);
   }
 }
 

@@ -552,7 +552,7 @@ Future<bool> hapusRujukan(BuildContext context, RujukanDetail r) async {
     builder: (ctx) => AlertDialog(
       title: const Text('Hapus Rujukan?'),
       content: Text(
-        'Surat rujukan ${r.nomor} untuk ${r.dataAnak.nama} akan dihapus dan tidak dapat '
+        'Surat rujukan ${r.nomor} untuk ${r.dataBalita.nama} akan dihapus dan tidak dapat '
         'dikembalikan. Orang tua akan diberi tahu bahwa surat ini tidak berlaku lagi.',
       ),
       actions: [

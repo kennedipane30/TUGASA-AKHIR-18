@@ -15,7 +15,7 @@ const _prefix = '/sekretaris/riwayat';
 const _hijauHeader = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
 
-/// Garis tepi kartu anak di dalam daftar: hitam lembut (tidak mencolok).
+/// Garis tepi kartu balita di dalam daftar: hitam lembut (tidak mencolok).
 const _garisDetail = Color(0xFFB8BEC6);
 
 // ---------------------------------------------------------------------------
@@ -23,7 +23,7 @@ const _garisDetail = Color(0xFFB8BEC6);
 // ---------------------------------------------------------------------------
 String _teks(dynamic v) => v?.toString().trim() ?? '';
 
-/// Label kondisi anak sebelum imunisasi.
+/// Label kondisi balita sebelum imunisasi.
 String _kondisiTeks(dynamic v) {
   switch (_teks(v)) {
     case 'sehat':
@@ -165,7 +165,7 @@ Widget _judulTebal(String teks) {
 }
 
 // ---------------------------------------------------------------------------
-// HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
+// HEADER (sama seperti halaman Imunisasi Balita: polos, judul di tengah)
 // Dipakai oleh ketiga halaman riwayat. Tombol kembali hanya muncul
 // bila ada halaman sebelumnya.
 // ---------------------------------------------------------------------------
@@ -477,7 +477,7 @@ class _AdminRiwayatPageState extends State<AdminRiwayatPage> {
           child: InkWell(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => _DaftarAnakPage(jadwal: j)),
+              MaterialPageRoute(builder: (_) => _DaftarBalitaPage(jadwal: j)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

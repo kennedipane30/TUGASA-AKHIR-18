@@ -95,7 +95,7 @@ mixin _FormSuplemen<T extends StatefulWidget> on _FormPemeriksaan<T> {
   // SUPLEMEN HARI INI
   // -------------------------------------------------------------------------
   /// Form suplemen langsung tampil (tanpa pilihan cepat): suplemen berbeda untuk
-  /// setiap anak sesuai kondisi kesehatannya, jadi nama, dosis, dan aturan pakai
+  /// setiap balita sesuai kondisi kesehatannya, jadi nama, dosis, dan aturan pakai
   /// diisi bidan. Baris yang dibiarkan kosong tidak disimpan.
   Widget _kartuSuplemen() {
     final terisi = _suplemenTerisi.length;

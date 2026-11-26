@@ -308,7 +308,7 @@ class _AdminHomeState extends State<AdminHome> {
           aset: 'imunisasi_anak.png',
           cadangan: Icons.vaccines_outlined,
           warna: AppColors.hijau,
-          judul: 'Imunisasi\nAnak',
+          judul: 'Imunisasi\nBalita',
           onTap: _bukaImunisasi,
         ),
         ItemLayananHome(

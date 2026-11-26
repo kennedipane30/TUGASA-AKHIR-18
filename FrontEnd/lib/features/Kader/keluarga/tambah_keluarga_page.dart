@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/utils/no_hp.dart';
-import 'form_anak.dart';
+import 'form_balita.dart';
 import 'keluarga.dart';
 
 /// "Tambahkan Akun" oleh kader (sesuai BPMN):
 ///   1. Akun     : nama, NIK, No. HP, PIN (NIK & No. HP dicek langsung)
 ///   2. Keluarga : data ibu, alamat, suami/ayah (opsional)
-///   3. Anak     : satu atau lebih data anak
+///   3. Balita     : satu atau lebih data balita
 ///   -> Simpan (satu transaksi di backend)
 /// PIN disebutkan oleh orang tua dan dicatat/disampaikan manual di luar sistem.
 class TambahKeluargaPage extends StatefulWidget {
@@ -21,7 +21,7 @@ class TambahKeluargaPage extends StatefulWidget {
 }
 
 class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
-  static const _judulLangkah = ['Akun', 'Keluarga', 'Anak'];
+  static const _judulLangkah = ['Akun', 'Keluarga', 'Balita'];
 
   int _langkah = 0;
   bool _menyimpan = false;
@@ -45,8 +45,8 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
   final _keyKeluarga = GlobalKey<FormState>();
   final _keluarga = IsianKeluarga();
 
-  // langkah 3: anak
-  final List<IsianAnak> _anak = [];
+  // langkah 3: balita
+  final List<IsianBalita> _balita = [];
 
   @override
   void dispose() {
@@ -166,11 +166,11 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
     }
   }
 
-  // ---------------------------------------------------------------- anak
-  bool _dobel(IsianAnak a, {int? kecuali}) {
-    for (var i = 0; i < _anak.length; i++) {
+  // ---------------------------------------------------------------- balita
+  bool _dobel(IsianBalita a, {int? kecuali}) {
+    for (var i = 0; i < _balita.length; i++) {
       if (i == kecuali) continue;
-      final b = _anak[i];
+      final b = _balita[i];
       if (a.nik.isNotEmpty && a.nik == b.nik) return true;
       if (a.nama.toLowerCase() == b.nama.toLowerCase() && a.tglLahir == b.tglLahir) {
         return true;
@@ -179,30 +179,30 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
     return false;
   }
 
-  Future<void> _tambahAnak() async {
-    final a = await bukaFormAnak(context);
+  Future<void> _tambahBalita() async {
+    final a = await bukaFormBalita(context);
     if (a == null || !mounted) return;
     if (_dobel(a)) {
-      kkSnack(context, 'Data anak sama dengan anak yang sudah ditambahkan');
+      kkSnack(context, 'Data balita sama dengan balita yang sudah ditambahkan');
       return;
     }
-    setState(() => _anak.add(a));
+    setState(() => _balita.add(a));
   }
 
-  Future<void> _ubahAnak(int i) async {
-    final a = await bukaFormAnak(context, awal: _anak[i]);
+  Future<void> _ubahBalita(int i) async {
+    final a = await bukaFormBalita(context, awal: _balita[i]);
     if (a == null || !mounted) return;
     if (_dobel(a, kecuali: i)) {
-      kkSnack(context, 'Data anak sama dengan anak yang sudah ditambahkan');
+      kkSnack(context, 'Data balita sama dengan balita yang sudah ditambahkan');
       return;
     }
-    setState(() => _anak[i] = a);
+    setState(() => _balita[i] = a);
   }
 
   // ---------------------------------------------------------------- simpan
   Future<void> _simpan() async {
-    if (_anak.isEmpty) {
-      kkSnack(context, 'Tambahkan minimal satu data anak');
+    if (_balita.isEmpty) {
+      kkSnack(context, 'Tambahkan minimal satu data balita');
       return;
     }
     if (!_setuju) {
@@ -217,7 +217,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
         'no_hp': noHpKeServer(_hp.text),
         'pin': _pin.text,
         'profil': _keluarga.toJson(),
-        'anak': _anak.map((a) => a.toJson()).toList(),
+        'balita': _balita.map((a) => a.toJson()).toList(),
       });
       if (!mounted) return;
       await _dialogBerhasil();
@@ -254,7 +254,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
             kkInfo('Nama', _nama.text.trim(), lebar: 100),
             kkInfo('NIK', _nik.text.trim(), lebar: 100),
             kkInfo('No. HP', formatNoHp(noHpKeServer(_hp.text)), lebar: 100),
-            kkInfo('Jumlah anak', '${_anak.length}', lebar: 100),
+            kkInfo('Jumlah balita', '${_balita.length}', lebar: 100),
             const SizedBox(height: 8),
             const Text(
               'Orang tua masuk memakai No. HP dan PIN yang mereka sebutkan. '
@@ -422,29 +422,29 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
     );
   }
 
-  Widget _langkahAnak() {
+  Widget _langkahBalita() {
     return Column(
       children: [
         KartuBagian(
-          judul: 'Data Anak',
-          kanan: '${_anak.length} anak',
+          judul: 'Data Balita',
+          kanan: '${_balita.length} balita',
           sub: 'Tambahkan semua balita dalam keluarga ini.',
           child: Column(
             children: [
-              if (_anak.isEmpty)
+              if (_balita.isEmpty)
                 const Padding(
                   padding: EdgeInsets.only(bottom: 12),
-                  child: Text('Belum ada data anak.',
+                  child: Text('Belum ada data balita.',
                       style: TextStyle(fontSize: 15.5, color: kkTeksAbu)),
                 ),
-              for (var i = 0; i < _anak.length; i++)
-                BarisAnak(
-                  anak: _anak[i],
-                  onUbah: () => _ubahAnak(i),
-                  onHapus: () => setState(() => _anak.removeAt(i)),
+              for (var i = 0; i < _balita.length; i++)
+                BarisBalita(
+                  balita: _balita[i],
+                  onUbah: () => _ubahBalita(i),
+                  onHapus: () => setState(() => _balita.removeAt(i)),
                 ),
               const SizedBox(height: 4),
-              kkTombolGaris('Tambah Anak', ikon: Icons.add, onPressed: _tambahAnak),
+              kkTombolGaris('Tambah Balita', ikon: Icons.add, onPressed: _tambahBalita),
             ],
           ),
         ),
@@ -459,7 +459,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
               kkInfo('Alamat', _keluarga.ringkasAlamat),
               kkInfo('Suami/Ayah',
                   _keluarga.tanpaAyah ? 'Tidak ada' : _keluarga.namaAyah.text.trim()),
-              kkInfo('Jumlah anak', '${_anak.length}'),
+              kkInfo('Jumlah balita', '${_balita.length}'),
               const SizedBox(height: 4),
               InkWell(
                 onTap: () => setState(() => _setuju = !_setuju),
@@ -494,7 +494,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isi = [_langkahAkun, _langkahKeluarga, _langkahAnak][_langkah]();
+    final isi = [_langkahAkun, _langkahKeluarga, _langkahBalita][_langkah]();
     return PopScope(
       canPop: _langkah == 0 && !_menyimpan,
       onPopInvokedWithResult: (sudah, _) {

@@ -2,7 +2,7 @@ part of 'catat_pemeriksaan_page.dart';
 
 // ===========================================================================
 // FORM PEMERIKSAAN — INTI
-// State bersama halaman Catat & Edit Pemeriksaan: memuat data anak, menyimpan
+// State bersama halaman Catat & Edit Pemeriksaan: memuat data balita, menyimpan
 // catatan (hasil pemeriksaan + imunisasi + suplemen sekaligus), dan pembantu
 // yang dipakai seluruh bagian form.
 //
@@ -60,7 +60,7 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
   /// Imunisasi yang sudah tersimpan pada kunjungan ini (saat catatan diubah).
   final Set<String> _imunisasiSesiIni = {};
 
-  /// Kondisi anak sebelum imunisasi: sehat | demam_ringan | sakit.
+  /// Kondisi balita sebelum imunisasi: sehat | demam_ringan | sakit.
   String? _kondisi;
 
   final List<_BarisSuplemen> _suplemen = [];
@@ -68,7 +68,7 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
   // ---- KPSP (skrining perkembangan) ----
   final _svcKpsp = KpspService();
 
-  /// Lembar KPSP sesuai umur anak; null selama belum berhasil diambil.
+  /// Lembar KPSP sesuai umur balita; null selama belum berhasil diambil.
   LembarKpsp? _kpspLembar;
 
   /// Jawaban bidan per nomor pertanyaan: true bila "Ya".
@@ -118,11 +118,11 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
 
   int get _usiaBulan => int.tryParse(_detail?['usia_bulan']?.toString() ?? '') ?? 0;
 
-  String get _anakId =>
-      (_detail?['anak'] is Map) ? (_detail!['anak']['id']?.toString() ?? '') : '';
+  String get _balitaId =>
+      (_detail?['balita'] is Map) ? (_detail!['balita']['id']?.toString() ?? '') : '';
 
   DateTime? get _lahir {
-    final a = _detail?['anak'];
+    final a = _detail?['balita'];
     if (a is! Map) return null;
     final t = a['tanggal_lahir']?.toString() ?? '';
     return t.length >= 10 ? DateTime.tryParse(t.substring(0, 10)) : null;
@@ -191,13 +191,13 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     }
     if (_imunisasiDipilih.isNotEmpty) {
       if (!_riwayatOk) {
-        _snack('Catat riwayat imunisasi anak terlebih dahulu');
+        _snack('Catat riwayat imunisasi balita terlebih dahulu');
         return;
       }
-      // Kondisi mengikuti pendataan kader; anak sakit tidak boleh mendapat imunisasi baru.
+      // Kondisi mengikuti pendataan kader; balita sakit tidak boleh mendapat imunisasi baru.
       if (_kondisi == KondisiImunisasi.sakit &&
           _imunisasiDipilih.keys.any((k) => !_imunisasiSesiIni.contains(k))) {
-        _snack('Anak sedang sakit (pendataan kader). Hapus centangnya dan tunda imunisasi.');
+        _snack('Balita sedang sakit (pendataan kader). Hapus centangnya dan tunda imunisasi.');
         return;
       }
     }
@@ -221,12 +221,12 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
           // Keluhan diambil dari pendataan kader; tanggal kunjungan ulang tidak dipakai.
           'catatan_evaluasi': _catatanOrtu.text.trim(),
           'saran_gizi': _saranGizi.text.trim(),
-          'vaksin': [
+          'imunisasi': [
             for (final e in _imunisasiDipilih.entries)
               {
-                'jenis_vaksin_id': e.key.split('|').first,
+                'jenis_imunisasi_id': e.key.split('|').first,
                 'dosis_ke': int.tryParse(e.key.split('|').last) ?? 1,
-                'kondisi_anak': _kondisi ?? '',
+                'kondisi_balita': _kondisi ?? '',
               }
           ],
           // KPSP hanya dikirim bila seluruh 10 pertanyaan terjawab; bila tidak,
@@ -266,13 +266,13 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
   // -------------------------------------------------------------------------
   // KPSP
   // -------------------------------------------------------------------------
-  /// Mengambil lembar KPSP sesuai umur anak. Dipanggil dari _muat setelah
+  /// Mengambil lembar KPSP sesuai umur balita. Dipanggil dari _muat setelah
   /// detail pendaftaran diterima, dan dapat diulang bidan lewat tombol
   /// "Coba Ambil Lagi" bila jaringan sempat putus.
   Future<void> _muatKpsp() async {
-    if (_kpspUsiaAnak <= 0 || _kpspMemuat) return;
+    if (_kpspUsiaBalita <= 0 || _kpspMemuat) return;
     setState(() => _kpspMemuat = true);
-    final lembar = await _svcKpsp.lembar(_kpspUsiaAnak);
+    final lembar = await _svcKpsp.lembar(_kpspUsiaBalita);
     if (!mounted) return;
     setState(() {
       _kpspLembar = lembar;
@@ -280,8 +280,8 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     });
   }
 
-  /// Umur anak dalam bulan, diisi _muat dari detail pendaftaran.
-  int _kpspUsiaAnak = 0;
+  /// Umur balita dalam bulan, diisi _muat dari detail pendaftaran.
+  int _kpspUsiaBalita = 0;
 
   /// Mengisi jawaban dari hasil KPSP yang sudah tersimpan pada kunjungan ini,
   /// supaya bidan melihat isian terakhirnya saat membuka atau mengubah catatan.
@@ -337,7 +337,7 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
         title: const Text('Batalkan catatan imunisasi?'),
         content: Text(
           '${r.namaDosis} akan dihapus dari riwayat. Gunakan bila orang tua menyatakan '
-          'anak ternyata belum menerima imunisasi ini.',
+          'balita ternyata belum menerima imunisasi ini.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Tidak')),
@@ -395,12 +395,12 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
     );
   }
 
-  /// Kunjungan pertama: bidan mencatat riwayat imunisasi anak sebelum posyandu
+  /// Kunjungan pertama: bidan mencatat riwayat imunisasi balita sebelum posyandu
   /// (belum pernah / sudah pernah + daftar centang + imunisasi mandiri).
   Future<void> _catatRiwayatAwal() async {
     final lahir = _lahir;
     if (lahir == null) {
-      _snack('Tanggal lahir anak belum tersedia');
+      _snack('Tanggal lahir balita belum tersedia');
       return;
     }
     final sudah = <String>{
@@ -415,15 +415,15 @@ mixin _FormPemeriksaan<T extends StatefulWidget> on State<T> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => _FormRiwayatImunisasiAwal(
-        anakId: _anakId,
-        nama: _kartu?.anak.nama ?? '',
+        balitaId: _balitaId,
+        nama: _kartu?.balita.nama ?? '',
         lahir: lahir,
         sudahTercatat: sudah,
         adaRiwayatLuar: _riwayatLuar.isNotEmpty,
       ),
     );
     if (hasil == true) {
-      _snack('Riwayat imunisasi anak tersimpan');
+      _snack('Riwayat imunisasi balita tersimpan');
       _muat();
     }
   }

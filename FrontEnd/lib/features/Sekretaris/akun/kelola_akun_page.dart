@@ -85,7 +85,7 @@ Widget bagianKartuAkun(IconData ikon, String label, String nilai) {
 }
 
 // ---------------------------------------------------------------------------
-// HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
+// HEADER (sama seperti halaman Imunisas: polos, judul di tengah)
 // [kembali] menampilkan tombol panah di kiri, [actions] tombol di kanan.
 // ---------------------------------------------------------------------------
 class HeaderAkun extends StatelessWidget {

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import 'data_anak_page.dart';
+import 'data_balita_page.dart';
 import 'data_orang_tua_page.dart';
 
-export 'data_orang_tua_page.dart' show DataAnak, DataKeluarga, KeluargaApi;
+export 'data_orang_tua_page.dart' show DataBalita, DataKeluarga, KeluargaApi;
 
 // ---------------------------------------------------------------------------
 // KARTU LENGKAPI DATA KELUARGA
@@ -20,7 +20,7 @@ class KartuLengkapiKeluarga extends StatefulWidget {
 class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
   int? _selesai;
   bool _lengkap = false;
-  int _jumlahAnak = 0;
+  int _jumlahBalita = 0;
   bool _gagal = false;
 
   @override
@@ -37,7 +37,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
       setState(() {
         _selesai = m.langkahSelesai;
         _lengkap = m.lengkap;
-        _jumlahAnak = m.anak.length;
+        _jumlahBalita = m.balita.length;
         _gagal = false;
       });
     } catch (_) {
@@ -54,10 +54,10 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
     widget.onKembali?.call();
   }
 
-  Future<void> _bukaAnak() async {
+  Future<void> _bukaBalita() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const DataAnakPage()),
+      MaterialPageRoute(builder: (_) => const DataBalitaPage()),
     );
     _muat();
     widget.onKembali?.call();
@@ -181,9 +181,9 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
               ),
               const SizedBox(height: 10),
               _tombol(
-                judul: _jumlahAnak > 0 ? 'Data Anak ($_jumlahAnak)' : 'Data Anak',
+                judul: _jumlahBalita > 0 ? 'Data Balita ($_jumlahBalita)' : 'Data Balita',
                 sub: 'Balita & Tumbuh Kembang',
-                onTap: _bukaAnak,
+                onTap: _bukaBalita,
               ),
             ],
           ),

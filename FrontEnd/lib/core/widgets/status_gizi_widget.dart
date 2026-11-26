@@ -70,7 +70,7 @@ List<MasalahGizi> masalahGizi(dynamic statusGizi) {
       label: 'Gizi buruk',
       berat: true,
       penjelasan:
-          'Berat badan anak sangat kurang dibandingkan panjang/tingginya.',
+          'Berat badan balita sangat kurang dibandingkan panjang/tingginya.',
       saran: 'Segera konsultasikan ke bidan atau puskesmas.',
     ));
   } else if (wasting) {
@@ -79,9 +79,9 @@ List<MasalahGizi> masalahGizi(dynamic statusGizi) {
       label: 'Wasting (gizi kurang)',
       berat: false,
       penjelasan:
-          'Berat badan anak kurang dibandingkan panjang/tingginya (anak terlihat kurus).',
+          'Berat badan balita kurang dibandingkan panjang/tingginya (balita terlihat kurus).',
       saran:
-          'Perbaiki makanan anak sesuai saran bidan dan timbang anak secara rutin.',
+          'Perbaiki makanan balita sesuai saran bidan dan timbang balita secara rutin.',
     ));
   }
 
@@ -91,7 +91,7 @@ List<MasalahGizi> masalahGizi(dynamic statusGizi) {
       label: 'Stunting (sangat pendek)',
       berat: true,
       penjelasan:
-          'Panjang/tinggi badan anak sangat kurang untuk usianya.',
+          'Panjang/tinggi badan balita sangat kurang untuk usianya.',
       saran:
           'Konsultasikan ke bidan atau puskesmas dan datang ke posyandu setiap bulan.',
     ));
@@ -100,7 +100,7 @@ List<MasalahGizi> masalahGizi(dynamic statusGizi) {
       kode: 'stunting',
       label: 'Stunting (pendek)',
       berat: false,
-      penjelasan: 'Panjang/tinggi badan anak kurang untuk usianya.',
+      penjelasan: 'Panjang/tinggi badan balita kurang untuk usianya.',
       saran:
           'Ikuti saran gizi dari bidan dan datang ke posyandu setiap bulan.',
     ));
@@ -338,11 +338,11 @@ class KotakStatusGizi extends StatelessWidget {
 
 // ---------------------------------------------------------------------------
 // KARTU PERINGATAN GIZI DI BERANDA ORANG TUA
-// Mengambil /riwayat, memakai pemeriksaan terakhir tiap anak.
+// Mengambil /riwayat, memakai pemeriksaan terakhir tiap balita.
 // ---------------------------------------------------------------------------
 
 class KartuPeringatanGizi extends StatefulWidget {
-  final void Function(String anakId) onLihat;
+  final void Function(String balitaId) onLihat;
 
   const KartuPeringatanGizi({super.key, required this.onLihat});
 
@@ -350,17 +350,17 @@ class KartuPeringatanGizi extends StatefulWidget {
   State<KartuPeringatanGizi> createState() => KartuPeringatanGiziState();
 }
 
-class _AnakBermasalah {
-  final String anakId;
+class _BalitaBermasalah {
+  final String balitaId;
   final String nama;
   final DateTime? tanggal;
   final List<MasalahGizi> masalah;
 
-  _AnakBermasalah(this.anakId, this.nama, this.tanggal, this.masalah);
+  _BalitaBermasalah(this.balitaId, this.nama, this.tanggal, this.masalah);
 }
 
 class KartuPeringatanGiziState extends State<KartuPeringatanGizi> {
-  List<_AnakBermasalah> _data = [];
+  List<_BalitaBermasalah> _data = [];
 
   @override
   void initState() {
@@ -377,13 +377,13 @@ class KartuPeringatanGiziState extends State<KartuPeringatanGizi> {
       dynamic d = r.data;
       if (d is Map && d.containsKey('data')) d = d['data'];
 
-      // pemeriksaan terakhir (yang punya status gizi) per anak
+      // pemeriksaan terakhir (yang punya status gizi) per balita
       final terakhir = <String, Map<String, dynamic>>{};
       final tglTerakhir = <String, DateTime>{};
       if (d is List) {
         for (final e in d) {
           if (e is! Map || e['status_gizi'] is! Map) continue;
-          final id = e['anak_id']?.toString() ?? '';
+          final id = e['balita_id']?.toString() ?? '';
           if (id.isEmpty) continue;
           final t = DateTime.tryParse(e['tanggal']?.toString() ?? '') ??
               DateTime(1970);
@@ -394,13 +394,13 @@ class KartuPeringatanGiziState extends State<KartuPeringatanGizi> {
         }
       }
 
-      final out = <_AnakBermasalah>[];
+      final out = <_BalitaBermasalah>[];
       terakhir.forEach((id, e) {
         final m = masalahGizi(e['status_gizi']);
         if (m.isEmpty) return;
-        out.add(_AnakBermasalah(
+        out.add(_BalitaBermasalah(
           id,
-          e['nama_anak']?.toString() ?? 'Anak',
+          e['nama_balita']?.toString() ?? 'Balita',
           tglTerakhir[id],
           m,
         ));
@@ -426,7 +426,7 @@ class KartuPeringatanGiziState extends State<KartuPeringatanGizi> {
     return '${l.day} ${bln[l.month - 1]} ${l.year}';
   }
 
-  Widget _kartu(_AnakBermasalah a) {
+  Widget _kartu(_BalitaBermasalah a) {
     final berat = a.masalah.any((m) => m.berat);
     final warna = berat ? AppColors.merah : AppColors.kuning;
     final latar = berat ? AppColors.merahMuda : AppColors.kuningMuda;
@@ -500,7 +500,7 @@ class KartuPeringatanGiziState extends State<KartuPeringatanGizi> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => widget.onLihat(a.anakId),
+              onPressed: () => widget.onLihat(a.balitaId),
               icon: const Icon(Icons.description_outlined, size: 18),
               label: const Text('Lihat hasil pemeriksaan'),
               style: ElevatedButton.styleFrom(

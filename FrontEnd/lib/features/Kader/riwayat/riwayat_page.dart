@@ -23,7 +23,7 @@ const _garis = Color(0xFFB8BEC6);
 
 String _teks(dynamic v) => v?.toString().trim() ?? '';
 
-/// Label kondisi anak sebelum imunisasi.
+/// Label kondisi balita sebelum imunisasi.
 String _kondisiTeks(dynamic v) {
   switch (_teks(v)) {
     case 'sehat':
@@ -212,7 +212,7 @@ Widget _judulTebal(String teks) {
 }
 
 // ---------------------------------------------------------------------------
-// HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
+// HEADER (sama seperti halaman Imunisasi Balita: polos, judul di tengah)
 // Dipakai oleh ketiga halaman riwayat.
 // ---------------------------------------------------------------------------
 
@@ -535,7 +535,7 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
           child: InkWell(
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => _DaftarAnakPage(jadwal: j)),
+              MaterialPageRoute(builder: (_) => _DaftarBalitaPage(jadwal: j)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -551,7 +551,7 @@ class _KaderRiwayatPageState extends State<KaderRiwayatPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _bagian(Icons.location_on_outlined, 'Lokasi', _teks(j['lokasi'])),
-                            _bagian(Icons.how_to_reg_outlined, 'Anak check-in', '$checkin anak'),
+                            _bagian(Icons.how_to_reg_outlined, 'Balita check-in', '$checkin balita'),
                           ],
                         ),
                       ),

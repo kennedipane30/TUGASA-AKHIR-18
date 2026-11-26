@@ -9,7 +9,7 @@ import 'tambah_keluarga_page.dart';
 
 /// Menu kader "Data Keluarga":
 /// daftar keluarga di posyandu kader + tombol "Tambahkan Akun".
-/// Cari: nama ibu, NIK, No. HP, atau nama anak.
+/// Cari: nama ibu, NIK, No. HP, atau nama balita.
 class KeluargaPage extends StatefulWidget {
   const KeluargaPage({super.key});
 
@@ -91,7 +91,7 @@ class _KeluargaPageState extends State<KeluargaPage> {
         textInputAction: TextInputAction.search,
         onSubmitted: (_) => _muat(),
         decoration: InputDecoration(
-          hintText: 'Cari nama ibu, NIK, No. HP, atau nama anak',
+          hintText: 'Cari nama ibu, NIK, No. HP, atau nama balita',
           isDense: true,
           filled: true,
           fillColor: Colors.white,
@@ -137,7 +137,7 @@ class _KeluargaPageState extends State<KeluargaPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                kkKepala(k.namaIbu, kanan: '${k.jumlahAnak} anak'),
+                kkKepala(k.namaIbu, kanan: '${k.jumlahBalita} balita'),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                   child: Column(

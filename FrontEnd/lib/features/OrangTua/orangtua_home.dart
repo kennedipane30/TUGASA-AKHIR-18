@@ -12,7 +12,7 @@ import 'pendaftaran/kartu_antrean_page.dart';
 import 'pendaftaran/pendaftaran_page.dart';
 import 'riwayat/grafik_page.dart';
 import 'riwayat/pemeriksaan_page.dart';
-import 'rujukan/rujukan_anak_page.dart';
+import 'rujukan/rujukan_balita_page.dart';
 import 'imunisasi/imunisasi_page.dart';
 
 DateTime _tambahBulan(DateTime d, int n) {
@@ -25,7 +25,7 @@ DateTime _tambahBulan(DateTime d, int n) {
 
 /// Usia detail dari tanggal lahir "dd/mm/yyyy":
 /// "27 hari", "1 bulan 3 hari", "1 tahun 2 bulan", "2 tahun".
-String _usiaAnak(String tgl) {
+String _usiaBalita(String tgl) {
   final p = tgl.split('/');
   if (p.length != 3) return '-';
 
@@ -72,31 +72,31 @@ class OrangTuaHome extends StatefulWidget {
 
 class _OrangTuaHomeState extends State<OrangTuaHome> {
   int _aktif = 0;
-  List<DataAnak> _daftar = [];
+  List<DataBalita> _daftar = [];
   bool _memuat = true;
   String? _gagal;
   JadwalTerdekatData? _jadwal;
   final _kunciGizi = GlobalKey<KartuPeringatanGiziState>();
 
-  DataAnak? get _anak => _daftar.isEmpty ? null : _daftar[_aktif];
+  DataBalita? get _balita => _daftar.isEmpty ? null : _daftar[_aktif];
 
-  AnakStatusJadwal? _statusAnakDari(DataAnak a) {
+  BalitaStatusJadwal? _statusBalitaDari(DataBalita a) {
     final j = _jadwal;
     if (j == null) return null;
 
-    for (final s in j.anak) {
-      if (s.anakId == a.id) return s;
+    for (final s in j.balita) {
+      if (s.balitaId == a.id) return s;
     }
     return null;
   }
 
-  AnakStatusJadwal? get _statusAnak {
-    final a = _anak;
+  BalitaStatusJadwal? get _statusBalita {
+    final a = _balita;
     if (a == null) return null;
-    return _statusAnakDari(a);
+    return _statusBalitaDari(a);
   }
 
-  String get _hadir => _statusAnak?.status ?? 'belum_daftar';
+  String get _hadir => _statusBalita?.status ?? 'belum_daftar';
 
   @override
   void initState() {
@@ -115,8 +115,8 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
 
     try {
       final data = await KeluargaApi.ambil();
-      final daftar = ((data['anak'] as List?) ?? [])
-          .map((e) => DataAnak.fromApi(Map<String, dynamic>.from(e as Map)))
+      final daftar = ((data['balita'] as List?) ?? [])
+          .map((e) => DataBalita.fromApi(Map<String, dynamic>.from(e as Map)))
           .toList();
 
       if (!mounted) return;
@@ -130,7 +130,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _gagal = 'Gagal memuat data anak dari server.';
+        _gagal = 'Gagal memuat data balita dari server.';
         _memuat = false;
       });
     }
@@ -146,12 +146,12 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     _muat();
   }
 
-  /// Anak terpilih terdaftar tetapi belum check-in: langsung buka kamera scan QR.
+  /// Balita terpilih terdaftar tetapi belum check-in: langsung buka kamera scan QR.
   /// Berhasil check-in -> diarahkan ke halaman nomor antrean.
   Future<void> _scanSekarang() async {
     final j = _jadwal;
-    final a = _anak;
-    final s = _statusAnak;
+    final a = _balita;
+    final s = _statusBalita;
     if (j == null || a?.id == null || s == null) return;
     if (!s.bolehCheckin) {
       final buka = j.checkinBuka;
@@ -164,7 +164,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
         ));
       return;
     }
-    final ok = await scanCheckin(context, jadwalId: j.id, anakId: a!.id!.toString());
+    final ok = await scanCheckin(context, jadwalId: j.id, balitaId: a!.id!.toString());
     if (!mounted) return;
     if (ok) {
       await _bukaNomorAntrean();
@@ -173,15 +173,15 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     }
   }
 
-  /// Anak terpilih sudah check-in: buka halaman nomor antrean.
+  /// Balita terpilih sudah check-in: buka halaman nomor antrean.
   Future<void> _bukaNomorAntrean() async {
     final j = _jadwal;
-    final a = _anak;
+    final a = _balita;
     if (j == null || a?.id == null) return;
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => KartuAntreanPage(jadwalId: j.id, anakId: a!.id!.toString()),
+        builder: (_) => KartuAntreanPage(jadwalId: j.id, balitaId: a!.id!.toString()),
       ),
     );
     _muat();
@@ -209,47 +209,47 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   }
 
   void _bukaPemeriksaan() {
-    final a = _anak;
+    final a = _balita;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => OrangTuaPemeriksaanPage(
-          anakId: a?.id?.toString(),
+          balitaId: a?.id?.toString(),
         ),
       ),
     );
   }
 
-  /// Anak selesai dilayani: buka hasil pemeriksaan kunjungan hari ini.
+  /// Balita selesai dilayani: buka hasil pemeriksaan kunjungan hari ini.
   void _bukaHasilSelesai() {
-    final st = _statusAnak;
+    final st = _statusBalita;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => OrangTuaPemeriksaanPage(
-          anakId: st?.anakId ?? _anak?.id?.toString(),
+          balitaId: st?.balitaId ?? _balita?.id?.toString(),
           pendaftaranId: (st == null || st.pendaftaranId.isEmpty) ? null : st.pendaftaranId,
         ),
       ),
     );
   }
 
-  void _bukaPemeriksaanAnak(String anakId) {
+  void _bukaPemeriksaanBalita(String balitaId) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => OrangTuaPemeriksaanPage(anakId: anakId),
+        builder: (_) => OrangTuaPemeriksaanPage(balitaId: balitaId),
       ),
     );
   }
 
   void _bukaGrafik() {
-    final a = _anak;
+    final a = _balita;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => OrangTuaGrafikPage(
-          anakId: a?.id?.toString(),
+          balitaId: a?.id?.toString(),
         ),
       ),
     );
@@ -290,7 +290,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
         if (siap) ...[
           KartuPeringatanGizi(
             key: _kunciGizi,
-            onLihat: _bukaPemeriksaanAnak,
+            onLihat: _bukaPemeriksaanBalita,
           ),
           const SizedBox(height: 8),
         ],
@@ -317,11 +317,11 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     );
   }
 
-  Widget _kartuBelumAdaAnak() {
+  Widget _kartuBelumAdaBalita() {
     return KartuPesanHome(
       ikon: Icons.child_care,
-      judul: 'Data Anak',
-      pesan: 'Belum ada data anak. Lengkapi data keluarga terlebih dahulu.',
+      judul: 'Data Balita',
+      pesan: 'Belum ada data balita. Lengkapi data keluarga terlebih dahulu.',
       aksi: TombolUtamaHome(
         label: 'Lengkapi Data Keluarga',
         ikon: Icons.family_restroom,
@@ -330,7 +330,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     );
   }
 
-  void _pilihAnakSheet() {
+  void _pilihBalitaSheet() {
     if (_daftar.length < 2) return;
 
     showModalBottomSheet(
@@ -345,7 +345,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           children: [
             const SizedBox(height: 12),
             const Text(
-              'Pilih Anak',
+              'Pilih Balita',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
@@ -363,7 +363,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
                   _daftar[i].nama,
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
-                subtitle: Text(_usiaAnak(_daftar[i].tglLahir)),
+                subtitle: Text(_usiaBalita(_daftar[i].tglLahir)),
                 onTap: () {
                   setState(() => _aktif = i);
                   Navigator.pop(ctx);
@@ -377,12 +377,12 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   }
 
   // -------------------------------------------------------------------------
-  // KARTU STATUS: jadwal posyandu terdekat untuk anak yang dipilih
+  // KARTU STATUS: jadwal posyandu terdekat untuk balita yang dipilih
   // -------------------------------------------------------------------------
 
-  /// Lencana status pelayanan anak pada jadwal terdekat.
+  /// Lencana status pelayanan balita pada jadwal terdekat.
   Widget _lencanaStatus() {
-    final s = _statusAnak?.statusTampil ?? _hadir;
+    final s = _statusBalita?.statusTampil ?? _hadir;
     final (label, _, _) = labelStatusHadir(s);
     final jenis = switch (s) {
       'selesai' => 'sukses',
@@ -394,7 +394,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
     return LencanaStatusHome.jenis(jenis, label);
   }
 
-  /// Tombol utama kartu status (mengikuti anak yang dipilih):
+  /// Tombol utama kartu status (mengikuti balita yang dipilih):
   ///  - belum daftar   : "Buka Pendaftaran & Check-in" -> halaman pendaftaran
   ///  - terdaftar      : "Scan Sekarang"   -> kamera scan QR -> halaman nomor antrean
   ///  - sudah check-in : "Nomor Antrean"   -> halaman nomor antrean
@@ -402,7 +402,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
   Widget _tombolDaftar() {
     final terdaftar = _hadir == 'terdaftar';
     final sudahCheckin = _hadir == 'sudah_checkin';
-    final selesai = _statusAnak?.selesai ?? false;
+    final selesai = _statusBalita?.selesai ?? false;
     final (String label, IconData ikon, VoidCallback aksi) = terdaftar
         ? ('Scan Sekarang', Icons.qr_code_scanner, _scanSekarang)
         : selesai
@@ -424,7 +424,7 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
       );
     }
     if (_gagal != null) return _kartuGagal();
-    if (_daftar.isEmpty) return _kartuBelumAdaAnak();
+    if (_daftar.isEmpty) return _kartuBelumAdaBalita();
 
     final j = _jadwal;
     final pos = (context.watch<AuthProvider>().user?['posyandu'] ?? '').toString();
@@ -456,8 +456,8 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           KepalaKartuHome(
-            judul: _kapital(_anak?.nama ?? '-'),
-            onJudul: _daftar.length > 1 ? _pilihAnakSheet : null,
+            judul: _kapital(_balita?.nama ?? '-'),
+            onJudul: _daftar.length > 1 ? _pilihBalitaSheet : null,
             lencana: _lencanaStatus(),
           ),
           const SizedBox(height: 16),
@@ -506,21 +506,21 @@ class _OrangTuaHomeState extends State<OrangTuaHome> {
           aset: 'grafik_anak.png',
           cadangan: Icons.show_chart_rounded,
           warna: const Color(0xFF0B6B55),
-          judul: 'Grafik\nAnak',
+          judul: 'Grafik\nBalita',
           onTap: _bukaGrafik,
         ),
         ItemLayananHome(
           aset: 'imunisasi_anak.png',
           cadangan: Icons.vaccines_rounded,
           warna: const Color(0xFF2563EB),
-          judul: 'Imunisasi\nAnak',
+          judul: 'Imunisasi\nBalita',
           onTap: _bukaImunisasi,
         ),
         ItemLayananHome(
           aset: 'rujukan_anak.png',
           cadangan: Icons.description_rounded,
           warna: const Color(0xFFB45309),
-          judul: 'Rujukan\nAnak',
+          judul: 'Rujukan\nBalita',
           onTap: _bukaRujukan,
         ),
         ItemLayananHome(

@@ -262,7 +262,7 @@ class _AdminLaporanBulananPageState extends State<AdminLaporanBulananPage> {
           ? _kosong('Tidak ada pemberian suplemen bulan ini.')
           : Column(
               children: _daftarBaris([
-                for (final s in d.suplemen) (s.nama, '${s.jumlah} anak', null),
+                for (final s in d.suplemen) (s.nama, '${s.jumlah} balita', null),
               ]),
             ),
     );
@@ -272,7 +272,7 @@ class _AdminLaporanBulananPageState extends State<AdminLaporanBulananPage> {
     final list = d.balitaBerisiko;
     return KartuRekap(
       title: 'VI. Balita Berisiko',
-      trailing: teksKananRekap('${list.length} anak'),
+      trailing: teksKananRekap('${list.length} balita'),
       child: list.isEmpty
           ? _kosong('Tidak ada balita berisiko bulan ini.')
           : Column(
@@ -330,7 +330,7 @@ class _AdminLaporanBulananPageState extends State<AdminLaporanBulananPage> {
     required VoidCallback? onTap,
     bool isi = true,
   }) {
-    final anak = proses
+    final balita = proses
         ? SizedBox(
             width: 20,
             height: 20,
@@ -363,7 +363,7 @@ class _AdminLaporanBulananPageState extends State<AdminLaporanBulananPage> {
                 elevation: 0,
                 shape: bentuk,
               ),
-              child: anak,
+              child: balita,
             )
           : OutlinedButton(
               onPressed: onTap,
@@ -372,7 +372,7 @@ class _AdminLaporanBulananPageState extends State<AdminLaporanBulananPage> {
                 side: const BorderSide(color: AppColors.hijau, width: 1.4),
                 shape: bentuk,
               ),
-              child: anak,
+              child: balita,
             ),
     );
   }

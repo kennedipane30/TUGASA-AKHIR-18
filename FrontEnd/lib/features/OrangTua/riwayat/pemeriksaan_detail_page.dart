@@ -92,9 +92,9 @@ class _DetailRiwayatPage extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
-                // Identitas anak + hasil pengukuran (digabung dalam satu kartu)
+                // Identitas balita + hasil pengukuran (digabung dalam satu kartu)
                 _kartu(
-                  judul: d.namaAnak,
+                  judul: d.namaBalita,
                   kanan: t == null ? null : formatTanggal(t),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,7 +118,7 @@ class _DetailRiwayatPage extends StatelessWidget {
                 // Status gizi
                 if (d.adaUkur && d.statusGizi != null)
                   _kartu(
-                    judul: 'Status Gizi Anak',
+                    judul: 'Status Gizi Balita',
                     child: KotakStatusGizi(d.statusGizi, untukOrangTua: true),
                   ),
 

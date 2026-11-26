@@ -1,7 +1,7 @@
 part of 'catat_pemeriksaan_page.dart';
 
 // ---------------------------------------------------------------------------
-// HALAMAN EDIT PEMERIKSAAN (anak yang catatan bidannya sudah tersimpan)
+// HALAMAN EDIT PEMERIKSAAN (balita yang catatan bidannya sudah tersimpan)
 // Catatan, imunisasi, dan suplemen yang tersimpan dimuat ke form.
 // ---------------------------------------------------------------------------
 class EditPemeriksaanPage extends StatefulWidget {
@@ -73,7 +73,7 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
       }
 
       // Riwayat imunisasi sebelum posyandu.
-      final status = detail['status_riwayat_vaksin']?.toString() ?? '';
+      final status = detail['status_riwayat_imunisasi']?.toString() ?? '';
       final luar = <RiwayatImunisasi>[];
       final rl = detail['riwayat_luar'];
       if (rl is List) {
@@ -92,15 +92,15 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
       final imun = detail['imunisasi'];
       if (imun is List) {
         for (final e in imun) {
-          if (e is Map && e['jenis_vaksin_id'] != null) {
-            final k = '${e['jenis_vaksin_id']}|${e['dosis_ke']}';
+          if (e is Map && e['jenis_imunisasi_id'] != null) {
+            final k = '${e['jenis_imunisasi_id']}|${e['dosis_ke']}';
             _imunisasiDipilih[k] = _PilihImunisasi();
             _imunisasiSesiIni.add(k);
           }
         }
       }
 
-      // Kondisi anak sebelum imunisasi mengikuti pendataan kader ("Sedang sakit").
+      // Kondisi balita sebelum imunisasi mengikuti pendataan kader ("Sedang sakit").
       final ukurKader = detail['pengukuran'] is Map
           ? Map<String, dynamic>.from(detail['pengukuran'] as Map)
           : const <String, dynamic>{};
@@ -137,18 +137,18 @@ class _EditPemeriksaanState extends State<EditPemeriksaanPage>
       // Form suplemen langsung tampil (satu baris kosong bila belum ada suplemen).
       _siapkanFormSuplemen();
 
-      // KPSP: umur anak menentukan lembar yang dipakai; jawaban yang sudah
+      // KPSP: umur balita menentukan lembar yang dipakai; jawaban yang sudah
       // tersimpan ditampilkan kembali agar bidan dapat mengubahnya.
-      _kpspUsiaAnak = int.tryParse(detail['usia_bulan']?.toString() ?? '') ?? 0;
+      _kpspUsiaBalita = int.tryParse(detail['usia_bulan']?.toString() ?? '') ?? 0;
       _isiKpspTersimpan(detail['kpsp']);
 
-      // Kartu imunisasi anak (jadwal + status).
+      // Kartu imunisasi balita (jadwal + status).
       KartuImunisasi? kartu;
       String? gagalKartu;
-      final anakId = (detail['anak'] is Map) ? (detail['anak']['id']?.toString() ?? '') : '';
-      if (anakId.isNotEmpty) {
+      final balitaId = (detail['balita'] is Map) ? (detail['balita']['id']?.toString() ?? '') : '';
+      if (balitaId.isNotEmpty) {
         try {
-          kartu = await _svcImunisasi.kartuAnak(anakId);
+          kartu = await _svcImunisasi.kartuBalita(balitaId);
         } catch (e) {
           gagalKartu = _pesanError(e);
         }

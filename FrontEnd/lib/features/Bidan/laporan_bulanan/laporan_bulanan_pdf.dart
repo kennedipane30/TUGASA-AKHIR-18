@@ -194,12 +194,12 @@ Future<Uint8List> buatPdfLaporanBulananBidan({
     _bagian('IV', 'Imunisasi yang Diberikan'),
     if (data.imunisasi.isEmpty)
       _tabel([
-        ['Jenis imunisasi', 'Jumlah anak'],
+        ['Jenis imunisasi', 'Jumlah balita'],
         ['Tidak ada imunisasi di posyandu bulan ini', '0'],
       ], [130, 44], tengah: {1})
     else
       _tabel([
-        ['Jenis imunisasi', 'Jumlah anak'],
+        ['Jenis imunisasi', 'Jumlah balita'],
         for (final v in data.imunisasi) [v.nama, '${v.jumlah}'],
         ['Total pemberian', '${data.totalImunisasi}'],
       ], [130, 44], tengah: {1}, barisTebal: {data.imunisasi.length + 1}),
@@ -208,12 +208,12 @@ Future<Uint8List> buatPdfLaporanBulananBidan({
     _bagian('V', 'Pemberian Suplemen'),
     if (data.suplemen.isEmpty)
       _tabel([
-        ['Suplemen', 'Jumlah anak'],
+        ['Suplemen', 'Jumlah balita'],
         ['Tidak ada pemberian suplemen bulan ini', '0'],
       ], [130, 44], tengah: {1})
     else
       _tabel([
-        ['Suplemen', 'Jumlah anak'],
+        ['Suplemen', 'Jumlah balita'],
         for (final s in data.suplemen) [s.nama, '${s.jumlah}'],
       ], [130, 44], tengah: {1}),
     _catatan('Vitamin A dosis tinggi dan obat cacing umumnya diberikan pada bulan Februari dan Agustus.'),
@@ -242,7 +242,7 @@ Future<Uint8List> buatPdfLaporanBulananBidan({
     // VII. KPSP (khusus bidan)
     _bagian('VII', 'Hasil KPSP (Kuesioner Pra Skrining Perkembangan)'),
     _tabel([
-      ['Hasil KPSP', 'Jumlah anak'],
+      ['Hasil KPSP', 'Jumlah balita'],
       ['Sesuai (S)', '-'],
       ['Meragukan (M)', '-'],
       ['Kemungkinan ada penyimpangan (P)', '-'],

@@ -2,7 +2,7 @@ part of 'catat_pemeriksaan_page.dart';
 
 // ===========================================================================
 // FORM IMUNISASI
-// Dua bagian: imunisasi yang diberikan hari ini, dan riwayat imunisasi anak
+// Dua bagian: imunisasi yang diberikan hari ini, dan riwayat imunisasi balita
 // sebelum posyandu yang dicatat bidan sekali pada kunjungan pertama.
 // ===========================================================================
 
@@ -28,7 +28,7 @@ mixin _FormImunisasi<T extends StatefulWidget> on _FormPemeriksaan<T> {
         kanan: 'Terkunci',
         warnaKanan: AppColors.teksRedup,
         child: const Text(
-          'Catat riwayat imunisasi anak di atas terlebih dahulu agar tidak ada imunisasi yang diberikan dua kali.',
+          'Catat riwayat imunisasi balita di atas terlebih dahulu agar tidak ada imunisasi yang diberikan dua kali.',
           style: TextStyle(fontSize: 16.5, color: AppColors.teksRedup),
         ),
       );
@@ -41,7 +41,7 @@ mixin _FormImunisasi<T extends StatefulWidget> on _FormPemeriksaan<T> {
         child: Column(
           children: [
             Text(
-              _gagalKartu ?? 'Jadwal imunisasi anak tidak dapat dimuat',
+              _gagalKartu ?? 'Jadwal imunisasi balita tidak dapat dimuat',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16.5, color: AppColors.teksRedup),
             ),
@@ -74,8 +74,8 @@ mixin _FormImunisasi<T extends StatefulWidget> on _FormPemeriksaan<T> {
             const Text('Tidak ada imunisasi yang perlu diberikan hari ini.',
                 style: TextStyle(fontSize: 16.5, color: AppColors.teksRedup))
           else ...[
-            // Kondisi anak diambil dari pendataan kader (Kondisi Anak: "Sedang sakit").
-            const Text('Kondisi anak (dari pendataan kader)',
+            // Kondisi balita diambil dari pendataan kader (Kondisi Balita: "Sedang sakit").
+            const Text('Kondisi balita (dari pendataan kader)',
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: _teksGelap)),
             const SizedBox(height: 6),
             Container(
@@ -96,7 +96,7 @@ mixin _FormImunisasi<T extends StatefulWidget> on _FormPemeriksaan<T> {
             ),
             const SizedBox(height: 8),
             if (sakit)
-              _info('Anak sedang sakit: tunda imunisasi sampai anak sehat.',
+              _info('Balita sedang sakit: tunda imunisasi sampai balita sehat.',
                   ikon: Icons.do_not_disturb_on_outlined, bg: AppColors.merahMuda, fg: AppColors.merah)
             else
               const Padding(
@@ -117,7 +117,7 @@ mixin _FormImunisasi<T extends StatefulWidget> on _FormPemeriksaan<T> {
     );
   }
 
-  Widget _barisCalon(JadwalImunisasiAnak e, {required bool terkunci}) {
+  Widget _barisCalon(JadwalImunisasiBalita e, {required bool terkunci}) {
     final kunci = e.jadwal.kunci;
     final pilih = _imunisasiDipilih[kunci];
     final dipilih = pilih != null;
@@ -195,8 +195,8 @@ mixin _FormImunisasi<T extends StatefulWidget> on _FormPemeriksaan<T> {
   // KARTU RIWAYAT IMUNISASI SEBELUM POSYANDU (dicatat bidan sekali, kunjungan pertama)
   // -------------------------------------------------------------------------
   Widget _kartuRiwayat() {
-    const pesan = 'Kunjungan pertama anak. Tanyakan kepada orang tua dan lihat Buku KIA: imunisasi apa saja '
-        'yang pernah diterima anak di luar posyandu (rumah sakit, puskesmas, klinik, bidan praktik).';
+    const pesan = 'Kunjungan pertama balita. Tanyakan kepada orang tua dan lihat Buku KIA: imunisasi apa saja '
+        'yang pernah diterima balita di luar posyandu (rumah sakit, puskesmas, klinik, bidan praktik).';
     final menunggu = _riwayatLuar.where((r) => r.menungguKonfirmasi).length;
 
     return kartuBidan(
@@ -301,7 +301,7 @@ mixin _FormImunisasi<T extends StatefulWidget> on _FormPemeriksaan<T> {
 }
 
 // ---------------------------------------------------------------------------
-// FORM RIWAYAT IMUNISASI SEBELUM POSYANDU (bidan, kunjungan pertama anak)
+// FORM RIWAYAT IMUNISASI SEBELUM POSYANDU (bidan, kunjungan pertama balita)
 //   - Belum pernah diimunisasi, atau
 //   - Sudah pernah: centang dosis imunisasi program + "imunisasi mandiri" di luar daftar.
 // Data langsung sah. Dosis yang sudah tercatat tampil terkunci (tidak dobel).
@@ -333,7 +333,7 @@ class _ImunisasiMandiriAwal {
 }
 
 class _FormRiwayatImunisasiAwal extends StatefulWidget {
-  final String anakId;
+  final String balitaId;
   final String nama;
   final DateTime lahir;
 
@@ -344,7 +344,7 @@ class _FormRiwayatImunisasiAwal extends StatefulWidget {
   final bool adaRiwayatLuar;
 
   const _FormRiwayatImunisasiAwal({
-    required this.anakId,
+    required this.balitaId,
     required this.nama,
     required this.lahir,
     required this.sudahTercatat,
@@ -399,7 +399,7 @@ class _FormRiwayatImunisasiAwalState extends State<_FormRiwayatImunisasiAwal> {
         final m = await _svc.jadwalMaster();
         if (!mounted) return;
         setState(() {
-          // hanya dosis yang sudah mungkin diterima sesuai usia anak
+          // hanya dosis yang sudah mungkin diterima sesuai usia balita
           _master = m.where((j) => !j.jenis.khususDaerah && j.usiaMinBulan <= _usiaBulan).toList();
           _memuatMaster = false;
         });
@@ -495,7 +495,7 @@ class _FormRiwayatImunisasiAwalState extends State<_FormRiwayatImunisasiAwal> {
           return;
         }
         items.add({
-          'jenis_vaksin_id': e.key.split('|').first,
+          'jenis_imunisasi_id': e.key.split('|').first,
           'dosis_ke': int.tryParse(e.key.split('|').last) ?? 1,
           'tanggal_pemberian': tanggalApiImunisasi(d.tanggal!),
           'tempat': d.tempat.text.trim(),
@@ -518,7 +518,7 @@ class _FormRiwayatImunisasiAwalState extends State<_FormRiwayatImunisasiAwal> {
           return;
         }
         mandiri.add({
-          'nama_vaksin': nama,
+          'nama_imunisasi': nama,
           'dosis_ke': v.dosis,
           'tanggal_pemberian': tanggalApiImunisasi(v.tanggal!),
           'tempat': v.tempat.text.trim(),
@@ -535,7 +535,7 @@ class _FormRiwayatImunisasiAwalState extends State<_FormRiwayatImunisasiAwal> {
       _galat = null;
     });
     try {
-      await _svc.catatRiwayatAwal(anakId: widget.anakId, status: _status, items: items, mandiri: mandiri);
+      await _svc.catatRiwayatAwal(balitaId: widget.balitaId, status: _status, items: items, mandiri: mandiri);
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
@@ -759,12 +759,12 @@ class _FormRiwayatImunisasiAwalState extends State<_FormRiwayatImunisasiAwal> {
             Container(height: 3, color: aksenKartuBidan),
             const SizedBox(height: 10),
             Text(
-              'Apakah ${widget.nama.isEmpty ? 'anak' : widget.nama} sudah pernah menerima imunisasi sebelum ke posyandu '
+              'Apakah ${widget.nama.isEmpty ? 'balita' : widget.nama} sudah pernah menerima imunisasi sebelum ke posyandu '
               '(rumah sakit, puskesmas, klinik, atau bidan praktik)? Cocokkan dengan Buku KIA.',
               style: const TextStyle(fontSize: 16, color: AppColors.teksRedup, height: 1.4),
             ),
             const SizedBox(height: 14),
-            _opsi('belum_pernah', 'Belum pernah', 'Anak belum pernah diimunisasi', Icons.block_outlined),
+            _opsi('belum_pernah', 'Belum pernah', 'Balita belum pernah diimunisasi', Icons.block_outlined),
             _opsi('sudah', 'Sudah pernah', 'Centang imunisasi yang sudah diterima', Icons.vaccines_outlined),
             if (_status == 'sudah') ...[
               const SizedBox(height: 6),
@@ -805,7 +805,7 @@ class _FormRiwayatImunisasiAwalState extends State<_FormRiwayatImunisasiAwal> {
               ),
               child: const Text(
                 'Imunisasi yang dicatat langsung sah dan tidak akan diberikan lagi di posyandu. '
-                'Bagian ini hanya diisi sekali, pada kunjungan pertama anak.',
+                'Bagian ini hanya diisi sekali, pada kunjungan pertama balita.',
                 style: TextStyle(fontSize: 15, height: 1.4),
               ),
             ),

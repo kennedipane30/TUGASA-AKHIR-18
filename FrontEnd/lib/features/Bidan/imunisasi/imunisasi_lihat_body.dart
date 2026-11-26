@@ -214,7 +214,7 @@ Future<void> tampilkanBuktiImunisasi(BuildContext context, String nama) {
   );
 }
 
-/// Isi halaman imunisasi anak (dipakai bidan, kader, sekretaris, dan orang tua).
+/// Isi halaman imunisasi balita (dipakai bidan, kader, sekretaris, dan orang tua).
 /// Tab: Jadwal (dengan status) · Riwayat Imunisasi · Suplemen.
 /// [hanyaRiwayat] = true: tab Jadwal dan ringkasan jadwal disembunyikan, hanya imunisasi
 /// yang sudah diterima (riwayat) dan suplemen yang tampil (dipakai di halaman bidan).
@@ -222,14 +222,14 @@ Future<void> tampilkanBuktiImunisasi(BuildContext context, String nama) {
 /// catatan dari luar, dan menindaklanjuti reaksi setelah imunisasi (KIPI).
 /// [bisaLaporKipi] = true untuk orang tua: melaporkan reaksi setelah imunisasi.
 class ImunisasiLihatBody extends StatefulWidget {
-  final String anakId;
+  final String balitaId;
   final bool bisaKelola;
   final bool bisaLaporKipi;
   final bool hanyaRiwayat;
 
   const ImunisasiLihatBody({
     super.key,
-    required this.anakId,
+    required this.balitaId,
     this.bisaKelola = false,
     this.bisaLaporKipi = false,
     this.hanyaRiwayat = false,
@@ -249,7 +249,7 @@ class _GayaStatus {
 const _abu = Color(0xFF6B7280);
 const _abuMuda = Color(0xFFF1F2F4);
 
-_GayaStatus _gaya(JadwalImunisasiAnak e) {
+_GayaStatus _gaya(JadwalImunisasiBalita e) {
   if (e.riwayat?.menungguKonfirmasi == true) {
     return const _GayaStatus(AppColors.kuning, AppColors.kuningMuda, Icons.pending_actions);
   }
@@ -273,7 +273,7 @@ _GayaStatus _gaya(JadwalImunisasiAnak e) {
 }
 
 /// Label status singkat untuk pil di daftar jadwal.
-String _labelPil(JadwalImunisasiAnak e) {
+String _labelPil(JadwalImunisasiBalita e) {
   if (e.riwayat?.menungguKonfirmasi == true) return 'Menunggu konfirmasi';
   if (e.sudah) return 'Sudah';
   if (e.keFaskes) return 'Ke puskesmas';
@@ -310,7 +310,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
       _gagal = null;
     });
     try {
-      final k = await _svc.kartuAnak(widget.anakId);
+      final k = await _svc.kartuBalita(widget.balitaId);
       if (!mounted) return;
       setState(() {
         _kartu = k;
@@ -364,7 +364,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
           if (!widget.hanyaRiwayat) _ringkasan(k),
-          if (!k.anak.riwayatDikonfirmasi) ...[
+          if (!k.balita.riwayatDikonfirmasi) ...[
             _infoRiwayatAwal(k),
             const SizedBox(height: 12),
           ],
@@ -448,7 +448,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
                 _barisJumlah('Imunisasi lanjutan', r.lanjutanLengkap ? 'Lengkap' : 'Belum lengkap',
                     warna: r.lanjutanLengkap ? _hijauTua : AppColors.teksRedup),
                 _pemisah,
-                _barisJumlah('Usia anak', k.anak.usiaTeks),
+                _barisJumlah('Usia balita', k.balita.usiaTeks),
               ],
             ),
           ),
@@ -459,9 +459,9 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
 
   Widget _infoRiwayatAwal(KartuImunisasi k) {
     final pesan = widget.bisaKelola
-        ? 'Riwayat imunisasi anak sebelum posyandu belum dicatat. Catat di halaman Catatan Bidan saat kunjungan pertama.'
-        : 'Riwayat imunisasi anak sebelum posyandu akan dicatat bidan saat kunjungan pertama. '
-            'Bawa Buku KIA atau kartu imunisasi anak.';
+        ? 'Riwayat imunisasi balita sebelum posyandu belum dicatat. Catat di halaman Catatan Bidan saat kunjungan pertama.'
+        : 'Riwayat imunisasi balita sebelum posyandu akan dicatat bidan saat kunjungan pertama. '
+            'Bawa Buku KIA atau kartu imunisasi balita.';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -543,7 +543,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
     if (k.jadwal.isEmpty) return [_kosong(Icons.event_busy, 'Jadwal imunisasi belum tersedia')];
 
     // kelompokkan per usia ideal (urutan dari server sudah berdasarkan usia)
-    final grup = <String, List<JadwalImunisasiAnak>>{};
+    final grup = <String, List<JadwalImunisasiBalita>>{};
     for (final e in k.jadwal) {
       grup.putIfAbsent(e.jadwal.labelUsia, () => []).add(e);
     }
@@ -558,7 +558,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
     ];
   }
 
-  String _subJadwal(JadwalImunisasiAnak e) {
+  String _subJadwal(JadwalImunisasiBalita e) {
     final r = e.riwayat;
     if (r != null) {
       return 'Diberikan ${r.tanggal == null ? '-' : formatTanggal(r.tanggal!)} · usia ${r.usiaTeks}'
@@ -568,7 +568,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
     return e.teksJadwal;
   }
 
-  Widget _barisJadwal(JadwalImunisasiAnak e) {
+  Widget _barisJadwal(JadwalImunisasiBalita e) {
     final g = _gaya(e);
     final tambahan = [
       if (e.jadwal.lanjutan) 'Lanjutan',
@@ -638,7 +638,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
     );
   }
 
-  void _detailJadwal(JadwalImunisasiAnak e) {
+  void _detailJadwal(JadwalImunisasiBalita e) {
     final j = e.jadwal;
     final r = e.riwayat;
     final g = _gaya(e);
@@ -703,7 +703,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
         _info('Sumber data', r.labelSumber),
         _info('Diberikan oleh', r.namaPemberi),
         _info('Nomor batch', r.nomorBatch),
-        _info('Kondisi anak', KondisiImunisasi.label(r.kondisiAnak)),
+        _info('Kondisi balita', KondisiImunisasi.label(r.kondisiBalita)),
         _info('Catatan', r.catatan),
       ];
 
@@ -814,7 +814,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
           _info('Tempat', r.tempat.isEmpty ? r.labelSumber : r.tempat),
           _info(r.dariPosyandu ? 'Diberikan oleh' : 'Petugas', r.namaPemberi),
           _info('Nomor batch', r.nomorBatch),
-          _info('Kondisi anak', r.kondisiAnak.isEmpty ? '' : KondisiImunisasi.label(r.kondisiAnak)),
+          _info('Kondisi balita', r.kondisiBalita.isEmpty ? '' : KondisiImunisasi.label(r.kondisiBalita)),
           _info('Catatan', r.catatan),
           if (adaReaksi) ...[
             const SizedBox(height: 6),
@@ -980,10 +980,10 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
   Future<void> _laporKipi(RiwayatImunisasi r) async {
     final reaksi = await _isian(
       judul: 'Laporkan Reaksi Setelah Imunisasi',
-      keterangan: 'Ceritakan reaksi yang dialami anak setelah ${r.namaDosis}, misalnya demam, bengkak, '
-          'kemerahan, atau rewel terus-menerus. Laporan dikirim ke bidan. Bila anak kejang, sesak napas, '
+      keterangan: 'Ceritakan reaksi yang dialami balita setelah ${r.namaDosis}, misalnya demam, bengkak, '
+          'kemerahan, atau rewel terus-menerus. Laporan dikirim ke bidan. Bila balita kejang, sesak napas, '
           'atau tidak sadar, segera bawa ke puskesmas atau IGD terdekat.',
-      label: 'Reaksi yang dialami anak',
+      label: 'Reaksi yang dialami balita',
     );
     if (reaksi == null || reaksi.isEmpty) return;
     try {
@@ -1002,7 +1002,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
       keterangan: r.namaDosis,
       label: 'Tindak lanjut bidan',
       awal: r.kipiTindakLanjut,
-      label2: 'Reaksi yang dialami anak',
+      label2: 'Reaksi yang dialami balita',
       awal2: r.reaksiKipi,
       simpanKedua: (v) => reaksi = v,
     );
@@ -1053,7 +1053,7 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => _FormLuar(anakId: k.anak.id, lahir: k.anak.tanggalLahir, opsi: opsi, svc: _svc),
+      builder: (_) => _FormLuar(balitaId: k.balita.id, lahir: k.balita.tanggalLahir, opsi: opsi, svc: _svc),
     );
     if (tersimpan == true) {
       _snack('Imunisasi dari luar posyandu tercatat');
@@ -1064,12 +1064,12 @@ class _ImunisasiLihatBodyState extends State<ImunisasiLihatBody> {
 
 /// Bidan mencatat imunisasi yang diberikan di luar posyandu berdasarkan keterangan orang tua.
 class _FormLuar extends StatefulWidget {
-  final String anakId;
+  final String balitaId;
   final DateTime? lahir;
-  final List<JadwalImunisasiAnak> opsi;
+  final List<JadwalImunisasiBalita> opsi;
   final ImunisasiService svc;
 
-  const _FormLuar({required this.anakId, required this.lahir, required this.opsi, required this.svc});
+  const _FormLuar({required this.balitaId, required this.lahir, required this.opsi, required this.svc});
 
   @override
   State<_FormLuar> createState() => _FormLuarState();
@@ -1094,7 +1094,7 @@ class _FormLuarState extends State<_FormLuar> {
     super.dispose();
   }
 
-  JadwalImunisasiAnak? get _dipilih {
+  JadwalImunisasiBalita? get _dipilih {
     for (final e in widget.opsi) {
       if (e.jadwal.kunci == _kunci) return e;
     }
@@ -1144,7 +1144,7 @@ class _FormLuarState extends State<_FormLuar> {
     });
     try {
       await widget.svc.catatRiwayat(
-        anakId: widget.anakId,
+        balitaId: widget.balitaId,
         jenisImunisasiId: d.jadwal.jenis.id,
         dosisKe: d.jadwal.dosisKe,
         tanggal: _tanggal!,
@@ -1223,7 +1223,7 @@ class _FormLuarState extends State<_FormLuar> {
               if (lahir != null && _tanggal != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 6, left: 4),
-                  child: Text('Usia anak saat itu: ${usiaDariLahir(lahir, _tanggal!)}',
+                  child: Text('Usia balita saat itu: ${usiaDariLahir(lahir, _tanggal!)}',
                       style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
                 ),
               const SizedBox(height: 10),

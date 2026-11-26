@@ -21,7 +21,7 @@ const _teksGelap = Color(0xFF1F2937);
 
 class _ItemBidan {
   final String pendaftaranId;
-  final String anakId;
+  final String balitaId;
   final String nama;
   final String jk;
   final DateTime? tanggalLahir;
@@ -35,7 +35,7 @@ class _ItemBidan {
 
   _ItemBidan({
     required this.pendaftaranId,
-    required this.anakId,
+    required this.balitaId,
     required this.nama,
     required this.jk,
     required this.tanggalLahir,
@@ -50,7 +50,7 @@ class _ItemBidan {
 
   factory _ItemBidan.fromApi(Map<String, dynamic> j) => _ItemBidan(
         pendaftaranId: j['pendaftaran_id']?.toString() ?? '',
-        anakId: j['anak_id']?.toString() ?? '',
+        balitaId: j['balita_id']?.toString() ?? '',
         nama: j['nama']?.toString() ?? '',
         jk: j['jenis_kelamin']?.toString() ?? '',
         tanggalLahir: _tglLahir(j['tanggal_lahir']),
@@ -309,7 +309,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Balita: polos, judul di tengah)
   // Tanpa tombol kembali, sama seperti sebelumnya (halaman tab).
   // -------------------------------------------------------------------------
   Widget _header() {
@@ -415,7 +415,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                     else ...[
                       kartuBidan(
                         judul: 'Sesi Posyandu',
-                        kanan: daftar.isEmpty ? null : '${daftar.length} anak',
+                        kanan: daftar.isEmpty ? null : '${daftar.length} balita',
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -431,7 +431,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                             child: Padding(
                               padding: EdgeInsets.symmetric(vertical: 12),
                               child: Text(
-                                'Belum ada anak yang check-in',
+                                'Belum ada balita yang check-in',
                                 style: TextStyle(
                                   fontSize: 16.5,
                                   color: AppColors.teksRedup,
@@ -450,7 +450,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
                         if (!daftar.any((d) => d.selesai == _lihatSudah))
                           kartuBidan(
                             child: Text(
-                              _lihatSudah ? 'Belum ada catatan yang selesai.' : 'Semua anak sudah dicatat.',
+                              _lihatSudah ? 'Belum ada catatan yang selesai.' : 'Semua balita sudah dicatat.',
                               style: const TextStyle(fontSize: 16, color: AppColors.teksRedup),
                             ),
                           ),
@@ -467,7 +467,7 @@ class _BidanHasilPendataanPageState extends State<BidanHasilPendataanPage> {
     );
   }
 
-  /// Kartu antrean: hanya nomor antrean dan status. Nama anak dan status gizi
+  /// Kartu antrean: hanya nomor antrean dan status. Nama balita dan status gizi
   /// tidak ditampilkan di daftar; semuanya tetap tampil di halaman Catat / Edit.
   Widget _kartu(_ItemBidan d) {
     final selesai = d.selesai;

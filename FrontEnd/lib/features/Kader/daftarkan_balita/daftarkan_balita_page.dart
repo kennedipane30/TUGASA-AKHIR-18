@@ -9,11 +9,11 @@ import '../keluarga/tambah_keluarga_page.dart';
 import '../../../core/theme/app_colors.dart';
 
 // ============================================================================
-// DAFTARKAN ANAK KE SESI POSYANDU HARI INI (kader)
+// DAFTARKAN BALITA KE SESI POSYANDU HARI INI (kader)
 //   - hanya saat ada sesi posyandu hari ini
-//   - cari nama anak atau nama orang tua
-//   - "Daftarkan" hanya untuk anak yang belum terdaftar
-//   - anak yang sudah terdaftar / sudah check-in tidak dapat didaftarkan lagi
+//   - cari nama balita atau nama orang tua
+//   - "Daftarkan" hanya untuk balita yang belum terdaftar
+//   - balita yang sudah terdaftar / sudah check-in tidak dapat didaftarkan lagi
 //   - pendaftaran kader langsung check-in dan mendapat nomor antrean
 // ============================================================================
 
@@ -24,13 +24,13 @@ const _namaBulan = [
 
 final Options _opsi = Options(receiveTimeout: const Duration(seconds: 15));
 
-class AnakSesi {
-  final String anakId, nama, jk, tglLahir, usia, namaIbu, status;
+class BalitaSesi {
+  final String balitaId, nama, jk, tglLahir, usia, namaIbu, status;
   final int? nomorAntrean;
   final bool bolehDaftar;
 
-  AnakSesi({
-    required this.anakId,
+  BalitaSesi({
+    required this.balitaId,
     required this.nama,
     required this.jk,
     required this.tglLahir,
@@ -41,8 +41,8 @@ class AnakSesi {
     required this.bolehDaftar,
   });
 
-  factory AnakSesi.fromJson(Map<String, dynamic> j) => AnakSesi(
-        anakId: j['anak_id'].toString(),
+  factory BalitaSesi.fromJson(Map<String, dynamic> j) => BalitaSesi(
+        balitaId: j['balita_id'].toString(),
         nama: (j['nama'] ?? '').toString(),
         jk: (j['jenis_kelamin'] ?? '').toString(),
         tglLahir: kkDariApi(j['tanggal_lahir']),
@@ -58,27 +58,27 @@ class _Sesi {
   final bool aktif;
   final String pesan;
   final Map<String, dynamic>? jadwal;
-  final List<AnakSesi> anak;
-  _Sesi(this.aktif, this.pesan, this.jadwal, this.anak);
+  final List<BalitaSesi> balita;
+  _Sesi(this.aktif, this.pesan, this.jadwal, this.balita);
 }
 
 class _Api {
   static Future<_Sesi> cari(String kata) async {
     final r = await ApiClient.dio
-        .get('/kader/daftar-anak', queryParameters: {'cari': kata}, options: _opsi);
+        .get('/kader/daftar-balita', queryParameters: {'cari': kata}, options: _opsi);
     final d = Map<String, dynamic>.from(r.data['data'] as Map);
     return _Sesi(
       d['sesi_aktif'] == true,
       (d['pesan'] ?? '').toString(),
       d['jadwal'] is Map ? Map<String, dynamic>.from(d['jadwal']) : null,
-      ((d['anak'] as List?) ?? [])
-          .map((e) => AnakSesi.fromJson(Map<String, dynamic>.from(e as Map)))
+      ((d['balita'] as List?) ?? [])
+          .map((e) => BalitaSesi.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),
     );
   }
 
-  static Future<int?> daftarkan(String anakId) async {
-    final r = await ApiClient.dio.post('/kader/daftar-anak/$anakId', options: _opsi);
+  static Future<int?> daftarkan(String balitaId) async {
+    final r = await ApiClient.dio.post('/kader/daftar-balita/$balitaId', options: _opsi);
     final d = Map<String, dynamic>.from(r.data['data'] as Map);
     return (d['nomor_antrean'] as num?)?.toInt();
   }
@@ -172,20 +172,20 @@ Widget _baris(String label, String nilai, {double lebar = 120}) {
   );
 }
 
-class DaftarkanAnakPage extends StatefulWidget {
-  const DaftarkanAnakPage({super.key});
+class DaftarkanBalitaPage extends StatefulWidget {
+  const DaftarkanBalitaPage({super.key});
 
   @override
-  State<DaftarkanAnakPage> createState() => _DaftarkanAnakPageState();
+  State<DaftarkanBalitaPage> createState() => _DaftarkanBalitaPageState();
 }
 
-class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
+class _DaftarkanBalitaPageState extends State<DaftarkanBalitaPage> {
   final _cari = TextEditingController();
   Timer? _tunda;
   _Sesi? _sesi;
   bool _memuat = true;
   String? _galat;
-  String? _sedangDaftar; // anak_id yang sedang diproses
+  String? _sedangDaftar; // balita_id yang sedang diproses
   int _permintaan = 0;
 
   @override
@@ -227,12 +227,12 @@ class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
     }
   }
 
-  Future<void> _daftarkan(AnakSesi a) async {
+  Future<void> _daftarkan(BalitaSesi a) async {
     final ya = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text('Daftarkan anak?',
+        title: const Text('Daftarkan balita?',
             style: TextStyle(fontWeight: FontWeight.w700, color: kkTeksGelap)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -243,7 +243,7 @@ class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
             _baris('Usia', a.usia, lebar: 70),
             const SizedBox(height: 6),
             const Text(
-              'Anak akan didaftarkan pada sesi posyandu hari ini, langsung check-in, '
+              'Balita akan didaftarkan pada sesi posyandu hari ini, langsung check-in, '
               'dan mendapat nomor antrean.',
               style: TextStyle(fontSize: 15, color: kkTeksAbu, height: 1.4),
             ),
@@ -292,9 +292,9 @@ class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
     );
     if (ya != true || !mounted) return;
 
-    setState(() => _sedangDaftar = a.anakId);
+    setState(() => _sedangDaftar = a.balitaId);
     try {
-      final n = await _Api.daftarkan(a.anakId);
+      final n = await _Api.daftarkan(a.balitaId);
       if (!mounted) return;
       kkSnack(context, '${a.nama} terdaftar · nomor antrean ${_nomor(n)}');
     } catch (e) {
@@ -400,7 +400,7 @@ class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
         onSubmitted: (_) => _muat(),
         style: const TextStyle(fontSize: 16),
         decoration: InputDecoration(
-          hintText: 'Cari nama anak atau nama orang tua',
+          hintText: 'Cari nama balita atau nama orang tua',
           filled: true,
           fillColor: Colors.white,
           prefixIcon: const Icon(Icons.search, color: Colors.black54),
@@ -423,8 +423,8 @@ class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
     );
   }
 
-  /// Keterangan anak yang sudah terdaftar (teks biasa, tanpa pill).
-  Widget _teksTerdaftar(AnakSesi a) {
+  /// Keterangan balita yang sudah terdaftar (teks biasa, tanpa pill).
+  Widget _teksTerdaftar(BalitaSesi a) {
     final checkin = a.status == 'sudah_checkin';
     return Text(
       '${checkin ? 'Sudah check-in' : 'Sudah terdaftar'} · ${_nomor(a.nomorAntrean)}',
@@ -432,8 +432,8 @@ class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
     );
   }
 
-  Widget _kartuAnak(AnakSesi a) {
-    final proses = _sedangDaftar == a.anakId;
+  Widget _kartuBalita(BalitaSesi a) {
+    final proses = _sedangDaftar == a.balitaId;
     final jk = a.jk == 'L' ? 'Laki-laki' : (a.jk == 'P' ? 'Perempuan' : '-');
     return Container(
       width: double.infinity,
@@ -531,11 +531,11 @@ class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
     if (s == null) return const SizedBox();
     final kata = _cari.text.trim();
     if (kata.length < 2) {
-      return _teksTengah('Ketik minimal 2 huruf nama anak atau nama orang tua.');
+      return _teksTengah('Ketik minimal 2 huruf nama balita atau nama orang tua.');
     }
-    if (s.anak.isEmpty) {
+    if (s.balita.isEmpty) {
       return _teksTengah(
-        'Anak tidak ditemukan.\nBila orang tua belum memiliki akun, tambahkan akun terlebih dahulu.',
+        'Balita tidak ditemukan.\nBila orang tua belum memiliki akun, tambahkan akun terlebih dahulu.',
         aksi: TextButton(
           onPressed: _tambahAkun,
           child: const Text('Tambahkan Akun',
@@ -550,8 +550,8 @@ class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
     }
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-      itemCount: s.anak.length,
-      itemBuilder: (_, i) => _kartuAnak(s.anak[i]),
+      itemCount: s.balita.length,
+      itemBuilder: (_, i) => _kartuBalita(s.balita[i]),
     );
   }
 
@@ -563,7 +563,7 @@ class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
     return Scaffold(
       backgroundColor: kkLatar,
       // Header hijau 0xFF065F46 dari kkAppBar.
-      appBar: kkAppBar('Daftarkan Anak'),
+      appBar: kkAppBar('Daftarkan Balita'),
       // Kolom cari selalu paling atas, tepat di bawah header.
       body: Column(
         children: [

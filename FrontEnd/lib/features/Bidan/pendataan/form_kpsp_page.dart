@@ -3,8 +3,8 @@ part of 'catat_pemeriksaan_page.dart';
 // ===========================================================================
 // FORM KPSP (Kuesioner Pra Skrining Perkembangan)
 //
-// Kartu ini hanya muncul bila umur anak berada pada jangkauan KPSP (3-72
-// bulan). Lembar yang dipakai ditentukan server dari tanggal lahir anak:
+// Kartu ini hanya muncul bila umur balita berada pada jangkauan KPSP (3-72
+// bulan). Lembar yang dipakai ditentukan server dari tanggal lahir balita:
 // tiap 3 bulan sampai umur 24 bulan, lalu tiap 6 bulan sampai 72 bulan.
 //
 // Bidan menjawab Ya/Tidak pada 10 pertanyaan. Hasil S/M/P yang tampil di layar
@@ -86,7 +86,7 @@ mixin _FormKpsp<T extends StatefulWidget> on _FormPemeriksaan<T> {
         children: [
           _info(
             'Tanyakan kepada orang tua, atau amati langsung bila memungkinkan. '
-            'Jawab sesuai keadaan anak saat ini, bukan yang diharapkan.',
+            'Jawab sesuai keadaan balita saat ini, bukan yang diharapkan.',
           ),
           const SizedBox(height: 12),
           for (final p in lembar.pertanyaan) _barisKpsp(p),
@@ -97,7 +97,7 @@ mixin _FormKpsp<T extends StatefulWidget> on _FormPemeriksaan<T> {
             _kpspCatatan,
             'Catatan KPSP (opsional)',
             baris: 2,
-            hint: 'mis. anak rewel saat diperiksa, perlu diulang dua minggu lagi',
+            hint: 'mis. balita rewel saat diperiksa, perlu diulang dua minggu lagi',
             ikon: Icons.sticky_note_2_outlined,
           ),
         ],

@@ -34,7 +34,7 @@ class RencanaItemJadwal {
   factory RencanaItemJadwal.fromApi(Map<String, dynamic> j) => RencanaItemJadwal(
         jenis: j['jenis']?.toString() ?? '',
         kode: j['kode']?.toString() ?? '',
-        jenisImunisasiId: j['jenis_vaksin_id']?.toString() ?? '',
+        jenisImunisasiId: j['jenis_imunisasi_id']?.toString() ?? '',
         nama: j['nama']?.toString() ?? '',
         dosisKe: int.tryParse(j['dosis_ke']?.toString() ?? '') ?? 0,
         keterangan: j['keterangan']?.toString() ?? '',
@@ -42,13 +42,13 @@ class RencanaItemJadwal {
       );
 }
 
-/// Rencana imunisasi & suplemen anak pada jadwal posyandu (dihitung server).
-class RencanaAnakJadwal {
+/// Rencana imunisasi & suplemen balita pada jadwal posyandu (dihitung server).
+class RencanaBalitaJadwal {
   final List<RencanaItemJadwal> imunisasi;
   final List<RencanaItemJadwal> suplemen;
   final List<RencanaItemJadwal> keFaskes;
 
-  RencanaAnakJadwal({
+  RencanaBalitaJadwal({
     required this.imunisasi,
     required this.suplemen,
     required this.keFaskes,
@@ -59,7 +59,7 @@ class RencanaAnakJadwal {
       .map((e) => RencanaItemJadwal.fromApi(Map<String, dynamic>.from(e)))
       .toList();
 
-  factory RencanaAnakJadwal.fromApi(Map<String, dynamic> j) => RencanaAnakJadwal(
+  factory RencanaBalitaJadwal.fromApi(Map<String, dynamic> j) => RencanaBalitaJadwal(
         imunisasi: _daftar(j['imunisasi']),
         suplemen: _daftar(j['suplemen']),
         keFaskes: _daftar(j['ke_faskes']),
@@ -68,25 +68,25 @@ class RencanaAnakJadwal {
   bool get kosong => imunisasi.isEmpty && suplemen.isEmpty && keFaskes.isEmpty;
 }
 
-class AnakStatusJadwal {
-  final String anakId;
+class BalitaStatusJadwal {
+  final String balitaId;
   final String nama;
   final String status; // belum_daftar | terdaftar | sudah_checkin | tidak_hadir
   final int? nomorAntrean;
   final bool bolehDaftar;
   final bool bolehBatal;
   final bool bolehCheckin;
-  final RencanaAnakJadwal? rencana;
+  final RencanaBalitaJadwal? rencana;
 
   /// Posisi dalam pelayanan (dari server): belum_daftar | belum_checkin | menunggu_kader |
   /// menunggu_bidan | selesai | tidak_dilayani | tidak_hadir.
   final String tahap;
 
-  /// Id pendaftaran (ada bila anak sudah terdaftar); dipakai membuka hasil pemeriksaan.
+  /// Id pendaftaran (ada bila balita sudah terdaftar); dipakai membuka hasil pemeriksaan.
   final String pendaftaranId;
 
-  AnakStatusJadwal({
-    required this.anakId,
+  BalitaStatusJadwal({
+    required this.balitaId,
     required this.nama,
     required this.status,
     required this.nomorAntrean,
@@ -104,12 +104,12 @@ class AnakStatusJadwal {
   /// Sudah check-in, jadwal berakhir sebelum bidan mencatat.
   bool get tidakDilayani => status == 'sudah_checkin' && tahap == 'tidak_dilayani';
 
-  /// Status yang ditampilkan: untuk anak yang sudah check-in mengikuti tahap pelayanan.
+  /// Status yang ditampilkan: untuk balita yang sudah check-in mengikuti tahap pelayanan.
   String get statusTampil => (status == 'sudah_checkin' && tahap.isNotEmpty) ? tahap : status;
 
-  factory AnakStatusJadwal.fromApi(Map<String, dynamic> j) =>
-      AnakStatusJadwal(
-        anakId: j['anak_id']?.toString() ?? '',
+  factory BalitaStatusJadwal.fromApi(Map<String, dynamic> j) =>
+      BalitaStatusJadwal(
+        balitaId: j['balita_id']?.toString() ?? '',
         nama: j['nama']?.toString() ?? '',
         status: j['status_kehadiran']?.toString() ?? 'belum_daftar',
         nomorAntrean: int.tryParse(j['nomor_antrean']?.toString() ?? ''),
@@ -119,7 +119,7 @@ class AnakStatusJadwal {
         tahap: j['tahap']?.toString() ?? '',
         pendaftaranId: j['kartu'] is Map ? (j['kartu']['pendaftaran_id']?.toString() ?? '') : '',
         rencana: j['rencana'] is Map
-            ? RencanaAnakJadwal.fromApi(Map<String, dynamic>.from(j['rencana'] as Map))
+            ? RencanaBalitaJadwal.fromApi(Map<String, dynamic>.from(j['rencana'] as Map))
             : null,
       );
 }
@@ -132,7 +132,7 @@ class JadwalTerdekatData {
   final String lokasi;
   final DateTime? pendaftaranBuka;
   final DateTime? checkinBuka;
-  final List<AnakStatusJadwal> anak;
+  final List<BalitaStatusJadwal> balita;
 
   JadwalTerdekatData({
     required this.id,
@@ -142,7 +142,7 @@ class JadwalTerdekatData {
     required this.lokasi,
     required this.pendaftaranBuka,
     required this.checkinBuka,
-    required this.anak,
+    required this.balita,
   });
 
   static String _jam(dynamic v) {
@@ -173,8 +173,8 @@ class JadwalTerdekatData {
     final tgl = t.length >= 10 ? DateTime.tryParse(t.substring(0, 10)) : null;
     if (tgl == null) return null;
 
-    final anak = ((d['anak'] as List?) ?? [])
-        .map((e) => AnakStatusJadwal.fromApi(Map<String, dynamic>.from(e as Map)))
+    final balita = ((d['balita'] as List?) ?? [])
+        .map((e) => BalitaStatusJadwal.fromApi(Map<String, dynamic>.from(e as Map)))
         .toList();
 
     return JadwalTerdekatData(
@@ -185,7 +185,7 @@ class JadwalTerdekatData {
       lokasi: j['lokasi']?.toString() ?? '',
       pendaftaranBuka: _waktu(d['pendaftaran_dibuka_pada']),
       checkinBuka: _waktu(d['checkin_dibuka_pada']),
-      anak: anak,
+      balita: balita,
     );
   }
 
@@ -415,8 +415,8 @@ class _OrangTuaPendaftaranPageState
   JadwalTerdekatData? _jadwal;
   bool _memuat = true;
   String? _gagal;
-  String? _sibuk; // anakId yang sedang diproses
-  int _idx = 0; // anak terpilih (tampilan)
+  String? _sibuk; // balitaId yang sedang diproses
+  int _idx = 0; // balita terpilih (tampilan)
 
   @override
   void initState() {
@@ -432,7 +432,7 @@ class _OrangTuaPendaftaranPageState
         _jadwal = j;
         _gagal = null;
         _memuat = false;
-        if (j == null || _idx >= j.anak.length) _idx = 0;
+        if (j == null || _idx >= j.balita.length) _idx = 0;
       });
     } catch (e) {
       if (!mounted) return;
@@ -450,28 +450,28 @@ class _OrangTuaPendaftaranPageState
       ..showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  Future<void> _bukaKartu(String jadwalId, String anakId) async {
+  Future<void> _bukaKartu(String jadwalId, String balitaId) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => KartuAntreanPage(
           jadwalId: jadwalId,
-          anakId: anakId,
+          balitaId: balitaId,
         ),
       ),
     );
     if (mounted) _muat();
   }
 
-  Future<void> _daftar(AnakStatusJadwal a) async {
+  Future<void> _daftar(BalitaStatusJadwal a) async {
     final j = _jadwal;
     if (j == null || _sibuk != null) return;
-    setState(() => _sibuk = a.anakId);
+    setState(() => _sibuk = a.balitaId);
     var berhasil = false;
     try {
       await ApiClient.dio.post(
         '/jadwal/${j.id}/daftar',
-        data: {'anak_id': a.anakId},
+        data: {'balita_id': a.balitaId},
         options: Options(receiveTimeout: const Duration(seconds: 15)),
       );
       berhasil = true;
@@ -482,11 +482,11 @@ class _OrangTuaPendaftaranPageState
       if (mounted) setState(() => _sibuk = null);
     }
     if (berhasil && mounted) {
-      await _bukaKartu(j.id, a.anakId);
+      await _bukaKartu(j.id, a.balitaId);
     }
   }
 
-  Future<void> _batal(AnakStatusJadwal a) async {
+  Future<void> _batal(BalitaStatusJadwal a) async {
     final j = _jadwal;
     if (j == null || _sibuk != null) return;
 
@@ -509,11 +509,11 @@ class _OrangTuaPendaftaranPageState
     );
     if (ya != true) return;
 
-    setState(() => _sibuk = a.anakId);
+    setState(() => _sibuk = a.balitaId);
     try {
       await ApiClient.dio.post(
         '/jadwal/${j.id}/batal',
-        data: {'anak_id': a.anakId},
+        data: {'balita_id': a.balitaId},
         options: Options(receiveTimeout: const Duration(seconds: 15)),
       );
       _snack('Pendaftaran dibatalkan');
@@ -531,8 +531,8 @@ class _OrangTuaPendaftaranPageState
   @override
   Widget build(BuildContext context) {
     final j = _jadwal;
-    final punyaAnak =
-        !_memuat && _gagal == null && j != null && j.anak.isNotEmpty;
+    final punyaBalita =
+        !_memuat && _gagal == null && j != null && j.balita.isNotEmpty;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -588,14 +588,14 @@ class _OrangTuaPendaftaranPageState
             ),
           ],
         ),
-        bottomNavigationBar: punyaAnak
+        bottomNavigationBar: punyaBalita
             ? SafeArea(
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   child: _barAksi(
                     j,
-                    j.anak[_idx.clamp(0, j.anak.length - 1)],
+                    j.balita[_idx.clamp(0, j.balita.length - 1)],
                   ),
                 ),
               )
@@ -605,7 +605,7 @@ class _OrangTuaPendaftaranPageState
   }
 
   // -------------------------------------------------------------------------
-  // HEADER (sama seperti halaman Imunisasi Anak: polos, judul di tengah)
+  // HEADER (sama seperti halaman Imunisasi Balita: polos, judul di tengah)
   // -------------------------------------------------------------------------
   Widget _header() {
     return Container(
@@ -668,8 +668,8 @@ class _OrangTuaPendaftaranPageState
       );
 
   Widget _kartuPendaftaran(JadwalTerdekatData j) {
-    final ada = j.anak.isNotEmpty;
-    final a = ada ? j.anak[_idx.clamp(0, j.anak.length - 1)] : null;
+    final ada = j.balita.isNotEmpty;
+    final a = ada ? j.balita[_idx.clamp(0, j.balita.length - 1)] : null;
 
     return Container(
       width: double.infinity,
@@ -705,7 +705,7 @@ class _OrangTuaPendaftaranPageState
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             child: a == null
                 ? const Text(
-                    'Belum ada data anak. Lengkapi data keluarga di beranda terlebih dahulu.',
+                    'Belum ada data balita. Lengkapi data keluarga di beranda terlebih dahulu.',
                     style: TextStyle(fontSize: 15.5, height: 1.4, color: AppColors.teksRedup),
                   )
                 : _bagianBalita(j, a),
@@ -736,9 +736,9 @@ class _OrangTuaPendaftaranPageState
     );
   }
 
-  Widget _bagianBalita(JadwalTerdekatData j, AnakStatusJadwal a) {
+  Widget _bagianBalita(JadwalTerdekatData j, BalitaStatusJadwal a) {
     final (label, _, fg) = labelStatusHadir(a.statusTampil);
-    final banyak = j.anak.length > 1;
+    final banyak = j.balita.length > 1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -750,11 +750,11 @@ class _OrangTuaPendaftaranPageState
               InkWell(
                 onTap: _sibuk != null
                     ? null
-                    : () => setState(() => _idx = (_idx + 1) % j.anak.length),
+                    : () => setState(() => _idx = (_idx + 1) % j.balita.length),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 2),
                   child: Text(
-                    'Ganti anak',
+                    'Ganti balita',
                     style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w600,
@@ -885,8 +885,8 @@ class _OrangTuaPendaftaranPageState
     );
   }
 
-  Widget _barAksi(JadwalTerdekatData j, AnakStatusJadwal a) {
-    final proses = _sibuk == a.anakId;
+  Widget _barAksi(JadwalTerdekatData j, BalitaStatusJadwal a) {
+    final proses = _sibuk == a.balitaId;
     final lock = _sibuk != null;
 
     if (a.selesai) {
@@ -901,7 +901,7 @@ class _OrangTuaPendaftaranPageState
               context,
               MaterialPageRoute(
                 builder: (_) => OrangTuaPemeriksaanPage(
-                  anakId: a.anakId,
+                  balitaId: a.balitaId,
                   pendaftaranId: a.pendaftaranId.isEmpty ? null : a.pendaftaranId,
                 ),
               ),
@@ -912,7 +912,7 @@ class _OrangTuaPendaftaranPageState
     }
 
     if (a.tidakDilayani) {
-      return _kotakStatus('Sesi berakhir sebelum anak diperiksa bidan', AppColors.merah);
+      return _kotakStatus('Sesi berakhir sebelum balita diperiksa bidan', AppColors.merah);
     }
 
     if (a.status == 'sudah_checkin') {
@@ -927,7 +927,7 @@ class _OrangTuaPendaftaranPageState
           const SizedBox(height: 8),
           _tombolUtama(
             teks: 'Lihat Kartu Antrean',
-            onTap: () => _bukaKartu(j.id, a.anakId),
+            onTap: () => _bukaKartu(j.id, a.balitaId),
           ),
         ],
       );
@@ -949,7 +949,7 @@ class _OrangTuaPendaftaranPageState
             child: _tombolUtama(
               teks: 'Kartu Antrean',
               aktif: !lock,
-              onTap: lock ? () {} : () => _bukaKartu(j.id, a.anakId),
+              onTap: lock ? () {} : () => _bukaKartu(j.id, a.balitaId),
             ),
           ),
         ],
@@ -957,7 +957,7 @@ class _OrangTuaPendaftaranPageState
     }
 
     if (a.status == 'tidak_hadir') {
-      return _kotakStatus('Anak tidak hadir pada sesi ini', AppColors.merah);
+      return _kotakStatus('Balita tidak hadir pada sesi ini', AppColors.merah);
     }
 
     return _tombolUtama(

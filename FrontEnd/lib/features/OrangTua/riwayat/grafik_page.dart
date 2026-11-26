@@ -162,8 +162,8 @@ class _Metrik {
             : 'Berat badan melebihi standar untuk panjang/tinggi badannya ($kategori). Dianjurkan konsultasi gizi dengan bidan Posyandu.';
       case _Jenis.lk:
         return bawah
-            ? 'Lingkar kepala di bawah garis -2 SD ($kategori). Dianjurkan konsultasi dengan dokter spesialis anak / bidan Posyandu.'
-            : 'Lingkar kepala di atas garis +2 SD ($kategori). Dianjurkan konsultasi dengan dokter spesialis anak / bidan Posyandu.';
+            ? 'Lingkar kepala di bawah garis -2 SD ($kategori). Dianjurkan konsultasi dengan dokter spesialis balita / bidan Posyandu.'
+            : 'Lingkar kepala di atas garis +2 SD ($kategori). Dianjurkan konsultasi dengan dokter spesialis balita / bidan Posyandu.';
     }
   }
 }
@@ -212,14 +212,14 @@ class _Titik {
       _ => ('', _teksAbu, AppColors.isiField),
     };
 
-class _AnakGrafik {
+class _BalitaGrafik {
   final String id;
   final String nama;
   final bool laki;
   final DateTime? lahir;
   final List<_Titik> titik;
 
-  _AnakGrafik(this.id, this.nama, this.laki, this.lahir, this.titik);
+  _BalitaGrafik(this.id, this.nama, this.laki, this.lahir, this.titik);
 
   int get usiaSekarang {
     final l = lahir;
@@ -292,16 +292,16 @@ Widget _judulTebal(String teks) {
 }
 
 class OrangTuaGrafikPage extends StatefulWidget {
-  final String? anakId;
+  final String? balitaId;
 
-  const OrangTuaGrafikPage({super.key, this.anakId});
+  const OrangTuaGrafikPage({super.key, this.balitaId});
 
   @override
   State<OrangTuaGrafikPage> createState() => _OrangTuaGrafikPageState();
 }
 
 class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
-  List<_AnakGrafik> _anak = [];
+  List<_BalitaGrafik> _balita = [];
   int _aktif = 0;
   int _tab = 0;
   bool _semuaRiwayat = false;
@@ -327,23 +327,23 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
       dynamic d = r.data;
       if (d is Map && d.containsKey('data')) d = d['data'];
 
-      final perAnak = <String, List<Map<String, dynamic>>>{};
+      final perBalita = <String, List<Map<String, dynamic>>>{};
       if (d is List) {
         for (final e in d) {
           if (e is Map && e['pengukuran'] is Map) {
-            perAnak
-                .putIfAbsent(e['anak_id'].toString(), () => [])
+            perBalita
+                .putIfAbsent(e['balita_id'].toString(), () => [])
                 .add(Map<String, dynamic>.from(e));
           }
         }
       }
 
-      final hasil = <_AnakGrafik>[];
-      for (final a in model.anak) {
+      final hasil = <_BalitaGrafik>[];
+      for (final a in model.balita) {
         final lahir = parseTgl(a.tglLahir);
         final titik = <_Titik>[];
 
-        for (final e in perAnak[a.id] ?? const <Map<String, dynamic>>[]) {
+        for (final e in perBalita[a.id] ?? const <Map<String, dynamic>>[]) {
           final u = Map<String, dynamic>.from(e['pengukuran'] as Map);
           var gizi = e['status_gizi'] is Map
               ? Map<String, dynamic>.from(e['status_gizi'] as Map)
@@ -356,7 +356,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
           if (lahir != null && tgl != null) {
             bulan = tgl.difference(lahir).inDays / 30.4375;
           }
-          // Usia selalu dihitung dari tanggal lahir anak dan tanggal ukur.
+          // Usia selalu dihitung dari tanggal lahir balita dan tanggal ukur.
           final penuh = (lahir != null && tgl != null)
               ? _usiaBulanPenuh(lahir, tgl)
               : (_d(u['usia_bulan'])?.toInt() ?? bulan.floor());
@@ -378,18 +378,18 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
         }
 
         titik.sort((x, y) => x.bulan.compareTo(y.bulan));
-        hasil.add(_AnakGrafik(a.id ?? '', a.nama, a.jk != 'P', lahir, titik));
+        hasil.add(_BalitaGrafik(a.id ?? '', a.nama, a.jk != 'P', lahir, titik));
       }
 
-      var tampilAnak = hasil;
-      if (widget.anakId != null && widget.anakId!.isNotEmpty) {
-        final f = hasil.where((x) => x.id == widget.anakId).toList();
-        if (f.isNotEmpty) tampilAnak = f;
+      var tampilBalita = hasil;
+      if (widget.balitaId != null && widget.balitaId!.isNotEmpty) {
+        final f = hasil.where((x) => x.id == widget.balitaId).toList();
+        if (f.isNotEmpty) tampilBalita = f;
       }
 
       if (!mounted) return;
       setState(() {
-        _anak = tampilAnak;
+        _balita = tampilBalita;
         _aktif = 0;
         _gagal = null;
         _memuat = false;
@@ -523,16 +523,16 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
                           ],
                         ),
                       )
-                    else if (_anak.isEmpty)
+                    else if (_balita.isEmpty)
                       _kartu(
-                        judul: 'Belum ada data anak',
+                        judul: 'Belum ada data balita',
                         child: const Text(
                           'Lengkapi data keluarga terlebih dahulu.',
                           style: TextStyle(fontSize: 15.5, color: _teksAbu),
                         ),
                       )
                     else
-                      ..._isi(_anak[_aktif]),
+                      ..._isi(_balita[_aktif]),
                   ],
                 ),
               ),
@@ -577,7 +577,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
   }
 
   /// Rentang sumbu X grafik: (xMin, xMax, potongan kurva).
-  (double, double, List<(String, double, double)>) _jendela(_Metrik m, _AnakGrafik a) {
+  (double, double, List<(String, double, double)>) _jendela(_Metrik m, _BalitaGrafik a) {
     final usia = a.usiaSekarang;
     final seg = m.segmen(usia < 24);
 
@@ -591,7 +591,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
       return (0, xMax, potong);
     }
 
-    // BB/PB-BB/TB: sumbu X dalam cm, diperbesar di sekitar titik anak.
+    // BB/PB-BB/TB: sumbu X dalam cm, diperbesar di sekitar titik balita.
     final (idx, a0, a1) = seg.first;
     final xs = [
       for (final t in a.titik)
@@ -610,7 +610,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
     return (lo, hi, [(idx, lo, hi)]);
   }
 
-  List<Widget> _isi(_AnakGrafik a) {
+  List<Widget> _isi(_BalitaGrafik a) {
     final m = _daftarMetrik[_tab];
     final warna = a.laki ? const Color(0xFFDCEEFB) : const Color(0xFFF8DDEE);
     final aksen = a.laki ? const Color(0xFF1593D6) : const Color(0xFFC9379D);
@@ -651,20 +651,20 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
     final tampil = _semuaRiwayat ? riwayat : riwayat.take(1).toList();
 
     return [
-      if (_anak.length > 1)
+      if (_balita.length > 1)
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Wrap(
             spacing: 8,
             children: [
-              for (var i = 0; i < _anak.length; i++)
+              for (var i = 0; i < _balita.length; i++)
                 ChoiceChip(
                   selected: i == _aktif,
                   selectedColor: _hijauTua,
                   backgroundColor: Colors.white,
                   side: BorderSide(color: i == _aktif ? _hijauTua : _garis, width: 1.2),
                   showCheckmark: false,
-                  label: Text(_anak[i].nama),
+                  label: Text(_balita[i].nama),
                   labelStyle: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: i == _aktif ? Colors.white : _teksGelap,
@@ -795,7 +795,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
-                  'Belum ada data ${m.tab.toLowerCase()} yang tersimpan untuk anak ini. Titik grafik muncul setelah kader mengukur dan bidan menyimpan catatan.',
+                  'Belum ada data ${m.tab.toLowerCase()} yang tersimpan untuk balita ini. Titik grafik muncul setelah kader mengukur dan bidan menyimpan catatan.',
                   style: const TextStyle(fontSize: 14.5, color: _teksAbu, height: 1.4),
                 ),
               ),
@@ -845,7 +845,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
           children: [
             const Expanded(
               child: Text(
-                'Pelajari arti kurva Z-score pada grafik anak Anda.',
+                'Pelajari arti kurva Z-score pada grafik balita Anda.',
                 style: TextStyle(fontSize: 15.5, height: 1.4, color: Color(0xFF374151)),
               ),
             ),
@@ -858,7 +858,7 @@ class _OrangTuaGrafikPageState extends State<OrangTuaGrafikPage> {
   }
 
   /// Pengukuran tepat sebelum [t] (cadangan bila server belum mengirim data sebelumnya).
-  _Titik? _sebelum(_AnakGrafik a, _Titik t) {
+  _Titik? _sebelum(_BalitaGrafik a, _Titik t) {
     final i = a.titik.indexOf(t);
     for (var j = i - 1; j >= 0; j--) {
       if (a.titik[j].bb != null) return a.titik[j];
@@ -1238,7 +1238,7 @@ class _KurvaPainter extends CustomPainter {
     final h = size.height - bawah - atas;
     if (w <= 0 || h <= 0 || xMax <= xMin) return;
 
-    // Rentang Y dari kurva -3 SD / +3 SD dan titik anak.
+    // Rentang Y dari kurva -3 SD / +3 SD dan titik balita.
     double minY = double.infinity, maxY = -double.infinity;
     for (final (idx, a, b) in segmen) {
       for (var i = 0; i <= _sampel; i++) {
