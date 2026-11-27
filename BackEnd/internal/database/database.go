@@ -48,6 +48,20 @@ END $$;`, kolom)
 	gantiNamaKolom(db, "users", "password", "pin_hash")
 	gantiNamaKolom(db, "users", "must_change_password", "wajib_ganti_pin")
 
+	// Angka ukur (BB, TB, LK, LILA, berat/panjang lahir) kini bebas tanpa batas atas:
+	// perlebar kolom numeric lama agar angka besar tetap muat.
+	perlebarKolom(db, "numeric(10,2)", map[string][]string{
+		"pengukuran":        {"bb_kg"},
+		"anak":              {"berat_lahir_kg"},
+		"status_gizi":       {"z_bbu", "z_tbu", "z_bbtb", "z_lku"},
+		"penilaian_timbang": {"bb_kg", "bb_sebelumnya", "z_bbu"},
+	})
+	perlebarKolom(db, "numeric(10,1)", map[string][]string{
+		"pengukuran":  {"tb_cm", "lingkar_kepala_cm", "lila_cm"},
+		"anak":        {"panjang_lahir_cm"},
+		"status_gizi": {"tb_koreksi_cm"},
+	})
+
 	if err := db.AutoMigrate(models.AllModels()...); err != nil {
 		return nil, err
 	}
@@ -109,5 +123,29 @@ func isiPosyanduData(db *gorm.DB) {
 		"UPDATE users SET posyandu = ? WHERE role <> 'admin' AND (posyandu IS NULL OR posyandu = '')", def,
 	).Error; err != nil {
 		log.Printf("peringatan: isi posyandu akun gagal: %v", err)
+	}
+}
+// perlebarKolom: ubah tipe kolom numeric lama ke [tipe] bila presisinya masih lebih kecil.
+// Aman dijalankan berulang kali (kolom yang sudah sesuai atau belum ada dilewati).
+func perlebarKolom(db *gorm.DB, tipe string, kolom map[string][]string) {
+	var presisi int
+	fmt.Sscanf(tipe, "numeric(%d", &presisi)
+	for tabel, daftar := range kolom {
+		for _, k := range daftar {
+			sql := fmt.Sprintf(`
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = '%[1]s' AND column_name = '%[2]s'
+      AND numeric_precision < %[4]d
+  ) THEN
+    ALTER TABLE %[1]s ALTER COLUMN %[2]s TYPE %[3]s;
+  END IF;
+END $$;`, tabel, k, tipe, presisi)
+			if err := db.Exec(sql).Error; err != nil {
+				log.Printf("peringatan: perlebar kolom %s.%s gagal: %v", tabel, k, err)
+			}
+		}
 	}
 }

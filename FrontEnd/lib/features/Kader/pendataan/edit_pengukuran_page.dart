@@ -328,8 +328,25 @@ class _EditPengukuranPageState extends State<EditPengukuranPage> {
       return;
     }
 
+    if (bb <= 0 || tb <= 0) {
+      setState(
+        () => _galat =
+            'Berat badan dan tinggi/panjang badan harus lebih dari 0 (tidak boleh minus).',
+      );
+      return;
+    }
+
     final lk = _angka(_lk);
     final lila = _angka(_lila);
+
+    if ((_lk.text.trim().isNotEmpty && (lk == null || lk <= 0)) ||
+        (_lila.text.trim().isNotEmpty && (lila == null || lila <= 0))) {
+      setState(
+        () => _galat =
+            'Lingkar kepala dan LILA harus berupa angka lebih dari 0 (tidak boleh minus).',
+      );
+      return;
+    }
 
     setState(() {
       _kirim = true;

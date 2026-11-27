@@ -35,11 +35,11 @@ type PenilaianTimbang struct {
 	AnakID       uuid.UUID `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
 	TanggalUkur  time.Time `gorm:"column:tanggal_ukur;type:date;not null;index" json:"tanggal_ukur"`
 	UsiaBulan    int16     `gorm:"column:usia_bulan" json:"usia_bulan"`
-	BbKg         float64   `gorm:"column:bb_kg;type:numeric(5,2)" json:"bb_kg"`
+	BbKg         float64   `gorm:"column:bb_kg;type:numeric(10,2)" json:"bb_kg"`
 
 	// Penimbangan sebelumnya (nil bila belum pernah ditimbang).
 	PengukuranSebelumnyaID *uuid.UUID `gorm:"column:pengukuran_sebelumnya_id;type:uuid" json:"pengukuran_sebelumnya_id"`
-	BbSebelumnya           *float64   `gorm:"column:bb_sebelumnya;type:numeric(5,2)" json:"bb_sebelumnya"`
+	BbSebelumnya           *float64   `gorm:"column:bb_sebelumnya;type:numeric(10,2)" json:"bb_sebelumnya"`
 	TanggalSebelumnya      *time.Time `gorm:"column:tanggal_sebelumnya;type:date" json:"tanggal_sebelumnya"`
 	SelisihBulan           *int16     `gorm:"column:selisih_bulan" json:"selisih_bulan"`
 
@@ -48,7 +48,7 @@ type PenilaianTimbang struct {
 	Status       string   `gorm:"column:status;size:1;index" json:"status"` // N | T | O | B
 	DuaT         bool     `gorm:"column:dua_t;index" json:"dua_t"`
 	Bgm          bool     `gorm:"column:bgm;index" json:"bgm"`
-	ZBbu         *float64 `gorm:"column:z_bbu;type:numeric(5,2)" json:"z_bbu"`
+	ZBbu         *float64 `gorm:"column:z_bbu;type:numeric(10,2)" json:"z_bbu"`
 	PerluRujuk   bool     `gorm:"column:perlu_rujuk;index" json:"perlu_rujuk"` // 2T atau BGM
 	Keterangan   string   `gorm:"column:keterangan;type:text" json:"keterangan"`
 

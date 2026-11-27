@@ -107,12 +107,13 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
     );
   }
 
-  String? _cekDesimal(String? v, double min, double maks, String satuan) {
+  /// Angka bebas (tanpa batas atas), asal lebih dari 0 (tidak nol / minus).
+  String? _cekDesimal(String? v) {
     final t = (v ?? '').trim();
     if (t.isEmpty) return null;
     final n = kkDouble(t);
     if (n == null) return 'Harus angka';
-    if (n < min || n > maks) return 'Tidak wajar ($min-$maks $satuan)';
+    if (n <= 0) return 'Harus lebih dari 0';
     return null;
   }
 
@@ -208,7 +209,7 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
                             keyboardType:
                                 const TextInputType.numberWithOptions(decimal: true),
                             decoration: kkDekor('3.1', ikon: Icons.monitor_weight_outlined),
-                            validator: (v) => _cekDesimal(v, 0.5, 7, 'kg'),
+                            validator: (v) => _cekDesimal(v),
                           ),
                         ],
                       ),
@@ -224,7 +225,7 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
                             keyboardType:
                                 const TextInputType.numberWithOptions(decimal: true),
                             decoration: kkDekor('49', ikon: Icons.straighten),
-                            validator: (v) => _cekDesimal(v, 30, 65, 'cm'),
+                            validator: (v) => _cekDesimal(v),
                           ),
                         ],
                       ),

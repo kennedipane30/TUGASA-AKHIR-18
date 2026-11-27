@@ -151,19 +151,19 @@ func (s *PelayananService) CatatPengukuran(kaderID uint, pos string, pendaftaran
 	}
 
 	// validasi angka
-	if err := rentang(in.BbKg, 2, 30, "berat badan (kg)"); err != nil {
+	if err := positif(in.BbKg, "berat badan (kg)"); err != nil {
 		return nil, err
 	}
-	if err := rentang(in.TbCm, 40, 130, "tinggi/panjang badan (cm)"); err != nil {
+	if err := positif(in.TbCm, "tinggi/panjang badan (cm)"); err != nil {
 		return nil, err
 	}
 	if in.LingkarKepalaCm != nil {
-		if err := rentang(*in.LingkarKepalaCm, 30, 60, "lingkar kepala (cm)"); err != nil {
+		if err := positif(*in.LingkarKepalaCm, "lingkar kepala (cm)"); err != nil {
 			return nil, err
 		}
 	}
 	if in.LilaCm != nil {
-		if err := rentang(*in.LilaCm, 8, 25, "lingkar lengan atas (cm)"); err != nil {
+		if err := positif(*in.LilaCm, "lingkar lengan atas (cm)"); err != nil {
 			return nil, err
 		}
 	}

@@ -28,17 +28,17 @@ type StatusGizi struct {
 	CaraUkur     string    `gorm:"column:cara_ukur;size:10" json:"cara_ukur"`
 
 	// Panjang/tinggi setelah koreksi 0,7 cm (dipakai untuk PB/U, TB/U, BB/PB, BB/TB).
-	TbKoreksiCm float64 `gorm:"column:tb_koreksi_cm;type:numeric(5,1)" json:"tb_koreksi_cm"`
+	TbKoreksiCm float64 `gorm:"column:tb_koreksi_cm;type:numeric(10,1)" json:"tb_koreksi_cm"`
 
-	ZBbu         *float64 `gorm:"column:z_bbu;type:numeric(5,2)" json:"z_bbu"`
+	ZBbu         *float64 `gorm:"column:z_bbu;type:numeric(10,2)" json:"z_bbu"`
 	KategoriBbu  string   `gorm:"column:kategori_bbu;size:40" json:"kategori_bbu"`
-	ZTbu         *float64 `gorm:"column:z_tbu;type:numeric(5,2)" json:"z_tbu"` // PB/U (< 24 bln) atau TB/U (>= 24 bln)
+	ZTbu         *float64 `gorm:"column:z_tbu;type:numeric(10,2)" json:"z_tbu"` // PB/U (< 24 bln) atau TB/U (>= 24 bln)
 	KategoriTbu  string   `gorm:"column:kategori_tbu;size:40" json:"kategori_tbu"`
 	IndeksTbu    string   `gorm:"column:indeks_tbu;size:10" json:"indeks_tbu"`
-	ZBbtb        *float64 `gorm:"column:z_bbtb;type:numeric(5,2)" json:"z_bbtb"` // BB/PB (< 24 bln) atau BB/TB (>= 24 bln)
+	ZBbtb        *float64 `gorm:"column:z_bbtb;type:numeric(10,2)" json:"z_bbtb"` // BB/PB (< 24 bln) atau BB/TB (>= 24 bln)
 	KategoriBbtb string   `gorm:"column:kategori_bbtb;size:40" json:"kategori_bbtb"`
 	IndeksBbtb   string   `gorm:"column:indeks_bbtb;size:10" json:"indeks_bbtb"`
-	ZLku         *float64 `gorm:"column:z_lku;type:numeric(5,2)" json:"z_lku"`
+	ZLku         *float64 `gorm:"column:z_lku;type:numeric(10,2)" json:"z_lku"`
 	KategoriLku  string   `gorm:"column:kategori_lku;size:40" json:"kategori_lku"`
 
 	Stunting      bool   `gorm:"column:stunting;index" json:"stunting"`       // PB/U atau TB/U < -2 SD

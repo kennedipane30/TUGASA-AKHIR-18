@@ -1,12 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../config/api_client.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/posyandu.dart';
-import '../../theme/app_colors.dart';
 
 const Color _hijauHeader = Color(0xFF065F46);
 const Color _hijau = Color(0xFF176A46);
@@ -114,6 +118,7 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
   String? _kode;
   String? _posyandu;
   String? _gagal;
+  bool _mengunduh = false;
 
   @override
   void initState() {
@@ -150,6 +155,77 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _gagal = _pesanError(e));
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // UNDUH QR (PDF)
+  // -------------------------------------------------------------------------
+  String get _namaFile {
+    final pos = (_posyandu != null && _posyandu!.isNotEmpty)
+        ? labelPosyandu(_posyandu).replaceAll(' ', '_')
+        : 'Posyandu';
+    return 'QR_Checkin_$pos.pdf';
+  }
+
+  /// PDF satu halaman A4: hanya nama posyandu di atas dan kode QR di bawahnya.
+  Future<Uint8List> _buatPdf() async {
+    final namaPosyandu = (_posyandu != null && _posyandu!.isNotEmpty)
+        ? labelPosyandu(_posyandu)
+        : '';
+
+    final doc = pw.Document(
+      title: 'QR Check-in $namaPosyandu',
+      author: 'PosyanduCare',
+    );
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        build: (ctx) => pw.Center(
+          child: pw.Column(
+            mainAxisSize: pw.MainAxisSize.min,
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              if (namaPosyandu.isNotEmpty) ...[
+                pw.Text(
+                  namaPosyandu,
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(fontSize: 28, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.SizedBox(height: 28),
+              ],
+              pw.BarcodeWidget(
+                barcode: pw.Barcode.qrCode(),
+                data: _kode!,
+                width: 380,
+                height: 380,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    return doc.save();
+  }
+
+  /// Unduh: membuka layar cetak HP, lalu pilih "Simpan sebagai PDF".
+  Future<void> _unduhPdf() async {
+    if (_kode == null || _mengunduh) return;
+    setState(() => _mengunduh = true);
+    try {
+      final bytes = await _buatPdf();
+      await Printing.layoutPdf(name: _namaFile, onLayout: (_) async => bytes);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+            content: Text('PDF gagal dibuat: ${e.toString().replaceFirst('Exception: ', '')}'),
+          ));
+      }
+    } finally {
+      if (mounted) setState(() => _mengunduh = false);
     }
   }
 
@@ -287,6 +363,40 @@ class _QrCheckinPageState extends State<QrCheckinPage> {
                           fontSize: 15.5,
                           fontWeight: FontWeight.w500,
                           height: 1.45,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: FilledButton.icon(
+                          onPressed: _mengunduh ? null : _unduhPdf,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: _hijau,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: _hijau.withValues(alpha: 0.5),
+                            disabledForegroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: _mengunduh
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.4,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.download_rounded, size: 22),
+                          label: Text(
+                            _mengunduh ? 'Menyiapkan PDF...' : 'Unduh QR (PDF)',
+                            style: const TextStyle(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
                     ],

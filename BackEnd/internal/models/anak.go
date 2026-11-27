@@ -52,8 +52,8 @@ type Anak struct {
 	Nama           string     `gorm:"column:nama;size:100;not null" json:"nama"`
 	TanggalLahir   time.Time  `gorm:"column:tanggal_lahir;type:date;not null" json:"tanggal_lahir"`
 	JenisKelamin   string     `gorm:"column:jenis_kelamin;size:1;not null" json:"jenis_kelamin"` // L | P
-	BeratLahirKg   *float64   `gorm:"column:berat_lahir_kg;type:numeric(4,2)" json:"berat_lahir_kg"`
-	PanjangLahirCm *float64   `gorm:"column:panjang_lahir_cm;type:numeric(4,1)" json:"panjang_lahir_cm"`
+	BeratLahirKg   *float64   `gorm:"column:berat_lahir_kg;type:numeric(10,2)" json:"berat_lahir_kg"`
+	PanjangLahirCm *float64   `gorm:"column:panjang_lahir_cm;type:numeric(10,1)" json:"panjang_lahir_cm"`
 	KodeQR         string     `gorm:"column:kode_qr;size:64;not null;uniqueIndex:ux_anak_kode_qr" json:"kode_qr"`
 	Status         string     `gorm:"column:status;size:10;default:aktif" json:"status"` // StatusAnakAktif | StatusAnakArsip
 	TanggalArsip   *time.Time `gorm:"column:tanggal_arsip;type:date" json:"tanggal_arsip,omitempty"`

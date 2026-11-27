@@ -14,11 +14,11 @@ type Pengukuran struct {
 	AnakID             uuid.UUID      `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
 	TanggalUkur        time.Time      `gorm:"column:tanggal_ukur;type:date;not null" json:"tanggal_ukur"`
 	UsiaBulan          int16          `gorm:"column:usia_bulan" json:"usia_bulan"`
-	BbKg               float64        `gorm:"column:bb_kg;type:numeric(5,2);not null" json:"bb_kg"`
-	TbCm               float64        `gorm:"column:tb_cm;type:numeric(5,1);not null" json:"tb_cm"`
+	BbKg               float64        `gorm:"column:bb_kg;type:numeric(10,2);not null" json:"bb_kg"`
+	TbCm               float64        `gorm:"column:tb_cm;type:numeric(10,1);not null" json:"tb_cm"`
 	CaraUkur           string         `gorm:"column:cara_ukur;size:10" json:"cara_ukur"`
-	LingkarKepalaCm    *float64       `gorm:"column:lingkar_kepala_cm;type:numeric(4,1)" json:"lingkar_kepala_cm"`
-	LilaCm             *float64       `gorm:"column:lila_cm;type:numeric(4,1)" json:"lila_cm"`
+	LingkarKepalaCm    *float64       `gorm:"column:lingkar_kepala_cm;type:numeric(10,1)" json:"lingkar_kepala_cm"`
+	LilaCm             *float64       `gorm:"column:lila_cm;type:numeric(10,1)" json:"lila_cm"`
 	Keluhan            string         `gorm:"column:keluhan;type:text" json:"keluhan"`
 	SedangSakit        bool           `gorm:"column:sedang_sakit" json:"sedang_sakit"`
 	AsiEksklusif       bool           `gorm:"column:asi_eksklusif" json:"asi_eksklusif"`

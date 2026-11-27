@@ -196,11 +196,12 @@ func buatAnak(in AnakInput) (*models.Anak, error) {
 	if err := cekNIK(in.NIK); err != nil {
 		return nil, err
 	}
-	if in.BeratLahir != nil && (*in.BeratLahir < 0.5 || *in.BeratLahir > 7) {
-		return nil, invalid("berat lahir tidak wajar (0.5-7 kg)")
+	// berat & panjang lahir: angka bebas, asal lebih dari 0 (tidak nol / minus)
+	if in.BeratLahir != nil && (*in.BeratLahir <= 0 || *in.BeratLahir >= 1e7) {
+		return nil, invalid("berat lahir harus berupa angka lebih dari 0")
 	}
-	if in.PanjangLahir != nil && (*in.PanjangLahir < 30 || *in.PanjangLahir > 65) {
-		return nil, invalid("panjang lahir tidak wajar (30-65 cm)")
+	if in.PanjangLahir != nil && (*in.PanjangLahir <= 0 || *in.PanjangLahir >= 1e7) {
+		return nil, invalid("panjang lahir harus berupa angka lebih dari 0")
 	}
 	return &models.Anak{
 		Nama:           nama,

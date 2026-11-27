@@ -220,6 +220,12 @@ func (s *StatusGiziService) hitungIndeks(indeks, jk string, acuan, x float64, se
 		return nil
 	}
 	z := zScore(b, x, sesuaikan)
+	// angka ukur kini bebas (tanpa batas atas): z-score ekstrem dibatasi agar muat di kolom
+	if z > 9999 {
+		z = 9999
+	} else if z < -9999 {
+		z = -9999
+	}
 	k, t := kat(z)
 	return &hasilIndeks{z: bulat2(z), kategori: k, tingkat: t, tidakWajar: z < batasBawah || z > batasAtas}
 }

@@ -17,6 +17,7 @@ package service
 
 import (
 	"errors"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -130,9 +131,13 @@ func cekSesiSudahMulai(j *models.JadwalPosyandu) error {
 	return nil
 }
 
-func rentang(v float64, min, maks float64, nama string) error {
-	if v < min || v > maks {
-		return validasi("%s tidak wajar (%.0f-%.0f)", nama, min, maks)
+// positif: angka bebas (tanpa batas atas), asal lebih dari 0 (tidak nol / minus).
+func positif(v float64, nama string) error {
+	if math.IsNaN(v) || math.IsInf(v, 0) || v <= 0 {
+		return validasi("%s harus berupa angka lebih dari 0", nama)
+	}
+	if v >= 1e7 { // batas kapasitas kolom database
+		return validasi("%s terlalu besar", nama)
 	}
 	return nil
 }

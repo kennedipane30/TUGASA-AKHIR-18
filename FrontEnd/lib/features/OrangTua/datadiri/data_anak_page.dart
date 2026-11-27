@@ -510,17 +510,12 @@ class _FormAnakState extends State<_FormAnak> {
     if (tanggal != null) setState(() => _tgl.text = fmtTgl(tanggal));
   }
 
-  String? _rentang(
-    String? value,
-    double min,
-    double maks,
-    String nama,
-  ) {
+  /// Angka bebas (tanpa batas atas), asal lebih dari 0 (tidak nol / minus).
+  String? _positif(String? value, String nama) {
     if (value == null || value.trim().isEmpty) return null;
-    final angka = double.tryParse(value.replaceAll(',', '.'));
-    if (angka == null || angka < min || angka > maks) {
-      return '$nama tidak wajar ($min-$maks)';
-    }
+    final angka = double.tryParse(value.trim().replaceAll(',', '.'));
+    if (angka == null) return '$nama harus angka';
+    if (angka <= 0) return '$nama harus lebih dari 0';
     return null;
   }
 
@@ -708,7 +703,7 @@ class _FormAnakState extends State<_FormAnak> {
                             decoration: _dekor('Berat',
                                 icon: Icons.monitor_weight_outlined, suffix: 'kg'),
                             validator: (value) =>
-                                _rentang(value, .5, 7, 'Berat'),
+                                _positif(value, 'Berat'),
                           ),
                         ],
                       ),
@@ -727,7 +722,7 @@ class _FormAnakState extends State<_FormAnak> {
                             decoration: _dekor('Panjang',
                                 icon: Icons.straighten, suffix: 'cm'),
                             validator: (value) =>
-                                _rentang(value, 30, 65, 'Panjang'),
+                                _positif(value, 'Panjang'),
                           ),
                         ],
                       ),
