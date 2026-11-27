@@ -1252,7 +1252,7 @@ type StatistikJenisItem struct {
 
 type StatistikImunisasiResp struct {
 	Posyandu          string               `json:"posyandu"`
-	JumlahBalita      int                  `json:"jumlah_balita"`
+	JumlahAnak      int                  `json:"jumlah_anak"`
 	TotalDiberikan    int                  `json:"total_diberikan"`
 	TotalAnakDiimunisasi int                  `json:"total_anak_divaksin"`
 	AnakJatuhTempo    int                  `json:"anak_jatuh_tempo"`
@@ -1306,7 +1306,7 @@ func (s *ImunisasiService) Statistik(pos string) (*StatistikImunisasiResp, error
 		if usia > 60 {
 			continue
 		}
-		out.JumlahBalita++
+		out.JumlahAnak++
 		_, rk := hitungJadwal(a, master, perAnak[a.ID], hari)
 		if rk.JatuhTempo > 0 {
 			out.AnakJatuhTempo++

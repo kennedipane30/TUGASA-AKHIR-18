@@ -11,7 +11,7 @@ import '../../../features/OrangTua/riwayat/pemeriksaan_page.dart';
 import '../../../features/OrangTua/imunisasi/imunisasi_page.dart';
 import '../../../features/auth/auth_provider.dart';
 import '../../theme/app_colors.dart';
-import '../balita/balita_detail_page.dart';
+import '../anak/anak_detail_page.dart';
 import '../../widgets/common_widgets.dart';
 import '../../../service/notifikasi_service.dart';
 
@@ -132,11 +132,11 @@ String? labelTujuanNotifikasi(String jenis, String role, String? objekId) {
 ///   - Jadwal baru / pengingat jadwal / jadwal diubah (orang tua): halaman Pendaftaran.
 ///   - Check-in dibuka (orang tua): halaman Nomor Antrean anak yang sudah terdaftar
 ///     (pilih anak bila lebih dari satu; ke Pendaftaran bila belum ada yang terdaftar).
-///   - Peringatan 2T/BGM: orang tua ke Grafik anak, petugas ke detail balita.
+///   - Peringatan 2T/BGM: orang tua ke Grafik anak, petugas ke detail anak.
 ///   - Rencana / pengingat H-3 (orang tua): halaman Pendaftaran (kartu Rencana Pelayanan).
 ///   - Imunisasi terlambat / ke puskesmas (orang tua): halaman Imunisasi Anak.
 ///   - Jadwal belum dibuat (sekretaris): halaman Kelola Jadwal.
-///   - Laporan reaksi imunisasi / KIPI (bidan): tab Imunisasi pada detail balita.
+///   - Laporan reaksi imunisasi / KIPI (bidan): tab Imunisasi pada detail anak.
 ///   - Hasil pemeriksaan bidan (orang tua): langsung ke detail pemeriksaan kunjungan itu.
 ///   - Lainnya: daftar notifikasi.
 void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
@@ -159,9 +159,9 @@ void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
       if (adaObjek) {
         halaman = switch (role) {
           'orang_tua' => OrangTuaGrafikPage(anakId: id),
-          'bidan' => BalitaDetailPage(prefix: '/bidan', anakId: id, nama: 'Detail Balita', bisaKelolaImunisasi: true),
-          'kader' => BalitaDetailPage(prefix: '/kader', anakId: id, nama: 'Detail Balita'),
-          'sekretaris' => BalitaDetailPage(prefix: '/sekretaris', anakId: id, nama: 'Detail Balita'),
+          'bidan' => AnakDetailPage(prefix: '/bidan', anakId: id, nama: 'Detail Anak', bisaKelolaImunisasi: true),
+          'kader' => AnakDetailPage(prefix: '/kader', anakId: id, nama: 'Detail Anak'),
+          'sekretaris' => AnakDetailPage(prefix: '/sekretaris', anakId: id, nama: 'Detail Anak'),
           _ => const NotifikasiPage(),
         };
       }
@@ -176,10 +176,10 @@ void bukaObjekNotifikasi(NavigatorState nav, String jenis, String? objekId) {
       if (role == 'sekretaris') halaman = const AdminJadwalPage();
     case 'laporan_kipi':
       if (role == 'bidan' && adaObjek) {
-        halaman = BalitaDetailPage(
+        halaman = AnakDetailPage(
           prefix: '/bidan',
           anakId: id,
-          nama: 'Detail Balita',
+          nama: 'Detail Anak',
           bisaKelolaImunisasi: true,
         );
       }
@@ -226,52 +226,58 @@ Future<void> _bukaNomorAntrean(NavigatorState nav) async {
 
   final pilih = await showModalBottomSheet<AnakStatusJadwal>(
     context: nav.context,
+    isScrollControlled: true, // tinggi mengikuti isi, tidak terpotong
     backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (ctx) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Pilih Nomor Antrean Anak',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: _teksGelap,
-              ),
-            ),
-            const SizedBox(height: 12),
-            for (final a in terdaftar)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.hijauMuda,
-                    borderRadius: BorderRadius.circular(12),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Pilih Nomor Antrean Anak',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: _teksGelap,
                   ),
-                  child: const Icon(Icons.confirmation_number_outlined, color: AppColors.hijau),
                 ),
-                title: Text(
-                  a.nama,
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
-                ),
-                subtitle: Text(
-                  a.nomorAntrean == null
-                      ? (a.status == 'sudah_checkin' ? 'Sudah check-in' : 'Terdaftar')
-                      : 'Nomor A-${a.nomorAntrean.toString().padLeft(3, '0')}'
-                          '${a.status == 'sudah_checkin' ? ' · Sudah check-in' : ''}',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.pop(ctx, a),
-              ),
-          ],
+                const SizedBox(height: 12),
+                for (final a in terdaftar)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.hijauMuda,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.confirmation_number_outlined, color: AppColors.hijau),
+                    ),
+                    title: Text(
+                      a.nama,
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      a.nomorAntrean == null
+                          ? (a.status == 'sudah_checkin' ? 'Sudah check-in' : 'Terdaftar')
+                          : 'Nomor A-${a.nomorAntrean.toString().padLeft(3, '0')}'
+                              '${a.status == 'sudah_checkin' ? ' · Sudah check-in' : ''}',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.pop(ctx, a),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     ),
@@ -561,97 +567,103 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
     final tujuan = labelTujuanNotifikasi(n.jenis, _roleDari(context), n.objekId);
     await showModalBottomSheet(
       context: context,
+      isScrollControlled: true, // tinggi mengikuti isi, tidak terpotong
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: bg,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(ikon, color: fg),
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: bg,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(ikon, color: fg),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          n.judul,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: _teksGelap,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      n.judul,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: _teksGelap,
+                  const SizedBox(height: 14),
+                  Text(
+                    n.isi,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                      color: _teksGelap,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '${formatTanggal(n.dibuat)} pukul ${formatJam(n.dibuat)} WIB',
+                    style: const TextStyle(
+                      fontSize: 15.5,
+                      color: AppColors.teksRedup,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (tujuan != null) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: AppButton(tujuan, icon: Icons.arrow_forward, onPressed: () {
+                        Navigator.pop(ctx);
+                        bukaObjekNotifikasi(Navigator.of(context), n.jenis, n.objekId);
+                      }),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: AppButton('Tutup', filled: false, onPressed: () => Navigator.pop(ctx)),
+                  ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.merah,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        final ok = await _konfirmasi(
+                          judul: 'Hapus Notifikasi?',
+                          isi: 'Notifikasi ini akan dihapus dari daftar dan tidak dapat dikembalikan.',
+                        );
+                        if (ok && mounted) await _hapus(n);
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text(
+                        'Hapus Notifikasi',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              Text(
-                n.isi,
-                style: const TextStyle(
-                  fontSize: 16,
-                  height: 1.5,
-                  color: _teksGelap,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '${formatTanggal(n.dibuat)} pukul ${formatJam(n.dibuat)} WIB',
-                style: const TextStyle(
-                  fontSize: 15.5,
-                  color: AppColors.teksRedup,
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (tujuan != null) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: AppButton(tujuan, icon: Icons.arrow_forward, onPressed: () {
-                    Navigator.pop(ctx);
-                    bukaObjekNotifikasi(Navigator.of(context), n.jenis, n.objekId);
-                  }),
-                ),
-                const SizedBox(height: 8),
-              ],
-              SizedBox(
-                width: double.infinity,
-                child: AppButton('Tutup', filled: false, onPressed: () => Navigator.pop(ctx)),
-              ),
-              const SizedBox(height: 4),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.merah,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  onPressed: () async {
-                    Navigator.pop(ctx);
-                    final ok = await _konfirmasi(
-                      judul: 'Hapus Notifikasi?',
-                      isi: 'Notifikasi ini akan dihapus dari daftar dan tidak dapat dikembalikan.',
-                    );
-                    if (ok && mounted) await _hapus(n);
-                  },
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text(
-                    'Hapus Notifikasi',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

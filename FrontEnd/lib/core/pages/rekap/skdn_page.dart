@@ -5,7 +5,7 @@ import '../../theme/app_colors.dart';
 import '../../widgets/common_widgets.dart';
 import '../../../service/rekap_service.dart';
 import '../../../service/skdn_service.dart';
-import '../balita/balita_detail_page.dart';
+import '../anak/anak_detail_page.dart';
 import 'rekap_posyandu_page.dart';
 
 const _abu = Color(0xFF64748B);
@@ -61,22 +61,22 @@ void tampilkanPenjelasanSkdn(BuildContext context) {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Halaman ini menunjukkan hasil penimbangan balita di posyandu selama satu bulan. '
+              'Halaman ini menunjukkan hasil penimbangan anak di posyandu selama satu bulan. '
               'Di laporan resmi ke puskesmas, ringkasan ini disebut SKDN.',
               style: TextStyle(fontSize: 16, height: 1.45),
             ),
             const SizedBox(height: 14),
-            _barisInfo('S', 'Jumlah seluruh balita', 'Semua balita usia 0-59 bulan di posyandu.'),
-            _barisInfo('K', 'Balita yang punya Buku KIA', 'Balita yang memiliki buku catatan tumbuh kembang.'),
-            _barisInfo('D', 'Balita yang datang ditimbang', 'Balita yang ditimbang pada bulan ini.'),
-            _barisInfo('N', 'Balita yang berat badannya naik', 'Kenaikan berat badan sesuai standar Kemenkes.'),
+            _barisInfo('S', 'Jumlah seluruh anak', 'Semua anak usia 0-59 bulan di posyandu.'),
+            _barisInfo('K', 'Anak yang punya Buku KIA', 'Anak yang memiliki buku catatan tumbuh kembang.'),
+            _barisInfo('D', 'Anak yang datang ditimbang', 'Anak yang ditimbang pada bulan ini.'),
+            _barisInfo('N', 'Anak yang berat badannya naik', 'Kenaikan berat badan sesuai standar Kemenkes.'),
             const Divider(height: 24),
             const Text('Cara membaca', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 8),
             const Text(
-              '• Tingkat kehadiran menunjukkan berapa persen balita yang datang ditimbang. Targetnya minimal 85%.\n'
-              '• Balita yang tumbuh baik menunjukkan berapa persen balita yang ditimbang dan berat badannya naik.\n'
-              '• Balita yang tidak naik 2 bulan berturut-turut atau berat badannya sangat kurang perlu segera '
+              '• Tingkat kehadiran menunjukkan berapa persen anak yang datang ditimbang. Targetnya minimal 85%.\n'
+              '• Anak yang tumbuh baik menunjukkan berapa persen anak yang ditimbang dan berat badannya naik.\n'
+              '• Anak yang tidak naik 2 bulan berturut-turut atau berat badannya sangat kurang perlu segera '
               'diperiksa bidan atau dirujuk ke puskesmas.',
               style: TextStyle(fontSize: 16, height: 1.5),
             ),
@@ -145,7 +145,7 @@ class SkdnPage extends StatelessWidget {
 
 /// Isi ringkasan penimbangan (SKDN) tanpa header.
 /// [prefix] '/sekretaris' atau '/bidan'.
-/// [tampilTidakHadir] true: daftar balita yang tidak datang ditimbang
+/// [tampilTidakHadir] true: daftar anak yang tidak datang ditimbang
 /// ikut ditampilkan di bagian bawah.
 class SkdnView extends StatefulWidget {
   final String prefix;
@@ -165,7 +165,7 @@ class _SkdnViewState extends State<SkdnView> {
   bool _loading = true;
   String? _error;
 
-  // Daftar balita tidak hadir (S − D).
+  // Daftar anak tidak hadir (S − D).
   RekapTidakHadir? _tidakHadir;
   String? _gagalTidakHadir;
 
@@ -220,7 +220,7 @@ class _SkdnViewState extends State<SkdnView> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BalitaDetailPage(
+        builder: (_) => AnakDetailPage(
           prefix: widget.prefix,
           anakId: a.anakId,
           nama: a.nama,
@@ -280,7 +280,7 @@ class _SkdnViewState extends State<SkdnView> {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Hasil penimbangan balita bulan ini (SKDN). Ketuk untuk penjelasan.',
+                  'Hasil penimbangan anak bulan ini (SKDN). Ketuk untuk penjelasan.',
                   style: TextStyle(fontSize: 15.5, color: AppColors.biru, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -306,7 +306,7 @@ class _SkdnViewState extends State<SkdnView> {
         AppColors.merah,
         AppColors.merahMuda,
         d.perluRujuk,
-        'Tidak ada balita yang perlu dirujuk bulan ini.',
+        'Tidak ada anak yang perlu dirujuk bulan ini.',
       ),
       _kartuAnak(
         'Berat Badan Tidak Naik',
@@ -314,19 +314,19 @@ class _SkdnViewState extends State<SkdnView> {
         AppColors.kuning,
         AppColors.kuningMuda,
         d.tidakNaik,
-        'Tidak ada balita yang berat badannya tidak naik bulan ini.',
+        'Tidak ada anak yang berat badannya tidak naik bulan ini.',
       ),
       if (widget.tampilTidakHadir) ..._bagianTidakHadir(),
     ];
   }
 
-  // -------------------------------------------------- balita tidak hadir
+  // -------------------------------------------------- anak tidak hadir
 
   List<Widget> _bagianTidakHadir() {
     if (_gagalTidakHadir != null) {
       return [
         KartuRekap(
-          title: 'Balita Tidak Hadir',
+          title: 'Anak Tidak Hadir',
           child: Text(_gagalTidakHadir!, style: const TextStyle(fontSize: 16, color: AppColors.teksRedup)),
         ),
       ];
@@ -336,13 +336,13 @@ class _SkdnViewState extends State<SkdnView> {
     return [
       const Padding(
         padding: EdgeInsets.only(top: 4, bottom: 10),
-        child: Text('Balita Tidak Hadir',
+        child: Text('Anak Tidak Hadir',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
       ),
       DaftarTidakHadir(data: th),
       Padding(
         padding: const EdgeInsets.only(top: 2, left: 2),
-        child: _barisKet('Jumlah balita', '${th.tidakHadir}'),
+        child: _barisKet('Jumlah anak', '${th.tidakHadir}'),
       ),
     ];
   }
@@ -368,13 +368,13 @@ class _SkdnViewState extends State<SkdnView> {
       title: 'Ringkasan ${b.label}',
       child: Column(
         children: [
-          _barisJumlah('S', 'Jumlah seluruh balita', b.s, bg: _abuMuda, fg: Colors.black87),
+          _barisJumlah('S', 'Jumlah seluruh anak', b.s, bg: _abuMuda, fg: Colors.black87),
           const Divider(height: 4, color: Color(0xFFE5E7EB)),
-          _barisJumlah('K', 'Balita yang punya Buku KIA', b.k, bg: _abuMuda, fg: Colors.black87),
+          _barisJumlah('K', 'Anak yang punya Buku KIA', b.k, bg: _abuMuda, fg: Colors.black87),
           const Divider(height: 4, color: Color(0xFFE5E7EB)),
-          _barisJumlah('D', 'Balita yang datang ditimbang', b.d),
+          _barisJumlah('D', 'Anak yang datang ditimbang', b.d),
           const Divider(height: 4, color: Color(0xFFE5E7EB)),
-          _barisJumlah('N', 'Balita yang berat badannya naik', b.n, bg: AppColors.biruMuda, fg: AppColors.biru),
+          _barisJumlah('N', 'Anak yang berat badannya naik', b.n, bg: AppColors.biruMuda, fg: AppColors.biru),
         ],
       ),
     );
@@ -430,17 +430,17 @@ class _SkdnViewState extends State<SkdnView> {
       title: 'Persentase',
       child: Column(
         children: [
-          _barisPersen('Tingkat kehadiran balita', 'Datang ditimbang ÷ seluruh balita (D/S)', b.persenDS,
+          _barisPersen('Tingkat kehadiran anak', 'Datang ditimbang ÷ seluruh anak (D/S)', b.persenDS,
               d.capaiTarget ? AppColors.hijau : AppColors.merah,
               catatan: d.capaiTarget
                   ? 'Kehadiran baik (target minimal 85% tercapai)'
                   : 'Kehadiran kurang (target minimal 85%)'),
-          _barisPersen('Balita yang tumbuh baik dari yang ditimbang', 'Berat badan naik ÷ datang ditimbang (N/D)',
+          _barisPersen('Anak yang tumbuh baik dari yang ditimbang', 'Berat badan naik ÷ datang ditimbang (N/D)',
               b.persenND, AppColors.biru),
-          _barisPersen('Balita yang punya Buku KIA', 'Punya Buku KIA ÷ seluruh balita (K/S)', b.persenKS, _abu),
-          _barisPersen('Kehadiran balita yang punya Buku KIA', 'Datang ditimbang ÷ punya Buku KIA (D/K)', b.persenDK,
+          _barisPersen('Anak yang punya Buku KIA', 'Punya Buku KIA ÷ seluruh anak (K/S)', b.persenKS, _abu),
+          _barisPersen('Kehadiran anak yang punya Buku KIA', 'Datang ditimbang ÷ punya Buku KIA (D/K)', b.persenDK,
               AppColors.hijau),
-          _barisPersen('Balita yang tumbuh baik dari seluruh balita', 'Berat badan naik ÷ seluruh balita (N/S)',
+          _barisPersen('Anak yang tumbuh baik dari seluruh anak', 'Berat badan naik ÷ seluruh anak (N/S)',
               b.persenNS, AppColors.biru),
         ],
       ),
@@ -466,7 +466,7 @@ class _SkdnViewState extends State<SkdnView> {
 
   Widget _kartuRincian(SkdnBulan b) {
     return KartuRekap(
-      title: 'Rincian Balita yang Ditimbang',
+      title: 'Rincian Anak yang Ditimbang',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -477,9 +477,9 @@ class _SkdnViewState extends State<SkdnView> {
           const Divider(height: 18),
           _barisRincian('Tidak naik 2 bulan berturut-turut (perlu dirujuk)', b.duaT),
           _barisRincian('Berat badan sangat kurang / bawah garis merah (perlu dirujuk)', b.bgm),
-          _barisRincian('Balita yang tidak datang ditimbang', b.tidakDatang),
+          _barisRincian('Anak yang tidak datang ditimbang', b.tidakDatang),
           const Divider(height: 18),
-          _barisKet('Jumlah balita', '${b.d}'),
+          _barisKet('Jumlah anak', '${b.d}'),
         ],
       ),
     );
@@ -587,7 +587,7 @@ class _SkdnViewState extends State<SkdnView> {
           else
             for (final a in list) _barisAnak(a, fg, bg),
           const SizedBox(height: 6),
-          _barisKet('Jumlah balita', '${list.length}'),
+          _barisKet('Jumlah anak', '${list.length}'),
         ],
       ),
     );

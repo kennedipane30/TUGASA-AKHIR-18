@@ -8,7 +8,7 @@ import 'skdn_page.dart';
 import '../../theme/app_colors.dart';
 
 // Halaman Rekap Posyandu dipecah menjadi 3 file (satu library):
-//   rekap_posyandu_page.dart : komponen bersama, halaman utama, balita tidak hadir
+//   rekap_posyandu_page.dart : komponen bersama, halaman utama, anak tidak hadir
 //   rekap_gizi.dart          : tab Status Gizi
 //   rekap_suplemen.dart      : tab Vitamin A & Obat Cacing
 part 'rekap_gizi.dart';
@@ -433,7 +433,7 @@ Widget _batang(String label, int nilai, int dasar, Color warna, Color latar, {St
 // ============================================================================
 
 /// Rekap posyandu untuk sekretaris dan bidan, 3 tab:
-/// 1. Penimbangan (SKDN) + daftar balita tidak hadir
+/// 1. Penimbangan (SKDN) + daftar anak tidak hadir
 /// 2. Status Gizi
 /// 3. Vitamin A & Obat Cacing
 /// [prefix] '/sekretaris' atau '/bidan'.
@@ -526,10 +526,10 @@ class _RekapPosyanduPageState extends State<RekapPosyanduPage> {
 }
 
 // ============================================================================
-// BALITA TIDAK HADIR (halaman kader; sekretaris melihatnya di tab Penimbangan)
+// ANAK TIDAK HADIR (halaman kader; sekretaris melihatnya di tab Penimbangan)
 // ============================================================================
 
-/// Daftar balita sasaran yang tidak ditimbang pada bulan terpilih (S − D).
+/// Daftar anak sasaran yang tidak ditimbang pada bulan terpilih (S − D).
 /// [prefix] '/sekretaris', '/bidan', atau '/kader'.
 class TidakHadirView extends StatefulWidget {
   final String prefix;
@@ -612,7 +612,7 @@ class _TidakHadirViewState extends State<TidakHadirView> {
           children: [
             Row(
               children: [
-                Expanded(child: StatBox(nilai: '${d.sasaran}', label: 'Semua\nbalita')),
+                Expanded(child: StatBox(nilai: '${d.sasaran}', label: 'Semua\nanak')),
                 const SizedBox(width: 8),
                 Expanded(
                   child: StatBox(
@@ -629,7 +629,7 @@ class _TidakHadirViewState extends State<TidakHadirView> {
               ],
             ),
             const SizedBox(height: 12),
-            _batang('Kehadiran balita', d.ditimbang, d.sasaran, AppColors.hijau, AppColors.hijauMuda,
+            _batang('Kehadiran anak', d.ditimbang, d.sasaran, AppColors.hijau, AppColors.hijauMuda,
                 sub: 'Target posyandu minimal 85%'),
             if (d.jumlahJadwal == 0)
               const Text('Belum ada jadwal posyandu pada bulan ini.',
@@ -643,7 +643,7 @@ class _TidakHadirViewState extends State<TidakHadirView> {
 }
 
 // ============================================================================
-// DAFTAR BALITA TIDAK HADIR (filter + kartu)
+// DAFTAR ANAK TIDAK HADIR (filter + kartu)
 // Dipakai tab Penimbangan sekretaris dan halaman Tidak Hadir kader.
 // ============================================================================
 class DaftarTidakHadir extends StatefulWidget {
@@ -658,7 +658,7 @@ class DaftarTidakHadir extends StatefulWidget {
 class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
   static const _filter = ['Semua', '≥ 2 bulan', 'Belum pernah', 'Sudah mendaftar'];
   static const _ketFilter = {
-    'Semua': 'Semua balita yang tidak datang bulan ini.',
+    'Semua': 'Semua anak yang tidak datang bulan ini.',
     '≥ 2 bulan': 'Tidak datang 2 bulan atau lebih. Sebaiknya dikunjungi ke rumah.',
     'Belum pernah': 'Terdaftar tetapi belum pernah ditimbang sama sekali.',
     'Sudah mendaftar': 'Sudah mendaftar, tetapi tidak datang/check-in.',
@@ -710,7 +710,7 @@ class _DaftarTidakHadirState extends State<DaftarTidakHadir> {
           KartuRekap(
             child: _kosong(
               Icons.verified_outlined,
-              d.anak.isEmpty ? 'Semua balita sasaran sudah ditimbang bulan ini' : 'Tidak ada balita pada filter ini',
+              d.anak.isEmpty ? 'Semua anak sasaran sudah ditimbang bulan ini' : 'Tidak ada anak pada filter ini',
             ),
           ),
         for (final a in daftar) _kartu(a),

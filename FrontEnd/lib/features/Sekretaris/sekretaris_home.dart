@@ -11,7 +11,7 @@ import '../../core/widgets/common_widgets.dart';
 import '../../core/pages/checkin/qr_checkin_page.dart';
 import '../auth/auth_provider.dart';
 import 'akun/kelola_akun_page.dart';
-import '../../core/pages/balita/semua_balita_page.dart';
+import '../../core/pages/anak/semua_anak_page.dart';
 import '../../core/pages/rekap/rekap_posyandu_page.dart';
 import 'imunisasi/imunisasi_page.dart';
 import 'log_aktivitas/log_aktivitas_page.dart';
@@ -31,7 +31,7 @@ class _AdminHomeState extends State<AdminHome> {
     ('Koreksi NIK', 'Aisyah Putri: pengajuan koreksi NIK dari orang tua', 'Periksa'),
   ];
 
-  // Grafik kehadiran balita per jadwal.
+  // Grafik kehadiran anak per jadwal.
   List<_TitikHadir> _hadir = [];
   bool _hadirMemuat = true;
   String? _hadirGagal;
@@ -89,10 +89,10 @@ class _AdminHomeState extends State<AdminHome> {
     );
   }
 
-  void _bukaBalita() {
+  void _bukaAnak() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const SemuaBalitaPage(prefix: '/sekretaris')),
+      MaterialPageRoute(builder: (_) => const SemuaAnakPage(prefix: '/sekretaris')),
     );
   }
 
@@ -159,7 +159,7 @@ class _AdminHomeState extends State<AdminHome> {
   }
 
   // -------------------------------------------------------------------------
-  // KARTU STATUS: kehadiran balita pada beberapa jadwal terakhir
+  // KARTU STATUS: kehadiran anak pada beberapa jadwal terakhir
   // -------------------------------------------------------------------------
   Widget _kartuGrafikHadir() {
     Widget isi;
@@ -211,7 +211,7 @@ class _AdminHomeState extends State<AdminHome> {
             spacing: 14,
             runSpacing: 6,
             children: [
-              _Legenda(_warnaTotal, 'Total balita'),
+              _Legenda(_warnaTotal, 'Total anak'),
               _Legenda(_warnaCheckin, 'Check-in'),
               _Legenda(_warnaTidak, 'Tidak check-in'),
             ],
@@ -224,7 +224,7 @@ class _AdminHomeState extends State<AdminHome> {
           ),
           BarisInfoHome(
             Icons.groups_outlined,
-            'Balita',
+            'Anak',
             '${akhir.total} terdaftar',
           ),
           BarisInfoHome(
@@ -248,11 +248,11 @@ class _AdminHomeState extends State<AdminHome> {
         children: [
           const KepalaKartuHome(
             ikon: Icons.insert_chart_outlined_rounded,
-            judul: 'Kehadiran Balita',
+            judul: 'Kehadiran Anak',
           ),
           const SizedBox(height: 12),
           const Text(
-            'Jumlah balita terdaftar dan yang check-in pada 6 jadwal terakhir.',
+            'Jumlah anak terdaftar dan yang check-in pada 6 jadwal terakhir.',
             style: TextStyle(fontSize: 13.5, height: 1.4, color: warnaTeksVarianHome),
           ),
           const SizedBox(height: 12),
@@ -319,11 +319,11 @@ class _AdminHomeState extends State<AdminHome> {
           onTap: () => soon(context, 'Pengumuman'),
         ),
         ItemLayananHome(
-          aset: 'semua_balita.png',
+          aset: 'semua_anak.png',
           cadangan: Icons.child_care,
           warna: AppColors.hijau,
-          judul: 'Semua\nBalita',
-          onTap: _bukaBalita,
+          judul: 'Semua\nAnak',
+          onTap: _bukaAnak,
         ),
         ItemLayananHome(
           aset: 'laporan_bulanan.png',

@@ -477,7 +477,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
     final b = StringBuffer()
       ..writeln('*Bukti Antrean Posyandu*')
       ..writeln()
-      ..writeln('Nama Balita : ${k.namaAnak}')
+      ..writeln('Nama Anak : ${k.namaAnak}')
       ..writeln('Nomor Antrean : ${k.kodeNomor}')
       ..writeln('Tanggal : ${k.tanggalPanjang}');
     if (k.jam.isNotEmpty) b.writeln('Waktu : ${k.jam} WIB');
@@ -755,7 +755,7 @@ class _KartuAntreanPageState extends State<KartuAntreanPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _kolomNama('Nama Balita', k.namaAnak)),
+                Expanded(child: _kolomNama('Nama Anak', k.namaAnak)),
                 const SizedBox(width: 12),
                 Expanded(child: _kolomNama('Nama Pendamping', namaUser.isEmpty ? '-' : namaUser)),
               ],

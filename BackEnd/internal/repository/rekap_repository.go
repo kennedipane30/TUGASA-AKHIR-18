@@ -10,7 +10,7 @@ import (
 )
 
 // RekapRepository: kueri rekap posyandu untuk sekretaris dan kader
-// (status gizi, Vitamin A & obat cacing, balita tidak hadir).
+// (status gizi, Vitamin A & obat cacing, anak tidak hadir).
 type RekapRepository struct{ db *gorm.DB }
 
 func NewRekapRepository(db *gorm.DB) *RekapRepository { return &RekapRepository{db} }

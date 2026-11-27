@@ -73,7 +73,7 @@ type JumlahLaporan struct {
 	Jumlah int    `json:"jumlah"`
 }
 
-type BalitaBerisikoLaporan struct {
+type AnakBerisikoLaporan struct {
 	Nama         string   `json:"nama"`
 	JenisKelamin string   `json:"jenis_kelamin"`
 	UsiaTeks     string   `json:"usia_teks"`
@@ -90,7 +90,7 @@ type LaporanBulananResp struct {
 	Imunisasi      []JumlahLaporan         `json:"imunisasi"`
 	TotalImunisasi int                     `json:"total_imunisasi"`
 	Suplemen       []JumlahLaporan         `json:"suplemen"`
-	BalitaBerisiko []BalitaBerisikoLaporan `json:"balita_berisiko"`
+	AnakBerisiko []AnakBerisikoLaporan `json:"anak_berisiko"`
 }
 
 func labelSuplemenLaporan(jenis string) string {
@@ -121,7 +121,7 @@ func (s *LaporanBulananService) Laporan(pos, bulan string) (*LaporanBulananResp,
 	}
 	kode := dari.Format("2006-01")
 	out := &LaporanBulananResp{Bulan: kode, Label: labelBulan(dari), Posyandu: pos,
-		Imunisasi: []JumlahLaporan{}, Suplemen: []JumlahLaporan{}, BalitaBerisiko: []BalitaBerisikoLaporan{}}
+		Imunisasi: []JumlahLaporan{}, Suplemen: []JumlahLaporan{}, AnakBerisiko: []AnakBerisikoLaporan{}}
 
 	// ------------------------------------------------ I. kegiatan & kehadiran
 	jadwal, err := s.repo.JadwalRentang(pos, dari, sampai)
@@ -218,14 +218,14 @@ func (s *LaporanBulananService) Laporan(pos, bulan string) (*LaporanBulananResp,
 		out.Suplemen = append(out.Suplemen, JumlahLaporan{Nama: l, Jumlah: len(petaSup[l])})
 	}
 
-	// ------------------------------------------------ VI. balita berisiko
+	// ------------------------------------------------ VI. anak berisiko
 	indeks := map[uuid.UUID]int{}
 	tambahMasalah := func(id uuid.UUID, a AnakRekap, masalah ...string) {
 		i, ada := indeks[id]
 		if !ada {
-			out.BalitaBerisiko = append(out.BalitaBerisiko, BalitaBerisikoLaporan{
+			out.AnakBerisiko = append(out.AnakBerisiko, AnakBerisikoLaporan{
 				Nama: a.Nama, JenisKelamin: a.JenisKelamin, UsiaTeks: a.UsiaTeks, Masalah: []string{}})
-			i = len(out.BalitaBerisiko) - 1
+			i = len(out.AnakBerisiko) - 1
 			indeks[id] = i
 		}
 		for _, m := range masalah {
@@ -234,14 +234,14 @@ func (s *LaporanBulananService) Laporan(pos, bulan string) (*LaporanBulananResp,
 				continue
 			}
 			sudah := false
-			for _, x := range out.BalitaBerisiko[i].Masalah {
+			for _, x := range out.AnakBerisiko[i].Masalah {
 				if strings.EqualFold(x, m) {
 					sudah = true
 					break
 				}
 			}
 			if !sudah {
-				out.BalitaBerisiko[i].Masalah = append(out.BalitaBerisiko[i].Masalah, m)
+				out.AnakBerisiko[i].Masalah = append(out.AnakBerisiko[i].Masalah, m)
 			}
 		}
 	}
@@ -258,8 +258,8 @@ func (s *LaporanBulananService) Laporan(pos, bulan string) (*LaporanBulananResp,
 		}
 		tambahMasalah(a.AnakID, a.AnakRekap, m...)
 	}
-	sort.SliceStable(out.BalitaBerisiko, func(i, j int) bool {
-		return strings.ToLower(out.BalitaBerisiko[i].Nama) < strings.ToLower(out.BalitaBerisiko[j].Nama)
+	sort.SliceStable(out.AnakBerisiko, func(i, j int) bool {
+		return strings.ToLower(out.AnakBerisiko[i].Nama) < strings.ToLower(out.AnakBerisiko[j].Nama)
 	})
 
 	return out, nil

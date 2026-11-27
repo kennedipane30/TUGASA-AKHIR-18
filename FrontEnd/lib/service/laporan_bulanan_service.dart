@@ -92,13 +92,13 @@ class JumlahLaporan {
         jumlah = _i(j['jumlah']);
 }
 
-class BalitaBerisikoLaporan {
+class AnakBerisikoLaporan {
   final String nama;
   final String jenisKelamin;
   final String usiaTeks;
   final List<String> masalah;
 
-  BalitaBerisikoLaporan.fromJson(Map<String, dynamic> j)
+  AnakBerisikoLaporan.fromJson(Map<String, dynamic> j)
       : nama = _s(j['nama']),
         jenisKelamin = _s(j['jenis_kelamin']),
         usiaTeks = _s(j['usia_teks']),
@@ -122,7 +122,7 @@ class LaporanBulanan {
   final List<JumlahLaporan> imunisasi;
   final int totalImunisasi;
   final List<JumlahLaporan> suplemen;
-  final List<BalitaBerisikoLaporan> balitaBerisiko;
+  final List<AnakBerisikoLaporan> anakBerisiko;
 
   LaporanBulanan.fromJson(Map<String, dynamic> j)
       : bulan = _s(j['bulan']),
@@ -134,7 +134,7 @@ class LaporanBulanan {
         imunisasi = _l(j['imunisasi']).map(JumlahLaporan.fromJson).toList(),
         totalImunisasi = _i(j['total_imunisasi']),
         suplemen = _l(j['suplemen']).map(JumlahLaporan.fromJson).toList(),
-        balitaBerisiko = _l(j['balita_berisiko']).map(BalitaBerisikoLaporan.fromJson).toList();
+        anakBerisiko = _l(j['anak_berisiko']).map(AnakBerisikoLaporan.fromJson).toList();
 }
 
 // ============================================================================

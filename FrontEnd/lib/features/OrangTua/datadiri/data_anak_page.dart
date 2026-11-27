@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../core/config/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../service/imunisasi_service.dart';
+import 'arsip_anak_page.dart';
 import 'data_orang_tua_page.dart';
 
 const _hijauTua = kHijauHeader;
@@ -208,6 +209,47 @@ class _DataAnakPageState extends State<DataAnakPage> {
     }
   }
 
+  /// Arsipkan anak (pindah / meninggal / lainnya). Riwayat tetap tersimpan.
+  Future<void> _arsipkan(DataAnak anak) async {
+    if (anak.id == null) return;
+    final isian = await bukaFormArsip(context, nama: anak.nama, lahir: parseTgl(anak.tglLahir));
+    if (isian == null || !mounted) return;
+    if (!await konfirmasiArsip(context, anak.nama, isian) || !mounted) return;
+    try {
+      await ApiClient.dio.put(
+        '/keluarga/anak/${anak.id}/arsip',
+        data: {
+          'alasan': isian.alasan,
+          'tanggal': isian.tanggalApi,
+          'keterangan': isian.keterangan.trim(),
+        },
+        options: opsiApi,
+      );
+      if (!mounted) return;
+      snackDi(context, 'Data ${anak.nama} diarsipkan');
+      _muat();
+    } catch (error) {
+      if (mounted) snackDi(context, pesanError(error));
+    }
+  }
+
+  /// Aktifkan kembali anak arsip (salah arsip / kembali ke desa).
+  Future<void> _aktifkan(DataAnak anak) async {
+    if (anak.id == null) return;
+    if (!await konfirmasiAktifkan(context, anak.nama) || !mounted) return;
+    try {
+      await ApiClient.dio.put(
+        '/keluarga/anak/${anak.id}/aktifkan',
+        options: opsiApi,
+      );
+      if (!mounted) return;
+      snackDi(context, 'Data ${anak.nama} aktif kembali');
+      _muat();
+    } catch (error) {
+      if (mounted) snackDi(context, pesanError(error));
+    }
+  }
+
   /// Tombol hanya garis tepi (tanpa isi warna).
   Widget _tombolGaris(String label, Color warna, VoidCallback onTap) {
     return SizedBox(
@@ -278,15 +320,24 @@ class _DataAnakPageState extends State<DataAnakPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                if (anak.diarsipkan)
-                  // Anak arsip hanya dapat dilihat; riwayat tetap ada di menu Riwayat.
+                if (anak.diarsipkan) ...[
+                  // Anak arsip: riwayat tetap ada di menu Riwayat.
                   const Text(
                     'Data anak ini sudah tidak aktif di posyandu. '
                     'Riwayat penimbangan dan imunisasi tetap dapat dilihat.',
                     style: TextStyle(fontSize: 14.5, height: 1.4, color: AppColors.teksRedup),
-                  )
-                else
-                  // Tombol bergaris: Hapus di kiri, Ubah di kanan.
+                  ),
+                  // Anak lulus posyandu (usia 5 tahun) tidak dapat diaktifkan kembali.
+                  if (!anak.alasanArsip.startsWith('Lulus posyandu')) ...[
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _tombolGaris(
+                          'Aktifkan Kembali', kHijauHeader, () => _aktifkan(anak)),
+                    ),
+                  ],
+                ] else ...[
+                  // Tombol bergaris: Hapus di kiri, Ubah di kanan, Arsipkan di bawah.
                   Row(
                     children: [
                       Expanded(child: _tombolGaris('Hapus', AppColors.merah, () => _hapus(anak))),
@@ -296,6 +347,13 @@ class _DataAnakPageState extends State<DataAnakPage> {
                               _tombolGaris('Ubah', kHijauHeader, () => _tambahAtauUbah(awal: anak))),
                     ],
                   ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: _tombolGaris('Arsipkan (Pindah / Meninggal)', AppColors.teksRedup,
+                        () => _arsipkan(anak)),
+                  ),
+                ],
               ],
             ),
           ),
@@ -343,7 +401,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
                       decoration: dekorKartuKeluarga(),
                       child: const Text(
                         'Belum ada data anak. Tekan tombol hijau di bawah '
-                        'untuk menambah data anak balita.',
+                        'untuk menambah data anak.',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 15.5, height: 1.4, color: AppColors.teksRedup),
                       ),
@@ -363,7 +421,7 @@ class _DataAnakPageState extends State<DataAnakPage> {
           const Padding(
             padding: EdgeInsets.fromLTRB(32, 0, 32, 14),
             child: Text(
-              'Punya lebih dari 1 balita? Tekan tombol hijau di bawah '
+              'Punya lebih dari 1 anak? Tekan tombol hijau di bawah '
               'untuk menambah data adik atau kakak.',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -565,7 +623,7 @@ class _FormAnakState extends State<_FormAnak> {
               children: [
                 judulLembarKeluarga(
                   widget.awal == null ? 'Tambah Data Anak' : 'Ubah Data Anak',
-                  sub: 'Lengkapi biodata balita',
+                  sub: 'Lengkapi biodata anak',
                 ),
                 const SizedBox(height: 18),
                 _label('Nama Lengkap Anak', wajib: true),

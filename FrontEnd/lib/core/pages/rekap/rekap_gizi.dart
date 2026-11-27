@@ -84,7 +84,7 @@ class _TabGiziState extends State<_TabGizi> {
           children: [
             Row(
               children: [
-                Expanded(child: StatBox(nilai: '${d.sasaran}', label: 'Balita\nsasaran')),
+                Expanded(child: StatBox(nilai: '${d.sasaran}', label: 'Anak\nsasaran')),
                 const SizedBox(width: 8),
                 Expanded(
                   child: StatBox(
@@ -127,7 +127,7 @@ class _TabGiziState extends State<_TabGizi> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'Persentase dihitung dari balita yang diukur bulan ini. Satu anak bisa termasuk lebih dari satu kategori.',
+              'Persentase dihitung dari anak yang diukur bulan ini. Satu anak bisa termasuk lebih dari satu kategori.',
               style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
             ),
           ],
@@ -136,7 +136,7 @@ class _TabGiziState extends State<_TabGizi> {
       KartuRekap(
         title: 'Kategori Status Gizi',
         child: d.diukur == 0
-            ? const Text('Belum ada balita yang diukur pada bulan ini',
+            ? const Text('Belum ada anak yang diukur pada bulan ini',
                 style: TextStyle(fontSize: 16, color: AppColors.teksRedup))
             : Column(
                 children: [
@@ -162,17 +162,17 @@ class _TabGiziState extends State<_TabGizi> {
         child: _TrenGizi(tren: d.tren),
       ),
       KartuRekap(
-        title: 'Balita Prioritas',
+        title: 'Anak Prioritas',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (d.prioritas.isEmpty)
-              const Text('Tidak ada balita dengan masalah gizi pada bulan ini',
+              const Text('Tidak ada anak dengan masalah gizi pada bulan ini',
                   style: TextStyle(fontSize: 16, color: AppColors.teksRedup))
             else
               for (final a in d.prioritas) _kartuPrioritas(a),
             const SizedBox(height: 8),
-            _barisTotal('Total balita', '${d.prioritas.length}'),
+            _barisTotal('Total anak', '${d.prioritas.length}'),
           ],
         ),
       ),

@@ -10,7 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../../core/utils/posyandu.dart';
 import '../../../core/widgets/status_gizi_widget.dart';
-import '../../../service/balita_service.dart' show usiaDetail;
+import '../../../service/anak_service.dart' show usiaDetail;
 import '../../../service/kbm_model.dart';
 import '../../auth/auth_provider.dart';
 import '../../OrangTua/pendaftaran/pendaftaran_page.dart';

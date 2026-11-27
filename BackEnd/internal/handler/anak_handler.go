@@ -9,24 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type BalitaHandler struct{ svc *service.BalitaService }
+type AnakHandler struct{ svc *service.AnakService }
 
-func NewBalitaHandler(svc *service.BalitaService) *BalitaHandler { return &BalitaHandler{svc} }
+func NewAnakHandler(svc *service.AnakService) *AnakHandler { return &AnakHandler{svc} }
 
-// GET /{sekretaris|kader|bidan}/balita?cari=&semua=1
-// GET /{sekretaris|kader|bidan}/balita?arsip=1 : hanya anak yang diarsipkan
-func (h *BalitaHandler) Daftar(c *gin.Context) {
+// GET /{sekretaris|kader|bidan}/semua-anak?cari=&semua=1
+// Anak arsip tidak ditampilkan di sini; anak arsip dilihat orang tua di Data Anak.
+func (h *AnakHandler) Daftar(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
-		return
-	}
-	if c.Query("arsip") == "1" {
-		data, err := h.svc.DaftarArsip(pos, c.Query("cari"))
-		if err != nil {
-			tulisError(c, err)
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"data": data})
 		return
 	}
 	data, err := h.svc.Daftar(pos, c.Query("cari"), c.Query("semua") == "1")
@@ -37,8 +28,8 @@ func (h *BalitaHandler) Daftar(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
-// GET /{sekretaris|kader|bidan}/balita/:anak_id
-func (h *BalitaHandler) Detail(c *gin.Context) {
+// GET /{sekretaris|kader|bidan}/semua-anak/:anak_id
+func (h *AnakHandler) Detail(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return
@@ -59,8 +50,8 @@ func (h *BalitaHandler) Detail(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": data})
 }
 
-// GET /bidan/balita-berisiko : daftar anak berisiko (deteksi dini) di posyandu bidan.
-func (h *BalitaHandler) Berisiko(c *gin.Context) {
+// GET /bidan/anak-berisiko : daftar anak berisiko (deteksi dini) di posyandu bidan.
+func (h *AnakHandler) Berisiko(c *gin.Context) {
 	pos, ok := posyanduCtx(c)
 	if !ok {
 		return

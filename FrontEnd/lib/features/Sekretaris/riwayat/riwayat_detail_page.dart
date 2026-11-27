@@ -71,7 +71,7 @@ class _DaftarAnakPageState extends State<_DaftarAnakPage> {
               })
             else
               _kartu(
-                title: 'Daftar Balita',
+                title: 'Daftar Anak',
                 kanan: '${_data.length} anak',
                 child: _data.isEmpty
                     ? const Text('Belum ada anak yang check-in pada jadwal ini.',

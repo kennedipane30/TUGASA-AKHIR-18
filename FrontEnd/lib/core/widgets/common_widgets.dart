@@ -467,7 +467,7 @@ class ItemLayananHome {
   final String judul;
   final VoidCallback onTap;
 
-  /// Angka kecil di sudut ikon (mis. jumlah balita berisiko).
+  /// Angka kecil di sudut ikon (mis. jumlah anak berisiko).
   final int? badge;
   final Color badgeWarna;
 

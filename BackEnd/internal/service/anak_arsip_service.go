@@ -17,10 +17,11 @@ import (
 // ============================================================================
 // ARSIP DATA ANAK
 //
-//   - Manual oleh kader : anak pindah domisili, meninggal, atau alasan lain.
-//   - Otomatis (sistem) : anak berusia 60 bulan -> "Lulus balita (usia 5 tahun)".
+//   - Manual oleh orang tua (Data Keluarga > Data Anak): anak pindah domisili,
+//     meninggal, atau alasan lain.
+//   - Otomatis (sistem) : anak berusia 60 bulan -> "Lulus posyandu (usia 5 tahun)".
 //
-// Anak arsip tidak muncul lagi di pendaftaran, pendataan, daftar balita,
+// Anak arsip tidak muncul lagi di pendaftaran, pendataan, daftar anak,
 // deteksi dini, rekap, dan pengingat. Riwayat pemeriksaan, kartu imunisasi, dan
 // rujukan tetap tersimpan dan dapat dilihat.
 // ============================================================================
@@ -33,16 +34,19 @@ func NewAnakArsipService(r *repository.AnakArsipRepository) *AnakArsipService {
 	return &AnakArsipService{repo: r}
 }
 
-// ArsipAnakInput: isian kader saat mengarsipkan anak.
+// ArsipAnakInput: isian orang tua saat mengarsipkan anak.
 type ArsipAnakInput struct {
 	Alasan     string `json:"alasan" binding:"required"`  // pindah | meninggal | lainnya
 	Tanggal    string `json:"tanggal" binding:"required"` // YYYY-MM-DD
 	Keterangan string `json:"keterangan"`                 // wajib bila alasan = lainnya
 }
 
-// anakKader: anak [anakID] yang keluarganya berada di posyandu kader.
-func (s *AnakArsipService) anakKader(pos string, anakID uuid.UUID) (*models.Anak, error) {
-	pos, err := posKader(pos)
+// anakOrangTua: anak [anakID] yang terdaftar di keluarga milik akun orang tua [uid].
+func (s *AnakArsipService) anakOrangTua(uid uint, anakID uuid.UUID) (*models.Anak, error) {
+	kid, err := s.repo.KeluargaIDOrangTua(uid)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, terlarang("data keluarga belum ada")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -53,19 +57,15 @@ func (s *AnakArsipService) anakKader(pos string, anakID uuid.UUID) (*models.Anak
 	if err != nil {
 		return nil, err
 	}
-	k, err := s.repo.GetKeluarga(a.KeluargaID)
-	if err != nil {
-		return nil, err
-	}
-	if kp, _ := models.NormalisasiPosyandu(k.Posyandu); kp != pos {
-		return nil, terlarang("anak bukan bagian dari posyandu Anda")
+	if a.KeluargaID != kid {
+		return nil, terlarang("anak bukan bagian dari keluarga Anda")
 	}
 	return a, nil
 }
 
-// Arsipkan: kader mengarsipkan anak (pindah / meninggal / lainnya).
-func (s *AnakArsipService) Arsipkan(pos string, anakID uuid.UUID, in ArsipAnakInput) (*models.Anak, error) {
-	a, err := s.anakKader(pos, anakID)
+// Arsipkan: orang tua mengarsipkan anaknya (pindah / meninggal / lainnya).
+func (s *AnakArsipService) Arsipkan(uid uint, anakID uuid.UUID, in ArsipAnakInput) (*models.Anak, error) {
+	a, err := s.anakOrangTua(uid, anakID)
 	if err != nil {
 		return nil, err
 	}
@@ -115,18 +115,18 @@ func (s *AnakArsipService) Arsipkan(pos string, anakID uuid.UUID, in ArsipAnakIn
 	return s.repo.GetAnak(anakID)
 }
 
-// Aktifkan: kader mengaktifkan kembali anak arsip (salah arsip / kembali ke desa).
-// Anak yang sudah berusia 60 bulan tidak dapat diaktifkan (bukan balita lagi).
-func (s *AnakArsipService) Aktifkan(pos string, anakID uuid.UUID) (*models.Anak, error) {
-	a, err := s.anakKader(pos, anakID)
+// Aktifkan: orang tua mengaktifkan kembali anak arsip (salah arsip / kembali ke desa).
+// Anak yang sudah berusia 60 bulan tidak dapat diaktifkan (sudah melewati batas usia layanan).
+func (s *AnakArsipService) Aktifkan(uid uint, anakID uuid.UUID) (*models.Anak, error) {
+	a, err := s.anakOrangTua(uid, anakID)
 	if err != nil {
 		return nil, err
 	}
 	if a.Status != models.StatusAnakArsip {
 		return nil, konflik("data anak masih aktif")
 	}
-	if usiaBulan(tglSaja(a.TanggalLahir), hariIni()) > batasUsiaBalita {
-		return nil, konflik("anak sudah berusia 5 tahun (lulus balita) sehingga tidak dapat diaktifkan kembali")
+	if usiaBulan(tglSaja(a.TanggalLahir), hariIni()) > batasUsiaAnak {
+		return nil, konflik("anak sudah berusia 5 tahun (lulus posyandu) sehingga tidak dapat diaktifkan kembali")
 	}
 	if err := s.repo.Aktifkan(a.ID); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -137,25 +137,25 @@ func (s *AnakArsipService) Aktifkan(pos string, anakID uuid.UUID) (*models.Anak,
 	return s.repo.GetAnak(anakID)
 }
 
-// LulusBalita: arsipkan anak yang sudah berusia 60 bulan. Aman dijalankan berulang.
-func (s *AnakArsipService) LulusBalita() {
+// LulusAnak: arsipkan anak yang sudah berusia 60 bulan. Aman dijalankan berulang.
+func (s *AnakArsipService) LulusAnak() {
 	// usia >= 60 bulan  <=>  lahir pada/sebelum (hari ini - 60 bulan)
-	batas := hariIni().AddDate(0, -(batasUsiaBalita + 1), 0)
-	n, err := s.repo.LulusBalita(batas)
+	batas := hariIni().AddDate(0, -(batasUsiaAnak + 1), 0)
+	n, err := s.repo.LulusAnak(batas)
 	if err != nil {
-		log.Printf("arsip anak: gagal memproses lulus balita: %v", err)
+		log.Printf("arsip anak: gagal memproses lulus posyandu: %v", err)
 		return
 	}
 	if n > 0 {
-		log.Printf("arsip anak: %d anak lulus balita diarsipkan otomatis", n)
+		log.Printf("arsip anak: %d anak lulus posyandu diarsipkan otomatis", n)
 	}
 }
 
-// JalankanLulusBalita: diperiksa saat server mulai, lalu setiap jam
+// JalankanLulusAnak: diperiksa saat server mulai, lalu setiap jam
 // (diproses sekali per hari, saat tanggal berganti).
-func (s *AnakArsipService) JalankanLulusBalita(ctx context.Context) {
+func (s *AnakArsipService) JalankanLulusAnak(ctx context.Context) {
 	terakhir := hariIni()
-	s.LulusBalita()
+	s.LulusAnak()
 	t := time.NewTicker(time.Hour)
 	defer t.Stop()
 	for {
@@ -165,7 +165,7 @@ func (s *AnakArsipService) JalankanLulusBalita(ctx context.Context) {
 		case <-t.C:
 			if h := hariIni(); !h.Equal(terakhir) {
 				terakhir = h
-				s.LulusBalita()
+				s.LulusAnak()
 			}
 		}
 	}

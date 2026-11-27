@@ -199,7 +199,7 @@ class _AdminLaporanBulananPageState extends State<AdminLaporanBulananPage> {
       child: Column(
         children: _daftarBaris([
           ('Jadwal posyandu', k.jumlahSesi == 0 ? 'Tidak ada' : '${k.jumlahSesi} sesi', tgl.isEmpty ? null : tgl),
-          ('Balita sasaran (0-59 bulan)', '${k.sasaran}', null),
+          ('Anak sasaran (0-59 bulan)', '${k.sasaran}', null),
           ('Didaftarkan ke sesi', '${k.didaftarkan}', null),
           ('Hadir (check-in)', '${k.hadir}', null),
           ('Tidak hadir', '${k.tidakHadir}', null),
@@ -216,7 +216,7 @@ class _AdminLaporanBulananPageState extends State<AdminLaporanBulananPage> {
       trailing: teksKananRekap('D/S ${_persen(s.persenDS)}'),
       child: Column(
         children: _daftarBaris([
-          ('S - Seluruh balita', '${s.s}', null),
+          ('S - Seluruh anak', '${s.s}', null),
           ('K - Punya Buku KIA / terdaftar', '${s.k}', 'K/S = ${_persen(s.persenKS)}'),
           ('D - Ditimbang bulan ini', '${s.d}', 'D/S = ${_persen(s.persenDS)}'),
           ('N - Berat badan naik', '${s.n}', 'N/D = ${_persen(s.persenND)}'),
@@ -269,12 +269,12 @@ class _AdminLaporanBulananPageState extends State<AdminLaporanBulananPage> {
   }
 
   Widget _kartuBerisiko(LaporanBulanan d) {
-    final list = d.balitaBerisiko;
+    final list = d.anakBerisiko;
     return KartuRekap(
-      title: 'VI. Balita Berisiko',
+      title: 'VI. Anak Berisiko',
       trailing: teksKananRekap('${list.length} anak'),
       child: list.isEmpty
-          ? _kosong('Tidak ada balita berisiko bulan ini.')
+          ? _kosong('Tidak ada anak berisiko bulan ini.')
           : Column(
               children: [
                 for (var i = 0; i < list.length; i++)

@@ -5,13 +5,13 @@ import '../../core/widgets/common_widgets.dart';
 import '../../core/utils/posyandu.dart';
 import '../../core/pages/checkin/qr_checkin_page.dart';
 import '../OrangTua/pendaftaran/pendaftaran_page.dart';
-import '../../core/pages/balita/semua_balita_page.dart';
+import '../../core/pages/anak/semua_anak_page.dart';
 import '../auth/auth_provider.dart';
 import 'pendataan/pendataan_page.dart';
 import 'keluarga/keluarga_page.dart';
 import 'daftarkan_anak/daftarkan_anak_page.dart';
 import 'riwayat/riwayat_page.dart';
-import 'rekap/balita_tidak_hadir_page.dart';
+import 'rekap/anak_tidak_hadir_page.dart';
 import 'imunisasi/imunisasi_page.dart';
 
 const _namaHari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
@@ -86,7 +86,7 @@ class _KaderHomeState extends State<KaderHome> {
     );
   }
 
-  /// Daftarkan balita ke sesi posyandu hari ini (walk-in), lalu muat ulang antrean.
+  /// Daftarkan anak ke sesi posyandu hari ini (walk-in), lalu muat ulang antrean.
   Future<void> _bukaDaftarkanAnak() async {
     await Navigator.push(
       context,
@@ -109,10 +109,10 @@ class _KaderHomeState extends State<KaderHome> {
     );
   }
 
-  void _bukaBalita() {
+  void _bukaAnak() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const SemuaBalitaPage(prefix: '/kader')),
+      MaterialPageRoute(builder: (_) => const SemuaAnakPage(prefix: '/kader')),
     );
   }
 
@@ -295,15 +295,15 @@ class _KaderHomeState extends State<KaderHome> {
           aset: 'pendaftaran.png',
           cadangan: Icons.how_to_reg_outlined,
           warna: const Color(0xFF0F766E),
-          judul: 'Daftarkan\nBalita',
+          judul: 'Daftarkan\nAnak',
           onTap: _bukaDaftarkanAnak,
         ),
         ItemLayananHome(
-          aset: 'semua_balita.png',
+          aset: 'semua_anak.png',
           cadangan: Icons.child_care,
           warna: const Color(0xFFEA580C),
-          judul: 'Semua\nBalita',
-          onTap: _bukaBalita,
+          judul: 'Semua\nAnak',
+          onTap: _bukaAnak,
         ),
         ItemLayananHome(
           aset: 'riwatar_pemeriksaan.png',
@@ -313,10 +313,10 @@ class _KaderHomeState extends State<KaderHome> {
           onTap: _bukaRiwayat,
         ),
         ItemLayananHome(
-          aset: 'balita_tidak_hadir.png',
+          aset: 'anak_tidak_hadir.png',
           cadangan: Icons.person_search_outlined,
           warna: const Color(0xFFB45309),
-          judul: 'Balita\nTidak Hadir',
+          judul: 'Anak\nTidak Hadir',
           onTap: _bukaTidakHadir,
         ),
         ItemLayananHome(

@@ -5,10 +5,9 @@ import 'package:flutter/services.dart';
 
 import '../../theme/app_colors.dart';
 import '../../widgets/common_widgets.dart';
-import '../../../service/balita_service.dart';
+import '../../../service/anak_service.dart';
 import '../rekap/rekap_posyandu_page.dart';
-import 'balita_detail_page.dart';
-import '../../theme/app_colors.dart';
+import 'anak_detail_page.dart';
 
 const _hijauTua = Color(0xFF065F46);
 const _teksGelap = Color(0xFF1F2937);
@@ -88,17 +87,17 @@ String labelTimbang(String s) => const {
     }[s] ??
     s;
 
-class SemuaBalitaPage extends StatefulWidget {
+class SemuaAnakPage extends StatefulWidget {
   final String prefix;
   final bool bisaKelolaImunisasi;
 
-  const SemuaBalitaPage({super.key, required this.prefix, this.bisaKelolaImunisasi = false});
+  const SemuaAnakPage({super.key, required this.prefix, this.bisaKelolaImunisasi = false});
 
   @override
-  State<SemuaBalitaPage> createState() => _SemuaBalitaPageState();
+  State<SemuaAnakPage> createState() => _SemuaAnakPageState();
 }
 
-class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
+class _SemuaAnakPageState extends State<SemuaAnakPage> {
   static const _filter = [
     'Semua',
     '0-11 bln',
@@ -108,15 +107,13 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
     '2T / BGM',
     'Imunisasi terlambat',
     'Belum ditimbang',
-    'Diarsipkan', // pindah, meninggal, lulus balita (riwayat tetap dapat dilihat)
   ];
 
-  late final BalitaService _svc = BalitaService(widget.prefix);
+  late final AnakService _svc = AnakService(widget.prefix);
   final _cari = TextEditingController();
   Timer? _tunda;
 
-  DaftarBalita? _data;
-  DaftarBalita? _arsip; // anak yang sudah diarsipkan
+  DaftarAnak? _data;
   bool _loading = true;
   String? _error;
   String _aktif = 'Semua';
@@ -140,15 +137,10 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
       _error = null;
     });
     try {
-      final cari = _cari.text.trim();
-      final hasil = await Future.wait([
-        _svc.daftar(cari: cari),
-        _svc.daftarArsip(cari: cari),
-      ]);
+      final hasil = await _svc.daftar(cari: _cari.text.trim());
       if (!mounted) return;
       setState(() {
-        _data = hasil[0];
-        _arsip = hasil[1];
+        _data = hasil;
         _loading = false;
       });
     } catch (e) {
@@ -165,7 +157,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
     _tunda = Timer(const Duration(milliseconds: 400), _muat);
   }
 
-  List<BalitaItem> _saring(List<BalitaItem> list) {
+  List<AnakItem> _saring(List<AnakItem> list) {
     switch (_aktif) {
       case '0-11 bln':
         return list.where((b) => b.kelompokUsia == '0-11').toList();
@@ -185,11 +177,11 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
     return list;
   }
 
-  Future<void> _buka(BalitaItem b) async {
+  Future<void> _buka(AnakItem b) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BalitaDetailPage(
+        builder: (_) => AnakDetailPage(
           prefix: widget.prefix,
           anakId: b.anakId,
           nama: b.nama,
@@ -212,7 +204,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
         ),
         child: Column(
           children: [
-            headerRekap(context, 'Semua Balita'),
+            headerRekap(context, 'Semua Anak'),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
               child: TextField(
@@ -221,7 +213,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
                 textInputAction: TextInputAction.search,
                 onSubmitted: (_) => _muat(),
                 decoration: InputDecoration(
-                  hintText: 'Cari nama balita',
+                  hintText: 'Cari nama anak',
                   prefixIcon: const Icon(Icons.search, color: Colors.black54),
                   suffixIcon: _cari.text.isEmpty
                       ? null
@@ -285,10 +277,9 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
     );
   }
 
-  List<Widget> _isi(DaftarBalita d) {
+  List<Widget> _isi(DaftarAnak d) {
     final r = d.ringkas;
-    final lihatArsip = _aktif == 'Diarsipkan';
-    final daftar = lihatArsip ? (_arsip?.balita ?? const <BalitaItem>[]) : _saring(d.balita);
+    final daftar = _saring(d.anak);
     return [
       Container(
         width: double.infinity,
@@ -298,7 +289,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _kepala('Ringkasan Balita'),
+            _kepala('Ringkasan Anak'),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 4, 14, 4),
               child: Column(
@@ -334,9 +325,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: ChoiceChip(
-                  label: Text(f == 'Diarsipkan' && _arsip != null
-                      ? 'Diarsipkan (${_arsip!.balita.length})'
-                      : f),
+                  label: Text(f),
                   selected: _aktif == f,
                   selectedColor: _hijauTua,
                   backgroundColor: Colors.white,
@@ -361,7 +350,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
           decoration: _dekorKartu(),
           child: Text(
-              lihatArsip ? 'Belum ada balita yang diarsipkan' : 'Tidak ada balita yang sesuai',
+              'Tidak ada anak yang sesuai',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
         ),
@@ -371,10 +360,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
 
   static const _pemisah = Divider(height: 1, color: Color(0xFFE5E7EB));
 
-  static String _tglTeks(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-
-  /// Baris ringkasan: keterangan di kiri, jumlah balita di kanan.
+  /// Baris ringkasan: keterangan di kiri, jumlah anak di kanan.
   Widget _barisJumlah(String label, int nilai, Color warna) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -384,7 +370,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
             child: Text(label,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _teksGelap)),
           ),
-          Text('$nilai balita',
+          Text('$nilai anak',
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -394,7 +380,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
     );
   }
 
-  Widget _kartu(BalitaItem b) {
+  Widget _kartu(AnakItem b) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: DecoratedBox(
@@ -408,19 +394,7 @@ class _SemuaBalitaPageState extends State<SemuaBalitaPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _kepala(b.nama, kanan: b.diarsipkan ? 'Tidak aktif' : null),
-                if (b.diarsipkan)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-                    child: Text(
-                      [
-                        if (b.alasanArsip.isNotEmpty) b.alasanArsip,
-                        if (b.tanggalArsip != null) _tglTeks(b.tanggalArsip!),
-                      ].join(' · '),
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.teksRedup),
-                    ),
-                  ),
+                _kepala(b.nama),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
                   child: Row(

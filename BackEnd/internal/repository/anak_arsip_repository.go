@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// AnakArsipRepository: arsip data anak (pindah, meninggal, lulus balita).
+// AnakArsipRepository: arsip data anak (pindah, meninggal, lulus posyandu).
 //
 // Setiap perubahan menaikkan version dan memperbarui updated_at agar ikut
 // terkirim pada delta sync.
@@ -17,10 +17,11 @@ type AnakArsipRepository struct{ db *gorm.DB }
 
 func NewAnakArsipRepository(db *gorm.DB) *AnakArsipRepository { return &AnakArsipRepository{db} }
 
-func (r *AnakArsipRepository) GetKeluarga(id uuid.UUID) (*models.Keluarga, error) {
-	var k models.Keluarga
-	err := r.db.First(&k, "id = ?", id).Error
-	return &k, err
+// KeluargaIDOrangTua: ID keluarga milik akun orang tua [uid].
+func (r *AnakArsipRepository) KeluargaIDOrangTua(uid uint) (uuid.UUID, error) {
+	var ot models.OrangTua
+	err := r.db.Where("user_id = ?", uid).First(&ot).Error
+	return ot.KeluargaID, err
 }
 
 func (r *AnakArsipRepository) GetAnak(id uuid.UUID) (*models.Anak, error) {
@@ -70,9 +71,9 @@ func (r *AnakArsipRepository) Aktifkan(anakID uuid.UUID) error {
 	return nil
 }
 
-// LulusBalita: arsipkan semua anak aktif yang lahir pada/ sebelum [lahirPalingLambat]
+// LulusAnak: arsipkan semua anak aktif yang lahir pada/ sebelum [lahirPalingLambat]
 // (sudah berusia 60 bulan). Tanggal arsip = tanggal lahir + 60 bulan.
-func (r *AnakArsipRepository) LulusBalita(lahirPalingLambat time.Time) (int64, error) {
+func (r *AnakArsipRepository) LulusAnak(lahirPalingLambat time.Time) (int64, error) {
 	var jumlah int64
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		res := tx.Model(&models.Anak{}).

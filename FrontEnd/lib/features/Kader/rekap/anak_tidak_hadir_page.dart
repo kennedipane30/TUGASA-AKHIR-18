@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/pages/rekap/rekap_posyandu_page.dart';
 
-/// Kader: daftar balita sasaran yang tidak hadir (S − D) untuk ditindaklanjuti.
+/// Kader: daftar anak sasaran yang tidak hadir (S − D) untuk ditindaklanjuti.
 class KaderTidakHadirPage extends StatelessWidget {
   const KaderTidakHadirPage({super.key});
 
@@ -20,7 +20,7 @@ class KaderTidakHadirPage extends StatelessWidget {
         ),
         child: Column(
           children: [
-            headerRekap(context, 'Balita Tidak Hadir'),
+            headerRekap(context, 'Anak Tidak Hadir'),
             const Expanded(child: TidakHadirView(prefix: '/kader')),
           ],
         ),

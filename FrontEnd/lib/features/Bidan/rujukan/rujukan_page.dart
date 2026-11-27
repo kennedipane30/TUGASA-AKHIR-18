@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/pages/rekap/rekap_posyandu_page.dart';
 import '../../../core/pages/rujukan/rujukan_detail_view.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../service/balita_service.dart';
+import '../../../service/anak_service.dart';
 import '../../../service/rujukan_service.dart';
 import 'tambah_rujukan_page.dart';
 import 'detail_rujukan_page.dart';
@@ -46,10 +46,10 @@ class _BidanRujukanPageState extends State<BidanRujukanPage> {
       var perlu = <AnakBerisiko>[];
       if (_tab == 0) {
         try {
-          final b = await const BalitaService('/bidan').berisiko();
+          final b = await const AnakService('/bidan').berisiko();
           // anak yang sudah punya rujukan aktif tidak disarankan lagi
           final sudah = d.map((e) => e.anakId).toSet();
-          perlu = b.anak.where((a) => a.tinggi && !sudah.contains(a.balita.anakId)).toList();
+          perlu = b.anak.where((a) => a.tinggi && !sudah.contains(a.anak.anakId)).toList();
         } catch (_) {}
       }
       if (!mounted) return;
@@ -125,7 +125,7 @@ class _BidanRujukanPageState extends State<BidanRujukanPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Balita dengan risiko tinggi dari penimbangan terakhir.',
+          const Text('Anak dengan risiko tinggi dari penimbangan terakhir.',
               style: TextStyle(fontSize: 13.5, color: redupRujukan)),
           const SizedBox(height: 8),
           for (var i = 0; i < _perlu.length; i++)
@@ -142,11 +142,11 @@ class _BidanRujukanPageState extends State<BidanRujukanPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_perlu[i].balita.nama,
+                        Text(_perlu[i].anak.nama,
                             style: const TextStyle(
                                 fontSize: 15.5, fontWeight: FontWeight.w700, color: teksRujukan)),
                         const SizedBox(height: 2),
-                        Text(_perlu[i].balita.usiaTeks,
+                        Text(_perlu[i].anak.usiaTeks,
                             style: const TextStyle(fontSize: 13.5, color: redupRujukan)),
                         const SizedBox(height: 4),
                         Text(_perlu[i].alasan.join(', '),
@@ -157,7 +157,7 @@ class _BidanRujukanPageState extends State<BidanRujukanPage> {
                   ),
                   const SizedBox(width: 8),
                   TextButton(
-                    onPressed: () => _buat(_perlu[i].balita.anakId),
+                    onPressed: () => _buat(_perlu[i].anak.anakId),
                     style: TextButton.styleFrom(foregroundColor: AppColors.hijau),
                     child: const Text('Rujuk', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   ),

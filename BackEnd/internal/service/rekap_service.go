@@ -20,7 +20,7 @@ import (
 //   2. Rekap Vitamin A      : bulan Februari dan Agustus (kapsul biru 6-11 bln,
 //      dan obat cacing        kapsul merah 12-59 bln); obat cacing per semester
 //                             untuk usia 12-59 bulan.
-//   3. Balita tidak hadir   : sasaran (S) dikurangi yang ditimbang (D) pada bulan itu.
+//   3. Anak tidak hadir   : sasaran (S) dikurangi yang ditimbang (D) pada bulan itu.
 // ============================================================================
 
 type RekapService struct{ repo *repository.RekapRepository }
@@ -30,7 +30,7 @@ func NewRekapService(repo *repository.RekapRepository) *RekapService { return &R
 var namaBulanRekap = []string{"", "Januari", "Februari", "Maret", "April", "Mei", "Juni",
 	"Juli", "Agustus", "September", "Oktober", "November", "Desember"}
 
-const batasUsiaBalita = 59
+const batasUsiaAnak = 59
 
 // rentangBulan: "2026-11" -> [1 Nov 2026, 1 Des 2026). Kosong = bulan berjalan.
 func rentangBulan(s string) (time.Time, time.Time, error) {
@@ -62,15 +62,15 @@ func tglRekap(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }
 
-// sasaranBalita: anak lahir sebelum [acuan] dan berusia 0-59 bulan pada [acuan].
-func sasaranBalita(anak []models.Anak, acuan time.Time) []models.Anak {
+// sasaranAnak: anak lahir sebelum [acuan] dan berusia 0-59 bulan pada [acuan].
+func sasaranAnak(anak []models.Anak, acuan time.Time) []models.Anak {
 	out := make([]models.Anak, 0, len(anak))
 	for _, a := range anak {
 		lahir := tglRekap(a.TanggalLahir)
 		if lahir.After(acuan) {
 			continue
 		}
-		if usiaBulan(lahir, acuan) > batasUsiaBalita {
+		if usiaBulan(lahir, acuan) > batasUsiaAnak {
 			continue
 		}
 		out = append(out, a)
@@ -242,7 +242,7 @@ func (s *RekapService) RekapGizi(pos, bulan string) (*RekapGiziResp, error) {
 	if err != nil {
 		return nil, err
 	}
-	sasaran := sasaranBalita(anak, acuan)
+	sasaran := sasaranAnak(anak, acuan)
 	petaSasaran := map[uuid.UUID]bool{}
 	petaAnak := map[uuid.UUID]*models.Anak{}
 	for i := range sasaran {
@@ -437,7 +437,7 @@ func (s *RekapService) RekapSuplemen(pos string, tahun, periode int) (*RekapSupl
 			continue
 		}
 		u := usiaBulan(lahir, acuan)
-		if u < 6 || u > batasUsiaBalita {
+		if u < 6 || u > batasUsiaAnak {
 			continue
 		}
 		item := AnakSuplemenRekap{AnakRekap: anakRekap(a, acuan), Belum: []string{}}
@@ -478,15 +478,15 @@ func (s *RekapService) RekapSuplemen(pos string, tahun, periode int) (*RekapSupl
 		TanggalAcuan:  acuan.Format("2006-01-02"),
 		VitaminA: []KelompokSuplemenRekap{
 			kelompokSuplemen("biru", "Kapsul biru", "Bayi 6-11 bulan · 100.000 IU", sasBiru, sudahBiru),
-			kelompokSuplemen("merah", "Kapsul merah", "Balita 12-59 bulan · 200.000 IU", sasMerah, sudahMerah),
-			kelompokSuplemen("total", "Total Vitamin A", "Balita 6-59 bulan", sasBiru+sasMerah, sudahBiru+sudahMerah),
+			kelompokSuplemen("merah", "Kapsul merah", "Anak 12-59 bulan · 200.000 IU", sasMerah, sudahMerah),
+			kelompokSuplemen("total", "Total Vitamin A", "Anak 6-59 bulan", sasBiru+sasMerah, sudahBiru+sudahMerah),
 		},
-		ObatCacing:    kelompokSuplemen("cacing", "Obat cacing", "Balita 12-59 bulan · 1 kali per semester", sasCacing, sudahCacing),
+		ObatCacing:    kelompokSuplemen("cacing", "Obat cacing", "Anak 12-59 bulan · 1 kali per semester", sasCacing, sudahCacing),
 		BelumMenerima: belum,
 	}, nil
 }
 
-// ---------------------------------------------------------------- 3. balita tidak hadir
+// ---------------------------------------------------------------- 3. anak tidak hadir
 
 type AnakTidakHadir struct {
 	AnakRekap
@@ -524,7 +524,7 @@ func (s *RekapService) TidakHadir(pos, bulan string) (*TidakHadirResp, error) {
 	if err != nil {
 		return nil, err
 	}
-	sasaran := sasaranBalita(anak, acuan)
+	sasaran := sasaranAnak(anak, acuan)
 	ditimbang, err := s.repo.DitimbangRentang(pos, dari, sampai)
 	if err != nil {
 		return nil, err

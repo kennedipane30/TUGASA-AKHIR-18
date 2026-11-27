@@ -270,7 +270,7 @@ class RekapSuplemen {
       );
 }
 
-// ---------------------------------------------------------------- balita tidak hadir
+// ---------------------------------------------------------------- anak tidak hadir
 
 class AnakTidakHadir {
   final AnakRekap anak;
@@ -376,7 +376,7 @@ class RekapService {
       RekapSuplemen.fromJson(
           await _get('$prefix/rekap/suplemen', {'tahun': tahun, 'periode': periode}));
 
-  /// Balita tidak hadir. [prefix] '/sekretaris', '/bidan', atau '/kader'.
+  /// Anak tidak hadir. [prefix] '/sekretaris', '/bidan', atau '/kader'.
   Future<RekapTidakHadir> tidakHadir(String prefix, DateTime bulan) async =>
       RekapTidakHadir.fromJson(await _get('$prefix/rekap/tidak-hadir', {'bulan': bulanApi(bulan)}));
 }

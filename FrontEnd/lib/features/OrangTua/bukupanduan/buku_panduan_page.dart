@@ -173,7 +173,7 @@ const List<String> _kategori = [
   'Masa Hamil',
   'Nifas & Menyusui',
   'Bayi Baru Lahir',
-  'Balita & Anak',
+  'Anak',
   'Keluarga',
 ];
 
@@ -539,7 +539,7 @@ const List<_Bab> _daftarBab = [
       _Blok(_pnt, 'Mengatur jarak kehamilan, paling sedikit 2 tahun setelah melahirkan.'),
       _Blok(_pnt, 'Mengatur jumlah anak, sebaiknya tidak lebih dari tiga.'),
       _Blok(_pnt, 'Mencegah kehamilan yang tidak diinginkan.'),
-      _Blok(_pnt, 'Menjaga kesehatan ibu, bayi, dan balita.'),
+      _Blok(_pnt, 'Menjaga kesehatan ibu, bayi, dan anak.'),
       _Blok(_pnt, 'Ibu punya waktu dan perhatian cukup untuk diri sendiri, anak, dan keluarga.'),
       _Blok(_sub, 'Metode jangka panjang'),
       _Blok(_pnt, 'MOW dan MOP (metode operasi wanita dan pria).'),
@@ -615,7 +615,7 @@ const List<_Bab> _daftarBab = [
     Icons.baby_changing_station,
     [
       _Blok(_par,
-          'Satu bulan pertama adalah masa penting bagi kelangsungan hidup bayi. Dua pertiga kematian balita di Indonesia terjadi pada 28 hari pertama. Bayi tidur sampai 16 jam sehari.'),
+          'Satu bulan pertama adalah masa penting bagi kelangsungan hidup bayi. Dua pertiga kematian anak di Indonesia terjadi pada 28 hari pertama. Bayi tidur sampai 16 jam sehari.'),
       _Blok(_sub, 'Pemeriksaan oleh tenaga kesehatan'),
       _Blok(_pnt, '0-6 jam, 6-48 jam, 3-7 hari, dan 8-28 hari setelah lahir.'),
       _Blok(_pnt, 'Imunisasi hepatitis B (HB0) sebelum 24 jam.'),
@@ -800,7 +800,7 @@ const List<_Bab> _daftarBab = [
     [
       _Blok(_sub, 'Layanan bulanan di Posyandu'),
       _Blok(_pnt, 'Pemantauan pertumbuhan dan perkembangan.'),
-      _Blok(_pnt, 'Kelas ibu balita untuk ibu, ayah, dan keluarga.'),
+      _Blok(_pnt, 'Kelas ibu anak untuk ibu, ayah, dan keluarga.'),
       _Blok(_pnt, 'Kapsul vitamin A (Februari atau Agustus) dan imunisasi.'),
       _Blok(_sub, 'Stimulasi usia 6-9 bulan'),
       _Blok(_pnt, 'Peluk, senyum, bicara, panggil namanya, bersalaman, tepuk tangan, melambai.'),
@@ -974,7 +974,7 @@ const List<_Bab> _daftarBab = [
     ],
   ),
   _Bab(
-    'Tanda Bahaya pada Balita',
+    'Tanda Bahaya pada Anak',
     'Anak usia 29 hari sampai 5 tahun yang harus segera ke fasilitas kesehatan',
     Icons.warning_amber_rounded,
     [
@@ -1009,7 +1009,7 @@ const List<_Bab> _daftarBab = [
       _Blok(_pnt, 'Jangan diselimuti atau diberi baju tebal.'),
       _Blok(_pnt, 'Kompres dengan air biasa atau air hangat. Jangan dengan air dingin karena anak bisa menggigil.'),
       _Blok(_pnt, 'Jika demam tinggi, beri obat penurun panas sesuai dosis.'),
-      _Blok(_pnt, 'Di daerah endemis malaria, balita tidur dalam kelambu berinsektisida.'),
+      _Blok(_pnt, 'Di daerah endemis malaria, anak tidur dalam kelambu berinsektisida.'),
       _Blok(_pnt, 'Segera ke fasilitas kesehatan jika demam disertai kejang, tidak turun dalam 2 hari setelah obat penurun panas, atau disertai bintik merah, perdarahan di hidung, atau BAB hitam.'),
       _Blok(_sub, 'Batuk'),
       _Blok(_pnt, 'Beri ASI lebih sering dan air matang lebih banyak.'),
@@ -1137,11 +1137,11 @@ const List<_Bab> _daftarBab = [
   ),
   _Bab(
     'Kesiapsiagaan Bencana',
-    'Persiapan keluarga dengan ibu hamil, bayi, dan balita',
+    'Persiapan keluarga dengan ibu hamil, bayi, dan anak',
     Icons.backpack_outlined,
     [
       _Blok(_par,
-          'Indonesia rawan bencana. Kelompok paling rentan adalah ibu hamil, ibu nifas, bayi, dan balita. Pengungsian yang padat dengan sanitasi buruk berisiko menimbulkan penyakit menular, gizi kurang, pelecehan, kekerasan, trauma, dan anak terpisah dari orang tua.'),
+          'Indonesia rawan bencana. Kelompok paling rentan adalah ibu hamil, ibu nifas, bayi, dan anak. Pengungsian yang padat dengan sanitasi buruk berisiko menimbulkan penyakit menular, gizi kurang, pelecehan, kekerasan, trauma, dan anak terpisah dari orang tua.'),
       _Blok(_par,
           'Reaksi anak 1-2 tahun dipengaruhi suasana jiwa orang tua. Jika orang tua panik, anak jadi gelisah, rewel, dan mudah sakit. Anak prasekolah mudah merasa tidak berdaya dan sulit tidur. Bimbingan bermain dapat membantu.'),
       _Blok(_sub, 'Kesiapsiagaan'),
@@ -1152,7 +1152,7 @@ const List<_Bab> _daftarBab = [
       _Blok(_sub, 'Isi tas kit bencana'),
       _Blok(_pnt, 'Buku KIA, obat rutin, vitamin, dan perlengkapan pendukung.'),
       _Blok(_pnt, 'Kalung tanda pengenal berisi nama, nama orang tua, nomor telepon, dan alamat.'),
-      _Blok(_pnt, 'Perlengkapan bayi dan balita: pakaian, selimut, popok, topi, kaus kaki, mainan.'),
+      _Blok(_pnt, 'Perlengkapan bayi dan anak: pakaian, selimut, popok, topi, kaus kaki, mainan.'),
       _Blok(_pnt, 'Perlengkapan ibu: kain panjang dan pakaian.'),
       _Blok(_pnt, 'Makanan instan, air mineral, roti, dan makanan praktis.'),
       _Blok(_pnt, 'Tisu basah dan kering, hand sanitizer, perlengkapan mandi.'),

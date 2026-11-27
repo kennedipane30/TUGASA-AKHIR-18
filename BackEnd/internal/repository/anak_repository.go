@@ -7,40 +7,40 @@ import (
 	"gorm.io/gorm"
 )
 
-// BalitaRepository: data semua balita satu posyandu (untuk sekretaris, kader, bidan).
-type BalitaRepository struct{ db *gorm.DB }
+// AnakRepository: data semua anak satu posyandu (untuk sekretaris, kader, bidan).
+type AnakRepository struct{ db *gorm.DB }
 
-func NewBalitaRepository(db *gorm.DB) *BalitaRepository { return &BalitaRepository{db} }
+func NewAnakRepository(db *gorm.DB) *AnakRepository { return &AnakRepository{db} }
 
 // AnakPosyandu: semua anak di satu posyandu (aktif dan tidak aktif), urut nama.
-func (r *BalitaRepository) AnakPosyandu(pos string) ([]models.Anak, error) {
+func (r *AnakRepository) AnakPosyandu(pos string) ([]models.Anak, error) {
 	list := []models.Anak{}
 	err := r.db.Where("keluarga_id IN (?)", subKeluargaPosyandu(r.db, pos)).
 		Order("nama ASC").Find(&list).Error
 	return list, err
 }
 
-func (r *BalitaRepository) GetAnak(id uuid.UUID) (*models.Anak, error) {
+func (r *AnakRepository) GetAnak(id uuid.UUID) (*models.Anak, error) {
 	var a models.Anak
 	err := r.db.First(&a, "id = ?", id).Error
 	return &a, err
 }
 
-func (r *BalitaRepository) GetKeluarga(id uuid.UUID) (*models.Keluarga, error) {
+func (r *AnakRepository) GetKeluarga(id uuid.UUID) (*models.Keluarga, error) {
 	var k models.Keluarga
 	err := r.db.First(&k, "id = ?", id).Error
 	return &k, err
 }
 
 // PosyanduKeluarga: kode posyandu sebuah keluarga.
-func (r *BalitaRepository) PosyanduKeluarga(keluargaID uuid.UUID) (string, error) {
+func (r *AnakRepository) PosyanduKeluarga(keluargaID uuid.UUID) (string, error) {
 	var pos string
 	err := r.db.Model(&models.Keluarga{}).Select("posyandu").Where("id = ?", keluargaID).Scan(&pos).Error
 	return pos, err
 }
 
 // PengukuranBanyakAnak: semua pengukuran untuk banyak anak, terbaru di atas.
-func (r *BalitaRepository) PengukuranBanyakAnak(ids []uuid.UUID) ([]models.Pengukuran, error) {
+func (r *AnakRepository) PengukuranBanyakAnak(ids []uuid.UUID) ([]models.Pengukuran, error) {
 	list := []models.Pengukuran{}
 	if len(ids) == 0 {
 		return list, nil
@@ -49,7 +49,7 @@ func (r *BalitaRepository) PengukuranBanyakAnak(ids []uuid.UUID) ([]models.Pengu
 	return list, err
 }
 
-func (r *BalitaRepository) StatusGiziByPengukuran(ids []uuid.UUID) ([]models.StatusGizi, error) {
+func (r *AnakRepository) StatusGiziByPengukuran(ids []uuid.UUID) ([]models.StatusGizi, error) {
 	list := []models.StatusGizi{}
 	if len(ids) == 0 {
 		return list, nil
@@ -58,7 +58,7 @@ func (r *BalitaRepository) StatusGiziByPengukuran(ids []uuid.UUID) ([]models.Sta
 	return list, err
 }
 
-func (r *BalitaRepository) PenilaianByPengukuran(ids []uuid.UUID) ([]models.PenilaianTimbang, error) {
+func (r *AnakRepository) PenilaianByPengukuran(ids []uuid.UUID) ([]models.PenilaianTimbang, error) {
 	list := []models.PenilaianTimbang{}
 	if len(ids) == 0 {
 		return list, nil
@@ -68,7 +68,7 @@ func (r *BalitaRepository) PenilaianByPengukuran(ids []uuid.UUID) ([]models.Peni
 }
 
 // PemeriksaanByPendaftaran: catatan bidan untuk banyak kunjungan (pendaftaran).
-func (r *BalitaRepository) PemeriksaanByPendaftaran(ids []uuid.UUID) ([]models.PemeriksaanBidan, error) {
+func (r *AnakRepository) PemeriksaanByPendaftaran(ids []uuid.UUID) ([]models.PemeriksaanBidan, error) {
 	list := []models.PemeriksaanBidan{}
 	if len(ids) == 0 {
 		return list, nil
@@ -78,7 +78,7 @@ func (r *BalitaRepository) PemeriksaanByPendaftaran(ids []uuid.UUID) ([]models.P
 }
 
 // SuplemenByPendaftaran: suplemen (Vitamin A, obat cacing, dll.) yang diberikan pada banyak kunjungan.
-func (r *BalitaRepository) SuplemenByPendaftaran(ids []uuid.UUID) ([]models.SuplemenAnak, error) {
+func (r *AnakRepository) SuplemenByPendaftaran(ids []uuid.UUID) ([]models.SuplemenAnak, error) {
 	list := []models.SuplemenAnak{}
 	if len(ids) == 0 {
 		return list, nil
@@ -88,7 +88,7 @@ func (r *BalitaRepository) SuplemenByPendaftaran(ids []uuid.UUID) ([]models.Supl
 }
 
 // ImunisasiByPendaftaran: imunisasi yang diberikan pada banyak kunjungan, beserta nama imunisasi.
-func (r *BalitaRepository) ImunisasiByPendaftaran(ids []uuid.UUID) ([]models.ImunisasiAnak, error) {
+func (r *AnakRepository) ImunisasiByPendaftaran(ids []uuid.UUID) ([]models.ImunisasiAnak, error) {
 	list := []models.ImunisasiAnak{}
 	if len(ids) == 0 {
 		return list, nil

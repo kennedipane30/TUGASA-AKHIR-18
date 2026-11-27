@@ -3,12 +3,12 @@ import 'package:provider/provider.dart';
 
 import '../../core/widgets/common_widgets.dart';
 import '../../core/utils/posyandu.dart';
-import '../../core/pages/balita/semua_balita_page.dart';
+import '../../core/pages/anak/semua_anak_page.dart';
 import '../../core/pages/rekap/rekap_posyandu_page.dart';
 import 'laporan_bulanan/laporan_bulanan_page.dart';
-import '../../service/balita_service.dart';
+import '../../service/anak_service.dart';
 import '../auth/auth_provider.dart';
-import 'balita/balita_berisiko_page.dart';
+import 'anak/anak_berisiko_page.dart';
 import 'riwayat/riwayat_page.dart';
 import 'rujukan/rujukan_page.dart';
 
@@ -60,7 +60,7 @@ class _BidanHomeState extends State<BidanHome> {
 
   Future<void> _muatBerisiko() async {
     try {
-      final d = await const BalitaService('/bidan').berisiko();
+      final d = await const AnakService('/bidan').berisiko();
       if (!mounted) return;
       setState(() => _berisiko = d.ringkas.total);
     } catch (_) {}
@@ -69,16 +69,16 @@ class _BidanHomeState extends State<BidanHome> {
   Future<void> _bukaBerisiko() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const BalitaBerisikoPage()),
+      MaterialPageRoute(builder: (_) => const AnakBerisikoPage()),
     );
     _muatBerisiko();
   }
 
-  void _bukaBalita() {
+  void _bukaAnak() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const SemuaBalitaPage(prefix: '/bidan', bisaKelolaImunisasi: true),
+        builder: (_) => const SemuaAnakPage(prefix: '/bidan', bisaKelolaImunisasi: true),
       ),
     );
   }
@@ -117,7 +117,7 @@ class _BidanHomeState extends State<BidanHome> {
   }
 
   // -------------------------------------------------------------------------
-  // KARTU STATUS: ringkasan balita yang perlu perhatian bidan
+  // KARTU STATUS: ringkasan anak yang perlu perhatian bidan
   // -------------------------------------------------------------------------
   Widget _kartuDeteksiDini(String lokasi) {
     final n = _berisiko;
@@ -147,16 +147,16 @@ class _BidanHomeState extends State<BidanHome> {
           BarisInfoHome(
             Icons.warning_amber_rounded,
             'Berisiko',
-            aman ? 'Tidak ada balita berisiko' : '$n balita perlu perhatian',
+            aman ? 'Tidak ada anak berisiko' : '$n anak perlu perhatian',
             warnaNilai: aman ? null : _merah,
           ),
           BarisInfoHome(Icons.place_outlined, 'Wilayah', lokasi),
           BarisInfoHome(Icons.today_rounded, 'Diperbarui', 'Saat halaman dibuka'),
           const SizedBox(height: 4),
           TombolUtamaHome(
-            label: aman ? 'Lihat Semua Balita' : 'Lihat Balita Berisiko',
+            label: aman ? 'Lihat Semua Anak' : 'Lihat Anak Berisiko',
             ikon: aman ? Icons.child_care : Icons.priority_high_rounded,
-            onTap: aman ? _bukaBalita : _bukaBerisiko,
+            onTap: aman ? _bukaAnak : _bukaBerisiko,
           ),
         ],
       ),
@@ -180,11 +180,11 @@ class _BidanHomeState extends State<BidanHome> {
           badgeWarna: _merah,
         ),
         ItemLayananHome(
-          aset: 'semua_balita.png',
+          aset: 'semua_anak.png',
           cadangan: Icons.child_care,
           warna: _hijauTeks,
-          judul: 'Semua\nBalita',
-          onTap: _bukaBalita,
+          judul: 'Semua\nAnak',
+          onTap: _bukaAnak,
         ),
         ItemLayananHome(
           aset: 'antropometri.png',

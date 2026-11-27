@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// RujukanRepository: surat rujukan balita (bidan & orang tua).
+// RujukanRepository: surat rujukan anak (bidan & orang tua).
 type RujukanRepository struct{ db *gorm.DB }
 
 func NewRujukanRepository(db *gorm.DB) *RujukanRepository { return &RujukanRepository{db} }

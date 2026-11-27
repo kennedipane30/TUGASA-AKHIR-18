@@ -9,7 +9,7 @@ package service
 //
 // Tiap fiturnya ada di berkas tersendiri:
 //
-//	pengukuran_service.go           pendataan kader: antrean dan pengukuran balita
+//	pengukuran_service.go           pendataan kader: antrean dan pengukuran anak
 //	pemeriksaan_service.go          pemeriksaan bidan: antrean, detail, simpan catatan
 //	kpsp_service.go                 skrining perkembangan (KPSP)
 //	riwayat_pemeriksaan_service.go  riwayat pemeriksaan untuk orang tua

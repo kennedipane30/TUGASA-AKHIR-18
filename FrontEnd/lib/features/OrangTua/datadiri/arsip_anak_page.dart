@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../features/Kader/keluarga/keluarga.dart';
+import '../../Kader/keluarga/keluarga.dart';
 
 // ============================================================================
-// ARSIP BALITA (kader, dari Semua Balita -> Lihat detail)
+// ARSIP ANAK (orang tua, dari Data Keluarga -> Data Anak)
 //  - Form arsip (bottom sheet): alasan pindah / meninggal / lainnya + tanggal.
 //  - Konfirmasi sebelum diarsipkan / diaktifkan kembali.
-// Anak berusia 60 bulan diarsipkan otomatis oleh sistem (lulus balita).
-// Gaya form mengikuti form data anak kader (features/Kader/keluarga).
+// Anak berusia 60 bulan diarsipkan otomatis oleh sistem (lulus posyandu).
+// Gaya form mengikuti form data anak (features/Kader/keluarga).
 // ============================================================================
 
 /// Isian arsip. [alasan]: pindah | meninggal | lainnya. [tanggal]: dd/mm/yyyy.
@@ -52,7 +52,7 @@ Future<bool> konfirmasiArsip(BuildContext context, String nama, IsianArsip isian
         '$nama (${isian.alasanTeks}, ${isian.tanggal}) tidak akan muncul lagi '
         'di pendaftaran, pendataan, dan rekap posyandu.\n\n'
         'Riwayat penimbangan dan imunisasi tetap tersimpan. '
-        'Data dapat dilihat di Semua Balita > Diarsipkan dan diaktifkan kembali bila salah arsip.',
+        'Data tetap terlihat di Data Anak dan dapat diaktifkan kembali bila salah arsip.',
         style: const TextStyle(fontSize: 15, height: 1.4, color: kkTeksGelap),
       ),
       actions: [

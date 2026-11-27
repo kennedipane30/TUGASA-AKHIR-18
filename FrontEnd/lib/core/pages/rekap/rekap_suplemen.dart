@@ -305,7 +305,7 @@ class _TabSuplemenState extends State<_TabSuplemen> {
                   ),
                 ),
             const SizedBox(height: 6),
-            _barisSup('Total balita', '${daftarBelum.length}', lebar: 110),
+            _barisSup('Total anak', '${daftarBelum.length}', lebar: 110),
           ],
         ),
       ),

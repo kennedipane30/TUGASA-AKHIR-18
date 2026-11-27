@@ -257,7 +257,7 @@ func (s *StatusGiziService) Hitung(anak *models.Anak, u *models.Pengukuran) (*mo
 	}
 	if usia > 60 {
 		st.Tingkat = ""
-		st.Catatan = "Usia di atas 60 bulan, di luar rentang standar antropometri balita."
+		st.Catatan = "Usia di atas 60 bulan, di luar rentang standar antropometri anak."
 		return st, nil
 	}
 

@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// Keluarga: satu keluarga balita (alamat dan RT/RW).
+// Keluarga: satu keluarga anak (alamat dan RT/RW).
 // Posyandu: kode posyandu keluarga (sitoluama | aek_bolon | silaen), dipilih saat registrasi.
 type Keluarga struct {
 	ID            uuid.UUID      `gorm:"type:uuid;primaryKey;column:id" json:"id"`

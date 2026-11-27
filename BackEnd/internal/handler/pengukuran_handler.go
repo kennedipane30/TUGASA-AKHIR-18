@@ -1,7 +1,7 @@
 package handler
 
 // Endpoint pendataan kader: antrean anak yang sudah check-in, serta pencatatan
-// dan pembacaan pengukuran balita.
+// dan pembacaan pengukuran anak.
 
 import (
 	"net/http"

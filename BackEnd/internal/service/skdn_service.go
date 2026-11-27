@@ -13,10 +13,10 @@ import (
 // ============================================================================
 // RINGKASAN PENIMBANGAN (SKDN)
 //
-//   S = Sasaran          : balita aktif usia 0-59 bulan di posyandu
-//   K = Punya Buku KIA   : dianggap sama dengan S (semua balita terdaftar punya Buku KIA)
-//   D = Ditimbang        : balita sasaran yang ditimbang pada bulan itu
-//   N = Naik             : balita yang ditimbang dan berat badannya naik sesuai KBM
+//   S = Sasaran          : anak aktif usia 0-59 bulan di posyandu
+//   K = Punya Buku KIA   : dianggap sama dengan S (semua anak terdaftar punya Buku KIA)
+//   D = Ditimbang        : anak sasaran yang ditimbang pada bulan itu
+//   N = Naik             : anak yang ditimbang dan berat badannya naik sesuai KBM
 //
 // Rincian D = N + T + O + B (dari tabel penilaian_timbang).
 // Penimbangan yang belum dinilai dimasukkan ke O (belum bisa dinilai).
@@ -61,7 +61,7 @@ type SkdnBulan struct {
 	PersenNS float64 `json:"persen_ns"`
 }
 
-// AnakSkdn: balita yang perlu perhatian pada bulan itu.
+// AnakSkdn: anak yang perlu perhatian pada bulan itu.
 type AnakSkdn struct {
 	AnakRekap
 	TanggalUkur  string  `json:"tanggal_ukur"`
@@ -105,7 +105,7 @@ func (s *SkdnService) hitungBulan(pos string, semuaAnak []models.Anak, dari time
 		return out, nil
 	}
 
-	sasaran := sasaranBalita(semuaAnak, acuan)
+	sasaran := sasaranAnak(semuaAnak, acuan)
 	ditimbang, err := s.rekap.DitimbangRentang(pos, dari, sampai)
 	if err != nil {
 		return nil, err

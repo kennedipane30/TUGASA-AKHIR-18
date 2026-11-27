@@ -277,7 +277,7 @@ class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
                   _kotak('Anak\nDiimunisasi', '${d.totalAnakDiimunisasi}',
                       const Color(0xFFE3F2FD), const Color(0xFFBFDFF7), const Color(0xFF2563EB)),
                   const SizedBox(width: 8),
-                  _kotak('Balita\nAktif', '${d.jumlahBalita}',
+                  _kotak('Anak\nAktif', '${d.jumlahAnak}',
                       const Color(0xFFF3F4F6), const Color(0xFFE5E7EB), const Color(0xFF374151)),
                 ],
               ),
@@ -305,7 +305,7 @@ class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
                         style: TextStyle(fontSize: 16, color: AppColors.teksRedup)),
                   ),
                 )
-              : Column(children: [for (final e in d.jenis) _barisJenis(e, d.jumlahBalita)]),
+              : Column(children: [for (final e in d.jenis) _barisJenis(e, d.jumlahAnak)]),
         ),
         _kartu(
           judul: 'Jadwal Imunisasi Rutin',
@@ -344,8 +344,8 @@ class _AdminImunisasiPageState extends State<AdminImunisasiPage> {
     );
   }
 
-  Widget _barisJenis(StatistikJenisImunisasi e, int jumlahBalita) {
-    final belum = (jumlahBalita - e.jumlahAnak) < 0 ? 0 : jumlahBalita - e.jumlahAnak;
+  Widget _barisJenis(StatistikJenisImunisasi e, int jumlahAnak) {
+    final belum = (jumlahAnak - e.jumlahAnak) < 0 ? 0 : jumlahAnak - e.jumlahAnak;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),

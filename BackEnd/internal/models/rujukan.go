@@ -14,7 +14,7 @@ const (
 	StatusRujukanDibatalkan = "dibatalkan" // dibatalkan bidan beserta alasannya
 )
 
-// Rujukan: surat rujukan balita dari bidan posyandu ke fasilitas kesehatan
+// Rujukan: surat rujukan anak dari bidan posyandu ke fasilitas kesehatan
 // (Puskesmas/RS), seperti format rujukan rumah sakit.
 //
 // Data anak, orang tua, dan pemeriksaan terakhir disimpan sebagai salinan
@@ -30,7 +30,7 @@ type Rujukan struct {
 	// Posyandu: kode posyandu perujuk.
 	Posyandu string `gorm:"column:posyandu;size:20;not null;index" json:"posyandu"`
 
-	// AnakID: balita yang dirujuk (FK ke anak).
+	// AnakID: anak yang dirujuk (FK ke anak).
 	AnakID uuid.UUID `gorm:"column:anak_id;type:uuid;not null;index" json:"anak_id"`
 	Anak   *Anak     `gorm:"foreignKey:AnakID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"-"`
 

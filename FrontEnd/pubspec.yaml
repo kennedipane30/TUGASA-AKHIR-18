@@ -1,7 +1,7 @@
 # "name" tetap tugas_akhir: ini nama paket Dart (dipakai di import package:tugas_akhir/...),
 # bukan nama yang tampil di HP. Nama di HP diatur di AndroidManifest.xml (PosyanduCare).
 name: tugas_akhir
-description: "PosyanduCare - Aplikasi pemantauan tumbuh kembang balita di Posyandu."
+description: "PosyanduCare - Aplikasi pemantauan tumbuh kembang anak di Posyandu."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -60,7 +60,7 @@ flutter:
     - qr_chekin.png
     - rekap_skdn.png
     - riwatar_pemeriksaan.png
-    - semua_balita.png
+    - semua_anak.png
     - surat_rujukan.png
     - ukur_data.png
     - vitamin_pmt.png

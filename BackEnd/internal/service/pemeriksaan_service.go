@@ -449,12 +449,12 @@ func (s *PelayananService) SimpanCatatan(bidanID uint, pos string, pendaftaranID
 			usiaSup := usiaBulan(p.Anak.TanggalLahir, tanggal)
 			switch {
 			case isVitaminA(nama):
-				if usiaSup < 6 || usiaSup > batasUsiaBalita {
+				if usiaSup < 6 || usiaSup > batasUsiaAnak {
 					return nil, validasi("Vitamin A diberikan untuk usia 6-59 bulan (usia anak %s)", usiaTeks(p.Anak.TanggalLahir, tanggal))
 				}
 				x.Jumlah, satuan = 1, "kapsul"
 			case isObatCacing(nama):
-				if usiaSup < 12 || usiaSup > batasUsiaBalita {
+				if usiaSup < 12 || usiaSup > batasUsiaAnak {
 					return nil, validasi("obat cacing diberikan untuk usia 12-59 bulan (usia anak %s)", usiaTeks(p.Anak.TanggalLahir, tanggal))
 				}
 				x.Jumlah, satuan = 1, "tablet"

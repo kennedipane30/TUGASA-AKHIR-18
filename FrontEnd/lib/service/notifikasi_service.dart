@@ -313,7 +313,7 @@ class NotifikasiService {
     bukaHalaman(notifikasiId: id, jenis: jenis, objekId: objek);
   }
 
-  /// Membuka tujuan notifikasi. Peringatan 2T/BGM langsung ke detail balita
+  /// Membuka tujuan notifikasi. Peringatan 2T/BGM langsung ke detail anak
   /// (petugas) atau grafik anak (orang tua); selain itu ke daftar notifikasi.
   void bukaHalaman({String? notifikasiId, String? jenis, String? objekId}) {
     final nav = navigatorKey.currentState;

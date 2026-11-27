@@ -102,7 +102,7 @@ class RiwayatJadwalDetailPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        kepalaKartuJadwal('Kehadiran Balita'),
+                        kepalaKartuJadwal('Kehadiran Anak'),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
                           child: Column(

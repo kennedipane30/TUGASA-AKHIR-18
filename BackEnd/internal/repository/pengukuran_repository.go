@@ -1,6 +1,6 @@
 package repository
 
-// Kueri pengukuran balita yang dicatat kader: berat, tinggi, lingkar kepala,
+// Kueri pengukuran anak yang dicatat kader: berat, tinggi, lingkar kepala,
 // LILA, dan keluhan.
 
 import (

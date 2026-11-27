@@ -26,10 +26,10 @@ const (
 
 // Status data anak di posyandu.
 //
-//	aktif : balita yang dilayani posyandu.
+//	aktif : anak yang dilayani posyandu.
 //	arsip : tidak dilayani lagi; riwayat tetap tersimpan dan dapat dilihat.
 //	        Diarsipkan kader (pindah, meninggal, lainnya) atau otomatis oleh
-//	        sistem saat anak berusia 60 bulan (lulus balita).
+//	        sistem saat anak berusia 60 bulan (lulus posyandu).
 const (
 	StatusAnakAktif = "aktif"
 	StatusAnakArsip = "arsip"
@@ -37,13 +37,13 @@ const (
 
 // Alasan arsip (disimpan di alasan_arsip, boleh diikuti ": keterangan").
 const (
-	AlasanArsipLulus     = "Lulus balita (usia 5 tahun)"
+	AlasanArsipLulus     = "Lulus posyandu (usia 5 tahun)"
 	AlasanArsipPindah    = "Pindah domisili"
 	AlasanArsipMeninggal = "Meninggal"
 	AlasanArsipLainnya   = "Lainnya"
 )
 
-// Anak: data identitas balita.
+// Anak: data identitas anak.
 type Anak struct {
 	ID             uuid.UUID  `gorm:"type:uuid;primaryKey;column:id" json:"id"`
 	KeluargaID     uuid.UUID  `gorm:"column:keluarga_id;type:uuid;not null;index" json:"keluarga_id"`

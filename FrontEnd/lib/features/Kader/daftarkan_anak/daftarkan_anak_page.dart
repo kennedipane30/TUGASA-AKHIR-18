@@ -385,7 +385,7 @@ class _DaftarkanAnakPageState extends State<DaftarkanAnakPage> {
     );
   }
 
-  /// Kolom cari: putih, garis tepi hitam lembut (sama seperti Semua Balita).
+  /// Kolom cari: putih, garis tepi hitam lembut (sama seperti Semua Anak).
   Widget _kotakCari() {
     OutlineInputBorder garis(Color c, double w) => OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

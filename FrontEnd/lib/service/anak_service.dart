@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import '../core/config/api_client.dart';
 
 // ============================================================================
-// MODEL SEMUA BALITA
+// MODEL SEMUA ANAK
 // ============================================================================
 
 String _s(dynamic v) => v == null ? '' : v.toString();
@@ -169,7 +169,7 @@ class TimbangRingkas {
   final double? zBbtb;
   final List<String> masalah;
   final String tingkat;
-  final KunjunganRingkas? kunjungan; // hanya terisi pada detail balita
+  final KunjunganRingkas? kunjungan; // hanya terisi pada detail anak
 
   const TimbangRingkas({
     required this.tanggal,
@@ -249,7 +249,7 @@ class ImunisasiRingkas {
       );
 }
 
-class BalitaItem {
+class AnakItem {
   final String anakId;
   final String nama;
   final String jenisKelamin;
@@ -263,11 +263,11 @@ class BalitaItem {
   final int bulanTidakDatang; // -1 = belum pernah ditimbang
   final ImunisasiRingkas imunisasi;
 
-  /// Hanya terisi untuk anak arsip (pindah, meninggal, lulus balita).
+  /// Hanya terisi untuk anak arsip (pindah, meninggal, lulus posyandu).
   final DateTime? tanggalArsip;
   final String alasanArsip;
 
-  const BalitaItem({
+  const AnakItem({
     required this.anakId,
     required this.nama,
     required this.jenisKelamin,
@@ -284,7 +284,7 @@ class BalitaItem {
     this.alasanArsip = '',
   });
 
-  factory BalitaItem.fromJson(Map<String, dynamic> j) => BalitaItem(
+  factory AnakItem.fromJson(Map<String, dynamic> j) => AnakItem(
         anakId: _s(j['anak_id']),
         nama: _s(j['nama']).isEmpty ? '-' : _s(j['nama']),
         jenisKelamin: _s(j['jenis_kelamin']),
@@ -308,7 +308,7 @@ class BalitaItem {
   bool get perluPerhatian => terakhir?.perluPerhatian ?? false;
 }
 
-class RingkasBalita {
+class RingkasAnak {
   final int total;
   final int lakiLaki;
   final int perempuan;
@@ -321,7 +321,7 @@ class RingkasBalita {
   final int imunisasiTerlambat;
   final int belumPernah;
 
-  const RingkasBalita({
+  const RingkasAnak({
     required this.total,
     required this.lakiLaki,
     required this.perempuan,
@@ -335,7 +335,7 @@ class RingkasBalita {
     required this.belumPernah,
   });
 
-  factory RingkasBalita.fromJson(Map<String, dynamic> j) => RingkasBalita(
+  factory RingkasAnak.fromJson(Map<String, dynamic> j) => RingkasAnak(
         total: _i(j['total']),
         lakiLaki: _i(j['laki_laki']),
         perempuan: _i(j['perempuan']),
@@ -350,49 +350,49 @@ class RingkasBalita {
       );
 }
 
-class DaftarBalita {
-  final RingkasBalita ringkas;
-  final List<BalitaItem> balita;
+class DaftarAnak {
+  final RingkasAnak ringkas;
+  final List<AnakItem> anak;
 
-  const DaftarBalita({required this.ringkas, required this.balita});
+  const DaftarAnak({required this.ringkas, required this.anak});
 
-  factory DaftarBalita.fromJson(Map<String, dynamic> j) => DaftarBalita(
-        ringkas: RingkasBalita.fromJson(_m(j['ringkas'])),
-        balita: _l(j['balita']).map(BalitaItem.fromJson).toList(),
+  factory DaftarAnak.fromJson(Map<String, dynamic> j) => DaftarAnak(
+        ringkas: RingkasAnak.fromJson(_m(j['ringkas'])),
+        anak: _l(j['anak']).map(AnakItem.fromJson).toList(),
       );
 }
 
-class DetailBalita {
+class DetailAnak {
   final Map<String, dynamic> anak;
   final Map<String, dynamic> keluarga;
-  final BalitaItem ringkas;
+  final AnakItem ringkas;
   final List<TimbangRingkas> riwayat;
 
-  const DetailBalita({
+  const DetailAnak({
     required this.anak,
     required this.keluarga,
     required this.ringkas,
     required this.riwayat,
   });
 
-  factory DetailBalita.fromJson(Map<String, dynamic> j) => DetailBalita(
+  factory DetailAnak.fromJson(Map<String, dynamic> j) => DetailAnak(
         anak: _m(j['anak']),
         keluarga: _m(j['keluarga']),
-        ringkas: BalitaItem.fromJson(_m(j['ringkas'])),
+        ringkas: AnakItem.fromJson(_m(j['ringkas'])),
         riwayat: _l(j['riwayat']).map(TimbangRingkas.fromJson).toList(),
       );
 }
 
 class AnakBerisiko {
-  final BalitaItem balita;
+  final AnakItem anak;
   final List<String> alasan;
   final int skor;
   final String tingkat; // tinggi | sedang
 
-  const AnakBerisiko({required this.balita, required this.alasan, required this.skor, required this.tingkat});
+  const AnakBerisiko({required this.anak, required this.alasan, required this.skor, required this.tingkat});
 
   factory AnakBerisiko.fromJson(Map<String, dynamic> j) => AnakBerisiko(
-        balita: BalitaItem.fromJson(j),
+        anak: AnakItem.fromJson(j),
         alasan: _ls(j['alasan']),
         skor: _i(j['skor']),
         tingkat: _s(j['tingkat']),
@@ -450,11 +450,11 @@ class DaftarBerisiko {
 // SERVICE
 // ============================================================================
 
-class BalitaService {
+class AnakService {
   /// [prefix] '/sekretaris', '/kader', atau '/bidan'.
   final String prefix;
 
-  const BalitaService(this.prefix);
+  const AnakService(this.prefix);
 
   String _pesanError(DioException e) {
     final data = e.response?.data;
@@ -471,48 +471,14 @@ class BalitaService {
 
   Map<String, dynamic> _data(dynamic root) => _m((root is Map && root.containsKey('data')) ? root['data'] : root);
 
-  Future<DaftarBalita> daftar({String cari = '', bool semua = false}) async {
+  Future<DaftarAnak> daftar({String cari = '', bool semua = false}) async {
     try {
       final res = await ApiClient.dio.get(
-        '$prefix/balita',
+        '$prefix/semua-anak',
         queryParameters: {if (cari.isNotEmpty) 'cari': cari, if (semua) 'semua': '1'},
         options: Options(receiveTimeout: const Duration(seconds: 20)),
       );
-      return DaftarBalita.fromJson(_data(res.data));
-    } on DioException catch (e) {
-      throw Exception(_pesanError(e));
-    }
-  }
-
-  /// Anak yang sudah diarsipkan (pindah, meninggal, lulus balita), terbaru di atas.
-  Future<DaftarBalita> daftarArsip({String cari = ''}) async {
-    try {
-      final res = await ApiClient.dio.get(
-        '$prefix/balita',
-        queryParameters: {'arsip': '1', if (cari.isNotEmpty) 'cari': cari},
-        options: Options(receiveTimeout: const Duration(seconds: 20)),
-      );
-      return DaftarBalita.fromJson(_data(res.data));
-    } on DioException catch (e) {
-      throw Exception(_pesanError(e));
-    }
-  }
-
-  /// Kader: arsipkan anak. [alasan]: pindah | meninggal | lainnya. [tanggal]: YYYY-MM-DD.
-  Future<void> arsipkan(String anakId,
-      {required String alasan, required String tanggal, String keterangan = ''}) async {
-    try {
-      await ApiClient.dio.put('$prefix/balita/$anakId/arsip',
-          data: {'alasan': alasan, 'tanggal': tanggal, 'keterangan': keterangan.trim()});
-    } on DioException catch (e) {
-      throw Exception(_pesanError(e));
-    }
-  }
-
-  /// Kader: aktifkan kembali anak arsip (bukan lulus balita).
-  Future<void> aktifkan(String anakId) async {
-    try {
-      await ApiClient.dio.put('$prefix/balita/$anakId/aktifkan');
+      return DaftarAnak.fromJson(_data(res.data));
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }
@@ -522,7 +488,7 @@ class BalitaService {
   Future<DaftarBerisiko> berisiko() async {
     try {
       final res = await ApiClient.dio.get(
-        '$prefix/balita-berisiko',
+        '$prefix/anak-berisiko',
         options: Options(receiveTimeout: const Duration(seconds: 20)),
       );
       return DaftarBerisiko.fromJson(_data(res.data));
@@ -531,10 +497,10 @@ class BalitaService {
     }
   }
 
-  Future<DetailBalita> detail(String anakId) async {
+  Future<DetailAnak> detail(String anakId) async {
     try {
-      final res = await ApiClient.dio.get('$prefix/balita/$anakId');
-      return DetailBalita.fromJson(_data(res.data));
+      final res = await ApiClient.dio.get('$prefix/semua-anak/$anakId');
+      return DetailAnak.fromJson(_data(res.data));
     } on DioException catch (e) {
       throw Exception(_pesanError(e));
     }

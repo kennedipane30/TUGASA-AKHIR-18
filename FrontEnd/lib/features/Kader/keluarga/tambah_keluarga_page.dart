@@ -428,7 +428,7 @@ class _TambahKeluargaPageState extends State<TambahKeluargaPage> {
         KartuBagian(
           judul: 'Data Anak',
           kanan: '${_anak.length} anak',
-          sub: 'Tambahkan semua balita dalam keluarga ini.',
+          sub: 'Tambahkan semua anak dalam keluarga ini.',
           child: Column(
             children: [
               if (_anak.isEmpty)

@@ -580,7 +580,7 @@ class _OrangTuaPendaftaranPageState
                             'Belum ada jadwal posyandu mendatang. Pendaftaran dapat dilakukan setelah admin menerbitkan jadwal.',
                       )
                     else
-                      // Satu kartu: jadwal, balita terpilih, dan informasi penting.
+                      // Satu kartu: jadwal, anak terpilih, dan informasi penting.
                       _kartuPendaftaran(j),
                   ],
                 ),
@@ -649,7 +649,7 @@ class _OrangTuaPendaftaranPageState
   }
 
   // -------------------------------------------------------------------------
-  // KARTU PENDAFTARAN: satu kartu putih berbayang (jadwal + balita + informasi)
+  // KARTU PENDAFTARAN: satu kartu putih berbayang (jadwal + anak + informasi)
   // -------------------------------------------------------------------------
   Widget _pemisahDalam() => Container(
         height: 1,
@@ -700,7 +700,7 @@ class _OrangTuaPendaftaranPageState
           ),
           _pemisahDalam(),
 
-          // Balita terpilih
+          // Anak terpilih
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             child: a == null
@@ -708,7 +708,7 @@ class _OrangTuaPendaftaranPageState
                     'Belum ada data anak. Lengkapi data keluarga di beranda terlebih dahulu.',
                     style: TextStyle(fontSize: 15.5, height: 1.4, color: AppColors.teksRedup),
                   )
-                : _bagianBalita(j, a),
+                : _bagianAnak(j, a),
           ),
           _pemisahDalam(),
 
@@ -736,7 +736,7 @@ class _OrangTuaPendaftaranPageState
     );
   }
 
-  Widget _bagianBalita(JadwalTerdekatData j, AnakStatusJadwal a) {
+  Widget _bagianAnak(JadwalTerdekatData j, AnakStatusJadwal a) {
     final (label, _, fg) = labelStatusHadir(a.statusTampil);
     final banyak = j.anak.length > 1;
 
@@ -745,7 +745,7 @@ class _OrangTuaPendaftaranPageState
       children: [
         Row(
           children: [
-            Expanded(child: _labelBagian('BALITA')),
+            Expanded(child: _labelBagian('ANAK')),
             if (banyak)
               InkWell(
                 onTap: _sibuk != null
@@ -961,7 +961,7 @@ class _OrangTuaPendaftaranPageState
     }
 
     return _tombolUtama(
-      teks: proses ? 'Memproses...' : 'Daftarkan Balita Ini',
+      teks: proses ? 'Memproses...' : 'Daftarkan Anak Ini',
       aktif: a.bolehDaftar && !lock,
       onTap: (!a.bolehDaftar || lock)
           ? () => _snack(

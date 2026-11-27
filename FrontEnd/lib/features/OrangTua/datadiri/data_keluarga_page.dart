@@ -182,7 +182,7 @@ class _KartuLengkapiKeluargaState extends State<KartuLengkapiKeluarga> {
               const SizedBox(height: 10),
               _tombol(
                 judul: _jumlahAnak > 0 ? 'Data Anak ($_jumlahAnak)' : 'Data Anak',
-                sub: 'Balita & Tumbuh Kembang',
+                sub: 'Anak & Tumbuh Kembang',
                 onTap: _bukaAnak,
               ),
             ],

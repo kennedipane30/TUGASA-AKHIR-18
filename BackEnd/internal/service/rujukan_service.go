@@ -15,7 +15,7 @@ import (
 )
 
 // ============================================================================
-// RUJUKAN BALITA (bidan membuat, orang tua melihat)
+// RUJUKAN ANAK (bidan membuat, orang tua melihat)
 //
 // Bidan memilih anak -> data anak, orang tua, dan pemeriksaan terakhir terisi
 // otomatis -> bidan mengisi keluhan, diagnosis, tindakan, tujuan -> surat

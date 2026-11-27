@@ -55,10 +55,10 @@ func keAnak(i int, err error) error {
 	return err
 }
 
-// cekUsiaBalita: kader hanya mendaftarkan balita (0-59 bulan).
-func cekUsiaBalita(a *models.Anak) error {
-	if usiaBulan(a.TanggalLahir, hariIni()) > batasUsiaBalita {
-		return invalid("usia anak lebih dari 59 bulan (bukan balita)")
+// cekUsiaAnak: kader hanya mendaftarkan anak (0-59 bulan).
+func cekUsiaAnak(a *models.Anak) error {
+	if usiaBulan(a.TanggalLahir, hariIni()) > batasUsiaAnak {
+		return invalid("usia anak lebih dari 59 bulan (melewati batas usia layanan)")
 	}
 	return nil
 }
@@ -158,7 +158,7 @@ func (s *KaderKeluargaService) Tambah(pos string, in TambahKeluargaInput) (*Kelu
 		if err != nil {
 			return nil, keAnak(i, err)
 		}
-		if err := cekUsiaBalita(a); err != nil {
+		if err := cekUsiaAnak(a); err != nil {
 			return nil, keAnak(i, err)
 		}
 		if a.NIK != nil {
@@ -257,7 +257,7 @@ func (s *KaderKeluargaService) TambahAnak(pos string, kid uuid.UUID, in AnakInpu
 	if err != nil {
 		return nil, err
 	}
-	if err := cekUsiaBalita(a); err != nil {
+	if err := cekUsiaAnak(a); err != nil {
 		return nil, err
 	}
 	return s.klg.TambahAnak(uid, in)

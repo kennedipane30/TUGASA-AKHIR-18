@@ -8,8 +8,8 @@ import 'keluarga.dart';
 ///  - Data akun (nama, NIK, No. HP) hanya ditampilkan (tidak diubah di sini).
 ///  - Data keluarga (ibu, alamat, suami/ayah) dapat diubah lalu disimpan.
 ///  - Data anak dapat ditambah dan diubah (tidak dihapus, demi riwayat pemeriksaan).
-///  - Hanya anak aktif yang ditampilkan. Anak arsip (pindah, meninggal, lulus balita)
-///    dilihat dan dikelola di Semua Balita > Diarsipkan.
+///  - Hanya anak aktif yang ditampilkan. Anak arsip (pindah, meninggal, lulus posyandu)
+///    hanya dilihat dan dikelola orang tua di Data Keluarga > Data Anak.
 class EditKeluargaPage extends StatefulWidget {
   final String keluargaId;
   const EditKeluargaPage({super.key, required this.keluargaId});

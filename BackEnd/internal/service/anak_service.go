@@ -15,20 +15,20 @@ import (
 )
 
 // ============================================================================
-// SEMUA BALITA
+// SEMUA ANAK
 //
-// Daftar seluruh balita (0-59 bulan) di posyandu petugas beserta ringkasan
+// Daftar seluruh anak (0-59 bulan) di posyandu petugas beserta ringkasan
 // penimbangan terakhir, status gizi, status N/T (KBM), 2T/BGM, dan imunisasi.
 // Dipakai sekretaris, kader, dan bidan (hanya posyandunya sendiri).
 // ============================================================================
 
-type BalitaService struct {
-	repo   *repository.BalitaRepository
+type AnakService struct {
+	repo   *repository.AnakRepository
 	imunisasi *repository.ImunisasiRepository
 }
 
-func NewBalitaService(repo *repository.BalitaRepository, imunisasi *repository.ImunisasiRepository) *BalitaService {
-	return &BalitaService{repo: repo, imunisasi: imunisasi}
+func NewAnakService(repo *repository.AnakRepository, imunisasi *repository.ImunisasiRepository) *AnakService {
+	return &AnakService{repo: repo, imunisasi: imunisasi}
 }
 
 type TimbangRingkas struct {
@@ -93,7 +93,7 @@ type KunjunganRingkas struct {
 	Suplemen           []PemberianRingkas   `json:"suplemen"`
 }
 
-type BalitaItem struct {
+type AnakItem struct {
 	AnakRekap
 	Status           string          `json:"status"`
 	TanggalArsip     string          `json:"tanggal_arsip,omitempty"` // YYYY-MM-DD, hanya anak arsip
@@ -105,7 +105,7 @@ type BalitaItem struct {
 	Imunisasi           RingkasanImunisasi `json:"vaksin"`
 }
 
-type RingkasBalita struct {
+type RingkasAnak struct {
 	Total       int `json:"total"`
 	LakiLaki    int `json:"laki_laki"`
 	Perempuan   int `json:"perempuan"`
@@ -119,16 +119,16 @@ type RingkasBalita struct {
 	BelumPernah int `json:"belum_pernah"`
 }
 
-type DaftarBalitaResp struct {
+type DaftarAnakResp struct {
 	Posyandu string        `json:"posyandu"`
-	Ringkas  RingkasBalita `json:"ringkas"`
-	Balita   []BalitaItem  `json:"balita"`
+	Ringkas  RingkasAnak `json:"ringkas"`
+	Anak   []AnakItem  `json:"anak"`
 }
 
-type DetailBalitaResp struct {
+type DetailAnakResp struct {
 	Anak     *models.Anak     `json:"anak"`
 	Keluarga *models.Keluarga `json:"keluarga"`
-	Ringkas  BalitaItem       `json:"ringkas"`
+	Ringkas  AnakItem       `json:"ringkas"`
 	Riwayat  []TimbangRingkas `json:"riwayat"`
 }
 
@@ -162,7 +162,7 @@ func timbangRingkas(lahir time.Time, u *models.Pengukuran, g *models.StatusGizi,
 	return t
 }
 
-type dataBalita struct {
+type dataAnak struct {
 	ukur   map[uuid.UUID][]models.Pengukuran
 	gizi   map[uuid.UUID]models.StatusGizi
 	nilai  map[uuid.UUID]models.PenilaianTimbang
@@ -170,7 +170,7 @@ type dataBalita struct {
 	master []models.JadwalImunisasi
 }
 
-func (s *BalitaService) muatData(anak []models.Anak) (*dataBalita, error) {
+func (s *AnakService) muatData(anak []models.Anak) (*dataAnak, error) {
 	ids := make([]uuid.UUID, 0, len(anak))
 	for _, a := range anak {
 		ids = append(ids, a.ID)
@@ -179,7 +179,7 @@ func (s *BalitaService) muatData(anak []models.Anak) (*dataBalita, error) {
 	if err != nil {
 		return nil, err
 	}
-	d := &dataBalita{
+	d := &dataAnak{
 		ukur:   map[uuid.UUID][]models.Pengukuran{},
 		gizi:   map[uuid.UUID]models.StatusGizi{},
 		nilai:  map[uuid.UUID]models.PenilaianTimbang{},
@@ -217,10 +217,10 @@ func (s *BalitaService) muatData(anak []models.Anak) (*dataBalita, error) {
 	return d, nil
 }
 
-func (d *dataBalita) item(a *models.Anak, hari time.Time) BalitaItem {
+func (d *dataAnak) item(a *models.Anak, hari time.Time) AnakItem {
 	lahir := tglRekap(a.TanggalLahir)
 	u := usiaBulan(lahir, hari)
-	it := BalitaItem{
+	it := AnakItem{
 		AnakRekap: anakRekap(a, hari), Status: a.Status, KelompokUsia: kelompokUsia(u),
 		BulanTidakDatang: -1, AlasanArsip: a.AlasanArsip,
 	}
@@ -247,9 +247,9 @@ func (d *dataBalita) item(a *models.Anak, hari time.Time) BalitaItem {
 	return it
 }
 
-// Daftar: semua balita aktif berusia 0-59 bulan di posyandu [pos].
+// Daftar: semua anak aktif berusia 0-59 bulan di posyandu [pos].
 // [cari] menyaring nama; [semua] = true menyertakan anak non-aktif atau di atas 59 bulan.
-func (s *BalitaService) Daftar(pos, cari string, semua bool) (*DaftarBalitaResp, error) {
+func (s *AnakService) Daftar(pos, cari string, semua bool) (*DaftarAnakResp, error) {
 	if pos == "" {
 		return nil, terlarang("akun belum terhubung ke posyandu")
 	}
@@ -265,7 +265,7 @@ func (s *BalitaService) Daftar(pos, cari string, semua bool) (*DaftarBalitaResp,
 		if lahir.After(hari) {
 			continue
 		}
-		if !semua && (a.Status != "aktif" || usiaBulan(lahir, hari) > batasUsiaBalita) {
+		if !semua && (a.Status != "aktif" || usiaBulan(lahir, hari) > batasUsiaAnak) {
 			continue
 		}
 		if cari != "" && !strings.Contains(strings.ToLower(a.Nama), cari) {
@@ -277,11 +277,11 @@ func (s *BalitaService) Daftar(pos, cari string, semua bool) (*DaftarBalitaResp,
 	if err != nil {
 		return nil, err
 	}
-	out := &DaftarBalitaResp{Posyandu: pos, Balita: make([]BalitaItem, 0, len(pilih))}
+	out := &DaftarAnakResp{Posyandu: pos, Anak: make([]AnakItem, 0, len(pilih))}
 	r := &out.Ringkas
 	for i := range pilih {
 		it := d.item(&pilih[i], hari)
-		out.Balita = append(out.Balita, it)
+		out.Anak = append(out.Anak, it)
 		r.Total++
 		if it.JenisKelamin == "P" {
 			r.Perempuan++
@@ -316,51 +316,14 @@ func (s *BalitaService) Daftar(pos, cari string, semua bool) (*DaftarBalitaResp,
 			r.ImunisasiTelat++
 		}
 	}
-	sort.SliceStable(out.Balita, func(i, j int) bool {
-		return strings.ToLower(out.Balita[i].Nama) < strings.ToLower(out.Balita[j].Nama)
+	sort.SliceStable(out.Anak, func(i, j int) bool {
+		return strings.ToLower(out.Anak[i].Nama) < strings.ToLower(out.Anak[j].Nama)
 	})
 	return out, nil
 }
 
-// DaftarArsip: anak yang sudah diarsipkan (pindah, meninggal, lulus balita) di
-// posyandu [pos], terbaru diarsipkan di atas. Riwayatnya tetap dapat dibuka.
-func (s *BalitaService) DaftarArsip(pos, cari string) (*DaftarBalitaResp, error) {
-	if pos == "" {
-		return nil, terlarang("akun belum terhubung ke posyandu")
-	}
-	anak, err := s.repo.AnakPosyandu(pos)
-	if err != nil {
-		return nil, err
-	}
-	cari = strings.ToLower(strings.TrimSpace(cari))
-	pilih := make([]models.Anak, 0)
-	for _, a := range anak {
-		if a.Status != models.StatusAnakArsip {
-			continue
-		}
-		if cari != "" && !strings.Contains(strings.ToLower(a.Nama), cari) {
-			continue
-		}
-		pilih = append(pilih, a)
-	}
-	d, err := s.muatData(pilih)
-	if err != nil {
-		return nil, err
-	}
-	hari := hariIni()
-	out := &DaftarBalitaResp{Posyandu: pos, Balita: make([]BalitaItem, 0, len(pilih))}
-	for i := range pilih {
-		out.Balita = append(out.Balita, d.item(&pilih[i], hari))
-	}
-	out.Ringkas.Total = len(out.Balita)
-	sort.SliceStable(out.Balita, func(i, j int) bool {
-		return out.Balita[i].TanggalArsip > out.Balita[j].TanggalArsip
-	})
-	return out, nil
-}
-
-// Detail: profil, keluarga, ringkasan, dan seluruh riwayat penimbangan satu balita.
-func (s *BalitaService) Detail(pos string, anakID uuid.UUID) (*DetailBalitaResp, error) {
+// Detail: profil, keluarga, ringkasan, dan seluruh riwayat penimbangan satu anak.
+func (s *AnakService) Detail(pos string, anakID uuid.UUID) (*DetailAnakResp, error) {
 	if pos == "" {
 		return nil, terlarang("akun belum terhubung ke posyandu")
 	}
@@ -382,7 +345,7 @@ func (s *BalitaService) Detail(pos string, anakID uuid.UUID) (*DetailBalitaResp,
 	if err != nil {
 		return nil, err
 	}
-	out := &DetailBalitaResp{Anak: a, Ringkas: d.item(a, hariIni()), Riwayat: []TimbangRingkas{}}
+	out := &DetailAnakResp{Anak: a, Ringkas: d.item(a, hariIni()), Riwayat: []TimbangRingkas{}}
 	if k, err := s.repo.GetKeluarga(a.KeluargaID); err == nil {
 		out.Keluarga = k
 	}
@@ -410,7 +373,7 @@ func (s *BalitaService) Detail(pos string, anakID uuid.UUID) (*DetailBalitaResp,
 
 // muatKunjungan: catatan kader, catatan bidan, imunisasi, dan suplemen
 // untuk setiap pengukuran (dipetakan per ID pengukuran).
-func (s *BalitaService) muatKunjungan(ukur []models.Pengukuran) (map[uuid.UUID]*KunjunganRingkas, error) {
+func (s *AnakService) muatKunjungan(ukur []models.Pengukuran) (map[uuid.UUID]*KunjunganRingkas, error) {
 	out := map[uuid.UUID]*KunjunganRingkas{}
 	if len(ukur) == 0 {
 		return out, nil
@@ -485,7 +448,7 @@ func (s *BalitaService) muatKunjungan(ukur []models.Pengukuran) (map[uuid.UUID]*
 // ============================================================================
 // DAFTAR ANAK BERISIKO (deteksi dini, untuk bidan)
 //
-// Berdasarkan penimbangan terakhir setiap balita aktif:
+// Berdasarkan penimbangan terakhir setiap anak aktif:
 //   Risiko tinggi : gizi buruk (BB/TB < -3 SD), BGM (BB/U < -3 SD), 2T,
 //                   sangat pendek (TB/U < -3 SD)
 //   Risiko sedang : gizi kurang (BB/TB < -2 SD), pendek (TB/U < -2 SD),
@@ -496,7 +459,7 @@ func (s *BalitaService) muatKunjungan(ukur []models.Pengukuran) (map[uuid.UUID]*
 // ============================================================================
 
 type AnakBerisiko struct {
-	BalitaItem
+	AnakItem
 	Alasan  []string `json:"alasan"`
 	Skor    int      `json:"skor"`
 	Tingkat string   `json:"tingkat"` // tinggi | sedang
@@ -568,15 +531,15 @@ func nilaiRisiko(t *TimbangRingkas) ([]string, int, bool) {
 	return alasan, skor, tinggi
 }
 
-// Berisiko: balita aktif di posyandu [pos] dengan risiko gizi/pertumbuhan.
-func (s *BalitaService) Berisiko(pos string) (*DaftarBerisikoResp, error) {
+// Berisiko: anak aktif di posyandu [pos] dengan risiko gizi/pertumbuhan.
+func (s *AnakService) Berisiko(pos string) (*DaftarBerisikoResp, error) {
 	daftar, err := s.Daftar(pos, "", false)
 	if err != nil {
 		return nil, err
 	}
 	out := &DaftarBerisikoResp{Posyandu: pos, Anak: []AnakBerisiko{}}
 	r := &out.Ringkas
-	for _, b := range daftar.Balita {
+	for _, b := range daftar.Anak {
 		if b.Terakhir == nil {
 			continue
 		}
@@ -584,7 +547,7 @@ func (s *BalitaService) Berisiko(pos string) (*DaftarBerisikoResp, error) {
 		if skor == 0 {
 			continue
 		}
-		it := AnakBerisiko{BalitaItem: b, Alasan: alasan, Skor: skor, Tingkat: "sedang"}
+		it := AnakBerisiko{AnakItem: b, Alasan: alasan, Skor: skor, Tingkat: "sedang"}
 		if tinggi {
 			it.Tingkat = "tinggi"
 			r.Tinggi++

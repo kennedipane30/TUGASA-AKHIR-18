@@ -290,7 +290,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _kartu() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+      padding: EdgeInsets.fromLTRB(20, 14, 20, 24 + MediaQuery.of(context).padding.bottom),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -313,7 +313,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      'Khusus Orang Tua / Wali Balita',
+                      'Khusus Orang Tua / Wali Anak',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
@@ -644,18 +644,22 @@ class _RegisterPageState extends State<RegisterPage> {
           bottom: false,
           child: Form(
             key: _key,
-            child: CustomScrollView(
-              slivers: [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Column(
-                    children: [
-                      _kepala(),
-                      Expanded(child: _kartu()),
-                    ],
+            // Halaman dapat digulir; kartu putih mengisi sisa layar tanpa overflow.
+            child: LayoutBuilder(
+              builder: (context, batas) => SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: batas.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        _kepala(),
+                        Expanded(child: _kartu()),
+                      ],
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),

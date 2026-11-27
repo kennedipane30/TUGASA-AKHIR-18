@@ -8,21 +8,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AnakArsipHandler: kader mengarsipkan / mengaktifkan kembali data anak.
+// AnakArsipHandler: orang tua mengarsipkan / mengaktifkan kembali data anaknya
+// dari Data Keluarga > Data Anak.
 type AnakArsipHandler struct{ svc *service.AnakArsipService }
 
 func NewAnakArsipHandler(s *service.AnakArsipService) *AnakArsipHandler {
 	return &AnakArsipHandler{s}
 }
 
-// PUT /kader/balita/:anak_id/arsip
+// PUT /keluarga/anak/:id/arsip
 // Body: {alasan: pindah|meninggal|lainnya, tanggal: YYYY-MM-DD, keterangan}
 func (h *AnakArsipHandler) Arsipkan(c *gin.Context) {
-	pos, ok := posyanduCtx(c)
+	uid, ok := userID(c)
 	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "tidak terautentikasi"})
 		return
 	}
-	anakID, ok := idParam(c, "anak_id")
+	anakID, ok := paramID(c)
 	if !ok {
 		return
 	}
@@ -31,7 +33,7 @@ func (h *AnakArsipHandler) Arsipkan(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "alasan dan tanggal wajib diisi"})
 		return
 	}
-	a, err := h.svc.Arsipkan(pos, anakID, in)
+	a, err := h.svc.Arsipkan(uid, anakID, in)
 	if err != nil {
 		tulisError(c, err)
 		return
@@ -39,17 +41,18 @@ func (h *AnakArsipHandler) Arsipkan(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "data anak diarsipkan", "data": a})
 }
 
-// PUT /kader/balita/:anak_id/aktifkan
+// PUT /keluarga/anak/:id/aktifkan
 func (h *AnakArsipHandler) Aktifkan(c *gin.Context) {
-	pos, ok := posyanduCtx(c)
+	uid, ok := userID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "tidak terautentikasi"})
+		return
+	}
+	anakID, ok := paramID(c)
 	if !ok {
 		return
 	}
-	anakID, ok := idParam(c, "anak_id")
-	if !ok {
-		return
-	}
-	a, err := h.svc.Aktifkan(pos, anakID)
+	a, err := h.svc.Aktifkan(uid, anakID)
 	if err != nil {
 		tulisError(c, err)
 		return

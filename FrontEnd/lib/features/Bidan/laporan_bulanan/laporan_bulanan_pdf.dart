@@ -162,10 +162,10 @@ Future<Uint8List> buatPdfLaporanBulananBidan({
     _bagian('I', 'Kegiatan dan Kehadiran'),
     _tabel([
       ['Uraian', 'Jumlah'],
-      ['Balita sasaran (0-59 bulan)', '${k.sasaran}'],
-      ['Balita didaftarkan ke sesi', '${k.didaftarkan}'],
-      ['Balita hadir (check-in)', '${k.hadir}'],
-      ['Balita tidak hadir', '${k.tidakHadir}'],
+      ['Anak sasaran (0-59 bulan)', '${k.sasaran}'],
+      ['Anak didaftarkan ke sesi', '${k.didaftarkan}'],
+      ['Anak hadir (check-in)', '${k.hadir}'],
+      ['Anak tidak hadir', '${k.tidakHadir}'],
       ['Persentase kehadiran', _persen(k.persenHadir)],
     ], [130, 44], tengah: {1}),
 
@@ -173,22 +173,22 @@ Future<Uint8List> buatPdfLaporanBulananBidan({
     _bagian('II', 'Penimbangan (SKDN)'),
     _tabel([
       ['Kode', 'Keterangan', 'Jumlah', 'Capaian'],
-      ['S', 'Seluruh balita di wilayah posyandu', '${data.skdn.s}', '-'],
-      ['K', 'Balita yang memiliki Buku KIA / terdaftar', '${data.skdn.k}', 'K/S = ${_persen(data.skdn.persenKS)}'],
-      ['D', 'Balita yang ditimbang bulan ini', '${data.skdn.d}', 'D/S = ${_persen(data.skdn.persenDS)}'],
-      ['N', 'Balita yang berat badannya naik', '${data.skdn.n}', 'N/D = ${_persen(data.skdn.persenND)}'],
+      ['S', 'Seluruh anak di wilayah posyandu', '${data.skdn.s}', '-'],
+      ['K', 'Anak yang memiliki Buku KIA / terdaftar', '${data.skdn.k}', 'K/S = ${_persen(data.skdn.persenKS)}'],
+      ['D', 'Anak yang ditimbang bulan ini', '${data.skdn.d}', 'D/S = ${_persen(data.skdn.persenDS)}'],
+      ['N', 'Anak yang berat badannya naik', '${data.skdn.n}', 'N/D = ${_persen(data.skdn.persenND)}'],
     ], [16, 98, 25, 35], tengah: {0, 2, 3}),
 
     // III. Status gizi
-    _bagian('III', 'Status Gizi Balita yang Ditimbang'),
+    _bagian('III', 'Status Gizi Anak yang Ditimbang'),
     _tabel([
       ['Kategori', 'Indeks', 'Jumlah', 'Persen'],
-      ['Balita diukur bulan ini', '-', '${data.gizi.diukur}', '-'],
+      ['Anak diukur bulan ini', '-', '${data.gizi.diukur}', '-'],
       for (final g in data.gizi.kategori) [g.label, g.indeks, '${g.jumlah}', _persen(g.persen)],
       ['2T (dua kali tidak naik)', 'Penimbangan', '${data.skdn.duaT}', '-'],
       ['BGM (bawah garis merah)', 'Penimbangan', '${data.skdn.bgm}', '-'],
     ], [62, 56, 26, 30], tengah: {2, 3}),
-    _catatan('Satu balita dapat masuk lebih dari satu kategori. Persen dihitung dari balita yang diukur.'),
+    _catatan('Satu anak dapat masuk lebih dari satu kategori. Persen dihitung dari anak yang diukur.'),
 
     // IV. Imunisasi
     _bagian('IV', 'Imunisasi yang Diberikan'),
@@ -218,24 +218,24 @@ Future<Uint8List> buatPdfLaporanBulananBidan({
       ], [130, 44], tengah: {1}),
     _catatan('Vitamin A dosis tinggi dan obat cacing umumnya diberikan pada bulan Februari dan Agustus.'),
 
-    // VI. Balita berisiko
-    _bagian('VI', 'Daftar Balita Berisiko'),
-    if (data.balitaBerisiko.isEmpty)
+    // VI. Anak berisiko
+    _bagian('VI', 'Daftar Anak Berisiko'),
+    if (data.anakBerisiko.isEmpty)
       _tabel([
         ['Keterangan'],
-        ['Tidak ada balita berisiko pada bulan ini'],
+        ['Tidak ada anak berisiko pada bulan ini'],
       ], [174])
     else
       _tabel([
-        ['No', 'Nama balita', 'L/P', 'Umur', 'Masalah', 'Saran tindak lanjut'],
-        for (var i = 0; i < data.balitaBerisiko.length; i++)
+        ['No', 'Nama anak', 'L/P', 'Umur', 'Masalah', 'Saran tindak lanjut'],
+        for (var i = 0; i < data.anakBerisiko.length; i++)
           [
             '${i + 1}',
-            data.balitaBerisiko[i].nama,
-            data.balitaBerisiko[i].jk,
-            data.balitaBerisiko[i].usiaTeks,
-            data.balitaBerisiko[i].masalah.join(', '),
-            _saranTindakLanjut(data.balitaBerisiko[i].masalah),
+            data.anakBerisiko[i].nama,
+            data.anakBerisiko[i].jk,
+            data.anakBerisiko[i].usiaTeks,
+            data.anakBerisiko[i].masalah.join(', '),
+            _saranTindakLanjut(data.anakBerisiko[i].masalah),
           ],
       ], [9, 36, 10, 22, 47, 50], tengah: {0, 2}),
 

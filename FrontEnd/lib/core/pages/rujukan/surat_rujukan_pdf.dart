@@ -8,7 +8,7 @@ import '../../utils/posyandu.dart';
 import '../../utils/no_hp.dart';
 
 // ============================================================================
-// PDF SURAT RUJUKAN BALITA
+// PDF SURAT RUJUKAN ANAK
 // Hitam putih, tabel transparan (garis hitam, tanpa warna isi),
 // format seperti surat rujukan rumah sakit / puskesmas.
 // Dipakai bidan & orang tua.
@@ -142,7 +142,7 @@ Future<Uint8List> buatPdfSuratRujukan(RujukanDetail r) async {
     _teks(_isi(r.tujuan), tebal: true),
     _teks('di tempat'),
     pw.SizedBox(height: 8),
-    _teks('Dengan hormat, mohon pemeriksaan dan penanganan lebih lanjut terhadap balita berikut:'),
+    _teks('Dengan hormat, mohon pemeriksaan dan penanganan lebih lanjut terhadap anak berikut:'),
 
     _bagian('I', 'Identitas Anak'),
     _tabelData([

@@ -1,7 +1,7 @@
 package service
 
 // Pendataan kader: antrean anak yang sudah check-in, dan pencatatan pengukuran
-// balita (berat, tinggi, lingkar kepala, LILA, keluhan).
+// anak (berat, tinggi, lingkar kepala, LILA, keluhan).
 
 import (
 	"errors"
@@ -17,7 +17,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// Fitur kader: antrean pendataan dan pencatatan pengukuran balita
+// Fitur kader: antrean pendataan dan pencatatan pengukuran anak
 // (berat, tinggi, lingkar kepala, LILA, keluhan).
 
 

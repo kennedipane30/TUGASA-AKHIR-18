@@ -25,7 +25,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	imunisasiRepo := repository.NewImunisasiRepository(db)
 	rekapRepo := repository.NewRekapRepository(db)
 	kbmRepo := repository.NewKbmRepository(db)
-	balitaRepo := repository.NewBalitaRepository(db)
+	anakRepo := repository.NewAnakRepository(db)
 	skdnRepo := repository.NewSkdnRepository(db)
 	logAktivitasRepo := repository.NewLogAktivitasRepository(db)
 	laporanBulananRepo := repository.NewLaporanBulananRepository(db)
@@ -59,9 +59,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 		giziSvc.HitungDataLama()
 		kbmSvc.HitungDataLama()
 	}()
-	// arsip otomatis anak yang sudah berusia 60 bulan (lulus balita), dicek setiap hari
+	// arsip otomatis anak yang sudah berusia 60 bulan (lulus posyandu), dicek setiap hari
 	anakArsipSvc := service.NewAnakArsipService(anakArsipRepo)
-	go anakArsipSvc.JalankanLulusBalita(context.Background())
+	go anakArsipSvc.JalankanLulusAnak(context.Background())
 
 	// handler
 	authH := handler.NewAuthHandler(service.NewAuthService(userRepo))
@@ -73,10 +73,10 @@ func Setup(db *gorm.DB) *gin.Engine {
 	imunisasiH := handler.NewImunisasiHandler(imunisasiSvc)
 	kpspH := handler.NewKpspHandler(service.NewKpspService(kpspRepo))
 	rekapH := handler.NewRekapHandler(service.NewRekapService(rekapRepo))
-	balitaH := handler.NewBalitaHandler(service.NewBalitaService(balitaRepo, imunisasiRepo))
+	anakH := handler.NewAnakHandler(service.NewAnakService(anakRepo, imunisasiRepo))
 	skdnH := handler.NewSkdnHandler(service.NewSkdnService(rekapRepo, skdnRepo))
 	// laporan bulanan posyandu (sekretaris & bidan)
-	// rujukan balita (bidan membuat, orang tua melihat)
+	// rujukan anak (bidan membuat, orang tua melihat)
 	rujukanSvc := service.NewRujukanService(repository.NewRujukanRepository(db))
 	rujukanSvc.SetNotifikasi(notifSvc)
 	rujukanH := handler.NewRujukanHandler(rujukanSvc)
@@ -144,13 +144,13 @@ func Setup(db *gorm.DB) *gin.Engine {
 	sekretaris.GET("/riwayat/jadwal/:id/anak", pelayananH.SekretarisRiwayatAnak)
 	sekretaris.GET("/riwayat/pendaftaran/:id", pelayananH.SekretarisRiwayatDetail)
 	sekretaris.GET("/vaksin/statistik", imunisasiH.Statistik)
-	// rekap posyandu: status gizi, Vitamin A & obat cacing, balita tidak hadir
+	// rekap posyandu: status gizi, Vitamin A & obat cacing, anak tidak hadir
 	sekretaris.GET("/rekap/gizi", rekapH.Gizi)
 	sekretaris.GET("/rekap/suplemen", rekapH.Suplemen)
 	sekretaris.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
-	// semua balita posyandu
-	sekretaris.GET("/balita", balitaH.Daftar)
-	sekretaris.GET("/balita/:anak_id", balitaH.Detail)
+	// semua anak posyandu
+	sekretaris.GET("/semua-anak", anakH.Daftar)
+	sekretaris.GET("/semua-anak/:anak_id", anakH.Detail)
 	// ringkasan penimbangan (SKDN)
 	sekretaris.GET("/skdn", skdnH.Hitung)
 	sekretaris.GET("/laporan-bulanan", laporanBulananH.Laporan)
@@ -169,6 +169,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	ortu.POST("/keluarga/anak", keluargaH.TambahAnak)
 	ortu.PUT("/keluarga/anak/:id", keluargaH.UbahAnak)
 	ortu.DELETE("/keluarga/anak/:id", keluargaH.HapusAnak)
+	ortu.PUT("/keluarga/anak/:id/arsip", anakArsipH.Arsipkan)    // pindah | meninggal | lainnya
+	ortu.PUT("/keluarga/anak/:id/aktifkan", anakArsipH.Aktifkan) // batalkan arsip
 	ortu.POST("/jadwal/:id/daftar", jadwalH.Daftar)
 	ortu.POST("/jadwal/:id/batal", jadwalH.BatalDaftar)
 	ortu.POST("/jadwal/:id/scan", jadwalH.Scan)
@@ -196,10 +198,8 @@ func Setup(db *gorm.DB) *gin.Engine {
 	kader.GET("/riwayat/jadwal/:id/anak", pelayananH.KaderRiwayatAnak)
 	kader.GET("/riwayat/pendaftaran/:id", pelayananH.KaderRiwayatDetail)
 	kader.GET("/rekap/tidak-hadir", rekapH.TidakHadir)
-	kader.GET("/balita", balitaH.Daftar)
-	kader.GET("/balita/:anak_id", balitaH.Detail)
-	kader.PUT("/balita/:anak_id/arsip", anakArsipH.Arsipkan)    // pindah | meninggal | lainnya
-	kader.PUT("/balita/:anak_id/aktifkan", anakArsipH.Aktifkan) // batalkan arsip
+	kader.GET("/semua-anak", anakH.Daftar)
+	kader.GET("/semua-anak/:anak_id", anakH.Detail)
 	// Tambahkan Akun & Data Keluarga oleh kader (orang tua tanpa akun / tanpa HP)
 	kader.GET("/cek-akun", kaderKeluargaH.CekAkun) // ?nik=&no_hp= : cek langsung saat diisi
 	kader.GET("/keluarga", kaderKeluargaH.Cari)    // ?cari= nama ibu / NIK / No. HP / nama anak
@@ -233,9 +233,9 @@ func Setup(db *gorm.DB) *gin.Engine {
 	// KPSP (skrining perkembangan): ambil 10 pertanyaan sesuai umur anak.
 	// Pengisiannya ikut tersimpan lewat PUT /bidan/pendaftaran/:id/catatan.
 	bidan.GET("/kpsp/lembar", kpspH.Lembar)
-	bidan.GET("/balita", balitaH.Daftar)
-	bidan.GET("/balita-berisiko", balitaH.Berisiko)
-	bidan.GET("/balita/:anak_id", balitaH.Detail)
+	bidan.GET("/semua-anak", anakH.Daftar)
+	bidan.GET("/anak-berisiko", anakH.Berisiko)
+	bidan.GET("/semua-anak/:anak_id", anakH.Detail)
 	// ringkasan penimbangan (SKDN)
 	bidan.GET("/skdn", skdnH.Hitung)
 	bidan.GET("/laporan-bulanan", laporanBulananH.Laporan)
@@ -249,7 +249,7 @@ func Setup(db *gorm.DB) *gin.Engine {
 	bidan.POST("/rujukan/:id/batal", rujukanH.Batal)
 	bidan.GET("/rujukan-anak", rujukanH.CariAnak)          // ?cari=nama/NIK
 	bidan.GET("/rujukan-anak/:anak_id", rujukanH.DataAnak) // data anak otomatis
-	// rekap posyandu: status gizi, Vitamin A & obat cacing, balita tidak hadir
+	// rekap posyandu: status gizi, Vitamin A & obat cacing, anak tidak hadir
 	// (sama dengan sekretaris; data dibatasi ke posyandu akun bidan)
 	bidan.GET("/rekap/gizi", rekapH.Gizi)
 	bidan.GET("/rekap/suplemen", rekapH.Suplemen)

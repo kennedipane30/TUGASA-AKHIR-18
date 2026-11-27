@@ -3,13 +3,12 @@ import 'package:flutter/services.dart';
 
 import '../../theme/app_colors.dart';
 import '../../widgets/common_widgets.dart';
-import '../../../service/balita_service.dart';
+import '../../../service/anak_service.dart';
 import '../../../features/Bidan/imunisasi/imunisasi_lihat_body.dart';
 import '../rekap/rekap_posyandu_page.dart';
-import 'arsip_balita_page.dart';
-import 'semua_balita_page.dart' show labelTimbang;
+import 'semua_anak_page.dart' show labelTimbang;
 
-/// Detail satu balita: profil, data keluarga, kondisi terakhir, dan ringkasan
+/// Detail satu anak: profil, data keluarga, kondisi terakhir, dan ringkasan
 /// imunisasi.
 ///
 /// Riwayat pemeriksaan per kunjungan tidak ditampilkan di sini karena sudah
@@ -82,13 +81,13 @@ Widget _tautan(String teks) => Text(
       ),
     );
 
-class BalitaDetailPage extends StatefulWidget {
+class AnakDetailPage extends StatefulWidget {
   final String prefix;
   final String anakId;
   final String nama;
   final bool bisaKelolaImunisasi;
 
-  const BalitaDetailPage({
+  const AnakDetailPage({
     super.key,
     required this.prefix,
     required this.anakId,
@@ -97,12 +96,12 @@ class BalitaDetailPage extends StatefulWidget {
   });
 
   @override
-  State<BalitaDetailPage> createState() => _BalitaDetailPageState();
+  State<AnakDetailPage> createState() => _AnakDetailPageState();
 }
 
-class _BalitaDetailPageState extends State<BalitaDetailPage> {
-  late final BalitaService _svc = BalitaService(widget.prefix);
-  DetailBalita? _data;
+class _AnakDetailPageState extends State<AnakDetailPage> {
+  late final AnakService _svc = AnakService(widget.prefix);
+  DetailAnak? _data;
   bool _loading = true;
   String? _error;
 
@@ -131,100 +130,6 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
         _loading = false;
       });
     }
-  }
-
-  bool get _kader => widget.prefix == '/kader';
-
-  void _snack(String pesan) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(pesan)));
-  }
-
-  /// Kader: arsipkan anak (pindah / meninggal / lainnya).
-  Future<void> _arsipkan(BalitaItem r) async {
-    final isian = await bukaFormArsip(context, nama: r.nama, lahir: r.tanggalLahir);
-    if (isian == null || !mounted) return;
-    if (!await konfirmasiArsip(context, r.nama, isian) || !mounted) return;
-    try {
-      await _svc.arsipkan(widget.anakId,
-          alasan: isian.alasan, tanggal: isian.tanggalApi, keterangan: isian.keterangan);
-      if (!mounted) return;
-      _snack('Data ${r.nama} diarsipkan');
-      await _muat();
-    } catch (e) {
-      if (mounted) _snack(e.toString().replaceFirst('Exception: ', ''));
-    }
-  }
-
-  /// Kader: aktifkan kembali anak arsip.
-  Future<void> _aktifkan(BalitaItem r) async {
-    if (!await konfirmasiAktifkan(context, r.nama) || !mounted) return;
-    try {
-      await _svc.aktifkan(widget.anakId);
-      if (!mounted) return;
-      _snack('Data ${r.nama} aktif kembali');
-      await _muat();
-    } catch (e) {
-      if (mounted) _snack(e.toString().replaceFirst('Exception: ', ''));
-    }
-  }
-
-  /// Kartu status data anak (hanya kader): tombol Arsipkan / Aktifkan kembali.
-  Widget _kartuStatus(BalitaItem r) {
-    final lulus = r.alasanArsip.startsWith('Lulus balita');
-    final Widget isi;
-    if (!r.diarsipkan) {
-      isi = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Arsipkan bila anak pindah domisili atau meninggal. Riwayat penimbangan '
-            'dan imunisasi tetap tersimpan.',
-            style: TextStyle(fontSize: 15, height: 1.4, color: AppColors.teksRedup),
-          ),
-          const SizedBox(height: 12),
-          _tombolGaris('Arsipkan Anak', Icons.archive_outlined, AppColors.merah, () => _arsipkan(r)),
-        ],
-      );
-    } else if (lulus) {
-      isi = const Text(
-        'Anak sudah berusia 5 tahun dan diarsipkan otomatis oleh sistem (lulus balita).',
-        style: TextStyle(fontSize: 15, height: 1.4, color: AppColors.teksRedup),
-      );
-    } else {
-      isi = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Aktifkan kembali bila salah arsip atau anak kembali ke desa.',
-            style: TextStyle(fontSize: 15, height: 1.4, color: AppColors.teksRedup),
-          ),
-          const SizedBox(height: 12),
-          _tombolGaris('Aktifkan Kembali', Icons.unarchive_outlined, AppColors.hijau, () => _aktifkan(r)),
-        ],
-      );
-    }
-    return _kartu(judul: 'Status Data Anak', child: isi);
-  }
-
-  Widget _tombolGaris(String label, IconData ikon, Color warna, VoidCallback onTap) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: OutlinedButton.icon(
-        onPressed: onTap,
-        icon: Icon(ikon, size: 20),
-        label: Text(label),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: warna,
-          backgroundColor: Colors.white,
-          side: BorderSide(color: warna, width: 1.4),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w600),
-        ),
-      ),
-    );
   }
 
   @override
@@ -329,7 +234,7 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
     return kata.join(' ');
   }
 
-  Widget _profil(DetailBalita d) {
+  Widget _profil(DetailAnak d) {
     final a = d.anak;
     final r = d.ringkas;
     final num? beratLahir = num.tryParse(_t(a['berat_lahir_kg']));
@@ -419,7 +324,6 @@ class _BalitaDetailPageState extends State<BalitaDetailPage> {
             ],
           ),
         ),
-        if (_kader) _kartuStatus(r),
       ],
     );
   }

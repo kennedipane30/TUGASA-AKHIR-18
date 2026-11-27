@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import '../core/config/api_client.dart';
 
 // ============================================================================
-// MODEL & SERVICE RUJUKAN BALITA (bidan & orang tua)
+// MODEL & SERVICE RUJUKAN ANAK (bidan & orang tua)
 // ============================================================================
 
 String _s(dynamic v) => v == null ? '' : v.toString();

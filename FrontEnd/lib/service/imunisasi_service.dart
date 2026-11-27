@@ -570,7 +570,7 @@ class StatistikJenisImunisasi {
 
 class StatistikImunisasi {
   final String posyandu;
-  final int jumlahBalita;
+  final int jumlahAnak;
   final int totalDiberikan;
   final int totalAnakDiimunisasi;
   final int anakJatuhTempo;
@@ -581,7 +581,7 @@ class StatistikImunisasi {
 
   const StatistikImunisasi({
     required this.posyandu,
-    required this.jumlahBalita,
+    required this.jumlahAnak,
     required this.totalDiberikan,
     required this.totalAnakDiimunisasi,
     required this.anakJatuhTempo,
@@ -593,7 +593,7 @@ class StatistikImunisasi {
 
   factory StatistikImunisasi.fromJson(Map<String, dynamic> j) => StatistikImunisasi(
         posyandu: _s(j['posyandu']),
-        jumlahBalita: _i(j['jumlah_balita']),
+        jumlahAnak: _i(j['jumlah_anak']),
         totalDiberikan: _i(j['total_diberikan']),
         totalAnakDiimunisasi: _i(j['total_anak_divaksin']),
         anakJatuhTempo: _i(j['anak_jatuh_tempo']),

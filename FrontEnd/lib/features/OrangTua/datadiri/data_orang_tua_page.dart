@@ -248,7 +248,7 @@ class DataAnak {
   // belum_ditanya | belum_pernah | dilaporkan | perlu_ditanyakan | dikonfirmasi
   String statusRiwayatImunisasi;
 
-  /// aktif | arsip (diarsipkan kader: pindah / meninggal, atau otomatis: lulus balita)
+  /// aktif | arsip (diarsipkan orang tua: pindah / meninggal, atau otomatis: lulus posyandu)
   String status;
   String tglArsip; // dd/mm/yyyy
   String alasanArsip;

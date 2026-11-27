@@ -5,8 +5,8 @@ import '../core/config/api_client.dart';
 // ============================================================================
 // MODEL RINGKASAN PENIMBANGAN (SKDN)
 //
-//   S = jumlah seluruh balita        K = balita yang punya Buku KIA
-//   D = balita yang datang ditimbang N = balita yang berat badannya naik
+//   S = jumlah seluruh anak        K = anak yang punya Buku KIA
+//   D = anak yang datang ditimbang N = anak yang berat badannya naik
 // ============================================================================
 
 String _s(dynamic v) => v == null ? '' : v.toString();
@@ -93,7 +93,7 @@ class SkdnBulan {
   }
 }
 
-/// Balita yang perlu perhatian (tidak naik, 2T, atau BGM).
+/// Anak yang perlu perhatian (tidak naik, 2T, atau BGM).
 class AnakSkdn {
   final String anakId;
   final String nama;

@@ -5,7 +5,7 @@ import 'keluarga.dart';
 
 // ============================================================================
 // FORM DATA ANAK (bottom sheet) + baris anak.
-// Aturan sama dengan halaman Data Anak orang tua; usia dibatasi balita (0-59 bln).
+// Aturan sama dengan halaman Data Anak orang tua; usia dibatasi anak (0-59 bln).
 // ============================================================================
 
 // ---------------------------------------------------------------------------
@@ -119,7 +119,7 @@ class _FormIsianAnakState extends State<_FormIsianAnak> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    // balita: 0-59 bulan
+    // anak: 0-59 bulan
     final awal = DateTime(now.year - 5, now.month, now.day).add(const Duration(days: 1));
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),

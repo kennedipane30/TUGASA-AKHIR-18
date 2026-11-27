@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/pages/balita/balita_detail_page.dart';
+import '../../../core/pages/anak/anak_detail_page.dart';
 import '../../../core/widgets/common_widgets.dart';
-import '../../../service/balita_service.dart';
+import '../../../service/anak_service.dart';
 import '../../../core/pages/rekap/rekap_posyandu_page.dart';
 
 const _hijauTua = Color(0xFF065F46);
@@ -13,17 +13,17 @@ const _teksGelap = Color(0xFF1F2937);
 /// Bidan: daftar anak berisiko (deteksi dini) berdasarkan penimbangan terakhir.
 /// Risiko tinggi: gizi buruk, BGM, 2T, sangat pendek.
 /// Risiko sedang: gizi kurang, pendek, BB kurang, tidak naik (T), gizi lebih.
-class BalitaBerisikoPage extends StatefulWidget {
-  const BalitaBerisikoPage({super.key});
+class AnakBerisikoPage extends StatefulWidget {
+  const AnakBerisikoPage({super.key});
 
   @override
-  State<BalitaBerisikoPage> createState() => _BalitaBerisikoPageState();
+  State<AnakBerisikoPage> createState() => _AnakBerisikoPageState();
 }
 
-class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
+class _AnakBerisikoPageState extends State<AnakBerisikoPage> {
   static const _filter = ['Semua', 'Risiko tinggi', '2T / BGM', 'Stunting', 'Wasting'];
 
-  final _svc = const BalitaService('/bidan');
+  final _svc = const AnakService('/bidan');
   DaftarBerisiko? _data;
   bool _loading = true;
   String? _error;
@@ -58,12 +58,12 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
 
   List<AnakBerisiko> _saring(List<AnakBerisiko> list) {
     bool ada(AnakBerisiko a, List<String> kata) =>
-        a.balita.terakhir?.masalah.any(kata.contains) ?? false;
+        a.anak.terakhir?.masalah.any(kata.contains) ?? false;
     switch (_aktif) {
       case 'Risiko tinggi':
         return list.where((a) => a.tinggi).toList();
       case '2T / BGM':
-        return list.where((a) => a.balita.perluPerhatian).toList();
+        return list.where((a) => a.anak.perluPerhatian).toList();
       case 'Stunting':
         return list.where((a) => ada(a, const ['Pendek', 'Sangat pendek'])).toList();
       case 'Wasting':
@@ -76,10 +76,10 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BalitaDetailPage(
+        builder: (_) => AnakDetailPage(
           prefix: '/bidan',
-          anakId: a.balita.anakId,
-          nama: a.balita.nama,
+          anakId: a.anak.anakId,
+          nama: a.anak.nama,
           bisaKelolaImunisasi: true,
         ),
       ),
@@ -144,7 +144,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
   List<Widget> _isi(DaftarBerisiko d) {
     final r = d.ringkas;
     final daftar = _saring(d.anak);
-    final duaTBgm = d.anak.where((a) => a.balita.perluPerhatian).length;
+    final duaTBgm = d.anak.where((a) => a.anak.perluPerhatian).length;
     return [
       KartuRekap(
         title: 'Ringkasan Risiko',
@@ -164,7 +164,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
             _barisJumlah('Risiko sedang', r.sedang, AppColors.kuning),
             const SizedBox(height: 10),
             const Text(
-              'Dinilai dari penimbangan terakhir setiap balita aktif, sesuai Permenkes No. 2 Tahun 2020 dan KBM Buku KIA.',
+              'Dinilai dari penimbangan terakhir setiap anak aktif, sesuai Permenkes No. 2 Tahun 2020 dan KBM Buku KIA.',
               style: TextStyle(fontSize: 16, color: AppColors.teksRedup),
             ),
           ],
@@ -210,7 +210,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
   }
 
   Widget _kartu(AnakBerisiko a) {
-    final b = a.balita;
+    final b = a.anak;
     final t = b.terakhir;
     final warna = a.tinggi ? AppColors.merah : AppColors.kuning;
     final latar = a.tinggi ? AppColors.merahMuda : AppColors.kuningMuda;
@@ -303,7 +303,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
     );
   }
 
-  /// Baris ringkasan: keterangan di kiri, jumlah balita di kanan.
+  /// Baris ringkasan: keterangan di kiri, jumlah anak di kanan.
   Widget _barisJumlah(String label, int nilai, Color warna) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -313,7 +313,7 @@ class _BalitaBerisikoPageState extends State<BalitaBerisikoPage> {
             child: Text(label,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _teksGelap)),
           ),
-          Text('$nilai balita',
+          Text('$nilai anak',
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,

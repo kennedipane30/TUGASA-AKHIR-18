@@ -282,7 +282,7 @@ class IsianAnak {
   String nama, nik, tglLahir, jk, beratLahir, panjangLahir;
 
   /// aktif | arsip (hanya dibaca dari server, tidak dikirim saat simpan).
-  /// Anak arsip dikelola di Semua Balita > Lihat detail.
+  /// Anak arsip diarsipkan / diaktifkan orang tua di Data Keluarga > Data Anak.
   String status;
 
   IsianAnak({
